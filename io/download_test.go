@@ -20,13 +20,13 @@ func TestFmtURL(t *testing.T) {
 		{"a", NewUserInfo("m1"), base + "api_key=a&method=user.getInfo&user=m1"},
 		{"b", NewArtistInfo("m2"), base + "api_key=b&method=artist.getInfo&artist=m2"},
 		{"b", NewUserRecentTracks("X", 3, 86400), base + "api_key=b&method=user.getRecentTracks&user=X&page=3&from=86399&to=172800"},
+		// TODO escape non-ASCII characters
 	}
 
 	for i, tc := range testCases {
 		s := fmt.Sprintf("#%v: %v", i, tc.rsrc.name)
 		ft.Seq(s, func(ft fastest.T) {
 			url := FmtURL(tc.rsrc, tc.apiKey)
-
 			ft.Equals(url, tc.url)
 		})
 	}

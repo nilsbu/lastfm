@@ -11,7 +11,7 @@ func TestNewUserInfo(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		name string
+		name Name
 	}{
 		{"AB"},
 		{"A@@"},
@@ -26,7 +26,7 @@ func TestNewUserInfo(t *testing.T) {
 			ft.Equals(rsrc.method, "getInfo")
 			ft.Equals(rsrc.name, tc.name)
 			ft.Equals(rsrc.page, Page(0))
-			ft.Equals(len(rsrc.params), 0)
+			ft.Equals(rsrc.time, Midnight(-1))
 		})
 	}
 }
@@ -35,14 +35,12 @@ func TestNewUserRecentTracks(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		name string
+		name Name
 		page Page
 		time Midnight
-		from string
-		to   string
 	}{
-		{"_X", 1, 86400, "86399", "172800"},
-		{"Abra", 2, 8640000, "8639999", "8726400"},
+		{"_X", 1, 86400},
+		{"Abra", 2, 8640000},
 	}
 
 	for i, tc := range testCases {
@@ -54,8 +52,7 @@ func TestNewUserRecentTracks(t *testing.T) {
 			ft.Equals(rsrc.method, "getRecentTracks")
 			ft.Equals(rsrc.name, tc.name)
 			ft.Equals(rsrc.page, tc.page)
-			ft.Equals(rsrc.params["from"], tc.from)
-			ft.Equals(rsrc.params["to"], tc.to)
+			ft.Equals(rsrc.time, tc.time)
 		})
 	}
 }
@@ -64,7 +61,7 @@ func TestNewArtistInfo(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		name string
+		name Name
 	}{
 		{"xy"},
 		{"Týr"},
@@ -79,7 +76,7 @@ func TestNewArtistInfo(t *testing.T) {
 			ft.Equals(rsrc.method, "getInfo")
 			ft.Equals(rsrc.name, tc.name)
 			ft.Equals(rsrc.page, Page(0))
-			ft.Equals(len(rsrc.params), 0)
+			ft.Equals(rsrc.time, Midnight(-1))
 		})
 	}
 }
