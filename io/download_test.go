@@ -13,7 +13,7 @@ func TestFmtURL(t *testing.T) {
 	base := "http://ws.audioscrobbler.com/2.0/?format=json&"
 
 	testCases := []struct {
-		apiKey string
+		apiKey APIKey
 		rsrc   *Resource
 		url    string
 	}{
@@ -25,7 +25,7 @@ func TestFmtURL(t *testing.T) {
 	for i, tc := range testCases {
 		s := fmt.Sprintf("#%v: %v", i, tc.rsrc.name)
 		ft.Seq(s, func(ft fastest.T) {
-			url := FmtURL(tc.rsrc, tc.apiKey)
+			url := fmtURL(tc.rsrc, tc.apiKey)
 			ft.Equals(url, tc.url)
 		})
 	}
