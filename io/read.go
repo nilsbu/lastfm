@@ -27,9 +27,9 @@ func parseForPath(name Name) Name {
 	return escapeBadNames(Name(escaped))
 }
 
-// FmtPath returns the relative path for a resource.
-func FmtPath(rsrc *Resource) string {
-	path := "data/rawdata/"
+// fmtPath returns the relative path for a resource.
+func fmtPath(rsrc *Resource) string {
+	path := ".data/"
 	path += fmt.Sprintf("%v.%v/%v",
 		rsrc.main, rsrc.method, parseForPath(rsrc.name))
 
