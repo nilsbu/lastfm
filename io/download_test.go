@@ -20,7 +20,6 @@ func TestFmtURL(t *testing.T) {
 		{"a", NewUserInfo("Týr"), base + "api_key=a&method=user.getInfo&user=T%C3%BDr"},
 		{"b", NewArtistInfo("m2"), base + "api_key=b&method=artist.getInfo&artist=m2"},
 		{"b", NewUserRecentTracks("X", 3, 86400), base + "api_key=b&method=user.getRecentTracks&user=X&page=3&from=86399&to=172800"},
-		// TODO escape non-ASCII characters
 	}
 
 	for i, tc := range testCases {
