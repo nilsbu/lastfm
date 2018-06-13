@@ -9,9 +9,21 @@ type Page int
 // Name is the name of a user, artist or tag
 type Name string
 
+// Domain is used to differentiate between different kinds of resources.
+type Domain string
+
+// List of valid Domains.
+const (
+	Raw    Domain = "data"
+	User          = "user"
+	Util          = "util"
+	Global        = "global"
+)
+
 // Resource is a general descriptor for local files or Last.fm URLs.
 type Resource struct {
 	// TODO replace string with custom types
+	domain Domain
 	main   string
 	method string
 	name   Name
@@ -21,31 +33,34 @@ type Resource struct {
 
 // NewUserInfo returns the Resource for "user.getInfo".
 func NewUserInfo(name Name) *Resource {
-	rsrc := new(Resource)
-	rsrc.main = "user"
-	rsrc.method = "getInfo"
-	rsrc.name = name
-	rsrc.time = -1
-	return rsrc
+	return &Resource{
+		domain: Raw,
+		main:   "user",
+		method: "getInfo",
+		name:   name,
+		time:   -1,
+	}
 }
 
 // NewUserRecentTracks returns the Resource for "user.getRecentTracks".
 func NewUserRecentTracks(name Name, page Page, time Midnight) *Resource {
-	rsrc := new(Resource)
-	rsrc.main = "user"
-	rsrc.method = "getRecentTracks"
-	rsrc.name = name
-	rsrc.page = page
-	rsrc.time = time - time%86400
-	return rsrc
+	return &Resource{
+		domain: Raw,
+		main:   "user",
+		method: "getRecentTracks",
+		name:   name,
+		page:   page,
+		time:   time - time%86400,
+	}
 }
 
 // NewArtistInfo returns the Resource for "artist.getInfo".
 func NewArtistInfo(name Name) *Resource {
-	rsrc := new(Resource)
-	rsrc.main = "artist"
-	rsrc.method = "getInfo"
-	rsrc.name = name
-	rsrc.time = -1
-	return rsrc
+	return &Resource{
+		domain: Raw,
+		main:   "artist",
+		method: "getInfo",
+		name:   name,
+		time:   -1,
+	}
 }

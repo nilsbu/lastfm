@@ -22,6 +22,7 @@ func TestNewUserInfo(t *testing.T) {
 		ft.Seq(s, func(ft fastest.T) {
 			rsrc := NewUserInfo(tc.name)
 
+			ft.Equals(rsrc.domain, Raw)
 			ft.Equals(rsrc.main, "user")
 			ft.Equals(rsrc.method, "getInfo")
 			ft.Equals(rsrc.name, tc.name)
@@ -48,6 +49,7 @@ func TestNewUserRecentTracks(t *testing.T) {
 		ft.Seq(s, func(ft fastest.T) {
 			rsrc := NewUserRecentTracks(tc.name, tc.page, tc.time)
 
+			ft.Equals(rsrc.domain, Raw)
 			ft.Equals(rsrc.main, "user")
 			ft.Equals(rsrc.method, "getRecentTracks")
 			ft.Equals(rsrc.name, tc.name)
@@ -72,6 +74,7 @@ func TestNewArtistInfo(t *testing.T) {
 		ft.Seq(s, func(ft fastest.T) {
 			rsrc := NewArtistInfo(tc.name)
 
+			ft.Equals(rsrc.domain, Raw)
 			ft.Equals(rsrc.main, "artist")
 			ft.Equals(rsrc.method, "getInfo")
 			ft.Equals(rsrc.name, tc.name)
