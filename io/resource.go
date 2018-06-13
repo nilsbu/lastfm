@@ -22,14 +22,17 @@ const (
 
 // Resource is a general descriptor for local files or Last.fm URLs.
 type Resource struct {
-	// TODO replace string with custom types
 	domain Domain
+	// TODO replace string with custom types.
+	// TODO main is not a precise name.
 	main   string
 	method string
 	name   Name
 	page   Page
 	time   Midnight
 }
+
+// TODO New* is misleading, find a better name.
 
 // NewUserInfo returns the Resource for "user.getInfo".
 func NewUserInfo(name Name) *Resource {
@@ -61,6 +64,15 @@ func NewArtistInfo(name Name) *Resource {
 		main:   "artist",
 		method: "getInfo",
 		name:   name,
+		time:   -1,
+	}
+}
+
+// NewAPIKey returns the Resource for "artist.getInfo".
+func NewAPIKey() *Resource {
+	return &Resource{
+		domain: Util,
+		method: "apikey",
 		time:   -1,
 	}
 }
