@@ -29,15 +29,20 @@ func parseForPath(name Name) Name {
 
 // fmtPath returns the relative path for a resource.
 func fmtPath(rsrc *Resource) string {
-	path := ".data/"
-	path += fmt.Sprintf("%v.%v/%v",
-		rsrc.main, rsrc.method, parseForPath(rsrc.name))
+	path := fmt.Sprintf(".lastfm/%v/", rsrc.domain)
+	if rsrc.domain == Raw {
+		path += fmt.Sprintf("%v.%v/%v",
+			rsrc.main, rsrc.method, parseForPath(rsrc.name))
 
-	if rsrc.time > -1 {
-		path += fmt.Sprintf(".%d", rsrc.time)
+		if rsrc.time > -1 {
+			path += fmt.Sprintf(".%d", rsrc.time)
+		}
+		if rsrc.page > 0 {
+			path += fmt.Sprintf("(%v)", rsrc.page)
+		}
+	} else {
+		path += rsrc.method
 	}
-	if rsrc.page > 0 {
-		path += fmt.Sprintf("(%v)", rsrc.page)
-	}
+
 	return path + ".json"
 }

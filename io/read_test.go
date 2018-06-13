@@ -14,11 +14,12 @@ func TestFmtPath(t *testing.T) {
 		rsrc *Resource
 		path string
 	}{
-		{NewArtistInfo("m2"), ".data/artist.getInfo/m2.json"},
-		{NewUserInfo("con"), ".data/user.getInfo/_con.json"},
-		{NewArtistInfo("Týr"), ".data/artist.getInfo/T%C3%BDr.json"},
-		{NewArtistInfo("A B"), ".data/artist.getInfo/A+B.json"},
-		{NewUserRecentTracks("X", 3, 86400), ".data/user.getRecentTracks/X.86400(3).json"},
+		{NewArtistInfo("m2"), ".lastfm/data/artist.getInfo/m2.json"},
+		{NewUserInfo("con"), ".lastfm/data/user.getInfo/_con.json"},
+		{NewArtistInfo("Týr"), ".lastfm/data/artist.getInfo/T%C3%BDr.json"},
+		{NewArtistInfo("A B"), ".lastfm/data/artist.getInfo/A+B.json"},
+		{NewUserRecentTracks("X", 3, 86400), ".lastfm/data/user.getRecentTracks/X.86400(3).json"},
+		{NewAPIKey(), ".lastfm/util/apikey.json"},
 	}
 
 	for i, tc := range testCases {
