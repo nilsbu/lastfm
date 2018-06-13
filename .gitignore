@@ -12,5 +12,4 @@
 *.out
 
 # Data directories
-.data/
-.user/
+.lastfm/
