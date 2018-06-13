@@ -19,16 +19,14 @@ type WriteJob struct {
 	Back     chan<- error
 }
 
-// ReadWorker is a worker that executes ReadJobs.
-func ReadWorker(jobs <-chan ReadJob, r Reader) {
+func readWorker(jobs <-chan ReadJob, r Reader) {
 	for j := range jobs {
 		data, err := r.Read(j.Resource)
 		j.Back <- ReadResult{data, err}
 	}
 }
 
-// WriteWorker is a worker that executes WriteJobs.
-func WriteWorker(jobs <-chan WriteJob, r Writer) {
+func writeWorker(jobs <-chan WriteJob, r Writer) {
 	for j := range jobs {
 		err := r.Write(j.Data, j.Resource)
 		j.Back <- err
@@ -41,4 +39,29 @@ type Pool struct {
 	Download  chan ReadJob
 	ReadFile  chan ReadJob
 	WriteFile chan WriteJob
+}
+
+func NewPool(downloaders, fileReaders []Reader, fileWriters []Writer) *Pool {
+	p := &Pool{make(chan ReadJob), make(chan ReadJob), make(chan WriteJob)}
+
+	startWorkers(downloaders, fileReaders, fileWriters, p)
+
+	return p
+}
+
+func startWorkers(
+	downloaders, fileReaders []Reader,
+	fileWriters []Writer,
+	p *Pool) {
+	for _, d := range downloaders {
+		go readWorker(p.Download, d)
+	}
+
+	for _, r := range fileReaders {
+		go readWorker(p.ReadFile, r)
+	}
+
+	for _, w := range fileWriters {
+		go writeWorker(p.WriteFile, w)
+	}
 }
