@@ -7,9 +7,10 @@ import (
 	"github.com/nilsbu/fastest"
 )
 
-func TestUnmarshalRecentTracks(t *testing.T) {
+func TestUnmarshalUserRecentTracks(t *testing.T) {
 	ft := fastest.T{T: t}
 
+	// TODO use fastest
 	const (
 		ok int = iota
 		fail
@@ -67,11 +68,42 @@ func TestUnmarshalRecentTracks(t *testing.T) {
 	for i, tc := range testCases {
 		s := fmt.Sprintf("#%v", i)
 		ft.Seq(s, func(ft fastest.T) {
-			urt, err := NewUserRecentTracks(tc.json)
+			urt, err := UnmarshalUserRecentTracks(tc.json)
 
 			ft.Implies(tc.err == fail, err != nil)
 			ft.Only(tc.err == ok)
 			ft.DeepEquals(urt, tc.urt)
+		})
+	}
+}
+
+func TestUnmarshalAPIKey(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	const (
+		ok int = iota
+		fail
+	)
+
+	testCases := []struct {
+		json []byte
+		key  *APIKey
+		err  fastest.Code
+	}{
+		{
+			[]byte(`{"apikey":"asdf97"}`),
+			&APIKey{"asdf97"},
+			fastest.OK,
+		},
+	}
+
+	for i, tc := range testCases {
+		s := fmt.Sprintf("#%v", i)
+		ft.Seq(s, func(ft fastest.T) {
+			key, err := UnmarshalAPIKey(tc.json)
+
+			ft.Equals(tc.err == fastest.Fail, err != nil)
+			ft.DeepEquals(key, tc.key)
 		})
 	}
 }

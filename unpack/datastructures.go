@@ -38,3 +38,8 @@ type Text struct {
 	Str string `json:"#text"`
 	// Not included: mbid
 }
+
+// APIKey is an unmarshaled JSON tag for an API key.
+type APIKey struct {
+	Key string `json:"apikey"`
+}
