@@ -14,6 +14,16 @@ type Writer interface {
 	Write(data []byte, rsrc *Resource) error
 }
 
+// AsyncReader is an interface for reading resources asynchronously.
+type AsyncReader interface {
+	Read(rsrc *Resource) <-chan ReadResult
+}
+
+// AsyncWriter is an interface for writing resources asynchronously.
+type AsyncWriter interface {
+	Write(data []byte, rsrc *Resource) <-chan error
+}
+
 // FileWriter is a writer for files. It implements io.Writer.
 type FileWriter struct {
 }
@@ -71,4 +81,79 @@ func (dg DownloadGetter) Read(rsrc *Resource) (data []byte, err error) {
 	}
 
 	return
+}
+
+// AsyncFileWriter is a file reader that delegates work to a readWorker.
+type AsyncFileReader struct {
+	Job chan ReadJob
+}
+
+func (r AsyncFileReader) Read(rsrc *Resource) <-chan ReadResult {
+	out := make(chan ReadResult)
+	go func(r AsyncFileReader, rsrc *Resource, out chan<- ReadResult) {
+		back := make(chan ReadResult)
+		r.Job <- ReadJob{Resource: rsrc, Back: back}
+
+		out <- <-back
+		close(back)
+		close(out)
+	}(r, rsrc, out)
+	return out
+}
+
+// AsyncFileWriter is a file writer that delegates work to a writeWorker.
+type AsyncFileWriter struct {
+	Job chan WriteJob
+}
+
+func (r AsyncFileWriter) Write(data []byte, rsrc *Resource) <-chan error {
+	out := make(chan error)
+	go func(r AsyncFileWriter, data []byte, rsrc *Resource, out chan<- error) {
+		back := make(chan error)
+		r.Job <- WriteJob{Data: data, Resource: rsrc, Back: back}
+		out <- <-back
+		close(back)
+		close(out)
+	}(r, data, rsrc, out)
+	return out
+}
+
+// AsyncDownloadGetter is a download getter that delegates work to read and
+// write workers.
+type AsyncDownloadGetter struct {
+	downloader AsyncFileReader
+	fileReader AsyncFileReader
+	fileWriter AsyncFileWriter
+}
+
+func NewAsyncDownloadGetter(pool *Pool) *AsyncDownloadGetter {
+	return &AsyncDownloadGetter{
+		AsyncFileReader{pool.Download},
+		AsyncFileReader{pool.ReadFile},
+		AsyncFileWriter{pool.WriteFile},
+	}
+}
+
+func (dg *AsyncDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
+	out := make(chan ReadResult)
+	go func(dg *AsyncDownloadGetter, rsrc *Resource, out chan<- ReadResult) {
+		back := dg.fileReader.Read(rsrc)
+		res := <-back
+		if res.Err == nil {
+			out <- res
+			close(out)
+			return
+		}
+
+		back = dg.downloader.Read(rsrc)
+		res = <-back
+		if res.Err == nil {
+			back2 := dg.fileWriter.Write(res.Data, rsrc)
+			<-back2
+		}
+
+		out <- res
+		close(out)
+	}(dg, rsrc, out)
+	return out
 }
