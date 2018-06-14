@@ -110,15 +110,13 @@ func (dg DownloadGetter) Read(rsrc *Resource) (data []byte, err error) {
 }
 
 // AsyncFileReader is a file reader that delegates work to a readWorker.
-type AsyncFileReader struct {
-	Job chan ReadJob
-}
+type AsyncFileReader chan ReadJob
 
 func (r AsyncFileReader) Read(rsrc *Resource) <-chan ReadResult {
 	out := make(chan ReadResult)
 	go func(r AsyncFileReader, rsrc *Resource, out chan<- ReadResult) {
 		back := make(chan ReadResult)
-		r.Job <- ReadJob{Resource: rsrc, Back: back}
+		r <- ReadJob{Resource: rsrc, Back: back}
 
 		out <- <-back
 		close(back)
@@ -128,15 +126,13 @@ func (r AsyncFileReader) Read(rsrc *Resource) <-chan ReadResult {
 }
 
 // AsyncFileWriter is a file writer that delegates work to a writeWorker.
-type AsyncFileWriter struct {
-	Job chan WriteJob
-}
+type AsyncFileWriter chan WriteJob
 
 func (r AsyncFileWriter) Write(data []byte, rsrc *Resource) <-chan error {
 	out := make(chan error)
 	go func(r AsyncFileWriter, data []byte, rsrc *Resource, out chan<- error) {
 		back := make(chan error)
-		r.Job <- WriteJob{Data: data, Resource: rsrc, Back: back}
+		r <- WriteJob{Data: data, Resource: rsrc, Back: back}
 		out <- <-back
 		close(back)
 		close(out)
@@ -146,35 +142,22 @@ func (r AsyncFileWriter) Write(data []byte, rsrc *Resource) <-chan error {
 
 // AsyncDownloadGetter is a download getter that delegates work to read and
 // write workers.
-type AsyncDownloadGetter struct {
-	downloader AsyncFileReader
-	fileReader AsyncFileReader
-	fileWriter AsyncFileWriter
-}
-
-// NewAsyncDownloadGetter creates an AsyncDownloadGetter.
-func NewAsyncDownloadGetter(pool *Pool) AsyncDownloadGetter {
-	return AsyncDownloadGetter{
-		AsyncFileReader{pool.Download},
-		AsyncFileReader{pool.ReadFile},
-		AsyncFileWriter{pool.WriteFile},
-	}
-}
+type AsyncDownloadGetter Pool
 
 func (dg AsyncDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
 	out := make(chan ReadResult)
 	go func(dg AsyncDownloadGetter, rsrc *Resource, out chan<- ReadResult) {
-		res := <-dg.fileReader.Read(rsrc)
+		res := <-AsyncFileReader(dg.ReadFile).Read(rsrc)
 		if res.Err == nil {
 			out <- res
 			close(out)
 			return
 		}
 
-		res = <-dg.downloader.Read(rsrc)
+		res = <-AsyncFileReader(dg.Download).Read(rsrc)
 		if res.Err == nil {
 			// TODO what happens to the result
-			<-dg.fileWriter.Write(res.Data, rsrc)
+			<-AsyncFileWriter(dg.WriteFile).Write(res.Data, rsrc)
 		}
 
 		out <- res

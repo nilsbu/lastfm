@@ -42,8 +42,8 @@ type Pool struct {
 }
 
 // NewPool creates an IO worker pool with the given readers and writers.
-func NewPool(downloaders, fileReaders []Reader, fileWriters []Writer) *Pool {
-	p := &Pool{make(chan ReadJob), make(chan ReadJob), make(chan WriteJob)}
+func NewPool(downloaders, fileReaders []Reader, fileWriters []Writer) Pool {
+	p := Pool{make(chan ReadJob), make(chan ReadJob), make(chan WriteJob)}
 
 	startWorkers(downloaders, fileReaders, fileWriters, p)
 
@@ -53,7 +53,7 @@ func NewPool(downloaders, fileReaders []Reader, fileWriters []Writer) *Pool {
 func startWorkers(
 	downloaders, fileReaders []Reader,
 	fileWriters []Writer,
-	p *Pool) {
+	p Pool) {
 	for _, d := range downloaders {
 		go readWorker(p.Download, d)
 	}
