@@ -164,19 +164,17 @@ func NewAsyncDownloadGetter(pool *Pool) AsyncDownloadGetter {
 func (dg AsyncDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
 	out := make(chan ReadResult)
 	go func(dg AsyncDownloadGetter, rsrc *Resource, out chan<- ReadResult) {
-		back := dg.fileReader.Read(rsrc)
-		res := <-back
+		res := <-dg.fileReader.Read(rsrc)
 		if res.Err == nil {
 			out <- res
 			close(out)
 			return
 		}
 
-		back = dg.downloader.Read(rsrc)
-		res = <-back
+		res = <-dg.downloader.Read(rsrc)
 		if res.Err == nil {
-			back2 := dg.fileWriter.Write(res.Data, rsrc)
-			<-back2
+			// TODO what happens to the result
+			<-dg.fileWriter.Write(res.Data, rsrc)
 		}
 
 		out <- res
