@@ -41,6 +41,7 @@ type Pool struct {
 	WriteFile chan WriteJob
 }
 
+// NewPool creates an IO worker pool with the given readers and writers.
 func NewPool(downloaders, fileReaders []Reader, fileWriters []Writer) *Pool {
 	p := &Pool{make(chan ReadJob), make(chan ReadJob), make(chan WriteJob)}
 

@@ -153,17 +153,17 @@ type AsyncDownloadGetter struct {
 }
 
 // NewAsyncDownloadGetter creates an AsyncDownloadGetter.
-func NewAsyncDownloadGetter(pool *Pool) *AsyncDownloadGetter {
-	return &AsyncDownloadGetter{
+func NewAsyncDownloadGetter(pool *Pool) AsyncDownloadGetter {
+	return AsyncDownloadGetter{
 		AsyncFileReader{pool.Download},
 		AsyncFileReader{pool.ReadFile},
 		AsyncFileWriter{pool.WriteFile},
 	}
 }
 
-func (dg *AsyncDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
+func (dg AsyncDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
 	out := make(chan ReadResult)
-	go func(dg *AsyncDownloadGetter, rsrc *Resource, out chan<- ReadResult) {
+	go func(dg AsyncDownloadGetter, rsrc *Resource, out chan<- ReadResult) {
 		back := dg.fileReader.Read(rsrc)
 		res := <-back
 		if res.Err == nil {
