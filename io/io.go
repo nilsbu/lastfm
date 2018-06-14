@@ -2,6 +2,9 @@ package io
 
 import (
 	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
 // Reader is an interface for reading resources.
@@ -29,7 +32,22 @@ type FileWriter struct {
 }
 
 func (FileWriter) Write(data []byte, rsrc *Resource) error {
-	return write(data, fmtPath(rsrc))
+	path := fmtPath(rsrc)
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		dir := filepath.Dir(path)
+		if err := os.MkdirAll(dir, 0040755); err != nil {
+			return err
+		}
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(data)
+	return err
 }
 
 // FileReader is a reader for local files. It implements io.Reader.
@@ -53,7 +71,15 @@ func NewDownloader(key APIKey) Downloader {
 
 func (d Downloader) Read(rsrc *Resource) (data []byte, err error) {
 	url := fmtURL(rsrc, d.apiKey)
-	return download(url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	return data, err
 }
 
 // DownloadGetter is a reader and writer that downloads a resource,
@@ -83,7 +109,7 @@ func (dg DownloadGetter) Read(rsrc *Resource) (data []byte, err error) {
 	return
 }
 
-// AsyncFileWriter is a file reader that delegates work to a readWorker.
+// AsyncFileReader is a file reader that delegates work to a readWorker.
 type AsyncFileReader struct {
 	Job chan ReadJob
 }
@@ -126,6 +152,7 @@ type AsyncDownloadGetter struct {
 	fileWriter AsyncFileWriter
 }
 
+// NewAsyncDownloadGetter creates an AsyncDownloadGetter.
 func NewAsyncDownloadGetter(pool *Pool) *AsyncDownloadGetter {
 	return &AsyncDownloadGetter{
 		AsyncFileReader{pool.Download},

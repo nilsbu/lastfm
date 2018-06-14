@@ -6,6 +6,29 @@ import (
 	"strings"
 )
 
+// APIKey is an API key for Last.fm.
+type APIKey string
+
+// fmtURL formats the Last.FM URL.
+func fmtURL(rsrc *Resource, key APIKey) string {
+	base := "http://ws.audioscrobbler.com/2.0/"
+	params := "?format=json&api_key=%v&method=%v.%v&%v=%v"
+
+	url := base + fmt.Sprintf(params, key,
+		rsrc.main, rsrc.method, rsrc.main, url.PathEscape(string(rsrc.name)))
+
+	if rsrc.page > 0 {
+		url += fmt.Sprintf("&page=%d", int(rsrc.page))
+	}
+
+	if rsrc.time > -1 {
+		url += fmt.Sprintf("&from=%d&to=%d",
+			int(rsrc.time)-1, int(rsrc.time)+86400)
+	}
+
+	return url
+}
+
 func escapeBadNames(name Name) Name {
 	bad := [13]string{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
 		"LPT1", "LPT2", "LPT3", "LPT4", "LST"}
