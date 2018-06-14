@@ -1,31 +1,34 @@
 package testutils
 
-import "github.com/nilsbu/lastfm/io"
+import (
+	"errors"
 
-// strerr is a simple error that consists of a string.
-type strerr string
-
-func (s strerr) Error() string {
-	return string(s)
-}
+	"github.com/nilsbu/lastfm/io"
+)
 
 // Reader is a mock reader that stores data that is returned on request.
 // For each request of the same resource the same data is returned.
-type Reader struct {
-	data map[io.Resource][]byte
-}
+type Reader map[io.Resource][]byte
 
-// NewReader constructs a reader.
-func NewReader(data map[io.Resource][]byte) *Reader {
-	return &Reader{data}
-}
+// AsyncReader is a mock reader analogous to Reader that works concurrently.
+type AsyncReader Reader
 
-func (r *Reader) Read(rsrc *io.Resource) (data []byte, err error) {
-	data, ok := r.data[*rsrc]
+func (r Reader) Read(rsrc *io.Resource) (data []byte, err error) {
+	data, ok := r[*rsrc]
 	if ok {
 		return data, nil
 	}
-	return nil, strerr("resource not found")
+	return nil, errors.New("mock reader fails")
+}
+
+func (r AsyncReader) Read(rsrc *io.Resource) <-chan io.ReadResult {
+	out := make(chan io.ReadResult)
+	go func(rsrc *io.Resource, out chan<- io.ReadResult) {
+		data, err := Reader(r).Read(rsrc)
+		out <- io.ReadResult{Data: data, Err: err}
+		close(out)
+	}(rsrc, out)
+	return out
 }
 
 // Writer is a mock writer that stores data that is written.
@@ -37,24 +40,51 @@ type Writer struct {
 	failSequences map[io.Resource][]bool
 }
 
+// AsyncWriter is a mock writer analogous to Writer that works concurrently.
+type AsyncWriter Writer
+
 // NewWriter constructs a writer.
 func NewWriter(failSequences map[io.Resource][]bool) *Writer {
-	return &Writer{
+	w := &Writer{
 		data:          make(map[io.Resource][][]byte),
-		failSequences: failSequences,
+		failSequences: make(map[io.Resource][]bool),
 	}
+
+	// Copy to ensure that the input map is not altered
+	for k, v := range failSequences {
+		w.failSequences[k] = v
+	}
+	return w
 }
 
 func (w *Writer) Write(data []byte, rsrc *io.Resource) (err error) {
 	if seq, ok := w.failSequences[*rsrc]; ok {
 		if len(seq) > 0 {
 			if !seq[0] {
-				err = strerr("fail")
+				err = errors.New("mock writer fails")
 			}
+
 			w.failSequences[*rsrc] = seq[1:]
 		}
 	}
 
 	w.data[*rsrc] = append(w.data[*rsrc], data)
 	return
+}
+
+// NewAsyncWriter constructs a concurrent writer.
+func NewAsyncWriter(failSequences map[io.Resource][]bool) *AsyncWriter {
+	return (*AsyncWriter)(NewWriter(failSequences))
+}
+
+func (w *AsyncWriter) Write(
+	data []byte, rsrc *io.Resource) <-chan error {
+	out := make(chan error)
+
+	go func(data []byte, rsrc *io.Resource, out chan<- error) {
+		out <- (*Writer)(w).Write(data, rsrc)
+		close(out)
+	}(data, rsrc, out)
+
+	return out
 }
