@@ -5,28 +5,27 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/io"
 )
 
-func TestGetUserRegistered(t *testing.T) {
+func TestGetUser(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		ui         *UserInfo
-		registered io.Midnight
+		ui   *UserInfo
+		user *User
 	}{
 		{&UserInfo{
 			User: userUser{Name: "X", PlayCount: 2, Registered: time{114004225884}},
 		},
-			114004195200},
+			&User{"X", 114004195200}},
 	}
 
 	for i, tc := range testCases {
 		s := fmt.Sprintf("#%v", i)
 		ft.Seq(s, func(ft fastest.T) {
-			registered := GetUserRegistered(tc.ui)
-
-			ft.Equals(registered, tc.registered)
+			user := GetUser(tc.ui)
+			ft.Equals(user.Name, tc.user.Name)
+			ft.Equals(user.Registered, tc.user.Registered)
 		})
 	}
 }
