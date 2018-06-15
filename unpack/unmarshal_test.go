@@ -10,21 +10,15 @@ import (
 func TestUnmarshalUserRecentTracks(t *testing.T) {
 	ft := fastest.T{T: t}
 
-	// TODO use fastest
-	const (
-		ok int = iota
-		fail
-	)
-
 	testCases := []struct {
 		json []byte
 		urt  *UserRecentTracks
-		err  int
+		err  fastest.Code
 	}{
 		{
 			[]byte("{}"),
 			&UserRecentTracks{},
-			ok,
+			fastest.OK,
 		},
 		{
 			[]byte(`{"recenttracks":{"track":[],"@attr":{"user":"U","page":"1","perPage":"200","totalPages":"0","total":"0"}}}`),
@@ -35,7 +29,7 @@ func TestUnmarshalUserRecentTracks(t *testing.T) {
 						User: "U", Page: 1, PerPage: 200},
 				},
 			},
-			ok,
+			fastest.OK,
 		},
 		{
 			[]byte(`{"recenttracks":{
@@ -61,7 +55,7 @@ func TestUnmarshalUserRecentTracks(t *testing.T) {
 						User: "ÄÖ", Page: 1, PerPage: 200, TotalPages: 1, Total: 1},
 				},
 			},
-			ok,
+			fastest.OK,
 		},
 	}
 
@@ -70,8 +64,8 @@ func TestUnmarshalUserRecentTracks(t *testing.T) {
 		ft.Seq(s, func(ft fastest.T) {
 			urt, err := UnmarshalUserRecentTracks(tc.json)
 
-			ft.Implies(tc.err == fail, err != nil)
-			ft.Only(tc.err == ok)
+			ft.Implies(tc.err == fastest.Fail, err != nil)
+			ft.Only(tc.err == fastest.OK)
 			ft.DeepEquals(urt, tc.urt)
 		})
 	}
