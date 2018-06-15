@@ -1,7 +1,7 @@
 package io
 
 // Midnight is a unix time at midnight. It defaults to -1.
-type Midnight int
+type Midnight int64
 
 // Page is a page of a multi-page resource. It defaults to 0.
 type Page int
