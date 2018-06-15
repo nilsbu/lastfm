@@ -8,6 +8,36 @@ import (
 	"github.com/nilsbu/fastest"
 )
 
+func TestUserInfo(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		json []byte
+		ui   *UserInfo
+		err  fastest.Code
+	}{
+		{
+			[]byte(`{"user":{"name":"What","playcount":"1928","registered":{"unixtime":"1144225884"}}}`),
+			&UserInfo{
+				User: userUser{Name: "What", PlayCount: 1928, Registered: time{1144225884}},
+			},
+			fastest.OK,
+		},
+	}
+
+	for i, tc := range testCases {
+		s := fmt.Sprintf("#%v", i)
+		ft.Seq(s, func(ft fastest.T) {
+			ui := &UserInfo{}
+			err := json.Unmarshal(tc.json, ui)
+
+			ft.Implies(tc.err == fastest.Fail, err != nil)
+			ft.Only(tc.err == fastest.OK)
+			ft.DeepEquals(ui, tc.ui)
+		})
+	}
+}
+
 func TestUserRecentTracks(t *testing.T) {
 	ft := fastest.T{T: t}
 
@@ -25,7 +55,7 @@ func TestUserRecentTracks(t *testing.T) {
 			[]byte(`{"recenttracks":{"track":[],"@attr":{"user":"U","page":"1","perPage":"200","totalPages":"0","total":"0"}}}`),
 			&UserRecentTracks{
 				RecentTracks: recentTracks{
-					Track: make([]Track, 0),
+					Track: make([]track, 0),
 					Attr: recentTracksAttr{
 						User: "U", Page: 1, PerPage: 200},
 				},
@@ -46,11 +76,11 @@ func TestUserRecentTracks(t *testing.T) {
         "@attr":{"user":"ÄÖ","page":"1","perPage":"200","totalPages":"1","total":"1"}}}`),
 			&UserRecentTracks{
 				RecentTracks: recentTracks{
-					Track: []Track{Track{
-						Artist: Text{"BTS"},
+					Track: []track{track{
+						Artist: text{"BTS"},
 						Name:   "t3",
-						Album:  Text{"轉"},
-						Date:   Date{1526811835},
+						Album:  text{"轉"},
+						Date:   date{1526811835},
 					}},
 					Attr: recentTracksAttr{
 						User: "ÄÖ", Page: 1, PerPage: 200, TotalPages: 1, Total: 1},

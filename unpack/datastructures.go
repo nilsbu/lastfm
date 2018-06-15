@@ -1,12 +1,25 @@
 package unpack
 
+// UserInfo is unmarshaled JSON data from user.getInfo.
+type UserInfo struct {
+	User userUser `json:"user"`
+}
+
+type userUser struct {
+	Name       string `json:"name"`
+	PlayCount  int    `json:"playcount,string"`
+	Registered time   `json:"registered"`
+	// Not Included: realname, image, url, country, age, gender, subscriber, type
+	//               playlists, bootstrap
+}
+
 // UserRecentTracks is unmarshaled JSON data from user.getRecentTracks.
 type UserRecentTracks struct {
 	RecentTracks recentTracks `json:"recenttracks"`
 }
 
 type recentTracks struct {
-	Track []Track          `json:"track"`
+	Track []track          `json:"track"`
 	Attr  recentTracksAttr `json:"@attr"`
 }
 
@@ -18,23 +31,25 @@ type recentTracksAttr struct {
 	Total      int    `json:"total,string"`
 }
 
-// Date is an unmarshaled JSON date tag, that contains a unix timestamp.
-type Date struct {
-	UTS int `json:"uts,string"`
+type date struct {
+	UTS int64 `json:"uts,string"`
 	// Not included: #text
 }
 
-// Track is unmarshaled JSON data from user.getRecentTracks' track tag.
-type Track struct {
-	Artist Text   `json:"artist"`
+type time struct {
+	UTC int64 `json:"unixtime,string"`
+	// Not included: #text
+}
+
+type track struct {
+	Artist text   `json:"artist"`
 	Name   string `json:"name"`
-	Album  Text   `json:"album"`
-	Date   Date   `json:"date"`
+	Album  text   `json:"album"`
+	Date   date   `json:"date"`
 	// Not included: streamable, mbid, url, image
 }
 
-// Text is an unmarshaled JSON text tag with an omitted MBID attribute.
-type Text struct {
+type text struct {
 	Str string `json:"#text"`
 	// Not included: mbid
 }

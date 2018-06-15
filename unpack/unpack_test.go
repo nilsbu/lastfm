@@ -41,11 +41,11 @@ func TestCountPlays(t *testing.T) {
 		{
 			UserRecentTracks{
 				RecentTracks: recentTracks{
-					Track: []Track{
-						Track{Artist: Text{Str: "BTS"}},
-						Track{Artist: Text{Str: "XX"}},
-						Track{Artist: Text{Str: "12"}},
-						Track{Artist: Text{Str: "BTS"}},
+					Track: []track{
+						track{Artist: text{Str: "BTS"}},
+						track{Artist: text{Str: "XX"}},
+						track{Artist: text{Str: "12"}},
+						track{Artist: text{Str: "BTS"}},
 					},
 				},
 			},
