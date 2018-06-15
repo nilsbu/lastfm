@@ -1,13 +1,14 @@
 package unpack
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/nilsbu/fastest"
 )
 
-func TestUnmarshalUserRecentTracks(t *testing.T) {
+func TestUserRecentTracks(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
@@ -62,7 +63,8 @@ func TestUnmarshalUserRecentTracks(t *testing.T) {
 	for i, tc := range testCases {
 		s := fmt.Sprintf("#%v", i)
 		ft.Seq(s, func(ft fastest.T) {
-			urt, err := UnmarshalUserRecentTracks(tc.json)
+			urt := &UserRecentTracks{}
+			err := json.Unmarshal(tc.json, urt)
 
 			ft.Implies(tc.err == fastest.Fail, err != nil)
 			ft.Only(tc.err == fastest.OK)
@@ -71,7 +73,7 @@ func TestUnmarshalUserRecentTracks(t *testing.T) {
 	}
 }
 
-func TestUnmarshalAPIKey(t *testing.T) {
+func TestAPIKey(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	const (
@@ -94,7 +96,8 @@ func TestUnmarshalAPIKey(t *testing.T) {
 	for i, tc := range testCases {
 		s := fmt.Sprintf("#%v", i)
 		ft.Seq(s, func(ft fastest.T) {
-			key, err := UnmarshalAPIKey(tc.json)
+			key := &APIKey{}
+			err := json.Unmarshal(tc.json, key)
 
 			ft.Equals(tc.err == fastest.Fail, err != nil)
 			ft.DeepEquals(key, tc.key)

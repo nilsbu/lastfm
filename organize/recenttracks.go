@@ -1,6 +1,8 @@
 package organize
 
 import (
+	"encoding/json"
+
 	"github.com/nilsbu/lastfm/io"
 	"github.com/nilsbu/lastfm/unpack"
 )
@@ -66,7 +68,8 @@ func loadDayPlaysPage(rsrc *io.Resource,
 		return nil, 0, result.Err
 	}
 
-	urt, err := unpack.UnmarshalUserRecentTracks(result.Data)
+	urt := &unpack.UserRecentTracks{}
+	err = json.Unmarshal(result.Data, urt)
 	if err != nil {
 		return
 	}
