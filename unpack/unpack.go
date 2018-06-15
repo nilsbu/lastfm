@@ -2,6 +2,12 @@ package unpack
 
 import "github.com/nilsbu/lastfm/io"
 
+// GetUserRegistered returns the day the user registered.
+func GetUserRegistered(ui *UserInfo) (registered io.Midnight) {
+	utc := ui.User.Registered.UTC
+	return io.Midnight(utc - utc%86400)
+}
+
 // DayPlays lists the number of plays for a set of artists in a given day.
 // TODO find a place
 type DayPlays map[io.Name]int
