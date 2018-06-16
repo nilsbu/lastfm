@@ -83,3 +83,6 @@ func TestNewArtistInfo(t *testing.T) {
 		})
 	}
 }
+
+// Utils get tested in location_test.go
+// TODO why not test everything there?
