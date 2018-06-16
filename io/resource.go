@@ -76,3 +76,12 @@ func NewAPIKey() *Resource {
 		time:   -1,
 	}
 }
+
+func NewAllDayPlays(user Name) *Resource {
+	return &Resource{
+		domain: User,
+		name:   user,
+		method: "alldayplays",
+		time:   -1,
+	}
+}

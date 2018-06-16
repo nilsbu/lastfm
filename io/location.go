@@ -63,8 +63,10 @@ func fmtPath(rsrc *Resource) string {
 		if rsrc.page > 0 {
 			path += fmt.Sprintf("(%v)", rsrc.page)
 		}
-	} else {
+	} else if rsrc.domain == Util {
 		path += rsrc.method
+	} else if rsrc.domain == User {
+		path += fmt.Sprintf("%v/%v", rsrc.name, rsrc.method)
 	}
 
 	return path + ".json"
