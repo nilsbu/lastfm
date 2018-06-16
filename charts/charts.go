@@ -1,7 +1,9 @@
 package charts
 
 import (
+	"fmt"
 	"runtime"
+	"sort"
 
 	"github.com/nilsbu/lastfm/io"
 	"github.com/nilsbu/lastfm/unpack"
@@ -13,6 +15,15 @@ type Charts map[io.Name][]int
 // Sums are special charts where each row consists of the some from the
 // beginning until the current row.
 type Sums Charts
+
+// Column is a column of charts sorted descendingly.
+type Column []Score
+
+// Score is a score with a name attached,
+type Score struct {
+	Name  io.Name
+	Score int
+}
 
 // Compile builds Charts from DayPlays.
 func Compile(dayPlays []unpack.DayPlays) Charts {
@@ -65,4 +76,42 @@ func (c Charts) Sum() Sums {
 	close(lines)
 
 	return sums
+}
+
+// Column returns a column of charts sorted descendingly. Negative indices are
+// used to index the chartes from behind.
+func (c Charts) Column(i int) (column Column, err error) {
+	var size int
+	for _, line := range c {
+		size = len(line)
+		break
+	}
+	if i >= size {
+		return Column{}, fmt.Errorf("Index %d >= %d (size)", i, size)
+	}
+	if i < 0 {
+		i += size
+	}
+	if i < 0 {
+		return Column{}, fmt.Errorf("Index %d < -%d (size)", i-size, size)
+	}
+
+	for name, line := range c {
+		column = append(column, Score{name, line[i]})
+	}
+	sort.Sort(column)
+	return column, nil
+}
+
+func (c Column) Len() int           { return len(c) }
+func (c Column) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c Column) Less(i, j int) bool { return c[i].Score > c[j].Score }
+
+// Top returns the top n entries of col. If n is larger than len(col) the whole
+// column is returned.
+func (c Column) Top(n int) (top Column) {
+	if n > len(c) {
+		n = len(c)
+	}
+	return c[:n]
 }

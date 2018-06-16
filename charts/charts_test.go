@@ -42,7 +42,7 @@ func TestCompile(t *testing.T) {
 	}
 }
 
-func TestSum(t *testing.T) {
+func TestChartsSum(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
@@ -68,6 +68,100 @@ func TestSum(t *testing.T) {
 			sums := tc.charts.Sum()
 
 			ft.DeepEquals(sums, tc.sums)
+		})
+	}
+}
+
+func TestChartsColumn(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		charts Charts
+		i      int
+		column Column
+		ok     bool
+	}{
+		{
+			Charts{},
+			0,
+			Column{},
+			false,
+		},
+		{
+			Charts{"X": []int{}},
+			0,
+			Column{},
+			false,
+		},
+		{
+			Charts{
+				"o0o": []int{0, 0, 7},
+				"lol": []int{1, 2, 3},
+				"X":   []int{1, 3, 4}},
+			1,
+			Column{Score{"X", 3}, Score{"lol", 2}, Score{"o0o", 0}},
+			true,
+		},
+		{
+			Charts{"X": []int{1, 3, 4}},
+			-1,
+			Column{Score{"X", 4}},
+			true,
+		},
+		{
+			Charts{"X": []int{1, 3, 4}},
+			-4,
+			Column{},
+			false,
+		},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			column, err := tc.charts.Column(tc.i)
+
+			ft.Implies(err == nil, tc.ok)
+			ft.Implies(err != nil, !tc.ok, err)
+			ft.DeepEquals(column, tc.column)
+		})
+	}
+}
+
+func TestColumnTop(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		column Column
+		n      int
+		top    Column
+	}{
+		{
+			Column{},
+			0,
+			Column{},
+		},
+		{
+			Column{Score{"X", 4}},
+			0,
+			Column{},
+		},
+		{
+			Column{Score{"X", 3}, Score{"lol", 2}, Score{"o0o", 0}},
+			2,
+			Column{Score{"X", 3}, Score{"lol", 2}},
+		},
+		{
+			Column{Score{"X", 3}, Score{"lol", 2}, Score{"o0o", 0}},
+			4,
+			Column{Score{"X", 3}, Score{"lol", 2}, Score{"o0o", 0}},
+		},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			top := tc.column.Top(tc.n)
+
+			ft.DeepEquals(top, tc.top)
 		})
 	}
 }
