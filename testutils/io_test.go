@@ -103,7 +103,7 @@ func TestWriter(t *testing.T) {
 	for i, tc := range writeTestCases {
 		ft.Seq(fmt.Sprintf("#%d", i), func(ft fastest.T) {
 			err := w.Write([]byte(tc.in), tc.rsrc)
-			data, ok := w.data[*tc.rsrc]
+			data, ok := w.Data[*tc.rsrc]
 
 			ft.Implies(tc.err == fastest.OK, ok)
 			ft.Equals(err != nil, tc.err == fastest.Fail)
@@ -134,7 +134,7 @@ func TestAsyncWriter(t *testing.T) {
 	for i, tc := range writeTestCases {
 		ft.Seq(fmt.Sprintf("#%d", i), func(ft fastest.T) {
 			err := <-w.Write([]byte(tc.in), tc.rsrc)
-			data, ok := w.data[*tc.rsrc]
+			data, ok := w.Data[*tc.rsrc]
 
 			ft.Implies(tc.err == fastest.OK, ok)
 			ft.Equals(err != nil, tc.err == fastest.Fail)

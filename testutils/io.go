@@ -33,11 +33,11 @@ func (r AsyncReader) Read(rsrc *io.Resource) <-chan io.ReadResult {
 
 // Writer is a mock writer that stores data that is written.
 // When a resource is written more than all instances are stored.
-// Certain resources can throw errors. failSequences stores on which write
+// Certain resources can throw errors. FailSequences stores on which write
 // requests an error is thrown. If an error is thrown, the data is not stored.
 type Writer struct {
-	data          map[io.Resource][][]byte
-	failSequences map[io.Resource][]bool
+	Data          map[io.Resource][][]byte
+	FailSequences map[io.Resource][]bool
 }
 
 // AsyncWriter is a mock writer analogous to Writer that works concurrently.
@@ -46,29 +46,29 @@ type AsyncWriter Writer
 // NewWriter constructs a writer.
 func NewWriter(failSequences map[io.Resource][]bool) *Writer {
 	w := &Writer{
-		data:          make(map[io.Resource][][]byte),
-		failSequences: make(map[io.Resource][]bool),
+		Data:          make(map[io.Resource][][]byte),
+		FailSequences: make(map[io.Resource][]bool),
 	}
 
 	// Copy to ensure that the input map is not altered
 	for k, v := range failSequences {
-		w.failSequences[k] = v
+		w.FailSequences[k] = v
 	}
 	return w
 }
 
 func (w *Writer) Write(data []byte, rsrc *io.Resource) (err error) {
-	if seq, ok := w.failSequences[*rsrc]; ok {
+	if seq, ok := w.FailSequences[*rsrc]; ok {
 		if len(seq) > 0 {
 			if !seq[0] {
 				err = errors.New("mock writer fails")
 			}
 
-			w.failSequences[*rsrc] = seq[1:]
+			w.FailSequences[*rsrc] = seq[1:]
 		}
 	}
 
-	w.data[*rsrc] = append(w.data[*rsrc], data)
+	w.Data[*rsrc] = append(w.Data[*rsrc], data)
 	return
 }
 
