@@ -74,44 +74,56 @@ func TestAsyncReaderInterface(t *testing.T) {
 	ft.True(ok, "AsyncReader does not implement io.AsyncReader")
 }
 
-var writeTestCases = []struct {
+// TODO name
+type write struct {
 	rsrc *io.Resource
 	// in and stored should be []byte but used string for convenience
 	in     string
-	stored []string
+	stored string
 	err    fastest.Code
-}{
-	{io.NewUserInfo("AS"), "xx", []string{"xx"}, fastest.OK},
-	{io.NewUserInfo("X"), "++", []string{"++"}, fastest.Fail},
-	{io.NewUserInfo("AS"), "xy", []string{"xx", "xy"}, fastest.OK},
-	{io.NewUserInfo("AS"), "--", []string{"xx", "xy", "--"}, fastest.Fail},
-	{io.NewUserInfo("AS"), "++", []string{"xx", "xy", "--", "++"}, fastest.OK},
-	{io.NewUserRecentTracks("D", 1, 86400), "", []string{""}, fastest.OK},
-}
-
-var mockWriterContent = map[io.Resource][]bool{
-	*io.NewUserInfo("AS"): []bool{true, true, false},
-	*io.NewUserInfo("X"):  []bool{false},
 }
 
 // TestWriter tests both NewWriter() and Write()
 func TestWriter(t *testing.T) {
 	ft := fastest.T{T: t}
 
-	w := NewWriter(mockWriterContent)
+	var writeTestCases = []struct {
+		writes  []write
+		success map[io.Resource]bool
+	}{
+		{
+			[]write{},
+			map[io.Resource]bool{},
+		},
+		{
+			[]write{
+				{io.NewUserInfo("AS"), "X", "X", fastest.OK},
+			},
+			map[io.Resource]bool{}, // implicit OK
+		},
+		{
+			[]write{
+				{io.NewAPIKey(), "00", "00", fastest.OK},
+				{io.NewArtistInfo("AS"), "--", "", fastest.Fail},
+				{io.NewAPIKey(), "-", "-", fastest.OK}, // overwritd
+			},
+			map[io.Resource]bool{
+				*io.NewAPIKey():         true,
+				*io.NewArtistInfo("AS"): false,
+			},
+		},
+	}
 
 	for i, tc := range writeTestCases {
 		ft.Seq(fmt.Sprintf("#%d", i), func(ft fastest.T) {
-			err := w.Write([]byte(tc.in), tc.rsrc)
-			data, ok := w.Data[*tc.rsrc]
+			w := NewWriter(tc.success)
 
-			ft.Implies(tc.err == fastest.OK, ok)
-			ft.Equals(err != nil, tc.err == fastest.Fail)
-
-			ft.Equals(len(tc.stored), len(data))
-			for j := range tc.stored {
-				ft.Equals(tc.stored[j], string(data[j]),
-					fmt.Sprintf("Failed at element %v", j))
+			for _, write := range tc.writes {
+				err := w.Write([]byte(write.in), write.rsrc)
+				ft.Implies(err == nil, write.err == fastest.OK, err)
+				ft.Implies(err != nil, write.err == fastest.Fail)
+				ft.Only(err == nil)
+				ft.Equals(string(w.Data[*write.rsrc]), write.stored)
 			}
 		})
 	}
@@ -120,38 +132,7 @@ func TestWriter(t *testing.T) {
 func TestWriterInterface(t *testing.T) {
 	ft := fastest.T{T: t}
 
-	var w interface{} = NewWriter(map[io.Resource][]bool{})
+	var w interface{} = NewWriter(map[io.Resource]bool{})
 	_, ok := w.(io.Writer)
 	ft.True(ok, "Writer does not implement io.Writer")
-}
-
-// TestAsyncWriter tests both NewAsyncWriter() and Write()
-func TestAsyncWriter(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	w := NewAsyncWriter(mockWriterContent)
-
-	for i, tc := range writeTestCases {
-		ft.Seq(fmt.Sprintf("#%d", i), func(ft fastest.T) {
-			err := <-w.Write([]byte(tc.in), tc.rsrc)
-			data, ok := w.Data[*tc.rsrc]
-
-			ft.Implies(tc.err == fastest.OK, ok)
-			ft.Equals(err != nil, tc.err == fastest.Fail)
-
-			ft.Equals(len(tc.stored), len(data))
-			for j := range tc.stored {
-				ft.Equals(tc.stored[j], string(data[j]),
-					fmt.Sprintf("Failed at element %v", j))
-			}
-		})
-	}
-}
-
-func TestAsyncWriterInterface(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	var w interface{} = NewAsyncWriter(map[io.Resource][]bool{})
-	_, ok := w.(io.AsyncWriter)
-	ft.True(ok, "AsyncWriter does not implement io.AsyncWriter")
 }

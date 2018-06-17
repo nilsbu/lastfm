@@ -32,59 +32,35 @@ func (r AsyncReader) Read(rsrc *io.Resource) <-chan io.ReadResult {
 }
 
 // Writer is a mock writer that stores data that is written.
-// When a resource is written more than all instances are stored.
+// When a resource is written more than one, the last value is kept.
 // Certain resources can throw errors. FailSequences stores on which write
 // requests an error is thrown. If an error is thrown, the data is not stored.
 type Writer struct {
-	Data          map[io.Resource][][]byte
-	FailSequences map[io.Resource][]bool
+	Data    map[io.Resource][]byte
+	Success map[io.Resource]bool
 }
 
 // AsyncWriter is a mock writer analogous to Writer that works concurrently.
 type AsyncWriter Writer
 
 // NewWriter constructs a writer.
-func NewWriter(failSequences map[io.Resource][]bool) *Writer {
+func NewWriter(success map[io.Resource]bool) *Writer {
 	w := &Writer{
-		Data:          make(map[io.Resource][][]byte),
-		FailSequences: make(map[io.Resource][]bool),
+		Data:    make(map[io.Resource][]byte),
+		Success: make(map[io.Resource]bool),
 	}
 
-	// Copy to ensure that the input map is not altered
-	for k, v := range failSequences {
-		w.FailSequences[k] = v
-	}
+	w.Success = success
 	return w
 }
 
 func (w *Writer) Write(data []byte, rsrc *io.Resource) (err error) {
-	if seq, ok := w.FailSequences[*rsrc]; ok {
-		if len(seq) > 0 {
-			if !seq[0] {
-				err = errors.New("mock writer fails")
-			}
-
-			w.FailSequences[*rsrc] = seq[1:]
-		}
+	if success, ok := w.Success[*rsrc]; ok && !success {
+		return errors.New("mock writer fails")
 	}
 
-	w.Data[*rsrc] = append(w.Data[*rsrc], data)
+	w.Data[*rsrc] = data
 	return
 }
 
-// NewAsyncWriter constructs a concurrent writer.
-func NewAsyncWriter(failSequences map[io.Resource][]bool) *AsyncWriter {
-	return (*AsyncWriter)(NewWriter(failSequences))
-}
-
-func (w *AsyncWriter) Write(
-	data []byte, rsrc *io.Resource) <-chan error {
-	out := make(chan error)
-
-	go func(data []byte, rsrc *io.Resource, out chan<- error) {
-		out <- (*Writer)(w).Write(data, rsrc)
-		close(out)
-	}(data, rsrc, out)
-
-	return out
-}
+// TODO no AsyncWriter right now, since Writer is not thread-safe

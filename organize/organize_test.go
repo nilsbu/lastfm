@@ -77,20 +77,19 @@ func TestAllDayPlays(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			w := testutils.NewWriter(map[io.Resource][]bool{})
+			w := testutils.NewWriter(map[io.Resource]bool{})
 			err := WriteAllDayPlays(tc.plays, tc.name, w)
 			ft.Nil(err, err)
 
 			rsrc := io.NewAllDayPlays(tc.name)
 			written, ok := w.Data[*rsrc]
 			ft.True(ok)
-			ft.Equals(len(written), 1)
 
 			var r io.Reader
 			if tc.failRead {
 				r = testutils.Reader{}
 			} else {
-				r = testutils.Reader{*rsrc: written[0]}
+				r = testutils.Reader{*rsrc: written}
 			}
 			plays, err := ReadAllDayPlays(tc.name, r)
 			ft.Implies(err != nil, tc.failRead, err)
@@ -164,8 +163,8 @@ func TestWriteBookmark(t *testing.T) {
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
 			rsrc := io.NewBookmark("X")
-			w := testutils.NewWriter(map[io.Resource][]bool{
-				*rsrc: []bool{tc.err == fastest.OK}})
+			w := testutils.NewWriter(map[io.Resource]bool{
+				*rsrc: tc.err == fastest.OK})
 			err := WriteBookmark(tc.timestamp, "X", w)
 			ft.Implies(err != nil, tc.err == fastest.Fail)
 			ft.Implies(err == nil, tc.err == fastest.OK, err)
@@ -173,8 +172,7 @@ func TestWriteBookmark(t *testing.T) {
 
 			written, ok := w.Data[*rsrc]
 			ft.True(ok)
-			ft.Equals(len(written), 1)
-			ft.Equals(string(written[0]), string(tc.data))
+			ft.Equals(string(written), string(tc.data))
 		})
 	}
 }
