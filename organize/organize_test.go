@@ -100,3 +100,81 @@ func TestAllDayPlays(t *testing.T) {
 		})
 	}
 }
+
+func TestReadBookmark(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		timestamp int64
+		data      string
+		readOK    bool
+		err       fastest.Code
+	}{
+		{
+			1529246468,
+			`{"unixtime":"1529246468","time":"2018-06-17 14:41:08 +0000 UTC"}`,
+			true,
+			fastest.OK,
+		},
+		{
+			1529250983,
+			`{"unixtime":"1529250983","time":"2018-06-17 15:56:23 +0000 UTC"}`,
+			false,
+			fastest.Fail,
+		},
+		{
+			1529250983,
+			`{"unixtime":"1529250983xz`,
+			true,
+			fastest.Fail,
+		},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			rsrc := io.NewBookmark("X")
+			var r io.Reader
+			if tc.readOK {
+				r = testutils.Reader{*rsrc: []byte(tc.data)}
+			} else {
+				r = testutils.Reader{}
+			}
+			bookmark, err := ReadBookmark("X", r)
+			ft.Implies(err != nil, tc.err == fastest.Fail, err)
+			ft.Implies(err == nil, tc.err == fastest.OK)
+			ft.Only(err == nil)
+
+			ft.Equals(bookmark, tc.timestamp)
+		})
+	}
+}
+
+func TestWriteBookmark(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		timestamp int64
+		data      string
+		err       fastest.Code
+	}{
+		{1529246468, `{"unixtime":"1529246468","time":"2018-06-17 14:41:08 +0000 UTC"}`, fastest.OK},
+		{1529250983, `{"unixtime":"1529250983","time":"2018-06-17 15:56:23 +0000 UTC"}`, fastest.Fail},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			rsrc := io.NewBookmark("X")
+			w := testutils.NewWriter(map[io.Resource][]bool{
+				*rsrc: []bool{tc.err == fastest.OK}})
+			err := WriteBookmark(tc.timestamp, "X", w)
+			ft.Implies(err != nil, tc.err == fastest.Fail)
+			ft.Implies(err == nil, tc.err == fastest.OK, err)
+			ft.Only(err == nil)
+
+			written, ok := w.Data[*rsrc]
+			ft.True(ok)
+			ft.Equals(len(written), 1)
+			ft.Equals(string(written[0]), string(tc.data))
+		})
+	}
+}

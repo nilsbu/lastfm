@@ -106,11 +106,6 @@ func TestUserRecentTracks(t *testing.T) {
 func TestAPIKey(t *testing.T) {
 	ft := fastest.T{T: t}
 
-	const (
-		ok int = iota
-		fail
-	)
-
 	testCases := []struct {
 		json []byte
 		key  *APIKey
@@ -131,6 +126,32 @@ func TestAPIKey(t *testing.T) {
 
 			ft.Equals(tc.err == fastest.Fail, err != nil)
 			ft.DeepEquals(key, tc.key)
+		})
+	}
+}
+
+func TestBookmark(t *testing.T) {
+	// Test is redundant, see organize.TestBookmark
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		json     []byte
+		bookmark *Bookmark
+	}{
+		{
+			[]byte(`{"time":"2128-06-11 08:53:20 +0000 UTC","unixtime":"5000000000"}`),
+			&Bookmark{5000000000, "2128-06-11 08:53:20 +0000 UTC"},
+		},
+	}
+
+	for i, tc := range testCases {
+		s := fmt.Sprintf("#%v", i)
+		ft.Seq(s, func(ft fastest.T) {
+			bookmark := &Bookmark{}
+			err := json.Unmarshal(tc.json, bookmark)
+
+			ft.Nil(err, err)
+			ft.DeepEquals(bookmark, tc.bookmark)
 		})
 	}
 }

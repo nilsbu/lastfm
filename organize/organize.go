@@ -3,6 +3,7 @@ package organize
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/nilsbu/lastfm/io"
 	"github.com/nilsbu/lastfm/unpack"
@@ -51,4 +52,32 @@ func ReadAllDayPlays(
 
 	err = json.Unmarshal(jsonData, &plays)
 	return
+}
+
+// ReadBookmark read a bookmark for a user's saved daily plays.
+func ReadBookmark(user io.Name, r io.Reader) (utc int64, err error) {
+	data, err := r.Read(io.NewBookmark(user))
+	if err != nil {
+		return 0, err
+	}
+
+	bookmark := &unpack.Bookmark{}
+	err = json.Unmarshal(data, bookmark)
+	if err != nil {
+		return 0, err
+	}
+
+	return bookmark.UTC, nil
+}
+
+// WriteBookmark writes a bookmark for a user's saved daily plays.
+func WriteBookmark(utc int64, user io.Name, w io.Writer) error {
+	bookmark := unpack.Bookmark{
+		UTC:        utc,
+		TimeString: time.Unix(utc, 0).UTC().Format("2006-01-02 15:04:05 +0000 UTC"),
+	}
+
+	data, _ := json.Marshal(bookmark)
+	err := w.Write(data, io.NewBookmark(user))
+	return err
 }

@@ -45,6 +45,7 @@ func TestFmtPath(t *testing.T) {
 		{NewUserRecentTracks("X", 3, 86400), ".lastfm/data/user.getRecentTracks/X.86400(3).json"},
 		{NewAPIKey(), ".lastfm/util/apikey.json"},
 		{NewAllDayPlays("XX"), ".lastfm/user/XX/alldayplays.json"},
+		{NewBookmark("zY"), ".lastfm/user/zY/bookmark.json"},
 	}
 
 	for i, tc := range testCases {

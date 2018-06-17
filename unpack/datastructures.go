@@ -32,7 +32,7 @@ type recentTracksAttr struct {
 }
 
 type date struct {
-	UTS int64 `json:"uts,string"`
+	UTC int64 `json:"uts,string"`
 	// Not included: #text
 }
 
@@ -54,7 +54,13 @@ type text struct {
 	// Not included: mbid
 }
 
-// APIKey is an unmarshaled JSON tag for an API key.
+// APIKey is an unmarshaled JSON API key.
 type APIKey struct {
 	Key string `json:"apikey"`
+}
+
+// Bookmark is an unmarshaled JSON bookmark for daily plays.
+type Bookmark struct {
+	UTC        int64  `json:"unixtime,string"`
+	TimeString string `json:"time"`
 }

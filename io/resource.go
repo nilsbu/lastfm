@@ -66,7 +66,7 @@ func NewArtistInfo(name Name) *Resource {
 	}
 }
 
-// NewAPIKey returns the Resource for "artist.getInfo".
+// NewAPIKey returns the Resource for the API key.
 func NewAPIKey() *Resource {
 	return &Resource{
 		domain: Util,
@@ -75,11 +75,23 @@ func NewAPIKey() *Resource {
 	}
 }
 
+// NewAllDayPlays returns the Resource for a user's saved daily plays.
 func NewAllDayPlays(user Name) *Resource {
 	return &Resource{
 		domain: User,
 		name:   user,
 		method: "alldayplays",
+		time:   -1,
+	}
+}
+
+// NewBookmark returns the Resource for a user's bookmark the the saved daily
+// plays.
+func NewBookmark(user Name) *Resource {
+	return &Resource{
+		domain: User,
+		name:   user,
+		method: "bookmark",
 		time:   -1,
 	}
 }
