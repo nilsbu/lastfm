@@ -55,6 +55,7 @@ func ReadAllDayPlays(
 }
 
 // ReadBookmark read a bookmark for a user's saved daily plays.
+// TODO Bookmarks should use time.Time
 func ReadBookmark(user io.Name, r io.Reader) (utc int64, err error) {
 	data, err := r.Read(io.NewBookmark(user))
 	if err != nil {
