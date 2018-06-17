@@ -32,8 +32,6 @@ type Resource struct {
 	time   Midnight
 }
 
-// TODO New* is misleading, find a better name.
-
 // NewUserInfo returns the Resource for "user.getInfo".
 func NewUserInfo(name Name) *Resource {
 	return &Resource{
