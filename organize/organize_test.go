@@ -111,13 +111,13 @@ func TestReadBookmark(t *testing.T) {
 	}{
 		{
 			1529246468,
-			`{"unixtime":"1529246468","time":"2018-06-17 14:41:08 +0000 UTC"}`,
+			`{"unixtime":1529246468,"time":"2018-06-17 14:41:08 +0000 UTC"}`,
 			true,
 			fastest.OK,
 		},
 		{
 			1529250983,
-			`{"unixtime":"1529250983","time":"2018-06-17 15:56:23 +0000 UTC"}`,
+			`{"unixtime":1529250983,"time":"2018-06-17 15:56:23 +0000 UTC"}`,
 			false,
 			fastest.Fail,
 		},
@@ -156,8 +156,8 @@ func TestWriteBookmark(t *testing.T) {
 		data      string
 		err       fastest.Code
 	}{
-		{1529246468, `{"unixtime":"1529246468","time":"2018-06-17 14:41:08 +0000 UTC"}`, fastest.OK},
-		{1529250983, `{"unixtime":"1529250983","time":"2018-06-17 15:56:23 +0000 UTC"}`, fastest.Fail},
+		{1529246468, `{"unixtime":1529246468,"time":"2018-06-17 14:41:08 +0000 UTC"}`, fastest.OK},
+		{1529250983, `{"unixtime":1529250983,"time":"2018-06-17 15:56:23 +0000 UTC"}`, fastest.Fail},
 	}
 
 	for i, tc := range testCases {
