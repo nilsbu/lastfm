@@ -7,7 +7,7 @@ type UserInfo struct {
 
 type userUser struct {
 	Name       string `json:"name"`
-	PlayCount  int    `json:"playcount,string"`
+	PlayCount  int    `json:"playcount"`
 	Registered time   `json:"registered"`
 	// Not Included: realname, image, url, country, age, gender, subscriber, type
 	//               playlists, bootstrap
@@ -37,7 +37,7 @@ type date struct {
 }
 
 type time struct {
-	UTC int64 `json:"unixtime,string"`
+	UTC int64 `json:"unixtime"`
 	// Not included: #text
 }
 
@@ -61,6 +61,6 @@ type APIKey struct {
 
 // Bookmark is an unmarshaled JSON bookmark for daily plays.
 type Bookmark struct {
-	UTC        int64  `json:"unixtime,string"`
+	UTC        int64  `json:"unixtime"`
 	TimeString string `json:"time"`
 }
