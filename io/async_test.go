@@ -85,6 +85,84 @@ func TestPoolWriterWrite(t *testing.T) {
 	}
 }
 
+func TestSeqReaderRead(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		rsrc *Resource
+		data string
+		err  fastest.Code
+	}{
+		{NewAPIKey(), "XX", fastest.OK},
+		{NewUserInfo("SOX"), "", fastest.OK},
+		{NewUserInfo("A"), "lol", fastest.Fail},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			r := make(SeqReader)
+
+			go func() {
+				for job := range r {
+					if *job.Resource == *tc.rsrc && tc.err == fastest.OK {
+						job.Back <- ReadResult{[]byte(tc.data), nil}
+					} else {
+						job.Back <- ReadResult{nil, errors.New("read failed")}
+					}
+				}
+			}()
+
+			data, err := r.Read(tc.rsrc)
+
+			ft.Implies(err != nil, tc.err == fastest.Fail)
+			ft.Implies(err == nil, tc.err == fastest.OK, err)
+			ft.Only(err == nil)
+			ft.Equals(string(data), tc.data)
+		})
+	}
+}
+
+func TestSeqWriterWrite(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		rsrc *Resource
+		data string
+		err  fastest.Code
+	}{
+		{NewAPIKey(), "XX", fastest.OK},
+		{NewUserInfo("SOX"), "", fastest.OK},
+		{NewUserInfo("A"), "lol", fastest.Fail},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			w := make(SeqWriter)
+
+			var data []byte
+			var rsrc *Resource
+			go func() {
+				for job := range w {
+					data = job.Data
+					rsrc = job.Resource
+					if tc.err == fastest.OK {
+						job.Back <- nil
+					} else {
+						job.Back <- errors.New("read failed")
+					}
+				}
+			}()
+
+			err := w.Write([]byte(tc.data), tc.rsrc)
+			ft.Implies(err != nil, tc.err == fastest.Fail)
+			ft.Implies(err == nil, tc.err == fastest.OK, err)
+			ft.Equals(*rsrc, *tc.rsrc)
+			ft.Only(err == nil)
+			ft.Equals(string(data), tc.data)
+		})
+	}
+}
+
 type MockReader []byte
 
 func (r MockReader) Read(rsrc *Resource) ([]byte, error) {

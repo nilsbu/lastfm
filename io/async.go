@@ -41,6 +41,21 @@ func (r PoolWriter) Write(data []byte, rsrc *Resource) <-chan error {
 	return out
 }
 
+// SeqReader provides sequential access to a PoolReader.
+type SeqReader PoolReader
+
+func (r SeqReader) Read(rsrc *Resource) (data []byte, err error) {
+	res := <-PoolReader(r).Read(rsrc)
+	return res.Data, res.Err
+}
+
+// SeqWriter provides sequential access to a PoolWriter.
+type SeqWriter PoolWriter
+
+func (r SeqWriter) Write(data []byte, rsrc *Resource) error {
+	return <-PoolWriter(r).Write(data, rsrc)
+}
+
 // ReadJob is a job for reading a resource.
 type ReadJob struct {
 	Resource *Resource
