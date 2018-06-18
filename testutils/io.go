@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/nilsbu/lastfm/io"
 )
@@ -18,7 +19,7 @@ func (r Reader) Read(rsrc *io.Resource) (data []byte, err error) {
 	if ok {
 		return data, nil
 	}
-	return nil, errors.New("mock reader fails")
+	return nil, fmt.Errorf("mock reader fails (%v)", rsrc)
 }
 
 func (r AsyncReader) Read(rsrc *io.Resource) <-chan io.ReadResult {
