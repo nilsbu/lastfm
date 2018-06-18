@@ -82,3 +82,34 @@ func WriteBookmark(utc int64, user io.Name, w io.Writer) error {
 	err := w.Write(data, io.NewBookmark(user))
 	return err
 }
+
+// UpdateAllDayPlays loads saved daily plays from preprocessed all day plays and
+// reads the remaining days from raw data. The last saved day gets reloaded.
+func UpdateAllDayPlays(
+	user unpack.User,
+	until io.Midnight,
+	ioPool io.Pool, // Need Wrapper for Async readers ??
+) (plays []unpack.DayPlays, err error) {
+	registeredDay := user.Registered - user.Registered%86400
+	begin := registeredDay
+	fr := io.SeqReader(ioPool.ReadFile)
+
+	oldPlays, err := ReadAllDayPlays(user.Name, fr)
+	if err != nil {
+		oldPlays = []unpack.DayPlays{}
+	} else if len(oldPlays) > 0 {
+		begin = registeredDay + io.Midnight(86400*(len(oldPlays)-1))
+		oldPlays = oldPlays[:len(oldPlays)-1]
+	}
+
+	if begin > until+86400 {
+		days := int((begin-registeredDay)/86400) - 1
+		return oldPlays[:days], nil
+	}
+
+	newPlays, err := LoadAllDayPlays(
+		unpack.User{Name: user.Name, Registered: begin},
+		until, io.AsyncDownloadGetter(ioPool))
+
+	return append(oldPlays, newPlays...), err
+}

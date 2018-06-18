@@ -139,6 +139,7 @@ func TestReadBookmark(t *testing.T) {
 				r = testutils.Reader{}
 			}
 			bookmark, err := ReadBookmark("X", r)
+			// TODO check tat implies of this kind are handled propperly everywhere
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
 			ft.Implies(err == nil, tc.err == fastest.OK)
 			ft.Only(err == nil)
@@ -166,13 +167,112 @@ func TestWriteBookmark(t *testing.T) {
 			w := testutils.NewWriter(map[io.Resource]bool{
 				*rsrc: tc.err == fastest.OK})
 			err := WriteBookmark(tc.timestamp, "X", w)
-			ft.Implies(err != nil, tc.err == fastest.Fail)
-			ft.Implies(err == nil, tc.err == fastest.OK, err)
+			ft.Implies(err != nil, tc.err == fastest.Fail, err)
+			ft.Implies(err == nil, tc.err == fastest.OK)
 			ft.Only(err == nil)
 
 			written, ok := w.Data[*rsrc]
 			ft.True(ok)
 			ft.Equals(string(written), string(tc.data))
+		})
+	}
+}
+
+func TestUpdateAllDayPlays(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		user   unpack.User
+		until  io.Midnight
+		saved  []unpack.DayPlays
+		tracks map[io.Resource][]byte
+		plays  []unpack.DayPlays
+		err    fastest.Code
+	}{
+		{ // No data
+			unpack.User{Name: "A", Registered: 0},
+			0,
+			nil,
+			map[io.Resource][]byte{},
+			[]unpack.DayPlays{},
+			fastest.Fail,
+		},
+		{ // download one day
+			unpack.User{Name: "A", Registered: 300}, // registered at 0:05
+			0,
+			[]unpack.DayPlays{},
+			map[io.Resource][]byte{
+				*io.NewUserRecentTracks("A", 1, 0): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
+			},
+			[]unpack.DayPlays{
+				unpack.DayPlays{"ASDF": 1},
+			},
+			fastest.OK,
+		},
+		{ // download some, have some
+			unpack.User{Name: "A", Registered: 86400},
+			3 * 86400,
+			[]unpack.DayPlays{
+				unpack.DayPlays{"XX": 4},
+				unpack.DayPlays{}, // will be overwritten
+			},
+			map[io.Resource][]byte{
+				*io.NewUserRecentTracks("A", 1, 2*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
+				*io.NewUserRecentTracks("A", 1, 3*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
+			},
+			[]unpack.DayPlays{
+				unpack.DayPlays{"XX": 4},
+				unpack.DayPlays{"ASDF": 1},
+				unpack.DayPlays{"B": 1},
+			},
+			fastest.OK,
+		},
+		{ // have more than want
+			unpack.User{Name: "A", Registered: 0},
+			86400,
+			[]unpack.DayPlays{
+				unpack.DayPlays{"XX": 4},
+				unpack.DayPlays{"A": 1},
+				unpack.DayPlays{"DropMe": 1},
+				unpack.DayPlays{"DropMeToo": 100},
+			},
+			map[io.Resource][]byte{},
+			[]unpack.DayPlays{
+				unpack.DayPlays{"XX": 4},
+				unpack.DayPlays{"A": 1},
+			},
+			fastest.OK,
+		},
+		{ // download error
+			unpack.User{Name: "A", Registered: 0},
+			0,
+			[]unpack.DayPlays{},
+			map[io.Resource][]byte{},
+			[]unpack.DayPlays{},
+			fastest.Fail,
+		},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			w := testutils.NewWriter(map[io.Resource]bool{})
+			w.Data = tc.tracks
+			if tc.saved != nil {
+				err := WriteAllDayPlays(tc.saved, tc.user.Name, w)
+				ft.Nil(err)
+			}
+
+			r := testutils.Reader(w.Data)
+			pool := io.NewPool(
+				[]io.Reader{r},
+				[]io.Reader{r},
+				[]io.Writer{w})
+
+			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
+			ft.Implies(err != nil, tc.err == fastest.Fail, err)
+			ft.Implies(err == nil, tc.err == fastest.OK)
+			ft.Only(err == nil)
+			ft.DeepEquals(plays, tc.plays)
 		})
 	}
 }
