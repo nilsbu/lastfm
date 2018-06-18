@@ -26,6 +26,10 @@ func fmtURL(rsrc *Resource, key APIKey) string {
 			int(rsrc.time)-1, int(rsrc.time)+86400)
 	}
 
+	if rsrc.method == "getRecentTracks" {
+		url += "&limit=200"
+	}
+
 	return url
 }
 
