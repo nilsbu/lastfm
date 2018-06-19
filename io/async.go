@@ -148,3 +148,21 @@ func (dg AsyncDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
 	}(dg, rsrc, out)
 	return out
 }
+
+// TODO docu, name & test
+type ForcedDownloadGetter Pool
+
+func (dg ForcedDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
+	out := make(chan ReadResult)
+	go func(dg ForcedDownloadGetter, rsrc *Resource, out chan<- ReadResult) {
+		res := <-PoolReader(dg.Download).Read(rsrc)
+		if res.Err == nil {
+			// TODO what happens to the result
+			<-PoolWriter(dg.WriteFile).Write(res.Data, rsrc)
+		}
+
+		out <- res
+		close(out)
+	}(dg, rsrc, out)
+	return out
+}

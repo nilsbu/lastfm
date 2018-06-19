@@ -182,17 +182,19 @@ func TestUpdateAllDayPlays(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		user   unpack.User
-		until  io.Midnight
-		saved  []unpack.DayPlays
-		tracks map[io.Resource][]byte
-		plays  []unpack.DayPlays
-		err    fastest.Code
+		user           unpack.User
+		until          io.Midnight
+		saved          []unpack.DayPlays
+		tracksFile     map[io.Resource][]byte
+		tracksDownload map[io.Resource][]byte
+		plays          []unpack.DayPlays
+		err            fastest.Code
 	}{
 		{ // No data
 			unpack.User{Name: "A", Registered: 0},
 			0,
 			nil,
+			map[io.Resource][]byte{},
 			map[io.Resource][]byte{},
 			[]unpack.DayPlays{},
 			fastest.Fail,
@@ -201,6 +203,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			unpack.User{Name: "A", Registered: 300}, // registered at 0:05
 			0,
 			[]unpack.DayPlays{},
+			map[io.Resource][]byte{},
 			map[io.Resource][]byte{
 				*io.NewUserRecentTracks("A", 1, 0): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			},
@@ -217,6 +220,10 @@ func TestUpdateAllDayPlays(t *testing.T) {
 				unpack.DayPlays{}, // will be overwritten
 			},
 			map[io.Resource][]byte{
+				*io.NewUserRecentTracks("A", 1, 1*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				*io.NewUserRecentTracks("A", 1, 2*86400): []byte(`{"recenttracks":{"track":[], "@attr":{"totalPages":"1"}}}`),
+			},
+			map[io.Resource][]byte{
 				*io.NewUserRecentTracks("A", 1, 2*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				*io.NewUserRecentTracks("A", 1, 3*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
@@ -231,14 +238,18 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			unpack.User{Name: "A", Registered: 0},
 			86400,
 			[]unpack.DayPlays{
-				unpack.DayPlays{"XX": 4},
+				unpack.DayPlays{"XX": 2},
 				unpack.DayPlays{"A": 1},
 				unpack.DayPlays{"DropMe": 1},
 				unpack.DayPlays{"DropMeToo": 100},
 			},
+			map[io.Resource][]byte{
+				*io.NewUserRecentTracks("A", 1, 0):       []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				*io.NewUserRecentTracks("A", 1, 1*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
+			},
 			map[io.Resource][]byte{},
 			[]unpack.DayPlays{
-				unpack.DayPlays{"XX": 4},
+				unpack.DayPlays{"XX": 2},
 				unpack.DayPlays{"A": 1},
 			},
 			fastest.OK,
@@ -248,6 +259,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			0,
 			[]unpack.DayPlays{},
 			map[io.Resource][]byte{},
+			map[io.Resource][]byte{},
 			[]unpack.DayPlays{},
 			fastest.Fail,
 		},
@@ -256,16 +268,15 @@ func TestUpdateAllDayPlays(t *testing.T) {
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
 			w := testutils.NewWriter(map[io.Resource]bool{})
-			w.Data = tc.tracks
+			w.Data = tc.tracksFile
 			if tc.saved != nil {
 				err := WriteAllDayPlays(tc.saved, tc.user.Name, w)
 				ft.Nil(err)
 			}
 
-			r := testutils.Reader(w.Data)
 			pool := io.NewPool(
-				[]io.Reader{r},
-				[]io.Reader{r},
+				[]io.Reader{testutils.Reader(tc.tracksDownload)},
+				[]io.Reader{testutils.Reader(w.Data)},
 				[]io.Writer{w})
 
 			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)

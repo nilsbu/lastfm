@@ -109,7 +109,7 @@ func UpdateAllDayPlays(
 
 	newPlays, err := LoadAllDayPlays(
 		unpack.User{Name: user.Name, Registered: begin},
-		until, io.AsyncDownloadGetter(ioPool))
+		until, io.ForcedDownloadGetter(ioPool))
 
 	return append(oldPlays, newPlays...), err
 }
