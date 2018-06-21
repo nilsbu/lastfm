@@ -42,11 +42,16 @@ type time struct {
 }
 
 type track struct {
-	Artist text   `json:"artist"`
-	Name   string `json:"name"`
-	Album  text   `json:"album"`
-	Date   date   `json:"date"`
+	Artist text      `json:"artist"`
+	Name   string    `json:"name"`
+	Album  text      `json:"album"`
+	Date   date      `json:"date"`
+	Attr   trackAttr `json:"@attr"`
 	// Not included: streamable, mbid, url, image
+}
+
+type trackAttr struct {
+	NowPlaying bool `json:"nowplaying,string"`
 }
 
 type text struct {

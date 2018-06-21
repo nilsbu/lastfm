@@ -31,7 +31,9 @@ func GetTracksPages(urt *UserRecentTracks) (page int) {
 func CountPlays(urt *UserRecentTracks) DayPlays {
 	dp := make(DayPlays)
 	for _, track := range urt.RecentTracks.Track {
-		dp[rsrc.Name(track.Artist.Str)]++
+		if !track.Attr.NowPlaying {
+			dp[rsrc.Name(track.Artist.Str)]++
+		}
 	}
 	return dp
 }

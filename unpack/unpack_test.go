@@ -77,6 +77,18 @@ func TestCountPlays(t *testing.T) {
 			},
 			DayPlays{"BTS": 2, "XX": 1, "12": 1},
 		},
+		{
+			UserRecentTracks{
+				RecentTracks: recentTracks{
+					Track: []track{
+						track{Artist: text{Str: "BTS"}},
+						track{Artist: text{Str: "BTS"}},
+						track{Artist: text{Str: "BTS"}, Attr: trackAttr{NowPlaying: true}},
+					},
+				},
+			},
+			DayPlays{"BTS": 2},
+		},
 	}
 
 	for i, tc := range testCases {

@@ -88,6 +88,32 @@ func TestUserRecentTracks(t *testing.T) {
 			},
 			fastest.OK,
 		},
+		{
+			[]byte(`{"recenttracks":{
+        "track":[{
+          "artist":{"#text":"BTS","mbid":"ac6"},
+          "name":"t3",
+          "streamable":"0",
+          "mbid":"",
+          "album":{"#text":"轉","mbid":"2e"},
+          "url":"https://example.com",
+          "image":[{"#text":"s.png","size":"small"}],
+          "@attr":{"nowplaying":"true"}}],
+        "@attr":{"user":"ÄÖ","page":"1","perPage":"200","totalPages":"1","total":"1"}}}`),
+			&UserRecentTracks{
+				RecentTracks: recentTracks{
+					Track: []track{track{
+						Artist: text{"BTS"},
+						Name:   "t3",
+						Album:  text{"轉"},
+						Attr:   trackAttr{NowPlaying: true},
+					}},
+					Attr: recentTracksAttr{
+						User: "ÄÖ", Page: 1, PerPage: 200, TotalPages: 1, Total: 1},
+				},
+			},
+			fastest.OK,
+		},
 	}
 
 	for i, tc := range testCases {
@@ -97,6 +123,7 @@ func TestUserRecentTracks(t *testing.T) {
 			err := json.Unmarshal(tc.json, urt)
 
 			ft.Implies(tc.err == fastest.Fail, err != nil)
+			ft.Implies(tc.err == fastest.OK, err == nil, err)
 			ft.Only(tc.err == fastest.OK)
 			ft.DeepEquals(urt, tc.urt)
 		})
