@@ -6,28 +6,35 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
+	"github.com/nilsbu/lastfm/rsrc"
 )
 
 func TestPoolReaderRead(t *testing.T) {
 	ft := fastest.T{T: t}
+	userInfo, _ := rsrc.UserInfo("SOX")
 
 	testCases := []struct {
-		rsrc *Resource
+		rs   rsrc.Resource
 		data string
 		err  fastest.Code
 	}{
-		{NewAPIKey(), "XX", fastest.OK},
-		{NewUserInfo("SOX"), "", fastest.OK},
-		{NewUserInfo("A"), "lol", fastest.Fail},
+		{rsrc.APIKey(), "XX", fastest.OK},
+		{userInfo, "", fastest.OK},
+		{userInfo, "lol", fastest.Fail},
 	}
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
 			r := make(PoolReader)
-			c := r.Read(tc.rsrc)
+			c := r.Read(tc.rs)
 			go func() {
 				for job := range r {
-					if *job.Resource == *tc.rsrc && tc.err == fastest.OK {
+					path1, err1 := job.Resource.Path()
+					path2, err2 := tc.rs.Path()
+					ft.Nil(err1)
+					ft.Nil(err2)
+
+					if path1 == path2 && tc.err == fastest.OK {
 						job.Back <- ReadResult{[]byte(tc.data), nil}
 					} else {
 						job.Back <- ReadResult{nil, errors.New("read failed")}
@@ -46,27 +53,28 @@ func TestPoolReaderRead(t *testing.T) {
 
 func TestPoolWriterWrite(t *testing.T) {
 	ft := fastest.T{T: t}
+	userInfo, _ := rsrc.UserInfo("SOX")
 
 	testCases := []struct {
-		rsrc *Resource
+		rs   rsrc.Resource
 		data string
 		err  fastest.Code
 	}{
-		{NewAPIKey(), "XX", fastest.OK},
-		{NewUserInfo("SOX"), "", fastest.OK},
-		{NewUserInfo("A"), "lol", fastest.Fail},
+		{rsrc.APIKey(), "XX", fastest.OK},
+		{userInfo, "", fastest.OK},
+		{userInfo, "lol", fastest.Fail},
 	}
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
 			w := make(PoolWriter)
-			c := w.Write([]byte(tc.data), tc.rsrc)
+			c := w.Write([]byte(tc.data), tc.rs)
 			var data []byte
-			var rsrc *Resource
+			var rs rsrc.Resource = nil
 			go func() {
 				for job := range w {
 					data = job.Data
-					rsrc = job.Resource
+					rs = job.Resource
 					if tc.err == fastest.OK {
 						job.Back <- nil
 					} else {
@@ -78,7 +86,13 @@ func TestPoolWriterWrite(t *testing.T) {
 			err := <-c
 			ft.Implies(err != nil, tc.err == fastest.Fail)
 			ft.Implies(err == nil, tc.err == fastest.OK, err)
-			ft.Equals(*rsrc, *tc.rsrc)
+			ft.Only(err == nil)
+
+			path1, err1 := rs.Path()
+			path2, err2 := tc.rs.Path()
+			ft.Nil(err1)
+			ft.Nil(err2)
+			ft.Equals(path1, path2)
 			ft.Only(err == nil)
 			ft.Equals(string(data), tc.data)
 		})
@@ -87,15 +101,16 @@ func TestPoolWriterWrite(t *testing.T) {
 
 func TestSeqReaderRead(t *testing.T) {
 	ft := fastest.T{T: t}
+	userInfo, _ := rsrc.UserInfo("SOX")
 
 	testCases := []struct {
-		rsrc *Resource
+		rs   rsrc.Resource
 		data string
 		err  fastest.Code
 	}{
-		{NewAPIKey(), "XX", fastest.OK},
-		{NewUserInfo("SOX"), "", fastest.OK},
-		{NewUserInfo("A"), "lol", fastest.Fail},
+		{rsrc.APIKey(), "XX", fastest.OK},
+		{userInfo, "", fastest.OK},
+		{userInfo, "lol", fastest.Fail},
 	}
 
 	for i, tc := range testCases {
@@ -104,7 +119,12 @@ func TestSeqReaderRead(t *testing.T) {
 
 			go func() {
 				for job := range r {
-					if *job.Resource == *tc.rsrc && tc.err == fastest.OK {
+					path1, err1 := job.Resource.Path()
+					path2, err2 := tc.rs.Path()
+					ft.Nil(err1)
+					ft.Nil(err2)
+
+					if path1 == path2 && tc.err == fastest.OK {
 						job.Back <- ReadResult{[]byte(tc.data), nil}
 					} else {
 						job.Back <- ReadResult{nil, errors.New("read failed")}
@@ -112,7 +132,7 @@ func TestSeqReaderRead(t *testing.T) {
 				}
 			}()
 
-			data, err := r.Read(tc.rsrc)
+			data, err := r.Read(tc.rs)
 
 			ft.Implies(err != nil, tc.err == fastest.Fail)
 			ft.Implies(err == nil, tc.err == fastest.OK, err)
@@ -124,15 +144,16 @@ func TestSeqReaderRead(t *testing.T) {
 
 func TestSeqWriterWrite(t *testing.T) {
 	ft := fastest.T{T: t}
+	userInfo, _ := rsrc.UserInfo("SOX")
 
 	testCases := []struct {
-		rsrc *Resource
+		rs   rsrc.Resource
 		data string
 		err  fastest.Code
 	}{
-		{NewAPIKey(), "XX", fastest.OK},
-		{NewUserInfo("SOX"), "", fastest.OK},
-		{NewUserInfo("A"), "lol", fastest.Fail},
+		{rsrc.APIKey(), "XX", fastest.OK},
+		{userInfo, "", fastest.OK},
+		{userInfo, "lol", fastest.Fail},
 	}
 
 	for i, tc := range testCases {
@@ -140,11 +161,11 @@ func TestSeqWriterWrite(t *testing.T) {
 			w := make(SeqWriter)
 
 			var data []byte
-			var rsrc *Resource
+			var rs rsrc.Resource
 			go func() {
 				for job := range w {
 					data = job.Data
-					rsrc = job.Resource
+					rs = job.Resource
 					if tc.err == fastest.OK {
 						job.Back <- nil
 					} else {
@@ -153,10 +174,16 @@ func TestSeqWriterWrite(t *testing.T) {
 				}
 			}()
 
-			err := w.Write([]byte(tc.data), tc.rsrc)
+			err := w.Write([]byte(tc.data), tc.rs)
 			ft.Implies(err != nil, tc.err == fastest.Fail)
 			ft.Implies(err == nil, tc.err == fastest.OK, err)
-			ft.Equals(*rsrc, *tc.rsrc)
+			ft.Only(err == nil)
+
+			path1, err1 := rs.Path()
+			path2, err2 := tc.rs.Path()
+			ft.Nil(err1)
+			ft.Nil(err2)
+			ft.Equals(path1, path2)
 			ft.Only(err == nil)
 			ft.Equals(string(data), tc.data)
 		})
@@ -165,7 +192,7 @@ func TestSeqWriterWrite(t *testing.T) {
 
 type MockReader []byte
 
-func (r MockReader) Read(rsrc *Resource) ([]byte, error) {
+func (r MockReader) Read(rs rsrc.Resource) ([]byte, error) {
 	if r != nil {
 		return []byte(r), nil
 	}
@@ -177,7 +204,7 @@ type MockWriter struct {
 	ok   bool
 }
 
-func (w *MockWriter) Write(data []byte, rsrc *Resource) error {
+func (w *MockWriter) Write(data []byte, rs rsrc.Resource) error {
 	if w.ok {
 		w.data = data
 		return nil
@@ -199,15 +226,15 @@ func TestPool(t *testing.T) {
 		[]Reader{r},
 		[]Writer{w})
 
-	res := <-PoolReader(p.Download).Read(NewAPIKey())
+	res := <-PoolReader(p.Download).Read(rsrc.APIKey())
 	ft.Nil(res.Err, res.Err)
 	ft.Equals(string(res.Data), string(d))
 
-	res = <-PoolReader(p.ReadFile).Read(NewAPIKey())
+	res = <-PoolReader(p.ReadFile).Read(rsrc.APIKey())
 	ft.Nil(res.Err, res.Err)
 	ft.Equals(string(res.Data), string(r))
 
-	err := <-PoolWriter(p.WriteFile).Write(wStr, NewAPIKey())
+	err := <-PoolWriter(p.WriteFile).Write(wStr, rsrc.APIKey())
 	ft.Nil(err, err)
 	ft.Equals(string(w.data), string(wStr))
 }
@@ -250,7 +277,7 @@ func TestAsyncDownloadGetterRead(t *testing.T) {
 				[]Reader{r},
 				[]Writer{w}))
 
-			res := <-dg.Read(NewAPIKey())
+			res := <-dg.Read(rsrc.APIKey())
 			ft.Implies(res.Err != nil, tc.err == fastest.Fail)
 			ft.Implies(res.Err == nil, tc.err == fastest.OK, res.Err)
 			ft.Only(res.Err == nil)

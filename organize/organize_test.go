@@ -2,11 +2,13 @@ package organize
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/io"
-	"github.com/nilsbu/lastfm/testutils"
+	"github.com/nilsbu/lastfm/mock"
+	"github.com/nilsbu/lastfm/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 
@@ -14,9 +16,9 @@ func TestLoadAPIKey(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		json string
-		key  io.APIKey
-		err  fastest.Code
+		json   string
+		apiKey rsrc.Key
+		err    fastest.Code
 	}{
 		{"", "", fastest.Fail},
 		{`{`, "", fastest.Fail},
@@ -28,75 +30,98 @@ func TestLoadAPIKey(t *testing.T) {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
 			var r io.Reader
 			if tc.json == "" {
-				r = testutils.Reader(map[io.Resource][]byte{})
+				r, _ = mock.FileIO(map[string][]byte{})
 			} else {
-				r = testutils.Reader(map[io.Resource][]byte{
-					*io.NewAPIKey(): []byte(tc.json)})
+				path, _ := rsrc.APIKey().Path()
+				r, _ = mock.FileIO(map[string][]byte{
+					path: []byte(tc.json)})
 			}
-			key, err := LoadAPIKey(r)
+			apiKey, err := LoadAPIKey(r)
 			ft.Equals(err != nil, tc.err == fastest.Fail)
 			ft.Only(tc.err == fastest.OK)
-			ft.Equals(key, tc.key)
+			ft.Equals(apiKey, tc.apiKey)
 		})
 	}
 }
 
 func TestAllDayPlays(t *testing.T) {
-	ft := fastest.T{T: t}
+	// also see TestAllDayPlaysFalseName below
 
 	testCases := []struct {
-		name     io.Name
-		plays    []unpack.DayPlays
-		failRead bool
+		name    rsrc.Name
+		plays   []unpack.DayPlays
+		writeOK bool
+		readOK  bool
 	}{
 		{
-			"X",
-			[]unpack.DayPlays{},
-			false,
-		},
-		{
-			"X",
+			"XX",
 			[]unpack.DayPlays{unpack.DayPlays{"BTS": 2, "XX": 1, "12": 1}},
-			false,
+			true, true,
 		},
 		{
-			"X",
+			"XX",
 			[]unpack.DayPlays{
 				unpack.DayPlays{"as": 42, "": 1, "12": 100},
 				unpack.DayPlays{"ギルガメッシュ": 1000},
 			},
-			false,
+			false, false,
 		},
-
 		{
-			"X",
+			"XX",
 			[]unpack.DayPlays{unpack.DayPlays{"BTS": 2, "XX": 1, "12": 1}},
-			true,
+			true, false,
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			w := testutils.NewWriter(map[io.Resource]bool{})
-			err := WriteAllDayPlays(tc.plays, tc.name, w)
-			ft.Nil(err, err)
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			rs, _ := rsrc.AllDayPlays(tc.name)
+			path, _ := rs.Path()
+			var files map[string][]byte
 
-			rsrc := io.NewAllDayPlays(tc.name)
-			written, ok := w.Data[*rsrc]
-			ft.True(ok)
-
-			var r io.Reader
-			if tc.failRead {
-				r = testutils.Reader{}
+			if tc.writeOK {
+				files = map[string][]byte{path: nil}
 			} else {
-				r = testutils.Reader{*rsrc: written}
+				files = map[string][]byte{}
 			}
+
+			r, w := mock.FileIO(files)
+			err := WriteAllDayPlays(tc.plays, tc.name, w)
+			if err != nil && tc.writeOK {
+				t.Error("unexpected error during write:", err)
+			} else if err == nil && !tc.writeOK {
+				t.Error("expected error during write but none occured")
+			}
+
+			if !tc.readOK {
+				delete(files, path)
+			}
+
 			plays, err := ReadAllDayPlays(tc.name, r)
-			ft.Implies(err != nil, tc.failRead, err)
-			ft.Implies(err == nil, !tc.failRead)
-			ft.Only(err == nil)
-			ft.DeepEquals(plays, tc.plays)
+			if err != nil && tc.readOK {
+				t.Error("unexpected error during read:", err)
+			} else if err == nil && !tc.readOK {
+				t.Error("expected error during read but none occurred")
+			}
+			if err == nil {
+				if !reflect.DeepEqual(plays, tc.plays) {
+					t.Errorf("read plays differ from written:\nread:    %v\nwritten: %v",
+						plays, tc.plays)
+				}
+			}
 		})
+	}
+}
+
+func TestAllDayPlaysFalseName(t *testing.T) {
+	r, w := mock.FileIO(map[string][]byte{})
+
+	if err := WriteAllDayPlays([]unpack.DayPlays{}, "I", w); err == nil {
+		t.Error("expected error during write but non occurred")
+	}
+
+	if _, err := ReadAllDayPlays("I", r); err == nil {
+		t.Error("expected error during read but non occurred")
 	}
 }
 
@@ -111,13 +136,13 @@ func TestReadBookmark(t *testing.T) {
 	}{
 		{
 			1529246468,
-			`{"unixtime":"1529246468","time":"2018-06-17 14:41:08 +0000 UTC"}`,
+			`{"unixtime":1529246468,"time":"2018-06-17 14:41:08 +0000 UTC"}`,
 			true,
 			fastest.OK,
 		},
 		{
 			1529250983,
-			`{"unixtime":"1529250983","time":"2018-06-17 15:56:23 +0000 UTC"}`,
+			`{"unixtime":1529250983,"time":"2018-06-17 15:56:23 +0000 UTC"}`,
 			false,
 			fastest.Fail,
 		},
@@ -131,15 +156,15 @@ func TestReadBookmark(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			rsrc := io.NewBookmark("X")
+			rs, _ := rsrc.Bookmark("Xx")
 			var r io.Reader
 			if tc.readOK {
-				r = testutils.Reader{*rsrc: []byte(tc.data)}
+				path, _ := rs.Path()
+				r, _ = mock.FileIO(map[string][]byte{path: []byte(tc.data)})
 			} else {
-				r = testutils.Reader{}
+				r, _ = mock.FileIO(map[string][]byte{})
 			}
-			bookmark, err := ReadBookmark("X", r)
-			// TODO check tat implies of this kind are handled propperly everywhere
+			bookmark, err := ReadBookmark("Xx", r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
 			ft.Implies(err == nil, tc.err == fastest.OK)
 			ft.Only(err == nil)
@@ -157,21 +182,28 @@ func TestWriteBookmark(t *testing.T) {
 		data      string
 		err       fastest.Code
 	}{
-		{1529246468, `{"unixtime":"1529246468","time":"2018-06-17 14:41:08 +0000 UTC"}`, fastest.OK},
-		{1529250983, `{"unixtime":"1529250983","time":"2018-06-17 15:56:23 +0000 UTC"}`, fastest.Fail},
+		{1529246468, `{"unixtime":1529246468,"time":"2018-06-17 14:41:08 +0000 UTC"}`, fastest.OK},
+		{1529250983, `{"unixtime":1529250983,"time":"2018-06-17 15:56:23 +0000 UTC"}`, fastest.Fail},
 	}
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			rsrc := io.NewBookmark("X")
-			w := testutils.NewWriter(map[io.Resource]bool{
-				*rsrc: tc.err == fastest.OK})
-			err := WriteBookmark(tc.timestamp, "X", w)
+			rs, _ := rsrc.Bookmark("XX")
+			path, _ := rs.Path()
+			var files map[string][]byte
+			if tc.err == fastest.OK {
+				files = map[string][]byte{path: nil}
+			} else {
+				files = map[string][]byte{}
+			}
+
+			_, w := mock.FileIO(files)
+			err := WriteBookmark(tc.timestamp, "XX", w)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
 			ft.Implies(err == nil, tc.err == fastest.OK)
 			ft.Only(err == nil)
 
-			written, ok := w.Data[*rsrc]
+			written, ok := files[path]
 			ft.True(ok)
 			ft.Equals(string(written), string(tc.data))
 		})
@@ -179,111 +211,149 @@ func TestWriteBookmark(t *testing.T) {
 }
 
 func TestUpdateAllDayPlays(t *testing.T) {
-	ft := fastest.T{T: t}
+	h0, _ := rsrc.History("AA", 1, rsrc.ToDay(0*86400))
+	h1, _ := rsrc.History("AA", 1, rsrc.ToDay(1*86400))
+	h2, _ := rsrc.History("AA", 1, rsrc.ToDay(2*86400))
+	h3, _ := rsrc.History("AA", 1, rsrc.ToDay(3*86400))
+
+	h0URL, _ := h0.URL(mock.APIKey)
+	h1URL, _ := h1.URL(mock.APIKey)
+	h2URL, _ := h2.URL(mock.APIKey)
+	h3URL, _ := h3.URL(mock.APIKey)
 
 	testCases := []struct {
 		user           unpack.User
-		until          io.Midnight
+		until          rsrc.Day
 		saved          []unpack.DayPlays
-		tracksFile     map[io.Resource][]byte
-		tracksDownload map[io.Resource][]byte
+		tracksFile     map[string][]byte
+		tracksDownload map[string][]byte
 		plays          []unpack.DayPlays
-		err            fastest.Code
+		ok             bool
 	}{
 		{ // No data
-			unpack.User{Name: "A", Registered: 0},
-			0,
+			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
+			rsrc.ToDay(0),
 			nil,
-			map[io.Resource][]byte{},
-			map[io.Resource][]byte{},
+			map[string][]byte{},
+			map[string][]byte{},
 			[]unpack.DayPlays{},
-			fastest.Fail,
+			false,
+		},
+		{ // Registration day invalid
+			unpack.User{Name: "AA", Registered: rsrc.NoDay()},
+			rsrc.ToDay(0),
+			nil,
+			map[string][]byte{},
+			map[string][]byte{},
+			[]unpack.DayPlays{},
+			false,
+		},
+		{ // Begin no valid day
+			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
+			rsrc.NoDay(),
+			nil,
+			map[string][]byte{},
+			map[string][]byte{},
+			[]unpack.DayPlays{},
+			false,
 		},
 		{ // download one day
-			unpack.User{Name: "A", Registered: 300}, // registered at 0:05
-			0,
+			unpack.User{Name: "AA", Registered: rsrc.ToDay(300)}, // registered at 0:05
+			rsrc.ToDay(0),
 			[]unpack.DayPlays{},
-			map[io.Resource][]byte{},
-			map[io.Resource][]byte{
-				*io.NewUserRecentTracks("A", 1, 0): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
+			map[string][]byte{},
+			map[string][]byte{
+				h0URL: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			},
 			[]unpack.DayPlays{
 				unpack.DayPlays{"ASDF": 1},
 			},
-			fastest.OK,
+			true,
 		},
 		{ // download some, have some
-			unpack.User{Name: "A", Registered: 86400},
-			3 * 86400,
+			unpack.User{Name: "AA", Registered: rsrc.ToDay(86400)},
+			rsrc.ToDay(3 * 86400),
 			[]unpack.DayPlays{
 				unpack.DayPlays{"XX": 4},
 				unpack.DayPlays{}, // will be overwritten
 			},
-			map[io.Resource][]byte{
-				*io.NewUserRecentTracks("A", 1, 1*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
-				*io.NewUserRecentTracks("A", 1, 2*86400): []byte(`{"recenttracks":{"track":[], "@attr":{"totalPages":"1"}}}`),
+			map[string][]byte{
+				h1URL: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				h2URL: []byte(`{"recenttracks":{"track":[], "@attr":{"totalPages":"1"}}}`),
 			},
-			map[io.Resource][]byte{
-				*io.NewUserRecentTracks("A", 1, 2*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
-				*io.NewUserRecentTracks("A", 1, 3*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
+			map[string][]byte{
+				h2URL: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
+				h3URL: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
 			[]unpack.DayPlays{
 				unpack.DayPlays{"XX": 4},
 				unpack.DayPlays{"ASDF": 1},
 				unpack.DayPlays{"B": 1},
 			},
-			fastest.OK,
+			true,
 		},
 		{ // have more than want
-			unpack.User{Name: "A", Registered: 0},
-			86400,
+			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
+			rsrc.ToDay(86400),
 			[]unpack.DayPlays{
 				unpack.DayPlays{"XX": 2},
 				unpack.DayPlays{"A": 1},
 				unpack.DayPlays{"DropMe": 1},
 				unpack.DayPlays{"DropMeToo": 100},
 			},
-			map[io.Resource][]byte{
-				*io.NewUserRecentTracks("A", 1, 0):       []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
-				*io.NewUserRecentTracks("A", 1, 1*86400): []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
+			map[string][]byte{
+				h0URL: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				h1URL: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			map[io.Resource][]byte{},
+			map[string][]byte{},
 			[]unpack.DayPlays{
 				unpack.DayPlays{"XX": 2},
 				unpack.DayPlays{"A": 1},
 			},
-			fastest.OK,
+			true,
 		},
 		{ // download error
-			unpack.User{Name: "A", Registered: 0},
-			0,
+			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
+			rsrc.ToDay(0),
 			[]unpack.DayPlays{},
-			map[io.Resource][]byte{},
-			map[io.Resource][]byte{},
+			map[string][]byte{},
+			map[string][]byte{},
 			[]unpack.DayPlays{},
-			fastest.Fail,
+			false,
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			w := testutils.NewWriter(map[io.Resource]bool{})
-			w.Data = tc.tracksFile
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			rs, _ := rsrc.AllDayPlays(tc.user.Name)
+			path, _ := rs.Path()
+			tc.tracksFile[path] = nil
+			r, w := mock.FileIO(tc.tracksFile)
 			if tc.saved != nil {
-				err := WriteAllDayPlays(tc.saved, tc.user.Name, w)
-				ft.Nil(err)
+				if err := WriteAllDayPlays(tc.saved, tc.user.Name, w); err != nil {
+					t.Error("unexpected error during write of all day plays:", err)
+				}
+
 			}
 
 			pool := io.NewPool(
-				[]io.Reader{testutils.Reader(tc.tracksDownload)},
-				[]io.Reader{testutils.Reader(w.Data)},
+				[]io.Reader{mock.Downloader(tc.tracksDownload)},
+				[]io.Reader{r},
 				[]io.Writer{w})
 
 			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
-			ft.Implies(err != nil, tc.err == fastest.Fail, err)
-			ft.Implies(err == nil, tc.err == fastest.OK)
-			ft.Only(err == nil)
-			ft.DeepEquals(plays, tc.plays)
+			if err != nil && tc.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !tc.ok {
+				t.Error("expected error but none occurred")
+			}
+			if err == nil {
+				if !reflect.DeepEqual(plays, tc.plays) {
+					t.Errorf("updated plays faulty:\nhas:      %v\nexpected: %v",
+						plays, tc.plays)
+				}
+			}
+			// ft.DeepEquals(plays, tc.plays)
 		})
 	}
 }

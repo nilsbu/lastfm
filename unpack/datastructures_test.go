@@ -17,7 +17,7 @@ func TestUserInfo(t *testing.T) {
 		err  fastest.Code
 	}{
 		{
-			[]byte(`{"user":{"name":"What","playcount":"1928","registered":{"unixtime":"1144225884"}}}`),
+			[]byte(`{"user":{"name":"What","playcount":1928,"registered":{"unixtime":1144225884}}}`),
 			&UserInfo{
 				User: userUser{Name: "What", PlayCount: 1928, Registered: time{1144225884}},
 			},
@@ -139,7 +139,7 @@ func TestBookmark(t *testing.T) {
 		bookmark *Bookmark
 	}{
 		{
-			[]byte(`{"time":"2128-06-11 08:53:20 +0000 UTC","unixtime":"5000000000"}`),
+			[]byte(`{"time":"2128-06-11 08:53:20 +0000 UTC","unixtime":5000000000}`),
 			&Bookmark{5000000000, "2128-06-11 08:53:20 +0000 UTC"},
 		},
 	}
