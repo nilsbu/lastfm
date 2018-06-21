@@ -12,5 +12,8 @@ debug
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# OS stuff
+.DS_Store
+
 # Data directories
 .lastfm/
