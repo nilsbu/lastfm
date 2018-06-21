@@ -69,3 +69,8 @@ type Bookmark struct {
 	UTC        int64  `json:"unixtime"`
 	TimeString string `json:"time"`
 }
+
+// SessionID is an unmarshaled JSON session identifier.
+type SessionID struct {
+	User string `json:"user"`
+}

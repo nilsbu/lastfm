@@ -180,6 +180,13 @@ type util struct {
 	public bool
 }
 
+func Supertags() *util {
+	return &util{
+		method: "supertags",
+		public: true,
+	}
+}
+
 func APIKey() *util {
 	return &util{
 		method: "apikey",
@@ -187,10 +194,10 @@ func APIKey() *util {
 	}
 }
 
-func Supertags() *util {
+func SessionID() *util {
 	return &util{
-		method: "supertags",
-		public: true,
+		method: "sessionid",
+		public: false,
 	}
 }
 

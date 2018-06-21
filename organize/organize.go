@@ -32,6 +32,28 @@ func LoadAPIKey(r io.Reader) (apiKey rsrc.Key, err error) {
 	return rsrc.Key(unm.Key), nil
 }
 
+// SessionID describes a session.
+type SessionID rsrc.Name
+
+// LoadSessionID loads a session ID.
+func LoadSessionID(r io.Reader) (SessionID, error) {
+	data, err := r.Read(rsrc.SessionID())
+	if err != nil {
+		return "", err
+	}
+
+	unm := &unpack.SessionID{}
+	err = json.Unmarshal(data, unm)
+	if err != nil {
+		return "", err
+	}
+	if unm.User == "" {
+		return "", errors.New("No valid user was read")
+	}
+
+	return SessionID(unm.User), nil
+}
+
 // WriteAllDayPlays writes a list of day plays.
 func WriteAllDayPlays(
 	plays []unpack.DayPlays,

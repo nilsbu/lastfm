@@ -44,6 +44,38 @@ func TestLoadAPIKey(t *testing.T) {
 	}
 }
 
+func TestLoadSessionID(t *testing.T) {
+	ft := fastest.T{T: t}
+
+	testCases := []struct {
+		json string
+		sid  SessionID
+		err  fastest.Code
+	}{
+		{"", "", fastest.Fail},
+		{`{`, "", fastest.Fail},
+		{`{}`, "", fastest.Fail},
+		{`{"user":"asdf"}`, "asdf", fastest.OK},
+	}
+
+	for i, tc := range testCases {
+		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+			var r io.Reader
+			if tc.json == "" {
+				r, _ = mock.FileIO(map[string][]byte{})
+			} else {
+				path, _ := rsrc.SessionID().Path()
+				r, _ = mock.FileIO(map[string][]byte{
+					path: []byte(tc.json)})
+			}
+			sid, err := LoadSessionID(r)
+			ft.Equals(err != nil, tc.err == fastest.Fail)
+			ft.Only(tc.err == fastest.OK)
+			ft.DeepEquals(sid, tc.sid)
+		})
+	}
+}
+
 func TestAllDayPlays(t *testing.T) {
 	// also see TestAllDayPlaysFalseName below
 

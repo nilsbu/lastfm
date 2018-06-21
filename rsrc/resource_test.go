@@ -188,8 +188,9 @@ func TestUtilPath(t *testing.T) {
 		path string
 		// path is always ok, since input is considered valid
 	}{
-		{APIKey(), ".lastfm/util/apikey.json"},
 		{Supertags(), "data/util/supertags.json"},
+		{APIKey(), ".lastfm/util/apikey.json"},
+		{SessionID(), ".lastfm/util/sessionid.json"},
 	}
 
 	for _, c := range cases {
