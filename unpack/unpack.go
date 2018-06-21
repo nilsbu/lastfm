@@ -1,24 +1,26 @@
 package unpack
 
-import "github.com/nilsbu/lastfm/io"
+import (
+	"github.com/nilsbu/lastfm/rsrc"
+)
 
 // User contains relevant core information about a user.
 type User struct {
-	Name       io.Name
-	Registered io.Midnight
+	Name       rsrc.Name
+	Registered rsrc.Day
 }
 
 // GetUser returns the name and regestering date of a user.
 func GetUser(ui *UserInfo) *User {
 	utc := ui.User.Registered.UTC
 	return &User{
-		io.Name(ui.User.Name),
-		io.Midnight(utc - utc%86400)}
+		rsrc.Name(ui.User.Name),
+		rsrc.ToDay(utc)}
 }
 
 // DayPlays lists the number of plays for a set of artists in a given day.
 // TODO find a place
-type DayPlays map[io.Name]int
+type DayPlays map[rsrc.Name]int
 
 // GetTracksPages returns the total number of pages declared in urt.
 func GetTracksPages(urt *UserRecentTracks) (page int) {
@@ -29,7 +31,7 @@ func GetTracksPages(urt *UserRecentTracks) (page int) {
 func CountPlays(urt *UserRecentTracks) DayPlays {
 	dp := make(DayPlays)
 	for _, track := range urt.RecentTracks.Track {
-		dp[io.Name(track.Artist.Str)]++
+		dp[rsrc.Name(track.Artist.Str)]++
 	}
 	return dp
 }

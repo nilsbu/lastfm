@@ -2,11 +2,13 @@ package organize
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/io"
-	"github.com/nilsbu/lastfm/testutils"
+	"github.com/nilsbu/lastfm/mock"
+	"github.com/nilsbu/lastfm/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 
@@ -14,9 +16,9 @@ func TestLoadAPIKey(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		json string
-		key  io.APIKey
-		err  fastest.Code
+		json   string
+		apiKey rsrc.Key
+		err    fastest.Code
 	}{
 		{"", "", fastest.Fail},
 		{`{`, "", fastest.Fail},
@@ -28,75 +30,98 @@ func TestLoadAPIKey(t *testing.T) {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
 			var r io.Reader
 			if tc.json == "" {
-				r = testutils.Reader(map[io.Resource][]byte{})
+				r, _ = mock.FileIO(map[string][]byte{})
 			} else {
-				r = testutils.Reader(map[io.Resource][]byte{
-					*io.NewAPIKey(): []byte(tc.json)})
+				path, _ := rsrc.APIKey().Path()
+				r, _ = mock.FileIO(map[string][]byte{
+					path: []byte(tc.json)})
 			}
-			key, err := LoadAPIKey(r)
+			apiKey, err := LoadAPIKey(r)
 			ft.Equals(err != nil, tc.err == fastest.Fail)
 			ft.Only(tc.err == fastest.OK)
-			ft.Equals(key, tc.key)
+			ft.Equals(apiKey, tc.apiKey)
 		})
 	}
 }
 
 func TestAllDayPlays(t *testing.T) {
-	ft := fastest.T{T: t}
+	// also see TestAllDayPlaysFalseName below
 
 	testCases := []struct {
-		name     io.Name
-		plays    []unpack.DayPlays
-		failRead bool
+		name    rsrc.Name
+		plays   []unpack.DayPlays
+		writeOK bool
+		readOK  bool
 	}{
 		{
-			"X",
-			[]unpack.DayPlays{},
-			false,
-		},
-		{
-			"X",
+			"XX",
 			[]unpack.DayPlays{unpack.DayPlays{"BTS": 2, "XX": 1, "12": 1}},
-			false,
+			true, true,
 		},
 		{
-			"X",
+			"XX",
 			[]unpack.DayPlays{
 				unpack.DayPlays{"as": 42, "": 1, "12": 100},
 				unpack.DayPlays{"ギルガメッシュ": 1000},
 			},
-			false,
+			false, false,
 		},
-
 		{
-			"X",
+			"XX",
 			[]unpack.DayPlays{unpack.DayPlays{"BTS": 2, "XX": 1, "12": 1}},
-			true,
+			true, false,
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			w := testutils.NewWriter(map[io.Resource]bool{})
-			err := WriteAllDayPlays(tc.plays, tc.name, w)
-			ft.Nil(err, err)
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			rs, _ := rsrc.AllDayPlays(tc.name)
+			path, _ := rs.Path()
+			var files map[string][]byte
 
-			rsrc := io.NewAllDayPlays(tc.name)
-			written, ok := w.Data[*rsrc]
-			ft.True(ok)
-
-			var r io.Reader
-			if tc.failRead {
-				r = testutils.Reader{}
+			if tc.writeOK {
+				files = map[string][]byte{path: nil}
 			} else {
-				r = testutils.Reader{*rsrc: written}
+				files = map[string][]byte{}
 			}
+
+			r, w := mock.FileIO(files)
+			err := WriteAllDayPlays(tc.plays, tc.name, w)
+			if err != nil && tc.writeOK {
+				t.Error("unexpected error during write:", err)
+			} else if err == nil && !tc.writeOK {
+				t.Error("expected error during write but none occured")
+			}
+
+			if !tc.readOK {
+				delete(files, path)
+			}
+
 			plays, err := ReadAllDayPlays(tc.name, r)
-			ft.Implies(err != nil, tc.failRead, err)
-			ft.Implies(err == nil, !tc.failRead)
-			ft.Only(err == nil)
-			ft.DeepEquals(plays, tc.plays)
+			if err != nil && tc.readOK {
+				t.Error("unexpected error during read:", err)
+			} else if err == nil && !tc.readOK {
+				t.Error("expected error during read but none occurred")
+			}
+			if err == nil {
+				if !reflect.DeepEqual(plays, tc.plays) {
+					t.Errorf("read plays differ from written:\nread:    %v\nwritten: %v",
+						plays, tc.plays)
+				}
+			}
 		})
+	}
+}
+
+func TestAllDayPlaysFalseName(t *testing.T) {
+	r, w := mock.FileIO(map[string][]byte{})
+
+	if err := WriteAllDayPlays([]unpack.DayPlays{}, "I", w); err == nil {
+		t.Error("expected error during write but non occurred")
+	}
+
+	if _, err := ReadAllDayPlays("I", r); err == nil {
+		t.Error("expected error during read but non occurred")
 	}
 }
 
@@ -131,14 +156,15 @@ func TestReadBookmark(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			rsrc := io.NewBookmark("X")
+			rs, _ := rsrc.Bookmark("Xx")
 			var r io.Reader
 			if tc.readOK {
-				r = testutils.Reader{*rsrc: []byte(tc.data)}
+				path, _ := rs.Path()
+				r, _ = mock.FileIO(map[string][]byte{path: []byte(tc.data)})
 			} else {
-				r = testutils.Reader{}
+				r, _ = mock.FileIO(map[string][]byte{})
 			}
-			bookmark, err := ReadBookmark("X", r)
+			bookmark, err := ReadBookmark("Xx", r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
 			ft.Implies(err == nil, tc.err == fastest.OK)
 			ft.Only(err == nil)
@@ -162,15 +188,22 @@ func TestWriteBookmark(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			rsrc := io.NewBookmark("X")
-			w := testutils.NewWriter(map[io.Resource]bool{
-				*rsrc: tc.err == fastest.OK})
-			err := WriteBookmark(tc.timestamp, "X", w)
+			rs, _ := rsrc.Bookmark("XX")
+			path, _ := rs.Path()
+			var files map[string][]byte
+			if tc.err == fastest.OK {
+				files = map[string][]byte{path: nil}
+			} else {
+				files = map[string][]byte{}
+			}
+
+			_, w := mock.FileIO(files)
+			err := WriteBookmark(tc.timestamp, "XX", w)
 			ft.Implies(err != nil, tc.err == fastest.Fail)
 			ft.Implies(err == nil, tc.err == fastest.OK, err)
 			ft.Only(err == nil)
 
-			written, ok := w.Data[*rsrc]
+			written, ok := files[path]
 			ft.True(ok)
 			ft.Equals(string(written), string(tc.data))
 		})

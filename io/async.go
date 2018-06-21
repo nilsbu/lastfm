@@ -1,71 +1,73 @@
 package io
 
+import "github.com/nilsbu/lastfm/rsrc"
+
 // AsyncReader is an interface for reading resources asynchronously.
 type AsyncReader interface {
-	Read(rsrc *Resource) <-chan ReadResult
+	Read(rs rsrc.Resource) <-chan ReadResult
 }
 
 // AsyncWriter is an interface for writing resources asynchronously.
 type AsyncWriter interface {
-	Write(data []byte, rsrc *Resource) <-chan error
+	Write(data []byte, rs rsrc.Resource) <-chan error
 }
 
 // PoolReader is a file reader that delegates work to a readWorker.
 type PoolReader chan ReadJob
 
-func (r PoolReader) Read(rsrc *Resource) <-chan ReadResult {
+func (r PoolReader) Read(rs rsrc.Resource) <-chan ReadResult {
 	out := make(chan ReadResult)
-	go func(r PoolReader, rsrc *Resource, out chan<- ReadResult) {
+	go func(r PoolReader, rs rsrc.Resource, out chan<- ReadResult) {
 		back := make(chan ReadResult)
-		r <- ReadJob{Resource: rsrc, Back: back}
+		r <- ReadJob{Resource: rs, Back: back}
 
 		out <- <-back
 		close(back)
 		close(out)
-	}(r, rsrc, out)
+	}(r, rs, out)
 	return out
 }
 
 // PoolWriter is a file writer that delegates work to a writeWorker.
 type PoolWriter chan WriteJob
 
-func (r PoolWriter) Write(data []byte, rsrc *Resource) <-chan error {
+func (r PoolWriter) Write(data []byte, rs rsrc.Resource) <-chan error {
 	out := make(chan error)
-	go func(r PoolWriter, data []byte, rsrc *Resource, out chan<- error) {
+	go func(r PoolWriter, data []byte, rs rsrc.Resource, out chan<- error) {
 		back := make(chan error)
-		r <- WriteJob{Data: data, Resource: rsrc, Back: back}
+		r <- WriteJob{Data: data, Resource: rs, Back: back}
 		out <- <-back
 		close(back)
 		close(out)
-	}(r, data, rsrc, out)
+	}(r, data, rs, out)
 	return out
 }
 
 // SeqReader provides sequential access to a PoolReader.
 type SeqReader PoolReader
 
-func (r SeqReader) Read(rsrc *Resource) (data []byte, err error) {
-	res := <-PoolReader(r).Read(rsrc)
+func (r SeqReader) Read(rs rsrc.Resource) (data []byte, err error) {
+	res := <-PoolReader(r).Read(rs)
 	return res.Data, res.Err
 }
 
 // SeqWriter provides sequential access to a PoolWriter.
 type SeqWriter PoolWriter
 
-func (r SeqWriter) Write(data []byte, rsrc *Resource) error {
-	return <-PoolWriter(r).Write(data, rsrc)
+func (r SeqWriter) Write(data []byte, rs rsrc.Resource) error {
+	return <-PoolWriter(r).Write(data, rs)
 }
 
 // ReadJob is a job for reading a resource.
 type ReadJob struct {
-	Resource *Resource
+	Resource rsrc.Resource
 	Back     chan<- ReadResult
 }
 
 // WriteJob is a job for writing a resource.
 type WriteJob struct {
 	Data     []byte
-	Resource *Resource
+	Resource rsrc.Resource
 	Back     chan<- error
 }
 
@@ -127,24 +129,24 @@ func writeWorker(jobs <-chan WriteJob, r Writer) {
 // write workers.
 type AsyncDownloadGetter Pool
 
-func (dg AsyncDownloadGetter) Read(rsrc *Resource) <-chan ReadResult {
+func (dg AsyncDownloadGetter) Read(rs rsrc.Resource) <-chan ReadResult {
 	out := make(chan ReadResult)
-	go func(dg AsyncDownloadGetter, rsrc *Resource, out chan<- ReadResult) {
-		res := <-PoolReader(dg.ReadFile).Read(rsrc)
+	go func(dg AsyncDownloadGetter, rs rsrc.Resource, out chan<- ReadResult) {
+		res := <-PoolReader(dg.ReadFile).Read(rs)
 		if res.Err == nil {
 			out <- res
 			close(out)
 			return
 		}
 
-		res = <-PoolReader(dg.Download).Read(rsrc)
+		res = <-PoolReader(dg.Download).Read(rs)
 		if res.Err == nil {
 			// TODO what happens to the result
-			<-PoolWriter(dg.WriteFile).Write(res.Data, rsrc)
+			<-PoolWriter(dg.WriteFile).Write(res.Data, rs)
 		}
 
 		out <- res
 		close(out)
-	}(dg, rsrc, out)
+	}(dg, rs, out)
 	return out
 }

@@ -5,31 +5,39 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/nilsbu/lastfm/rsrc"
 )
 
 // Reader is an interface for reading resources.
 type Reader interface {
-	Read(rsrc *Resource) (data []byte, err error)
+	Read(rs rsrc.Resource) (data []byte, err error)
 }
 
 // Writer is an interface for writing resources.
 type Writer interface {
-	Write(data []byte, rsrc *Resource) error
+	Write(data []byte, rs rsrc.Resource) error
 }
 
 // FileReader is a reader for local files. It implements io.Reader.
 type FileReader struct{}
 
-func (FileReader) Read(rsrc *Resource) (data []byte, err error) {
-	path := fmtPath(rsrc)
+func (FileReader) Read(rs rsrc.Resource) (data []byte, err error) {
+	path, err := rs.Path()
+	if err != nil {
+		return nil, err
+	}
 	return ioutil.ReadFile(path)
 }
 
 // FileWriter is a writer for files. It implements io.Writer.
 type FileWriter struct{}
 
-func (FileWriter) Write(data []byte, rsrc *Resource) error {
-	path := fmtPath(rsrc)
+func (FileWriter) Write(data []byte, rs rsrc.Resource) error {
+	path, err := rs.Path()
+	if err != nil {
+		return err
+	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		dir := filepath.Dir(path)
@@ -48,10 +56,13 @@ func (FileWriter) Write(data []byte, rsrc *Resource) error {
 }
 
 // Downloader is a reader for Last.fm. It implements io.Reader.
-type Downloader APIKey
+type Downloader rsrc.Key
 
-func (d Downloader) Read(rsrc *Resource) (data []byte, err error) {
-	url := fmtURL(rsrc, APIKey(d))
+func (d Downloader) Read(rs rsrc.Resource) (data []byte, err error) {
+	url, err := rs.URL(rsrc.Key(d))
+	if err != nil {
+		return nil, err
+	}
 
 	resp, err := http.Get(url)
 	if err != nil {

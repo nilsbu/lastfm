@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/io"
-	"github.com/nilsbu/lastfm/testutils"
+	"github.com/nilsbu/lastfm/mock"
+	"github.com/nilsbu/lastfm/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 
@@ -15,21 +15,21 @@ func TestLoadAllDayPlays(t *testing.T) {
 
 	testCases := []struct {
 		user  unpack.User
-		until io.Midnight
+		until rsrc.Day
 		data  [][]string
 		dps   []unpack.DayPlays
 		err   fastest.Code
 	}{
 		{
-			unpack.User{Name: "", Registered: 0},
-			86400,
+			unpack.User{Name: "", Registered: rsrc.ToDay(0)},
+			rsrc.ToDay(86400),
 			[][]string{[]string{}, []string{}},
 			nil,
 			fastest.Fail,
 		},
 		{
-			unpack.User{Name: "ASDF", Registered: 86400},
-			2 * 86400,
+			unpack.User{Name: "ASDF", Registered: rsrc.ToDay(86400)},
+			rsrc.ToDay(2 * 86400),
 			[][]string{
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`},
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"XXX"}}], "@attr":{"totalPages":"1"}}}`},
@@ -38,8 +38,8 @@ func TestLoadAllDayPlays(t *testing.T) {
 			fastest.OK,
 		},
 		{
-			unpack.User{Name: "ASDF", Registered: 0},
-			0,
+			unpack.User{Name: "ASDF", Registered: rsrc.ToDay(0)},
+			rsrc.ToDay(0),
 			[][]string{
 				[]string{
 					`{"recenttracks":{"track":[{"artist":{"#text":"X"}}], "@attr":{"page":"1","totalPages":"3"}}}`,
@@ -54,15 +54,17 @@ func TestLoadAllDayPlays(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			files := make(map[io.Resource][]byte)
+			files := make(map[string][]byte)
 			for j, day := range tc.data {
 				for k, d := range day {
-					time := tc.user.Registered + io.Midnight(j*86400)
-					urt := io.NewUserRecentTracks(tc.user.Name, io.Page(k+1), time)
-					files[*urt] = []byte(d)
+					reg, _ := tc.user.Registered.Midnight()
+					time := reg + int64(j*86400)
+					rs, _ := rsrc.History(tc.user.Name, rsrc.Page(k+1), rsrc.ToDay(time))
+					path, _ := rs.Path()
+					files[path] = []byte(d)
 				}
 			}
-			r := testutils.AsyncReader(files)
+			r, _ := mock.AsyncFileIO(files)
 
 			dps, err := LoadAllDayPlays(tc.user, tc.until, r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
@@ -76,20 +78,20 @@ func TestLoadDayPlays(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		user io.Name
-		time io.Midnight
+		user rsrc.Name
+		time rsrc.Day
 		data []string
 		dp   unpack.DayPlays
 		err  fastest.Code
 	}{
 		{
-			"", 86400,
+			"", rsrc.ToDay(86400),
 			[]string{},
 			nil,
 			fastest.Fail,
 		},
 		{
-			"NOP", 86400,
+			"NOP", rsrc.ToDay(86400),
 			[]string{
 				"FAIL",
 			},
@@ -97,7 +99,7 @@ func TestLoadDayPlays(t *testing.T) {
 			fastest.Fail,
 		},
 		{
-			"ASDF", 86400,
+			"ASDF", rsrc.ToDay(86400),
 			[]string{
 				`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`,
 			},
@@ -105,7 +107,7 @@ func TestLoadDayPlays(t *testing.T) {
 			fastest.OK,
 		},
 		{
-			"XX", 86400,
+			"XX", rsrc.ToDay(86400),
 			[]string{
 				`{"recenttracks":{"track":[{"artist":{"#text":"X"}}], "@attr":{"page":"1","totalPages":"3"}}}`,
 				`{"recenttracks":{"track":[{"artist":{"#text":"Y"}}], "@attr":{"page":"2","totalPages":"3"}}}`,
@@ -115,7 +117,7 @@ func TestLoadDayPlays(t *testing.T) {
 			fastest.OK,
 		},
 		{
-			"XX", 86400,
+			"XX", rsrc.ToDay(86400),
 			[]string{
 				`{"recenttracks":{"track":[{"artist":{"#text":"X"}}], "@attr":{"page":"1","totalPages":"2"}}}`,
 				`{"recenttracks":{"track":[], "@attr":{"page":"2","totalPages":"2"}}}`,
@@ -124,7 +126,7 @@ func TestLoadDayPlays(t *testing.T) {
 			fastest.OK,
 		},
 		{
-			"XX", 86400,
+			"XX", rsrc.ToDay(86400),
 			[]string{
 				`{"recenttracks":{"track":[{"artist":{"#text":"X"}}], "@attr":{"page":"1","totalPages":"3"}}}`,
 				`FAIL`,
@@ -136,12 +138,14 @@ func TestLoadDayPlays(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			files := make(map[io.Resource][]byte)
+			files := make(map[string][]byte)
 			for j, d := range tc.data {
-				urt := io.NewUserRecentTracks(tc.user, io.Page(j+1), tc.time)
-				files[*urt] = []byte(d)
+				time, _ := tc.time.Midnight()
+				rs, _ := rsrc.History(tc.user, rsrc.Page(j+1), rsrc.ToDay(time))
+				path, _ := rs.Path()
+				files[path] = []byte(d)
 			}
-			r := testutils.AsyncReader(files)
+			r, _ := mock.AsyncFileIO(files)
 
 			dp, err := loadDayPlays(tc.user, tc.time, r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)

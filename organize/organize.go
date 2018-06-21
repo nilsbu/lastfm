@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/nilsbu/lastfm/io"
+	"github.com/nilsbu/lastfm/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 
 // TODO name / what is this file
 
 // LoadAPIKey loads an the API key.
-func LoadAPIKey(r io.Reader) (key io.APIKey, err error) {
-	rsrc := io.NewAPIKey()
-	data, err := r.Read(rsrc)
+func LoadAPIKey(r io.Reader) (apiKey rsrc.Key, err error) {
+	data, err := r.Read(rsrc.APIKey())
 	if err != nil {
 		return
 	}
@@ -28,24 +28,32 @@ func LoadAPIKey(r io.Reader) (key io.APIKey, err error) {
 		return "", errors.New("No valid API key was read")
 	}
 
-	return io.APIKey(unm.Key), nil
+	return rsrc.Key(unm.Key), nil
 }
 
 // WriteAllDayPlays writes a list of day plays.
 func WriteAllDayPlays(
 	plays []unpack.DayPlays,
-	name io.Name,
+	name rsrc.Name,
 	w io.Writer) (err error) {
 	jsonData, _ := json.Marshal(plays)
-	err = w.Write(jsonData, io.NewAllDayPlays(name))
-	return
+
+	rs, err := rsrc.AllDayPlays(name)
+	if err != nil {
+		return err
+	}
+	return w.Write(jsonData, rs)
 }
 
 // ReadAllDayPlays reads a list of day plays.
 func ReadAllDayPlays(
-	name io.Name,
+	name rsrc.Name,
 	r io.Reader) (plays []unpack.DayPlays, err error) {
-	jsonData, err := r.Read(io.NewAllDayPlays(name))
+	rs, err := rsrc.AllDayPlays(name)
+	if err != nil {
+		return nil, err
+	}
+	jsonData, err := r.Read(rs)
 	if err != nil {
 		return
 	}
@@ -56,8 +64,12 @@ func ReadAllDayPlays(
 
 // ReadBookmark read a bookmark for a user's saved daily plays.
 // TODO Bookmarks should use time.Time
-func ReadBookmark(user io.Name, r io.Reader) (utc int64, err error) {
-	data, err := r.Read(io.NewBookmark(user))
+func ReadBookmark(user rsrc.Name, r io.Reader) (utc int64, err error) {
+	rs, err := rsrc.Bookmark(user)
+	if err != nil {
+		return 0, err
+	}
+	data, err := r.Read(rs)
 	if err != nil {
 		return 0, err
 	}
@@ -72,13 +84,17 @@ func ReadBookmark(user io.Name, r io.Reader) (utc int64, err error) {
 }
 
 // WriteBookmark writes a bookmark for a user's saved daily plays.
-func WriteBookmark(utc int64, user io.Name, w io.Writer) error {
+func WriteBookmark(utc int64, user rsrc.Name, w io.Writer) error {
 	bookmark := unpack.Bookmark{
 		UTC:        utc,
 		TimeString: time.Unix(utc, 0).UTC().Format("2006-01-02 15:04:05 +0000 UTC"),
 	}
 
 	data, _ := json.Marshal(bookmark)
-	err := w.Write(data, io.NewBookmark(user))
+	rs, err := rsrc.Bookmark(user)
+	if err != nil {
+		return err
+	}
+	err = w.Write(data, rs)
 	return err
 }

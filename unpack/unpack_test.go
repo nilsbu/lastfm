@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
+	"github.com/nilsbu/lastfm/rsrc"
 )
 
 func TestGetUser(t *testing.T) {
@@ -17,7 +18,7 @@ func TestGetUser(t *testing.T) {
 		{&UserInfo{
 			User: userUser{Name: "X", PlayCount: 2, Registered: time{114004225884}},
 		},
-			&User{"X", 114004195200}},
+			&User{"X", rsrc.ToDay(114004195200)}},
 	}
 
 	for i, tc := range testCases {
@@ -25,7 +26,9 @@ func TestGetUser(t *testing.T) {
 		ft.Seq(s, func(ft fastest.T) {
 			user := GetUser(tc.ui)
 			ft.Equals(user.Name, tc.user.Name)
-			ft.Equals(user.Registered, tc.user.Registered)
+			midn1, _ := user.Registered.Midnight()
+			midn2, _ := user.Registered.Midnight()
+			ft.Equals(midn1, midn2)
 		})
 	}
 }

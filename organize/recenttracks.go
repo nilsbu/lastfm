@@ -2,8 +2,10 @@ package organize
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/nilsbu/lastfm/io"
+	"github.com/nilsbu/lastfm/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 
@@ -11,15 +13,22 @@ import (
 // TODO consistant naming scheme between read, write, download, load, get etc.
 func LoadAllDayPlays(
 	user unpack.User,
-	until io.Midnight,
+	until rsrc.Day,
 	r io.AsyncReader) ([]unpack.DayPlays, error) {
 
-	days := int((until - user.Registered) / 86400)
+	untilMdn, uOK := until.Midnight()
+	registered, rOK := user.Registered.Midnight()
+	if !uOK {
+		return nil, errors.New("parameter 'until' is no valid Day")
+	} else if !rOK {
+		return nil, errors.New("user has no valid registration date")
+	}
+	days := int((untilMdn - registered) / 86400)
 	result := make([]unpack.DayPlays, days+1)
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
-			date := io.Midnight(i)*86400 + user.Registered
+			date := rsrc.ToDay(int64(i*86400) + registered)
 			dp, err := loadDayPlays(user.Name, date, r)
 			if err == nil {
 				result[i] = dp
@@ -47,23 +56,30 @@ type LoadDayPlaysResult struct {
 }
 
 func loadDayPlays(
-	user io.Name,
-	time io.Midnight,
-	r io.AsyncReader) (unpack.DayPlays, error) {
-	dp, pages, err := loadDayPlaysPage(io.NewUserRecentTracks(user, 1, time), r)
+	user rsrc.Name,
+	time rsrc.Day,
+	r io.AsyncReader,
+) (unpack.DayPlays, error) {
+	rs, err := rsrc.History(user, 1, time)
+	if err != nil {
+		return nil, err
+	}
+	dp, pages, err := loadDayPlaysPage(rs, r)
 	if err != nil || pages == 1 {
 		return dp, err
 	}
 
 	back := make(chan LoadDayPlaysResult)
 	for p := 1; p < pages; p++ {
-		go func(p io.Page) {
-
-			tmpDP, _, tmpErr := loadDayPlaysPage(
-				io.NewUserRecentTracks(user, p+1, time), r)
+		go func(p rsrc.Page) {
+			rs, tmpErr := rsrc.History(user, p+1, time)
+			var tmpDP unpack.DayPlays
+			if tmpErr == nil {
+				tmpDP, _, tmpErr = loadDayPlaysPage(rs, r)
+			}
 
 			back <- LoadDayPlaysResult{tmpDP, tmpErr}
-		}(io.Page(p))
+		}(rsrc.Page(p))
 	}
 
 	for p := 1; p < pages; p++ {
@@ -81,9 +97,9 @@ func loadDayPlays(
 	return dp, err
 }
 
-func loadDayPlaysPage(rsrc *io.Resource,
+func loadDayPlaysPage(rs rsrc.Resource,
 	r io.AsyncReader) (dp unpack.DayPlays, pages int, err error) {
-	result := <-r.Read(rsrc)
+	result := <-r.Read(rs)
 	if result.Err != nil {
 		return nil, 0, result.Err
 	}
