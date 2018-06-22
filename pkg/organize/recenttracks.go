@@ -14,7 +14,7 @@ import (
 func LoadAllDayPlays(
 	user unpack.User,
 	until rsrc.Day,
-	r io.AsyncReader) ([]unpack.DayPlays, error) {
+	r io.Reader) ([]unpack.DayPlays, error) {
 
 	untilMdn, uOK := until.Midnight()
 	registered, rOK := user.Registered.Midnight()
@@ -58,7 +58,7 @@ type LoadDayPlaysResult struct {
 func loadDayPlays(
 	user rsrc.Name,
 	time rsrc.Day,
-	r io.AsyncReader,
+	r io.Reader,
 ) (unpack.DayPlays, error) {
 	rs, err := rsrc.History(user, 1, time)
 	if err != nil {
@@ -98,14 +98,14 @@ func loadDayPlays(
 }
 
 func loadDayPlaysPage(rs rsrc.Resource,
-	r io.AsyncReader) (dp unpack.DayPlays, pages int, err error) {
-	result := <-r.Read(rs)
-	if result.Err != nil {
-		return nil, 0, result.Err
+	r io.Reader) (dp unpack.DayPlays, pages int, err error) {
+	data, err := r.Read(rs)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	urt := &unpack.UserRecentTracks{}
-	err = json.Unmarshal(result.Data, urt)
+	err = json.Unmarshal(data, urt)
 	if err != nil {
 		return
 	}

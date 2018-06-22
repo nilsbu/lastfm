@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/test/mock"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
+	"github.com/nilsbu/lastfm/test/mock"
 )
 
 func TestLoadAllDayPlays(t *testing.T) {
@@ -64,7 +64,7 @@ func TestLoadAllDayPlays(t *testing.T) {
 					files[path] = []byte(d)
 				}
 			}
-			r, _ := mock.AsyncFileIO(files)
+			r, _ := mock.FileIO(files)
 
 			dps, err := LoadAllDayPlays(tc.user, tc.until, r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
@@ -145,7 +145,7 @@ func TestLoadDayPlays(t *testing.T) {
 				path, _ := rs.Path()
 				files[path] = []byte(d)
 			}
-			r, _ := mock.AsyncFileIO(files)
+			r, _ := mock.FileIO(files)
 
 			dp, err := loadDayPlays(tc.user, tc.time, r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
