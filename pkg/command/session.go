@@ -42,5 +42,5 @@ func (c sessionStart) Execute(ioPool io.Pool) error {
 type sessionStop struct{}
 
 func (sessionStop) Execute(ioPool io.Pool) error {
-	return io.FileRemover{}.Remove(rsrc.SessionID())
+	return io.FileIO{}.Remove(rsrc.SessionID())
 }

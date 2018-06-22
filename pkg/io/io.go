@@ -24,10 +24,11 @@ type Remover interface {
 	Remove(rs rsrc.Resource) error
 }
 
-// FileReader is a reader for local files. It implements io.Reader.
-type FileReader struct{}
+// FileIO privides access to the local file system. It implements Reader,
+// Writer and Remover.
+type FileIO struct{}
 
-func (FileReader) Read(rs rsrc.Resource) (data []byte, err error) {
+func (FileIO) Read(rs rsrc.Resource) (data []byte, err error) {
 	path, err := rs.Path()
 	if err != nil {
 		return nil, err
@@ -35,10 +36,7 @@ func (FileReader) Read(rs rsrc.Resource) (data []byte, err error) {
 	return ioutil.ReadFile(path)
 }
 
-// FileWriter is a writer for files. It implements io.Writer.
-type FileWriter struct{}
-
-func (FileWriter) Write(data []byte, rs rsrc.Resource) error {
+func (FileIO) Write(data []byte, rs rsrc.Resource) error {
 	path, err := rs.Path()
 	if err != nil {
 		return err
@@ -60,9 +58,7 @@ func (FileWriter) Write(data []byte, rs rsrc.Resource) error {
 	return err
 }
 
-type FileRemover struct{}
-
-func (FileRemover) Remove(rs rsrc.Resource) error {
+func (FileIO) Remove(rs rsrc.Resource) error {
 	path, err := rs.Path()
 	if err != nil {
 		return nil
