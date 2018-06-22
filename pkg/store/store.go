@@ -52,36 +52,36 @@ func startWorkers(
 
 func readWorker(jobs <-chan io.ReadJob, r io.Reader) {
 	for j := range jobs {
-		data, err := r.Read(j.Resource)
+		data, err := r.Read(j.Locator)
 		j.Back <- io.ReadResult{Data: data, Err: err}
 	}
 }
 
 func writeWorker(jobs <-chan io.WriteJob, r io.Writer) {
 	for j := range jobs {
-		err := r.Write(j.Data, j.Resource)
+		err := r.Write(j.Data, j.Locator)
 		j.Back <- err
 	}
 }
 
-func (p pool) Read(rs rsrc.Resource) (data []byte, err error) {
-	data, err = io.SeqReader(p.ReadFile).Read(rs)
+func (p pool) Read(loc rsrc.Locator) (data []byte, err error) {
+	data, err = io.SeqReader(p.ReadFile).Read(loc)
 	if err == nil {
 		return data, nil
 	}
 
-	return p.Update(rs)
+	return p.Update(loc)
 }
 
-func (p pool) Update(rs rsrc.Resource) (data []byte, err error) {
-	data, err = io.SeqReader(p.Download).Read(rs)
+func (p pool) Update(loc rsrc.Locator) (data []byte, err error) {
+	data, err = io.SeqReader(p.Download).Read(loc)
 	if err == nil {
 		// TODO what happens to the result
-		p.Write(data, rs)
+		p.Write(data, loc)
 	}
 	return data, err
 }
 
-func (p pool) Write(data []byte, rs rsrc.Resource) error {
-	return io.SeqWriter(p.WriteFile).Write(data, rs)
+func (p pool) Write(data []byte, loc rsrc.Locator) error {
+	return io.SeqWriter(p.WriteFile).Write(data, loc)
 }

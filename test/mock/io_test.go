@@ -7,7 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-// Resource that has no path.
+// Locator that has no path.
 type noPath string
 
 func (n noPath) URL(apiKey rsrc.Key) (string, error) {
@@ -23,7 +23,7 @@ func TestFileIO(t *testing.T) {
 
 	cases := []struct {
 		files     map[string][]byte
-		rs        rsrc.Resource
+		loc       rsrc.Locator
 		writeData []byte
 		result    []byte
 		writeOK   bool
@@ -77,7 +77,7 @@ func TestFileIO(t *testing.T) {
 			r, w := FileIO(c.files)
 
 			if c.writeData != nil {
-				err := w.Write(c.writeData, c.rs)
+				err := w.Write(c.writeData, c.loc)
 				if err != nil && c.writeOK {
 					t.Error("unexpected error during write:", err)
 				} else if err == nil && !c.writeOK {
@@ -85,7 +85,7 @@ func TestFileIO(t *testing.T) {
 				}
 			}
 
-			data, err := r.Read(c.rs)
+			data, err := r.Read(c.loc)
 			close(r)
 			close(w)
 
@@ -110,7 +110,7 @@ func TestDownloader(t *testing.T) {
 
 	cases := []struct {
 		files  map[string][]byte
-		rs     rsrc.Resource
+		loc    rsrc.Locator
 		result []byte
 		readOK bool
 	}{
@@ -132,7 +132,7 @@ func TestDownloader(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			r := Downloader(c.files)
 
-			data, err := r.Read(c.rs)
+			data, err := r.Read(c.loc)
 			close(r)
 
 			if err != nil && c.readOK {

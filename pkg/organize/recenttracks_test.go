@@ -59,8 +59,8 @@ func TestLoadAllDayPlays(t *testing.T) {
 				for k, d := range day {
 					reg, _ := tc.user.Registered.Midnight()
 					time := reg + int64(j*86400)
-					rs, _ := rsrc.History(tc.user.Name, rsrc.Page(k+1), rsrc.ToDay(time))
-					path, _ := rs.Path()
+					loc, _ := rsrc.History(tc.user.Name, rsrc.Page(k+1), rsrc.ToDay(time))
+					path, _ := loc.Path()
 					files[path] = []byte(d)
 				}
 			}
@@ -141,8 +141,8 @@ func TestLoadDayPlays(t *testing.T) {
 			files := make(map[string][]byte)
 			for j, d := range tc.data {
 				time, _ := tc.time.Midnight()
-				rs, _ := rsrc.History(tc.user, rsrc.Page(j+1), rsrc.ToDay(time))
-				path, _ := rs.Path()
+				loc, _ := rsrc.History(tc.user, rsrc.Page(j+1), rsrc.ToDay(time))
+				path, _ := loc.Path()
 				files[path] = []byte(d)
 			}
 			r, _ := mock.FileIO(files)

@@ -16,7 +16,7 @@ type Name string
 // Key represents a API key.
 type Key string
 
-type Resource interface {
+type Locator interface {
 	URL(apiKey Key) (string, error)
 	Path() (string, error)
 }
@@ -95,7 +95,7 @@ func History(user Name, page Page, day Day) (*lastFM, error) {
 	}, nil
 }
 
-func (rs *lastFM) URL(apiKey Key) (string, error) {
+func (loc *lastFM) URL(apiKey Key) (string, error) {
 	if err := checkAPIKey(apiKey); err != nil {
 		return "", err
 	}
@@ -103,19 +103,19 @@ func (rs *lastFM) URL(apiKey Key) (string, error) {
 	params := "?format=json&api_key=%v&method=%v&%v=%v"
 
 	url := base + fmt.Sprintf(params, apiKey,
-		rs.method, rs.nameType, url.PathEscape(string(rs.name)))
+		loc.method, loc.nameType, url.PathEscape(string(loc.name)))
 
-	if rs.page > 0 {
-		url += fmt.Sprintf("&page=%d", int(rs.page))
+	if loc.page > 0 {
+		url += fmt.Sprintf("&page=%d", int(loc.page))
 	}
 
-	if timestamp, ok := rs.day.Midnight(); ok {
+	if timestamp, ok := loc.day.Midnight(); ok {
 		url += fmt.Sprintf("&from=%d&to=%d",
 			timestamp-1, timestamp+86400)
 	}
 
-	if rs.limit > -1 {
-		url += fmt.Sprintf("&limit=%d", rs.limit)
+	if loc.limit > -1 {
+		url += fmt.Sprintf("&limit=%d", loc.limit)
 	}
 
 	return url, nil
@@ -139,15 +139,15 @@ func checkAPIKey(apiKey Key) error {
 	return nil
 }
 
-func (rs *lastFM) Path() (string, error) {
+func (loc *lastFM) Path() (string, error) {
 	path := fmt.Sprintf(".lastfm/data/%v/%v",
-		rs.method, parseForPath(rs.name))
+		loc.method, parseForPath(loc.name))
 
-	if timestamp, ok := rs.day.Midnight(); ok {
+	if timestamp, ok := loc.day.Midnight(); ok {
 		path += fmt.Sprintf(".%d", timestamp)
 	}
-	if rs.page > 0 {
-		path += fmt.Sprintf("(%v)", rs.page)
+	if loc.page > 0 {
+		path += fmt.Sprintf("(%v)", loc.page)
 	}
 
 	return path + ".json", nil

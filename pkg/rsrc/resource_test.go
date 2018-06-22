@@ -18,7 +18,7 @@ func TestUserInfo(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			rs, err := UserInfo(c.name)
+			loc, err := UserInfo(c.name)
 
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
@@ -26,13 +26,13 @@ func TestUserInfo(t *testing.T) {
 				t.Errorf("name '%v' should not have been accepted", c.name)
 			}
 			if err == nil {
-				if rs.name != c.name {
-					t.Errorf("got name '%v', expected '%v'", rs.name, c.name)
+				if loc.name != c.name {
+					t.Errorf("got name '%v', expected '%v'", loc.name, c.name)
 				}
-				if _, ok := rs.day.Midnight(); ok {
+				if _, ok := loc.day.Midnight(); ok {
 					t.Error("must not have a valid midnight")
 				}
-				if rs.page > 0 {
+				if loc.page > 0 {
 					t.Error("must not have a valid page")
 				}
 				// assume other fields without check
@@ -56,7 +56,7 @@ func TestHistory(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			rs, err := History(c.name, c.page, c.day)
+			loc, err := History(c.name, c.page, c.day)
 
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
@@ -64,17 +64,17 @@ func TestHistory(t *testing.T) {
 				t.Errorf("name '%v' should not have been accepted", c.name)
 			}
 			if err == nil {
-				if rs.name != c.name {
-					t.Errorf("got name '%v', expected '%v'", rs.name, c.name)
+				if loc.name != c.name {
+					t.Errorf("got name '%v', expected '%v'", loc.name, c.name)
 				}
-				if rs.page <= 0 {
+				if loc.page <= 0 {
 					t.Error("page must be positive")
 				}
-				if rs.page != c.page {
-					t.Errorf("got page '%d', expected '%d'", rs.page, c.page)
+				if loc.page != c.page {
+					t.Errorf("got page '%d', expected '%d'", loc.page, c.page)
 				}
-				if rs.day != c.day {
-					rsMid, _ := rs.day.Midnight()
+				if loc.day != c.day {
+					rsMid, _ := loc.day.Midnight()
 					cMid, _ := c.day.Midnight()
 					t.Errorf("got midnight '%d', expected '%d'", rsMid, cMid)
 				}
@@ -89,7 +89,7 @@ func TestLastFMURL(t *testing.T) {
 	history, _ := History("abc", 1, ToDay(86400))
 
 	cases := []struct {
-		rs     *lastFM
+		loc    *lastFM
 		apiKey Key
 		url    string
 		ok     bool
@@ -118,7 +118,7 @@ func TestLastFMURL(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			url, err := c.rs.URL(c.apiKey)
+			url, err := c.loc.URL(c.apiKey)
 
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
@@ -142,7 +142,7 @@ func TestLastFMPath(t *testing.T) {
 	history, _ := History("abc", 1, ToDay(86400))
 
 	cases := []struct {
-		rs   *lastFM
+		loc  *lastFM
 		path string
 		// path is always ok, since input is considered valid
 	}{
@@ -162,7 +162,7 @@ func TestLastFMPath(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			path, err := c.rs.Path()
+			path, err := c.loc.Path()
 
 			if err != nil {
 				t.Error("unexpected error:", err)
@@ -184,7 +184,7 @@ func TestUtilURL(t *testing.T) {
 
 func TestUtilPath(t *testing.T) {
 	cases := []struct {
-		rs   *util
+		loc  *util
 		path string
 		// path is always ok, since input is considered valid
 	}{
@@ -195,7 +195,7 @@ func TestUtilPath(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			path, err := c.rs.Path()
+			path, err := c.loc.Path()
 
 			if err != nil {
 				t.Error("unexpected error:", err)
@@ -223,7 +223,7 @@ func TestUserDataConstructors(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			rs, err := c.function(c.name)
+			loc, err := c.function(c.name)
 
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
@@ -231,8 +231,8 @@ func TestUserDataConstructors(t *testing.T) {
 				t.Errorf("name '%v' should not have been accepted", c.name)
 			}
 			if err == nil {
-				if rs.name != c.name {
-					t.Errorf("got name '%v', expected '%v'", rs.name, c.name)
+				if loc.name != c.name {
+					t.Errorf("got name '%v', expected '%v'", loc.name, c.name)
 				}
 				// assume method without check
 			}
@@ -250,7 +250,7 @@ func TestUserDataURL(t *testing.T) {
 func TestUserDataPath(t *testing.T) {
 	allDayPlays, _ := AllDayPlays("user1")
 	cases := []struct {
-		rs   *userData
+		loc  *userData
 		path string
 		// path is always ok, since input is considered valid
 	}{
@@ -259,7 +259,7 @@ func TestUserDataPath(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			path, err := c.rs.Path()
+			path, err := c.loc.Path()
 
 			if err != nil {
 				t.Error("unexpected error:", err)

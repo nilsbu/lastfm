@@ -26,9 +26,9 @@ func TestPoolRead(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("#%v", i), func(t *testing.T) {
-			rs, _ := rsrc.UserInfo("sss")
-			path, _ := rs.Path()
-			url, _ := rs.URL(mock.APIKey)
+			loc, _ := rsrc.UserInfo("sss")
+			path, _ := loc.Path()
+			url, _ := loc.URL(mock.APIKey)
 
 			var files, web map[string][]byte
 			if c.r {
@@ -50,7 +50,7 @@ func TestPoolRead(t *testing.T) {
 				[]io.Reader{r},
 				[]io.Writer{w})
 
-			data, err := p.Read(rs)
+			data, err := p.Read(loc)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {

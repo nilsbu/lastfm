@@ -11,7 +11,7 @@ func TestSeqReaderRead(t *testing.T) {
 	userInfo, _ := rsrc.UserInfo("SOX")
 
 	cases := []struct {
-		rs   rsrc.Resource
+		loc  rsrc.Locator
 		data string
 		ok   bool
 	}{
@@ -26,8 +26,8 @@ func TestSeqReaderRead(t *testing.T) {
 
 			go func() {
 				for job := range r {
-					path1, _ := job.Resource.Path()
-					path2, _ := c.rs.Path()
+					path1, _ := job.Locator.Path()
+					path2, _ := c.loc.Path()
 
 					if path1 == path2 && c.ok == true {
 						job.Back <- ReadResult{[]byte(c.data), nil}
@@ -37,7 +37,7 @@ func TestSeqReaderRead(t *testing.T) {
 				}
 			}()
 
-			data, err := r.Read(c.rs)
+			data, err := r.Read(c.loc)
 
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
@@ -58,7 +58,7 @@ func TestSeqWriterWrite(t *testing.T) {
 	userInfo, _ := rsrc.UserInfo("SOX")
 
 	cases := []struct {
-		rs   rsrc.Resource
+		loc  rsrc.Locator
 		data string
 		ok   bool
 	}{
@@ -72,11 +72,11 @@ func TestSeqWriterWrite(t *testing.T) {
 			w := make(SeqWriter)
 
 			var data []byte
-			var rs rsrc.Resource
+			var loc rsrc.Locator
 			go func() {
 				for job := range w {
 					data = job.Data
-					rs = job.Resource
+					loc = job.Locator
 					if c.ok {
 						job.Back <- nil
 					} else {
@@ -85,15 +85,15 @@ func TestSeqWriterWrite(t *testing.T) {
 				}
 			}()
 
-			err := w.Write([]byte(c.data), c.rs)
+			err := w.Write([]byte(c.data), c.loc)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
 				t.Error("expected error but non occurred")
 			}
 			if err == nil {
-				path1, _ := rs.Path()
-				path2, _ := c.rs.Path()
+				path1, _ := loc.Path()
+				path2, _ := c.loc.Path()
 
 				if path1 != path2 {
 					t.Errorf("written to wrong path:\nwritten:  '%v'\nexpected: '%v'",

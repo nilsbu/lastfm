@@ -60,11 +60,11 @@ func loadDayPlays(
 	time rsrc.Day,
 	r io.Reader,
 ) (unpack.DayPlays, error) {
-	rs, err := rsrc.History(user, 1, time)
+	loc, err := rsrc.History(user, 1, time)
 	if err != nil {
 		return nil, err
 	}
-	dp, pages, err := loadDayPlaysPage(rs, r)
+	dp, pages, err := loadDayPlaysPage(loc, r)
 	if err != nil || pages == 1 {
 		return dp, err
 	}
@@ -72,10 +72,10 @@ func loadDayPlays(
 	back := make(chan LoadDayPlaysResult)
 	for p := 1; p < pages; p++ {
 		go func(p rsrc.Page) {
-			rs, tmpErr := rsrc.History(user, p+1, time)
+			loc, tmpErr := rsrc.History(user, p+1, time)
 			var tmpDP unpack.DayPlays
 			if tmpErr == nil {
-				tmpDP, _, tmpErr = loadDayPlaysPage(rs, r)
+				tmpDP, _, tmpErr = loadDayPlaysPage(loc, r)
 			}
 
 			back <- LoadDayPlaysResult{tmpDP, tmpErr}
@@ -97,9 +97,9 @@ func loadDayPlays(
 	return dp, err
 }
 
-func loadDayPlaysPage(rs rsrc.Resource,
+func loadDayPlaysPage(loc rsrc.Locator,
 	r io.Reader) (dp unpack.DayPlays, pages int, err error) {
-	data, err := r.Read(rs)
+	data, err := r.Read(loc)
 	if err != nil {
 		return nil, 0, err
 	}

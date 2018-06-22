@@ -11,37 +11,37 @@ import (
 
 // Reader is an interface for reading resources.
 type Reader interface {
-	Read(rs rsrc.Resource) (data []byte, err error)
+	Read(loc rsrc.Locator) (data []byte, err error)
 }
 
 // Writer is an interface for writing resources.
 type Writer interface {
-	Write(data []byte, rs rsrc.Resource) error
+	Write(data []byte, loc rsrc.Locator) error
 }
 
 // Remover is an interface for removing a resources.
 type Remover interface {
-	Remove(rs rsrc.Resource) error
+	Remove(loc rsrc.Locator) error
 }
 
 type Updater interface {
-	Update(rs rsrc.Resource) (data []byte, err error)
+	Update(loc rsrc.Locator) (data []byte, err error)
 }
 
 // FileIO privides access to the local file system. It implements Reader,
 // Writer and Remover.
 type FileIO struct{}
 
-func (FileIO) Read(rs rsrc.Resource) (data []byte, err error) {
-	path, err := rs.Path()
+func (FileIO) Read(loc rsrc.Locator) (data []byte, err error) {
+	path, err := loc.Path()
 	if err != nil {
 		return nil, err
 	}
 	return ioutil.ReadFile(path)
 }
 
-func (FileIO) Write(data []byte, rs rsrc.Resource) error {
-	path, err := rs.Path()
+func (FileIO) Write(data []byte, loc rsrc.Locator) error {
+	path, err := loc.Path()
 	if err != nil {
 		return err
 	}
@@ -62,8 +62,8 @@ func (FileIO) Write(data []byte, rs rsrc.Resource) error {
 	return err
 }
 
-func (FileIO) Remove(rs rsrc.Resource) error {
-	path, err := rs.Path()
+func (FileIO) Remove(loc rsrc.Locator) error {
+	path, err := loc.Path()
 	if err != nil {
 		return nil
 	}
@@ -73,8 +73,8 @@ func (FileIO) Remove(rs rsrc.Resource) error {
 // Downloader is a reader for Last.fm. It implements io.Reader.
 type Downloader rsrc.Key
 
-func (d Downloader) Read(rs rsrc.Resource) (data []byte, err error) {
-	url, err := rs.URL(rsrc.Key(d))
+func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
+	url, err := loc.URL(rsrc.Key(d))
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +97,6 @@ func RedirectUpdate(updater Updater) *updateRedirect {
 	return &updateRedirect{updater: updater}
 }
 
-func (ur updateRedirect) Read(rs rsrc.Resource) (data []byte, err error) {
-	return ur.updater.Update(rs)
+func (ur updateRedirect) Read(loc rsrc.Locator) (data []byte, err error) {
+	return ur.updater.Update(loc)
 }

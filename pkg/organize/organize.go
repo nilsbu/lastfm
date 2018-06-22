@@ -62,22 +62,22 @@ func WriteAllDayPlays(
 	w io.Writer) (err error) {
 	jsonData, _ := json.Marshal(plays)
 
-	rs, err := rsrc.AllDayPlays(name)
+	loc, err := rsrc.AllDayPlays(name)
 	if err != nil {
 		return err
 	}
-	return w.Write(jsonData, rs)
+	return w.Write(jsonData, loc)
 }
 
 // ReadAllDayPlays reads a list of day plays.
 func ReadAllDayPlays(
 	name rsrc.Name,
 	r io.Reader) (plays []unpack.DayPlays, err error) {
-	rs, err := rsrc.AllDayPlays(name)
+	loc, err := rsrc.AllDayPlays(name)
 	if err != nil {
 		return nil, err
 	}
-	jsonData, err := r.Read(rs)
+	jsonData, err := r.Read(loc)
 	if err != nil {
 		return
 	}
@@ -89,11 +89,11 @@ func ReadAllDayPlays(
 // ReadBookmark read a bookmark for a user's saved daily plays.
 // TODO Bookmarks should use time.Time
 func ReadBookmark(user rsrc.Name, r io.Reader) (utc int64, err error) {
-	rs, err := rsrc.Bookmark(user)
+	loc, err := rsrc.Bookmark(user)
 	if err != nil {
 		return 0, err
 	}
-	data, err := r.Read(rs)
+	data, err := r.Read(loc)
 	if err != nil {
 		return 0, err
 	}
@@ -115,11 +115,11 @@ func WriteBookmark(utc int64, user rsrc.Name, w io.Writer) error {
 	}
 
 	data, _ := json.Marshal(bookmark)
-	rs, err := rsrc.Bookmark(user)
+	loc, err := rsrc.Bookmark(user)
 	if err != nil {
 		return err
 	}
-	err = w.Write(data, rs)
+	err = w.Write(data, loc)
 	return err
 }
 

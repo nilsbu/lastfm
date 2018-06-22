@@ -108,8 +108,8 @@ func TestAllDayPlays(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("", func(t *testing.T) {
-			rs, _ := rsrc.AllDayPlays(tc.name)
-			path, _ := rs.Path()
+			loc, _ := rsrc.AllDayPlays(tc.name)
+			path, _ := loc.Path()
 			var files map[string][]byte
 
 			if tc.writeOK {
@@ -189,10 +189,10 @@ func TestReadBookmark(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			rs, _ := rsrc.Bookmark("Xx")
+			loc, _ := rsrc.Bookmark("Xx")
 			var r io.Reader
 			if tc.readOK {
-				path, _ := rs.Path()
+				path, _ := loc.Path()
 				r, _ = mock.FileIO(map[string][]byte{path: []byte(tc.data)})
 			} else {
 				r, _ = mock.FileIO(map[string][]byte{})
@@ -221,8 +221,8 @@ func TestWriteBookmark(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			rs, _ := rsrc.Bookmark("XX")
-			path, _ := rs.Path()
+			loc, _ := rsrc.Bookmark("XX")
+			path, _ := loc.Path()
 			var files map[string][]byte
 			if tc.err == fastest.OK {
 				files = map[string][]byte{path: nil}
@@ -358,8 +358,8 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("", func(t *testing.T) {
-			rs, _ := rsrc.AllDayPlays(tc.user.Name)
-			path, _ := rs.Path()
+			loc, _ := rsrc.AllDayPlays(tc.user.Name)
+			path, _ := loc.Path()
 			tc.tracksFile[path] = nil
 			r, w := mock.FileIO(tc.tracksFile)
 			if tc.saved != nil {

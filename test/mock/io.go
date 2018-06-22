@@ -7,7 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-type resolver func(rsrc.Resource) (string, error)
+type resolver func(rsrc.Locator) (string, error)
 
 // APIKey is the API key that is used in mocked URLs.
 const APIKey = "00000000000000000000000000000000"
@@ -21,8 +21,8 @@ const APIKey = "00000000000000000000000000000000"
 func FileIO(content map[string][]byte) (io.SeqReader, io.SeqWriter) {
 	r := make(io.SeqReader)
 	w := make(io.SeqWriter)
-	go worker(content, r, w, func(rs rsrc.Resource) (string, error) {
-		return rs.Path()
+	go worker(content, r, w, func(loc rsrc.Locator) (string, error) {
+		return loc.Path()
 	})
 	return r, w
 }
@@ -33,8 +33,8 @@ func Downloader(content map[string][]byte) io.SeqReader {
 	r := make(io.SeqReader)
 	go worker(
 		content, r, make(chan io.WriteJob),
-		func(rs rsrc.Resource) (string, error) {
-			return rs.URL(APIKey)
+		func(loc rsrc.Locator) (string, error) {
+			return loc.URL(APIKey)
 		})
 	return r
 }
@@ -52,7 +52,7 @@ func worker(
 				break
 			}
 
-			path, err := resolve(job.Resource)
+			path, err := resolve(job.Locator)
 			if err != nil {
 				job.Back <- io.ReadResult{Data: nil, Err: err}
 				continue
@@ -72,7 +72,7 @@ func worker(
 				break
 			}
 
-			path, err := resolve(job.Resource)
+			path, err := resolve(job.Locator)
 			if err != nil {
 				// cannot happen, include for safety
 				job.Back <- err
