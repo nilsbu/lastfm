@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 
-	"github.com/nilsbu/lastfm/io"
+	"github.com/nilsbu/lastfm/pkg/io"
 )
 
 // Execute executes the command described in the arguments.

@@ -1,6 +1,6 @@
 package command
 
-import "github.com/nilsbu/lastfm/io"
+import "github.com/nilsbu/lastfm/pkg/io"
 
 type command interface {
 	Execute(ioPool io.Pool) error

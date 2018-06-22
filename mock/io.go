@@ -3,7 +3,7 @@ package mock
 import (
 	"fmt"
 
-	"github.com/nilsbu/lastfm/io"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
