@@ -14,39 +14,43 @@ type Store interface {
 // pool is a pool of IO workers. It contains workers for download, file reading
 // and writing.
 type pool struct {
-	Download  chan io.ReadJob
-	ReadFile  chan io.ReadJob
-	WriteFile chan io.WriteJob
+	Readers []chan io.ReadJob
+	Writers []chan io.WriteJob
 }
 
 // New creates an IO worker pool with the given readers and writers.
 func New(
 	downloaders, fileReaders []io.Reader,
-	fileWriters []io.Writer) pool {
-	p := pool{
-		make(chan io.ReadJob),
-		make(chan io.ReadJob),
-		make(chan io.WriteJob)}
+	fileWriters []io.Writer) Store {
+	readers := []chan io.ReadJob{make(chan io.ReadJob), make(chan io.ReadJob)}
+	writers := []chan io.WriteJob{make(chan io.WriteJob), make(chan io.WriteJob)}
 
-	startWorkers(downloaders, fileReaders, fileWriters, p)
+	p := pool{
+		readers,
+		writers,
+	}
+
+	p.startWorkers(
+		[][]io.Reader{downloaders, fileReaders},
+		[][]io.Writer{[]io.Writer{io.FailIO{}}, fileWriters})
 
 	return p
 }
 
-func startWorkers(
-	downloaders, fileReaders []io.Reader,
-	fileWriters []io.Writer,
-	p pool) {
-	for _, d := range downloaders {
-		go readWorker(p.Download, d)
+func (p pool) startWorkers(
+	readers [][]io.Reader,
+	writers [][]io.Writer) {
+
+	for i := range readers {
+		for _, d := range readers[i] {
+			go readWorker(p.Readers[i], d)
+		}
 	}
 
-	for _, r := range fileReaders {
-		go readWorker(p.ReadFile, r)
-	}
-
-	for _, w := range fileWriters {
-		go writeWorker(p.WriteFile, w)
+	for i := range writers {
+		for _, w := range writers[i] {
+			go writeWorker(p.Writers[i], w)
+		}
 	}
 }
 
@@ -65,7 +69,7 @@ func writeWorker(jobs <-chan io.WriteJob, r io.Writer) {
 }
 
 func (p pool) Read(loc rsrc.Locator) (data []byte, err error) {
-	data, err = io.SeqReader(p.ReadFile).Read(loc)
+	data, err = io.SeqReader(p.Readers[1]).Read(loc)
 	if err == nil {
 		return data, nil
 	}
@@ -74,7 +78,7 @@ func (p pool) Read(loc rsrc.Locator) (data []byte, err error) {
 }
 
 func (p pool) Update(loc rsrc.Locator) (data []byte, err error) {
-	data, err = io.SeqReader(p.Download).Read(loc)
+	data, err = io.SeqReader(p.Readers[0]).Read(loc)
 	if err == nil {
 		// TODO what happens to the result
 		p.Write(data, loc)
@@ -83,5 +87,5 @@ func (p pool) Update(loc rsrc.Locator) (data []byte, err error) {
 }
 
 func (p pool) Write(data []byte, loc rsrc.Locator) error {
-	return io.SeqWriter(p.WriteFile).Write(data, loc)
+	return io.SeqWriter(p.Writers[1]).Write(data, loc)
 }
