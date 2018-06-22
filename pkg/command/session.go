@@ -7,7 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/unpack"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 type sessionInfo struct{}

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/unpack"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 func TestCompile(t *testing.T) {

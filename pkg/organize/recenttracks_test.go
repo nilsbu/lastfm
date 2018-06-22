@@ -7,7 +7,7 @@ import (
 	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/mock"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/unpack"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 func TestLoadAllDayPlays(t *testing.T) {

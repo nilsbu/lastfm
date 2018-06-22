@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/unpack"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 // Charts is table of daily accumulation of plays.

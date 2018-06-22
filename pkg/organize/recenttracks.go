@@ -6,7 +6,7 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/unpack"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 // LoadAllDayPlays load plays from all days since the registration of the user.
