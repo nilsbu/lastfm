@@ -1,202 +1,72 @@
 package store
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/test/mock"
 )
 
-func TestSeqReaderRead(t *testing.T) {
-	ft := fastest.T{T: t}
-	userInfo, _ := rsrc.UserInfo("SOX")
-
-	testCases := []struct {
-		rs   rsrc.Resource
-		data string
-		err  fastest.Code
-	}{
-		{rsrc.APIKey(), "XX", fastest.OK},
-		{userInfo, "", fastest.OK},
-		{userInfo, "lol", fastest.Fail},
-	}
-
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			r := make(io.SeqReader)
-
-			go func() {
-				for job := range r {
-					path1, err1 := job.Resource.Path()
-					path2, err2 := tc.rs.Path()
-					ft.Nil(err1)
-					ft.Nil(err2)
-
-					if path1 == path2 && tc.err == fastest.OK {
-						job.Back <- io.ReadResult{[]byte(tc.data), nil}
-					} else {
-						job.Back <- io.ReadResult{nil, errors.New("read failed")}
-					}
-				}
-			}()
-
-			data, err := r.Read(tc.rs)
-
-			ft.Implies(err != nil, tc.err == fastest.Fail)
-			ft.Implies(err == nil, tc.err == fastest.OK, err)
-			ft.Only(err == nil)
-			ft.Equals(string(data), tc.data)
-		})
-	}
-}
-
-func TestSeqWriterWrite(t *testing.T) {
-	ft := fastest.T{T: t}
-	userInfo, _ := rsrc.UserInfo("SOX")
-
-	testCases := []struct {
-		rs   rsrc.Resource
-		data string
-		err  fastest.Code
-	}{
-		{rsrc.APIKey(), "XX", fastest.OK},
-		{userInfo, "", fastest.OK},
-		{userInfo, "lol", fastest.Fail},
-	}
-
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			w := make(io.SeqWriter)
-
-			var data []byte
-			var rs rsrc.Resource
-			go func() {
-				for job := range w {
-					data = job.Data
-					rs = job.Resource
-					if tc.err == fastest.OK {
-						job.Back <- nil
-					} else {
-						job.Back <- errors.New("read failed")
-					}
-				}
-			}()
-
-			err := w.Write([]byte(tc.data), tc.rs)
-			ft.Implies(err != nil, tc.err == fastest.Fail)
-			ft.Implies(err == nil, tc.err == fastest.OK, err)
-			ft.Only(err == nil)
-
-			path1, err1 := rs.Path()
-			path2, err2 := tc.rs.Path()
-			ft.Nil(err1)
-			ft.Nil(err2)
-			ft.Equals(path1, path2)
-			ft.Only(err == nil)
-			ft.Equals(string(data), tc.data)
-		})
-	}
-}
-
-type MockReader []byte
-
-func (r MockReader) Read(rs rsrc.Resource) ([]byte, error) {
-	if r != nil {
-		return []byte(r), nil
-	}
-	return nil, errors.New("read failed")
-}
-
-type MockWriter struct {
-	data []byte
-	ok   bool
-}
-
-func (w *MockWriter) Write(data []byte, rs rsrc.Resource) error {
-	if w.ok {
-		w.data = data
-		return nil
-	}
-	return errors.New("write failed")
-}
-
-func TestPool(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	d := MockReader("XYZ")
-	r := MockReader("089i")
-	w := &MockWriter{ok: true}
-
-	wStr := []byte("uiokl.")
-
-	p := New(
-		[]io.Reader{d},
-		[]io.Reader{r},
-		[]io.Writer{w})
-
-	data, err := io.SeqReader(p.Download).Read(rsrc.APIKey())
-	ft.Nil(err)
-	ft.Equals(string(data), string(d))
-
-	data, err = io.SeqReader(p.ReadFile).Read(rsrc.APIKey())
-	ft.Nil(err)
-	ft.Equals(string(data), string(r))
-
-	err = io.SeqWriter(p.WriteFile).Write(wStr, rsrc.APIKey())
-	ft.Nil(err)
-	ft.Equals(string(w.data), string(wStr))
-}
-
 func TestPoolRead(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
+	cases := []struct {
 		data    []byte
 		r, d, w bool
-		err     fastest.Code
+		ok      bool
 	}{
 		// Read from disk (availability of download doesn't matter)
-		{[]byte("A"), true, true, false, fastest.OK},
-		{[]byte("B"), true, false, false, fastest.OK},
+		{[]byte("A"), true, true, false, true},
+		{[]byte("B"), true, false, false, true},
 		// Downloaded and written
-		{[]byte("C"), false, true, true, fastest.OK},
+		{[]byte("C"), false, true, true, true},
 		// Read and download fails
-		{[]byte("D"), false, false, false, fastest.Fail},
+		{[]byte("D"), false, false, false, false},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			var r, d MockReader
-			if tc.r {
-				r = MockReader(tc.data)
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("#%v", i), func(t *testing.T) {
+			rs, _ := rsrc.UserInfo("sss")
+			path, _ := rs.Path()
+			url, _ := rs.URL(mock.APIKey)
+
+			var files, web map[string][]byte
+			if c.r {
+				files = map[string][]byte{path: c.data}
 			} else {
-				r = MockReader(nil)
+				files = map[string][]byte{path: nil}
 			}
-			if tc.d {
-				d = MockReader(tc.data)
+			if c.d {
+				web = map[string][]byte{url: c.data}
 			} else {
-				d = MockReader(nil)
+				web = map[string][]byte{}
 			}
 
-			w := &MockWriter{ok: tc.w}
+			r, w := mock.FileIO(files)
+			d := mock.Downloader(web)
 
 			p := New(
 				[]io.Reader{d},
 				[]io.Reader{r},
 				[]io.Writer{w})
 
-			data, err := p.Read(rsrc.APIKey())
-			ft.Implies(err != nil, tc.err == fastest.Fail, err)
-			ft.Implies(err == nil, tc.err == fastest.OK)
-			ft.Only(err == nil)
+			data, err := p.Read(rs)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected and error but none occurred")
+			}
 
-			ft.Equals(string(data), string(tc.data))
-
-			ft.Only(tc.w)
-			ft.Equals(string(w.data), string(tc.data))
+			if err == nil {
+				if string(data) != string(c.data) {
+					t.Errorf("read data is wrong\nread:     %v\nexpected: %v",
+						string(data), string(c.data))
+				}
+				if string(files[path]) != string(c.data) {
+					t.Errorf("written data is wrong\nread:     %v\nexpected: %v",
+						string(files[path]), string(c.data))
+				}
+			}
 		})
 	}
 }

@@ -53,7 +53,7 @@ func startWorkers(
 func readWorker(jobs <-chan io.ReadJob, r io.Reader) {
 	for j := range jobs {
 		data, err := r.Read(j.Resource)
-		j.Back <- io.ReadResult{data, err}
+		j.Back <- io.ReadResult{Data: data, Err: err}
 	}
 }
 
