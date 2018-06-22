@@ -9,96 +9,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-func TestPoolReaderRead(t *testing.T) {
-	ft := fastest.T{T: t}
-	userInfo, _ := rsrc.UserInfo("SOX")
-
-	testCases := []struct {
-		rs   rsrc.Resource
-		data string
-		err  fastest.Code
-	}{
-		{rsrc.APIKey(), "XX", fastest.OK},
-		{userInfo, "", fastest.OK},
-		{userInfo, "lol", fastest.Fail},
-	}
-
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			r := make(PoolReader)
-			c := r.Read(tc.rs)
-			go func() {
-				for job := range r {
-					path1, err1 := job.Resource.Path()
-					path2, err2 := tc.rs.Path()
-					ft.Nil(err1)
-					ft.Nil(err2)
-
-					if path1 == path2 && tc.err == fastest.OK {
-						job.Back <- ReadResult{[]byte(tc.data), nil}
-					} else {
-						job.Back <- ReadResult{nil, errors.New("read failed")}
-					}
-				}
-			}()
-
-			res := <-c
-			ft.Implies(res.Err != nil, tc.err == fastest.Fail)
-			ft.Implies(res.Err == nil, tc.err == fastest.OK, res.Err)
-			ft.Only(res.Err == nil)
-			ft.Equals(string(res.Data), tc.data)
-		})
-	}
-}
-
-func TestPoolWriterWrite(t *testing.T) {
-	ft := fastest.T{T: t}
-	userInfo, _ := rsrc.UserInfo("SOX")
-
-	testCases := []struct {
-		rs   rsrc.Resource
-		data string
-		err  fastest.Code
-	}{
-		{rsrc.APIKey(), "XX", fastest.OK},
-		{userInfo, "", fastest.OK},
-		{userInfo, "lol", fastest.Fail},
-	}
-
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			w := make(PoolWriter)
-			c := w.Write([]byte(tc.data), tc.rs)
-			var data []byte
-			var rs rsrc.Resource = nil
-			go func() {
-				for job := range w {
-					data = job.Data
-					rs = job.Resource
-					if tc.err == fastest.OK {
-						job.Back <- nil
-					} else {
-						job.Back <- errors.New("read failed")
-					}
-				}
-			}()
-
-			err := <-c
-			ft.Implies(err != nil, tc.err == fastest.Fail)
-			ft.Implies(err == nil, tc.err == fastest.OK, err)
-			ft.Only(err == nil)
-
-			path1, err1 := rs.Path()
-			path2, err2 := tc.rs.Path()
-			ft.Nil(err1)
-			ft.Nil(err2)
-			ft.Equals(path1, path2)
-			ft.Only(err == nil)
-			ft.Equals(string(data), tc.data)
-		})
-	}
-}
-
 func TestSeqReaderRead(t *testing.T) {
 	ft := fastest.T{T: t}
 	userInfo, _ := rsrc.UserInfo("SOX")
@@ -226,16 +136,16 @@ func TestPool(t *testing.T) {
 		[]Reader{r},
 		[]Writer{w})
 
-	res := <-PoolReader(p.Download).Read(rsrc.APIKey())
-	ft.Nil(res.Err, res.Err)
-	ft.Equals(string(res.Data), string(d))
+	data, err := SeqReader(p.Download).Read(rsrc.APIKey())
+	ft.Nil(err)
+	ft.Equals(string(data), string(d))
 
-	res = <-PoolReader(p.ReadFile).Read(rsrc.APIKey())
-	ft.Nil(res.Err, res.Err)
-	ft.Equals(string(res.Data), string(r))
+	data, err = SeqReader(p.ReadFile).Read(rsrc.APIKey())
+	ft.Nil(err)
+	ft.Equals(string(data), string(r))
 
-	err := <-PoolWriter(p.WriteFile).Write(wStr, rsrc.APIKey())
-	ft.Nil(err, err)
+	err = SeqWriter(p.WriteFile).Write(wStr, rsrc.APIKey())
+	ft.Nil(err)
 	ft.Equals(string(w.data), string(wStr))
 }
 
@@ -277,12 +187,12 @@ func TestAsyncDownloadGetterRead(t *testing.T) {
 				[]Reader{r},
 				[]Writer{w}))
 
-			res := <-dg.Read(rsrc.APIKey())
-			ft.Implies(res.Err != nil, tc.err == fastest.Fail)
-			ft.Implies(res.Err == nil, tc.err == fastest.OK, res.Err)
-			ft.Only(res.Err == nil)
+			data, err := dg.Read(rsrc.APIKey())
+			ft.Implies(err != nil, tc.err == fastest.Fail, err)
+			ft.Implies(err == nil, tc.err == fastest.OK)
+			ft.Only(err == nil)
 
-			ft.Equals(string(res.Data), string(tc.data))
+			ft.Equals(string(data), string(tc.data))
 
 			ft.Only(tc.w)
 			ft.Equals(string(w.data), string(tc.data))

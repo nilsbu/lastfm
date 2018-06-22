@@ -39,29 +39,6 @@ func Downloader(content map[string][]byte) io.SeqReader {
 	return r
 }
 
-// AsyncFileIO constructs an asynchronous versions of the reader and writer from
-// FileIO. The data access is thread-safe.
-func AsyncFileIO(content map[string][]byte) (io.PoolReader, io.PoolWriter) {
-	r := make(io.PoolReader)
-	w := make(io.PoolWriter)
-	go worker(content, r, w, func(rs rsrc.Resource) (string, error) {
-		return rs.Path()
-	})
-	return r, w
-}
-
-// AsyncDownloader constructs an asynchronous versions of the reader from
-// Downloader.
-func AsyncDownloader(content map[string][]byte) io.PoolReader {
-	r := make(io.PoolReader)
-	go worker(
-		content, r, make(chan io.WriteJob),
-		func(rs rsrc.Resource) (string, error) {
-			return rs.URL(APIKey)
-		})
-	return r
-}
-
 func worker(
 	content map[string][]byte,
 	readJobs <-chan io.ReadJob,
