@@ -1,6 +1,7 @@
 package io
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -99,4 +100,14 @@ func RedirectUpdate(updater Updater) *updateRedirect {
 
 func (ur updateRedirect) Read(loc rsrc.Locator) (data []byte, err error) {
 	return ur.updater.Update(loc)
+}
+
+type FailIO struct{}
+
+func (FailIO) Read(loc rsrc.Locator) (data []byte, err error) {
+	return nil, errors.New("cannot read")
+}
+
+func (FailIO) Write(data []byte, loc rsrc.Locator) (err error) {
+	return errors.New("cannot write")
 }
