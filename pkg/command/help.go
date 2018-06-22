@@ -1,14 +1,14 @@
 package command
 
-import "github.com/nilsbu/lastfm/pkg/io"
+import "github.com/nilsbu/lastfm/pkg/store"
 
 type command interface {
-	Execute(store io.Store) error
+	Execute(s store.Store) error
 }
 
 type help struct{}
 
-func (help) Execute(store io.Store) error {
+func (help) Execute(s store.Store) error {
 	// TODO fill
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -127,7 +128,7 @@ func WriteBookmark(utc int64, user rsrc.Name, w io.Writer) error {
 func UpdateAllDayPlays(
 	user unpack.User,
 	until rsrc.Day,
-	store io.Store,
+	store store.Store,
 ) (plays []unpack.DayPlays, err error) {
 	registeredDay, ok := user.Registered.Midnight()
 	if !ok {

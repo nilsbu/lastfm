@@ -8,6 +8,7 @@ import (
 	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -368,7 +369,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 			}
 
-			pool := io.NewStore(
+			pool := store.New(
 				[]io.Reader{mock.Downloader(tc.tracksDownload)},
 				[]io.Reader{r},
 				[]io.Writer{w})

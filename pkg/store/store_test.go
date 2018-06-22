@@ -1,4 +1,4 @@
-package io
+package store
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -25,7 +26,7 @@ func TestSeqReaderRead(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			r := make(SeqReader)
+			r := make(io.SeqReader)
 
 			go func() {
 				for job := range r {
@@ -35,9 +36,9 @@ func TestSeqReaderRead(t *testing.T) {
 					ft.Nil(err2)
 
 					if path1 == path2 && tc.err == fastest.OK {
-						job.Back <- ReadResult{[]byte(tc.data), nil}
+						job.Back <- io.ReadResult{[]byte(tc.data), nil}
 					} else {
-						job.Back <- ReadResult{nil, errors.New("read failed")}
+						job.Back <- io.ReadResult{nil, errors.New("read failed")}
 					}
 				}
 			}()
@@ -68,7 +69,7 @@ func TestSeqWriterWrite(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			w := make(SeqWriter)
+			w := make(io.SeqWriter)
 
 			var data []byte
 			var rs rsrc.Resource
@@ -131,20 +132,20 @@ func TestPool(t *testing.T) {
 
 	wStr := []byte("uiokl.")
 
-	p := NewStore(
-		[]Reader{d},
-		[]Reader{r},
-		[]Writer{w})
+	p := New(
+		[]io.Reader{d},
+		[]io.Reader{r},
+		[]io.Writer{w})
 
-	data, err := SeqReader(p.Download).Read(rsrc.APIKey())
+	data, err := io.SeqReader(p.Download).Read(rsrc.APIKey())
 	ft.Nil(err)
 	ft.Equals(string(data), string(d))
 
-	data, err = SeqReader(p.ReadFile).Read(rsrc.APIKey())
+	data, err = io.SeqReader(p.ReadFile).Read(rsrc.APIKey())
 	ft.Nil(err)
 	ft.Equals(string(data), string(r))
 
-	err = SeqWriter(p.WriteFile).Write(wStr, rsrc.APIKey())
+	err = io.SeqWriter(p.WriteFile).Write(wStr, rsrc.APIKey())
 	ft.Nil(err)
 	ft.Equals(string(w.data), string(wStr))
 }
@@ -182,10 +183,10 @@ func TestPoolRead(t *testing.T) {
 
 			w := &MockWriter{ok: tc.w}
 
-			p := NewStore(
-				[]Reader{d},
-				[]Reader{r},
-				[]Writer{w})
+			p := New(
+				[]io.Reader{d},
+				[]io.Reader{r},
+				[]io.Writer{w})
 
 			data, err := p.Read(rsrc.APIKey())
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)

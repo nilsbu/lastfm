@@ -24,6 +24,10 @@ type Remover interface {
 	Remove(rs rsrc.Resource) error
 }
 
+type Updater interface {
+	Update(rs rsrc.Resource) (data []byte, err error)
+}
+
 // FileIO privides access to the local file system. It implements Reader,
 // Writer and Remover.
 type FileIO struct{}
@@ -83,4 +87,16 @@ func (d Downloader) Read(rs rsrc.Resource) (data []byte, err error) {
 	data, err = ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	return data, err
+}
+
+type updateRedirect struct {
+	updater Updater
+}
+
+func RedirectUpdate(updater Updater) *updateRedirect {
+	return &updateRedirect{updater: updater}
+}
+
+func (ur updateRedirect) Read(rs rsrc.Resource) (data []byte, err error) {
+	return ur.updater.Update(rs)
 }
