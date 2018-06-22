@@ -156,7 +156,7 @@ func UpdateAllDayPlays(
 
 	newPlays, err := LoadAllDayPlays(
 		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
-		until, io.ForcedDownloadGetter(ioPool))
+		until, io.DownloadSaver(ioPool))
 
 	return append(oldPlays, newPlays...), err
 }

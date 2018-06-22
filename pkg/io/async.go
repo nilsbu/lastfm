@@ -89,10 +89,11 @@ func writeWorker(jobs <-chan WriteJob, r Writer) {
 	}
 }
 
-// TODO docu, name & test
-type ForcedDownloadGetter Pool
+// DownloadSaver is a Reader that downloads resources and saves them before
+// returning them.
+type DownloadSaver Pool
 
-func (dg ForcedDownloadGetter) Read(rs rsrc.Resource) (data []byte, err error) {
+func (dg DownloadSaver) Read(rs rsrc.Resource) (data []byte, err error) {
 	data, err = SeqReader(dg.Download).Read(rs)
 	if err == nil {
 		// TODO what happens to the result
@@ -103,7 +104,7 @@ func (dg ForcedDownloadGetter) Read(rs rsrc.Resource) (data []byte, err error) {
 
 // AsyncDownloadGetter is a download getter that delegates work to read and
 // write workers.
-type AsyncDownloadGetter ForcedDownloadGetter
+type AsyncDownloadGetter DownloadSaver
 
 func (dg AsyncDownloadGetter) Read(rs rsrc.Resource) (data []byte, err error) {
 	data, err = SeqReader(dg.ReadFile).Read(rs)
@@ -111,5 +112,5 @@ func (dg AsyncDownloadGetter) Read(rs rsrc.Resource) (data []byte, err error) {
 		return data, nil
 	}
 
-	return ForcedDownloadGetter(dg).Read(rs)
+	return DownloadSaver(dg).Read(rs)
 }
