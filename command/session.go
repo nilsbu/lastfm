@@ -6,7 +6,7 @@ import (
 
 	"github.com/nilsbu/lastfm/io"
 	"github.com/nilsbu/lastfm/organize"
-	"github.com/nilsbu/lastfm/rsrc"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 

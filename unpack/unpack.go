@@ -1,7 +1,7 @@
 package unpack
 
 import (
-	"github.com/nilsbu/lastfm/rsrc"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 // User contains relevant core information about a user.

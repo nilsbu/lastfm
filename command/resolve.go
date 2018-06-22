@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/nilsbu/lastfm/rsrc"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func resolve(args []string) (cmd command, err error) {

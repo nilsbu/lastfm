@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/nilsbu/lastfm/io"
-	"github.com/nilsbu/lastfm/rsrc"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 

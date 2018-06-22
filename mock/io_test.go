@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/nilsbu/lastfm/rsrc"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 // Resource that has no path.

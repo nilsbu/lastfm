@@ -6,7 +6,7 @@ import (
 
 	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/mock"
-	"github.com/nilsbu/lastfm/rsrc"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
 

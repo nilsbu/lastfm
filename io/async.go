@@ -1,6 +1,6 @@
 package io
 
-import "github.com/nilsbu/lastfm/rsrc"
+import "github.com/nilsbu/lastfm/pkg/rsrc"
 
 // AsyncReader is an interface for reading resources asynchronously.
 type AsyncReader interface {

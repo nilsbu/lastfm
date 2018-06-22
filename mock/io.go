@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nilsbu/lastfm/io"
-	"github.com/nilsbu/lastfm/rsrc"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type resolver func(rsrc.Resource) (string, error)
