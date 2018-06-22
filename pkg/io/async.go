@@ -1,8 +1,20 @@
 package io
 
-import "github.com/nilsbu/lastfm/pkg/rsrc"
+import (
+	"github.com/nilsbu/lastfm/pkg/rsrc"
+)
 
-// SeqReader provides sequential read access to an io.Pool.
+type Updater interface {
+	Update(rs rsrc.Resource) (data []byte, err error)
+}
+
+type Store interface {
+	Reader
+	Writer
+	Updater
+}
+
+// SeqReader provides sequential read access to an io.pool.
 type SeqReader chan ReadJob
 
 func (r SeqReader) Read(rs rsrc.Resource) (data []byte, err error) {
@@ -13,7 +25,7 @@ func (r SeqReader) Read(rs rsrc.Resource) (data []byte, err error) {
 	return res.Data, res.Err
 }
 
-// SeqWriter provides sequential write access to an io.Pool.
+// SeqWriter provides sequential write access to an io.pool.
 type SeqWriter chan WriteJob
 
 func (r SeqWriter) Write(data []byte, rs rsrc.Resource) error {
@@ -41,17 +53,17 @@ type ReadResult struct {
 	Err  error
 }
 
-// Pool is a pool of IO workers. It contains workers for download, file reading
+// pool is a pool of IO workers. It contains workers for download, file reading
 // and writing.
-type Pool struct {
+type pool struct {
 	Download  chan ReadJob
 	ReadFile  chan ReadJob
 	WriteFile chan WriteJob
 }
 
-// NewPool creates an IO worker pool with the given readers and writers.
-func NewPool(downloaders, fileReaders []Reader, fileWriters []Writer) Pool {
-	p := Pool{make(chan ReadJob), make(chan ReadJob), make(chan WriteJob)}
+// NewStore creates an IO worker pool with the given readers and writers.
+func NewStore(downloaders, fileReaders []Reader, fileWriters []Writer) pool {
+	p := pool{make(chan ReadJob), make(chan ReadJob), make(chan WriteJob)}
 
 	startWorkers(downloaders, fileReaders, fileWriters, p)
 
@@ -61,7 +73,7 @@ func NewPool(downloaders, fileReaders []Reader, fileWriters []Writer) Pool {
 func startWorkers(
 	downloaders, fileReaders []Reader,
 	fileWriters []Writer,
-	p Pool) {
+	p pool) {
 	for _, d := range downloaders {
 		go readWorker(p.Download, d)
 	}
@@ -89,28 +101,36 @@ func writeWorker(jobs <-chan WriteJob, r Writer) {
 	}
 }
 
-// DownloadSaver is a Reader that downloads resources and saves them before
-// returning them.
-type DownloadSaver Pool
-
-func (dg DownloadSaver) Read(rs rsrc.Resource) (data []byte, err error) {
-	data, err = SeqReader(dg.Download).Read(rs)
-	if err == nil {
-		// TODO what happens to the result
-		SeqWriter(dg.WriteFile).Write(data, rs)
-	}
-	return data, err
-}
-
-// AsyncDownloadGetter is a download getter that delegates work to read and
-// write workers.
-type AsyncDownloadGetter DownloadSaver
-
-func (dg AsyncDownloadGetter) Read(rs rsrc.Resource) (data []byte, err error) {
-	data, err = SeqReader(dg.ReadFile).Read(rs)
+func (p pool) Read(rs rsrc.Resource) (data []byte, err error) {
+	data, err = SeqReader(p.ReadFile).Read(rs)
 	if err == nil {
 		return data, nil
 	}
 
-	return DownloadSaver(dg).Read(rs)
+	return p.Update(rs)
+}
+
+func (p pool) Update(rs rsrc.Resource) (data []byte, err error) {
+	data, err = SeqReader(p.Download).Read(rs)
+	if err == nil {
+		// TODO what happens to the result
+		p.Write(data, rs)
+	}
+	return data, err
+}
+
+func (p pool) Write(data []byte, rs rsrc.Resource) error {
+	return SeqWriter(p.WriteFile).Write(data, rs)
+}
+
+type updateRedirect struct {
+	updater Updater
+}
+
+func RedirectUpdate(updater Updater) *updateRedirect {
+	return &updateRedirect{updater: updater}
+}
+
+func (ur updateRedirect) Read(rs rsrc.Resource) (data []byte, err error) {
+	return ur.updater.Update(rs)
 }

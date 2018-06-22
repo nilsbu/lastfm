@@ -3,12 +3,12 @@ package command
 import "github.com/nilsbu/lastfm/pkg/io"
 
 type command interface {
-	Execute(ioPool io.Pool) error
+	Execute(store io.Store) error
 }
 
 type help struct{}
 
-func (help) Execute(ioPool io.Pool) error {
+func (help) Execute(store io.Store) error {
 	// TODO fill
 	return nil
 }

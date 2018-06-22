@@ -7,14 +7,14 @@ import (
 )
 
 // Execute executes the command described in the arguments.
-func Execute(args []string, ioPool io.Pool) error {
+func Execute(args []string, store io.Store) error {
 	cmd, err := resolve(args)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 
-	err = cmd.Execute(ioPool)
+	err = cmd.Execute(store)
 	if err != nil {
 		fmt.Println(err)
 	}

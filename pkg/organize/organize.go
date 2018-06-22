@@ -127,7 +127,7 @@ func WriteBookmark(utc int64, user rsrc.Name, w io.Writer) error {
 func UpdateAllDayPlays(
 	user unpack.User,
 	until rsrc.Day,
-	ioPool io.Pool, // Need Wrapper for Async readers ??
+	store io.Store,
 ) (plays []unpack.DayPlays, err error) {
 	registeredDay, ok := user.Registered.Midnight()
 	if !ok {
@@ -135,9 +135,8 @@ func UpdateAllDayPlays(
 			user.Name)
 	}
 	begin := registeredDay
-	fr := io.SeqReader(ioPool.ReadFile)
 
-	oldPlays, err := ReadAllDayPlays(user.Name, fr)
+	oldPlays, err := ReadAllDayPlays(user.Name, store)
 	if err != nil {
 		oldPlays = []unpack.DayPlays{}
 	} else if len(oldPlays) > 0 {
@@ -156,7 +155,7 @@ func UpdateAllDayPlays(
 
 	newPlays, err := LoadAllDayPlays(
 		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
-		until, io.DownloadSaver(ioPool))
+		until, io.RedirectUpdate(store))
 
 	return append(oldPlays, newPlays...), err
 }

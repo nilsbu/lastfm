@@ -131,7 +131,7 @@ func TestPool(t *testing.T) {
 
 	wStr := []byte("uiokl.")
 
-	p := NewPool(
+	p := NewStore(
 		[]Reader{d},
 		[]Reader{r},
 		[]Writer{w})
@@ -149,7 +149,7 @@ func TestPool(t *testing.T) {
 	ft.Equals(string(w.data), string(wStr))
 }
 
-func TestAsyncDownloadGetterRead(t *testing.T) {
+func TestPoolRead(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
@@ -182,12 +182,12 @@ func TestAsyncDownloadGetterRead(t *testing.T) {
 
 			w := &MockWriter{ok: tc.w}
 
-			dg := AsyncDownloadGetter(NewPool(
+			p := NewStore(
 				[]Reader{d},
 				[]Reader{r},
-				[]Writer{w}))
+				[]Writer{w})
 
-			data, err := dg.Read(rsrc.APIKey())
+			data, err := p.Read(rsrc.APIKey())
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
 			ft.Implies(err == nil, tc.err == fastest.OK)
 			ft.Only(err == nil)

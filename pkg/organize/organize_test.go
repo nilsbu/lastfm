@@ -7,9 +7,9 @@ import (
 
 	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/pkg/io"
-	"github.com/nilsbu/lastfm/test/mock"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
+	"github.com/nilsbu/lastfm/test/mock"
 )
 
 func TestLoadAPIKey(t *testing.T) {
@@ -368,7 +368,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 			}
 
-			pool := io.NewPool(
+			pool := io.NewStore(
 				[]io.Reader{mock.Downloader(tc.tracksDownload)},
 				[]io.Reader{r},
 				[]io.Writer{w})
