@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/nilsbu/lastfm/io"
-	"github.com/nilsbu/lastfm/organize"
+	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/unpack"
 )
