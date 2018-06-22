@@ -19,6 +19,11 @@ type Writer interface {
 	Write(data []byte, rs rsrc.Resource) error
 }
 
+// Remover is an interface for removing a resources.
+type Remover interface {
+	Remove(rs rsrc.Resource) error
+}
+
 // FileReader is a reader for local files. It implements io.Reader.
 type FileReader struct{}
 
@@ -53,6 +58,16 @@ func (FileWriter) Write(data []byte, rs rsrc.Resource) error {
 
 	_, err = f.Write(data)
 	return err
+}
+
+type FileRemover struct{}
+
+func (FileRemover) Remove(rs rsrc.Resource) error {
+	path, err := rs.Path()
+	if err != nil {
+		return nil
+	}
+	return os.Remove(path)
 }
 
 // Downloader is a reader for Last.fm. It implements io.Reader.
