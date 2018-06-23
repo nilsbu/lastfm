@@ -1,51 +1,68 @@
 package cache
 
 import (
-	"errors"
-	"reflect"
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/test/mock"
 )
 
-type Sum struct{}
-
-func (Sum) Do(job Job) (data interface{}, err error) {
-	nums, ok := job.([]int)
-	if !ok {
-		return nil, errors.New("wrong job")
-	}
-
-	sum := 0
-	for _, x := range nums {
-		sum += x
-	}
-
-	return sum, nil
-}
-
-type String struct{}
-
-func (String) Do(job Job) (data interface{}, err error) {
-	return "i am a string", nil
-}
-
-func TestWorkSum(t *testing.T) {
+func TestPool(t *testing.T) {
 	cases := []struct {
-		workers  []Worker
-		job      interface{}
-		data     int
-		ctorOK   bool
-		workerOK bool
-		resultOK bool
+		files      map[rsrc.Locator][]byte
+		loc        rsrc.Locator
+		data       []byte
+		numReaders int
+		numWriters int
+		ctorOK     bool
+		writeOK    bool
+		readOK     bool
 	}{
-		{[]Worker{}, []int{1}, 1, false, false, false}, // no workers
-		{[]Worker{Sum{}}, []int{1, 2, 3, 4}, 10, true, true, true},
-		{[]Worker{Sum{}}, "wrong", -1, true, false, false},
-		{[]Worker{String{}}, []int{1, 2}, 3, true, true, false},
+		{
+			map[rsrc.Locator][]byte{},
+			rsrc.SessionID(),
+			[]byte("asdf"),
+			0, 1,
+			false, true, true,
+		},
+		{
+			map[rsrc.Locator][]byte{},
+			rsrc.SessionID(),
+			[]byte("asdf"),
+			1, 0,
+			false, true, true,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.SessionID(): []byte("asdf")},
+			rsrc.SessionID(),
+			[]byte("asdf"),
+			3, 3,
+			true, true, true,
+		},
+		{
+			map[rsrc.Locator][]byte{},
+			rsrc.SessionID(),
+			[]byte("asdf"),
+			1, 1,
+			true, false, false,
+		},
 	}
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			p, err := NewPool(c.workers)
+			r, w, _ := mock.IO(c.files, mock.Path)
+
+			var readers []io.Reader
+			var writers []io.Writer
+
+			for i := 0; i < c.numReaders; i++ {
+				readers = append(readers, r)
+			}
+			for i := 0; i < c.numWriters; i++ {
+				writers = append(writers, w)
+			}
+			p, err := NewPool(readers, writers)
 			if err != nil {
 				if c.ctorOK {
 					t.Error("unexpected error in constructor:", err)
@@ -53,26 +70,26 @@ func TestWorkSum(t *testing.T) {
 				return
 			}
 
-			resultChan := p.Work(c.job)
-			result := <-resultChan
-			if result.Err != nil && c.workerOK {
-				t.Error("unexpected error in worker:", result.Err)
-			} else if result.Err == nil && !c.workerOK {
-				t.Error("expected error but none occurred")
+			err = <-p.Write(c.data, c.loc)
+			if err != nil && c.writeOK {
+				t.Error("unexpected error during write:", err)
+			} else if err == nil && !c.writeOK {
+				t.Error("expected error during write but none occurred")
 			}
-			if err == nil {
-				data, ok := result.Data.(int)
-				if ok && !c.resultOK {
-					t.Error("expected result type other than 'int' but got 'int'")
-				} else if !ok && c.resultOK {
-					t.Errorf("result type is '%v', expected 'int'",
-						reflect.TypeOf(result.Data))
-				}
-				if ok {
-					if data != c.data {
-						t.Errorf("wrong result: got '%v', expected '%v'", data, c.data)
-					}
-				}
+			if err != nil {
+				return
+			}
+			readResult := <-p.Read(c.loc)
+			data, err := readResult.Data, readResult.Err
+			if err != nil && c.readOK {
+				t.Error("unexpected error during read:", err)
+			} else if err == nil && !c.readOK {
+				t.Error("expected error during read but none occurred")
+			}
+
+			if string(data) != string(c.data) {
+				t.Errorf("wrong result: got '%v', expected '%v'",
+					string(data), string(c.data))
 			}
 		})
 	}

@@ -1,56 +1,74 @@
 package cache
 
-import "errors"
+import (
+	"errors"
 
-// Pool is a pool of workers.
+	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
+)
+
+// Pool is a pool of readers and writers.
 type Pool interface {
-	Work(job Job) <-chan Result
+	Read(loc rsrc.Locator) <-chan io.ReadResult
+	Write(data []byte, loc rsrc.Locator) <-chan error
 }
 
-// Job is a generic job for a pool.
-type Job interface{}
-
-// Result is the result of a done job by a pool.
-type Result struct {
-	Data interface{}
-	Err  error
-}
-
-// Worker has the function Do that does a job and returns the result.
-type Worker interface {
-	Do(job Job) (data interface{}, err error)
+type workerPool struct {
+	readChan  chan io.ReadJob
+	writeChan chan io.WriteJob
 }
 
 // NewPool constructs a Pool. It requires a non-epty list of workers, which are
 // presumed to do identical jobs when provided with the same input.
-func NewPool(workers []Worker) (Pool, error) {
-	if len(workers) == 0 {
-		return nil, errors.New("pool needs at least one worker")
+func NewPool(
+	readers []io.Reader,
+	writers []io.Writer,
+) (Pool, error) {
+	if len(readers) == 0 {
+		return nil, errors.New("pool must have at least one reader")
+	}
+	if len(writers) == 0 {
+		return nil, errors.New("pool must have at least one writer")
 	}
 
-	pool := make(workerPool)
+	pool := workerPool{
+		make(chan io.ReadJob),
+		make(chan io.WriteJob),
+	}
 
-	for _, worker := range workers {
-		go func(worker Worker) {
-			for in := range pool {
-				data, err := worker.Do(in.job)
-				in.back <- Result{Data: data, Err: err}
-			}
-		}(worker)
+	for _, reader := range readers {
+		go readWorker(pool.readChan, reader)
+	}
+
+	for _, writer := range writers {
+		go writeWorker(pool.writeChan, writer)
 	}
 
 	return pool, nil
 }
 
-type workerPool chan jobWithBack
-
-type jobWithBack struct {
-	job  Job
-	back chan Result
+func readWorker(jobs <-chan io.ReadJob, r io.Reader) {
+	for j := range jobs {
+		data, err := r.Read(j.Locator)
+		j.Back <- io.ReadResult{Data: data, Err: err}
+	}
 }
 
-func (p workerPool) Work(job Job) <-chan Result {
-	resultChan := make(chan Result)
-	p <- jobWithBack{job: job, back: resultChan}
+func writeWorker(jobs <-chan io.WriteJob, r io.Writer) {
+	for j := range jobs {
+		err := r.Write(j.Data, j.Locator)
+		j.Back <- err
+	}
+}
+
+func (p workerPool) Read(loc rsrc.Locator) <-chan io.ReadResult {
+	resultChan := make(chan io.ReadResult)
+	p.readChan <- io.ReadJob{Locator: loc, Back: resultChan}
+	return resultChan
+}
+
+func (p workerPool) Write(data []byte, loc rsrc.Locator) <-chan error {
+	resultChan := make(chan error)
+	p.writeChan <- io.WriteJob{Data: data, Locator: loc, Back: resultChan}
 	return resultChan
 }
