@@ -54,17 +54,16 @@ func TestLoadAllDayPlays(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			files := make(map[string][]byte)
+			files := make(map[rsrc.Locator][]byte)
 			for j, day := range tc.data {
 				for k, d := range day {
 					reg, _ := tc.user.Registered.Midnight()
 					time := reg + int64(j*86400)
 					loc, _ := rsrc.History(tc.user.Name, rsrc.Page(k+1), rsrc.ToDay(time))
-					path, _ := loc.Path()
-					files[path] = []byte(d)
+					files[loc] = []byte(d)
 				}
 			}
-			r, _ := mock.FileIO(files)
+			r, _, _ := mock.IO(files, mock.Path)
 
 			dps, err := LoadAllDayPlays(tc.user, tc.until, r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
@@ -138,14 +137,13 @@ func TestLoadDayPlays(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			files := make(map[string][]byte)
+			files := make(map[rsrc.Locator][]byte)
 			for j, d := range tc.data {
 				time, _ := tc.time.Midnight()
 				loc, _ := rsrc.History(tc.user, rsrc.Page(j+1), rsrc.ToDay(time))
-				path, _ := loc.Path()
-				files[path] = []byte(d)
+				files[loc] = []byte(d)
 			}
-			r, _ := mock.FileIO(files)
+			r, _, _ := mock.IO(files, mock.Path)
 
 			dp, err := loadDayPlays(tc.user, tc.time, r)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)

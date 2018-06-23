@@ -7,43 +7,51 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-type resolver func(rsrc.Locator) (string, error)
-
 // APIKey is the API key that is used in mocked URLs.
 const APIKey = "00000000000000000000000000000000"
 
-// FileIO constructs a mock reader and a writer. Data what is written using the
-// writer can be read by the reader. The mocked file system is initialized with
-// content. They keys are the file paths and the values the data contained.
-// Locations that are not amon the contents during initialization cannot be
-// written to or read from. Locations initialized with value nil are considered
-// to be non-existing files that can however be written to.
-func FileIO(content map[string][]byte) (io.SeqReader, io.SeqWriter) {
-	r := make(io.SeqReader)
-	w := make(io.SeqWriter)
-	go worker(content, r, w, func(loc rsrc.Locator) (string, error) {
-		return loc.Path()
-	})
-	return r, w
+// Path returns loc.Path()
+func Path(loc rsrc.Locator) (string, error) {
+	return loc.Path()
 }
 
-// Downloader constructs a mock reader for data download. Content is
-// initialized analagous to FileIO.
-func Downloader(content map[string][]byte) io.SeqReader {
+// URL returns loc.URL() with the default mock API key.
+func URL(loc rsrc.Locator) (string, error) {
+	return loc.URL(APIKey)
+}
+
+// IO constructs a mock reader and a writer. Data what is written using the
+// writer can be read by the reader. The mocked data storage is initialized with
+// content. They keys are the locations and the values the data contained.
+// Locations that are not among the contents during initialization cannot be
+// written to or read from. Locations initialized with value nil are considered
+// to be non-existing files that can however be written to. Reader and writer
+// can safely be copied. They are thread-safe.
+func IO(
+	content map[rsrc.Locator][]byte,
+	resolve func(loc rsrc.Locator) (string, error),
+) (io.SeqReader, io.SeqWriter, error) {
+
+	files := make(map[string][]byte)
+	for k, v := range content {
+		path, err := resolve(k)
+		if err != nil {
+			return nil, nil, err
+		}
+		files[path] = v
+	}
+
 	r := make(io.SeqReader)
-	go worker(
-		content, r, make(chan io.WriteJob),
-		func(loc rsrc.Locator) (string, error) {
-			return loc.URL(APIKey)
-		})
-	return r
+	w := make(io.SeqWriter)
+	go worker(files, r, w, resolve)
+	return r, w, nil
 }
 
 func worker(
 	content map[string][]byte,
 	readJobs <-chan io.ReadJob,
 	writeJobs <-chan io.WriteJob,
-	resolve resolver,
+	resolve func(loc rsrc.Locator) (string, error),
 ) {
 	for {
 		select {
@@ -74,7 +82,6 @@ func worker(
 
 			path, err := resolve(job.Locator)
 			if err != nil {
-				// cannot happen, include for safety
 				job.Back <- err
 				continue
 			}

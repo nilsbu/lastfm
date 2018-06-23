@@ -27,23 +27,21 @@ func TestPoolRead(t *testing.T) {
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("#%v", i), func(t *testing.T) {
 			loc, _ := rsrc.UserInfo("sss")
-			path, _ := loc.Path()
-			url, _ := loc.URL(mock.APIKey)
 
-			var files, web map[string][]byte
+			var files, web map[rsrc.Locator][]byte
 			if c.r {
-				files = map[string][]byte{path: c.data}
+				files = map[rsrc.Locator][]byte{loc: c.data}
 			} else {
-				files = map[string][]byte{path: nil}
+				files = map[rsrc.Locator][]byte{loc: nil}
 			}
 			if c.d {
-				web = map[string][]byte{url: c.data}
+				web = map[rsrc.Locator][]byte{loc: c.data}
 			} else {
-				web = map[string][]byte{}
+				web = map[rsrc.Locator][]byte{}
 			}
 
-			r, w := mock.FileIO(files)
-			d := mock.Downloader(web)
+			r, w, _ := mock.IO(files, mock.Path)
+			d, _, _ := mock.IO(web, mock.URL)
 
 			p := New(
 				[]io.Reader{d},
@@ -62,9 +60,14 @@ func TestPoolRead(t *testing.T) {
 					t.Errorf("read data is wrong\nread:     %v\nexpected: %v",
 						string(data), string(c.data))
 				}
-				if string(files[path]) != string(c.data) {
-					t.Errorf("written data is wrong\nread:     %v\nexpected: %v",
-						string(files[path]), string(c.data))
+
+				written, err := r.Read(loc)
+				if err != nil {
+					t.Error("unexpected error while reading witten data:", err)
+				}
+				if string(written) != string(c.data) {
+					t.Errorf("read data is wrong\nread:     %v\nexpected: %v",
+						string(written), string(c.data))
 				}
 			}
 		})

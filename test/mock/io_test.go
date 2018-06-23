@@ -1,88 +1,80 @@
 package mock
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-// Locator that has no path.
-type noPath string
-
-func (n noPath) URL(apiKey rsrc.Key) (string, error) {
-	return string(n), nil
-}
-
-func (n noPath) Path() (string, error) {
-	return "", errors.New("resource has no path")
-}
-
-func TestFileIO(t *testing.T) {
-	apiKeyPath, _ := rsrc.APIKey().Path()
-
+func TestIO(t *testing.T) {
 	cases := []struct {
-		files     map[string][]byte
-		loc       rsrc.Locator
-		writeData []byte
-		result    []byte
-		writeOK   bool
-		readOK    bool
+		resolve func(loc rsrc.Locator) (string, error)
+		files   map[rsrc.Locator][]byte
+		loc     rsrc.Locator
+		data    []byte
+		ctorOK  bool
+		writeOK bool
+		readOK  bool
 	}{
 		{ // no data
-			map[string][]byte{},
+			Path,
+			map[rsrc.Locator][]byte{},
 			rsrc.APIKey(),
-			nil, nil,
-			false, false,
-		},
-		{ // read prepared data
-			map[string][]byte{apiKeyPath: []byte("xxd")},
-			rsrc.APIKey(),
-			nil,
-			[]byte("xxd"),
-			true, true,
+			[]byte(""),
+			true, false, false,
 		},
 		{ // read what was written
-			map[string][]byte{apiKeyPath: nil},
+			Path,
+			map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 			rsrc.APIKey(),
 			[]byte("xxd"),
-			[]byte("xxd"),
-			true, true,
+			true, true, true,
 		},
 		{ // write fails (key not contained in files)
-			map[string][]byte{},
+			Path,
+			map[rsrc.Locator][]byte{},
 			rsrc.APIKey(),
 			[]byte("xxd"),
-			nil,
-			false, false,
+			true, false, false,
 		},
 		{ // read from nil is not possible
-			map[string][]byte{apiKeyPath: nil},
+			Path,
+			map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 			rsrc.APIKey(),
 			nil,
-			nil,
-			false, false,
+			true, true, false,
 		},
 		{ // resolve of file path fails
-			map[string][]byte{},
-			noPath(""),
+			URL,
+			map[rsrc.Locator][]byte{},
+			rsrc.APIKey(),
 			[]byte(""),
+			true, false, false,
+		},
+		{ // unresolvable url in ctor
+			URL,
+			map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
+			rsrc.APIKey(),
 			[]byte(""),
-			false, false,
+			false, false, false,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			r, w := FileIO(c.files)
-
-			if c.writeData != nil {
-				err := w.Write(c.writeData, c.loc)
-				if err != nil && c.writeOK {
-					t.Error("unexpected error during write:", err)
-				} else if err == nil && !c.writeOK {
-					t.Error("write should have failed but did not")
+			r, w, err := IO(c.files, c.resolve)
+			if err != nil {
+				if c.ctorOK {
+					t.Error("unexprected error in constructor:", err)
 				}
+				return
+			}
+
+			err = w.Write(c.data, c.loc)
+			if err != nil && c.writeOK {
+				t.Error("unexpected error during write:", err)
+			} else if err == nil && !c.writeOK {
+				t.Error("write should have failed but did not")
 			}
 
 			data, err := r.Read(c.loc)
@@ -95,55 +87,9 @@ func TestFileIO(t *testing.T) {
 				t.Error("read should have failed but did not")
 			}
 			if err == nil {
-				if string(data) != string(c.result) {
+				if string(data) != string(c.data) {
 					t.Errorf("result does not match:\nresult:   %v\nexpected: %v",
-						string(data), string(c.result))
-				}
-			}
-		})
-	}
-}
-
-func TestDownloader(t *testing.T) {
-	userInfo, _ := rsrc.UserInfo("abc")
-	userInfoURL, _ := userInfo.URL(APIKey)
-
-	cases := []struct {
-		files  map[string][]byte
-		loc    rsrc.Locator
-		result []byte
-		readOK bool
-	}{
-		{ // API key has no URL
-			map[string][]byte{},
-			rsrc.APIKey(),
-			nil,
-			false,
-		},
-		{
-			map[string][]byte{userInfoURL: []byte("xxx")},
-			userInfo,
-			[]byte("xxx"),
-			true,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			r := Downloader(c.files)
-
-			data, err := r.Read(c.loc)
-			close(r)
-
-			if err != nil && c.readOK {
-				t.Error("unexpected error during read:", err)
-			} else if err == nil && !c.readOK {
-				t.Error("read should have failed but did not")
-			}
-			if err == nil {
-				if string(data) != string(c.result) {
-					t.Errorf("result does not match:\nresult:   %v\nexpected: %v",
-						string(data), string(c.result))
+						string(data), string(c.data))
 				}
 			}
 		})
