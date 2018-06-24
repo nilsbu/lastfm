@@ -2,6 +2,8 @@ package rsrc
 
 import (
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/fail"
 )
 
 func TestUserInfo(t *testing.T) {
@@ -20,11 +22,21 @@ func TestUserInfo(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			loc, err := UserInfo(c.name)
 
-			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
+			if err != nil {
+				if f, ok := err.(fail.Threat); ok {
+					if f.Severity() != fail.Critical {
+						t.Error("severity must be 'Critical':", err)
+					}
+				} else {
+					t.Error("error must implement Threat but does not:", err)
+				}
+				if c.ok {
+					t.Error("unexpected error:", err)
+				}
 			} else if err == nil && !c.ok {
 				t.Errorf("name '%v' should not have been accepted", c.name)
 			}
+
 			if err == nil {
 				if loc.name != c.name {
 					t.Errorf("got name '%v', expected '%v'", loc.name, c.name)
@@ -58,11 +70,21 @@ func TestHistory(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			loc, err := History(c.name, c.page, c.day)
 
-			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
+			if err != nil {
+				if f, ok := err.(fail.Threat); ok {
+					if f.Severity() != fail.Critical {
+						t.Error("severity must be 'Critical':", err)
+					}
+				} else {
+					t.Error("error must implement Threat but does not:", err)
+				}
+				if c.ok {
+					t.Error("unexpected error:", err)
+				}
 			} else if err == nil && !c.ok {
 				t.Errorf("name '%v' should not have been accepted", c.name)
 			}
+
 			if err == nil {
 				if loc.name != c.name {
 					t.Errorf("got name '%v', expected '%v'", loc.name, c.name)
@@ -120,11 +142,21 @@ func TestLastFMURL(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			url, err := c.loc.URL(c.apiKey)
 
-			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
+			if err != nil {
+				if f, ok := err.(fail.Threat); ok {
+					if f.Severity() != fail.Critical {
+						t.Error("severity must be 'Critical':", err)
+					}
+				} else {
+					t.Error("error must implement Threat but does not:", err)
+				}
+				if c.ok {
+					t.Error("unexpected error:", err)
+				}
 			} else if err == nil && !c.ok {
 				t.Errorf("URL() should have thrown an error but did not")
 			}
+
 			if err == nil {
 				if url != c.url {
 					t.Errorf("unexpected url:\n got      '%v',\n expected '%v'",
@@ -177,8 +209,16 @@ func TestLastFMPath(t *testing.T) {
 }
 
 func TestUtilURL(t *testing.T) {
-	if _, err := APIKey().URL("a3ee123098128acf29ca9f0cf29ca9f0"); err == nil {
+	_, err := APIKey().URL("a3ee123098128acf29ca9f0cf29ca9f0")
+	if err == nil {
 		t.Error("util resources should not yield a valid URL")
+	}
+	if f, ok := err.(fail.Threat); ok {
+		if f.Severity() != fail.Control {
+			t.Error("severity must be 'Control':", err)
+		}
+	} else {
+		t.Error("error must implement Threat but does not:", err)
 	}
 }
 
@@ -225,8 +265,17 @@ func TestUserDataConstructors(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			loc, err := c.function(c.name)
 
-			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
+			if err != nil {
+				if f, ok := err.(fail.Threat); ok {
+					if f.Severity() != fail.Critical {
+						t.Error("severity must be 'Critical':", err)
+					}
+				} else {
+					t.Error("error must implement Threat but does not:", err)
+				}
+				if c.ok {
+					t.Error("unexpected error:", err)
+				}
 			} else if err == nil && !c.ok {
 				t.Errorf("name '%v' should not have been accepted", c.name)
 			}
@@ -242,8 +291,16 @@ func TestUserDataConstructors(t *testing.T) {
 
 func TestUserDataURL(t *testing.T) {
 	allDayPlays, _ := AllDayPlays("user1")
-	if _, err := allDayPlays.URL("a3ee123098128acf29ca9f0cf29ca9f0"); err == nil {
+	_, err := allDayPlays.URL("a3ee123098128acf29ca9f0cf29ca9f0")
+	if err == nil {
 		t.Error("user data should not yield a valid URL")
+	}
+	if f, ok := err.(fail.Threat); ok {
+		if f.Severity() != fail.Control {
+			t.Error("severity must be 'Control':", err)
+		}
+	} else {
+		t.Error("error must implement Threat but does not:", err)
 	}
 }
 

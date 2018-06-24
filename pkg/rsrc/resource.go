@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/nilsbu/lastfm/pkg/fail"
 )
 
 // Page is a page of a multi-page resource. It defaults to 0.
@@ -31,6 +33,8 @@ type lastFM struct {
 	limit    int
 }
 
+// UserInfo returens a locator for the Last.fm API call "user.getInfo". if the
+// user name is malformed, it returns a critical error.
 func UserInfo(user Name) (*lastFM, error) {
 	if err := checkUserName(user); err != nil {
 		return nil, err
@@ -47,11 +51,14 @@ func UserInfo(user Name) (*lastFM, error) {
 
 func checkUserName(user Name) error {
 	if len(user) < 2 {
-		return fmt.Errorf("user name '%v' too short", user)
+		return WrapError(fail.Critical,
+			fmt.Errorf("user name '%v' too short, min length is 2", user))
 	} else if len(user) > 15 {
-		return fmt.Errorf("user name '%v' too long", user)
+		return WrapError(fail.Critical,
+			fmt.Errorf("user name '%v' too long, max length is 15", user))
 	} else if !isLetter(rune(user[0])) {
-		return fmt.Errorf("user name '%v' doesn't begin with a character", user)
+		return WrapError(fail.Critical,
+			fmt.Errorf("user name '%v' doesn't begin with a character", user))
 	}
 
 	for _, char := range user[1:] {
@@ -60,8 +67,8 @@ func checkUserName(user Name) error {
 		case rune(char) >= rune('0') && rune(char) <= rune('9'):
 		case isLetter(char):
 		default:
-			return fmt.Errorf("user name contains invalid character '%v'",
-				string(char))
+			return WrapError(fail.Critical,
+				fmt.Errorf("user name contains invalid character '%v'", string(char)))
 		}
 	}
 	return nil
@@ -80,9 +87,11 @@ func History(user Name, page Page, day Day) (*lastFM, error) {
 	if err := checkUserName(user); err != nil {
 		return nil, err
 	} else if page <= 0 {
-		return nil, errors.New("page must be positive")
+		return nil, WrapError(fail.Critical,
+			fmt.Errorf("page number must be positive, was %v", page))
 	} else if _, ok := day.Midnight(); !ok {
-		return nil, errors.New("invalid day, must have positive midnight")
+		return nil, WrapError(fail.Critical,
+			errors.New("invalid day, must have positive midnight"))
 	}
 
 	return &lastFM{
@@ -123,7 +132,8 @@ func (loc *lastFM) URL(apiKey Key) (string, error) {
 
 func checkAPIKey(apiKey Key) error {
 	if len(apiKey) != 32 {
-		return errors.New("API key does not have length 32")
+		return WrapError(fail.Critical,
+			errors.New("API key does not have length 32"))
 	}
 
 	for _, char := range apiKey[1:] {
@@ -131,8 +141,8 @@ func checkAPIKey(apiKey Key) error {
 		case rune(char) >= rune('a') && rune(char) <= rune('z'):
 		case rune(char) >= rune('0') && rune(char) <= rune('9'):
 		default:
-			return fmt.Errorf("user name contains invalid character '%v'",
-				string(char))
+			return WrapError(fail.Critical,
+				fmt.Errorf("user name contains invalid character '%v'", string(char)))
 		}
 	}
 
@@ -202,7 +212,8 @@ func SessionID() *util {
 }
 
 func (u util) URL(apiKey Key) (string, error) {
-	return "", fmt.Errorf("'%v' cannot be used as a URL", u.method)
+	return "", WrapError(fail.Control,
+		fmt.Errorf("'%v' cannot be used as a URL", u.method))
 }
 
 func (u util) Path() (string, error) {
@@ -238,7 +249,8 @@ func Bookmark(user Name) (*userData, error) {
 }
 
 func (u userData) URL(apiKey Key) (string, error) {
-	return "", fmt.Errorf("'%v' cannot be used as a URL", u.method)
+	return "", WrapError(fail.Control,
+		fmt.Errorf("'%v' cannot be used as a URL", u.method))
 }
 
 func (u userData) Path() (string, error) {
