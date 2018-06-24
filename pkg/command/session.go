@@ -16,7 +16,7 @@ type sessionInfo struct{}
 func (sessionInfo) Execute(s store.Store) error {
 	sid, err := organize.LoadSessionID(s)
 	if err != nil {
-		fmt.Println("No session is runnung")
+		fmt.Println("No session is running")
 		// TODO should check the kind of error, only some mean there is no session
 		return err
 	}
