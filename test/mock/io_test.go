@@ -3,6 +3,7 @@ package mock
 import (
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -71,20 +72,16 @@ func TestIO(t *testing.T) {
 			}
 
 			err = w.Write(c.data, c.loc)
-			if err != nil && c.writeOK {
-				t.Error("unexpected error during write:", err)
-			} else if err == nil && !c.writeOK {
-				t.Error("write should have failed but did not")
+			if msg, ok := IsThreatCorrect(err, c.writeOK, fail.Control); !ok {
+				t.Error(msg)
 			}
 
 			data, err := r.Read(c.loc)
 			close(r)
 			close(w)
 
-			if err != nil && c.readOK {
-				t.Error("unexpected error during read:", err)
-			} else if err == nil && !c.readOK {
-				t.Error("read should have failed but did not")
+			if msg, ok := IsThreatCorrect(err, c.readOK, fail.Control); !ok {
+				t.Error(msg)
 			}
 			if err == nil {
 				if string(data) != string(c.data) {

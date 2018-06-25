@@ -3,6 +3,7 @@ package mock
 import (
 	"fmt"
 
+	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -70,7 +71,8 @@ func worker(
 			if !ok || data == nil {
 				job.Back <- io.ReadResult{
 					Data: nil,
-					Err:  fmt.Errorf("read at '%v' failed", path),
+					Err: &fail.AssessedError{
+						Sev: fail.Control, Err: fmt.Errorf("read at '%v' failed", path)},
 				}
 			} else {
 				job.Back <- io.ReadResult{Data: data, Err: nil}
@@ -87,7 +89,8 @@ func worker(
 			}
 
 			if _, ok := content[path]; !ok {
-				job.Back <- fmt.Errorf("write at '%v' failed", path)
+				job.Back <- &fail.AssessedError{
+					Sev: fail.Control, Err: fmt.Errorf("write at '%v' failed", path)}
 			} else {
 				content[path] = job.Data
 				job.Back <- nil
