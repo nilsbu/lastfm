@@ -1,5 +1,7 @@
 package fail
 
+import "fmt"
+
 // Severity indicates the amount of damage an error can do.
 type Severity int
 
@@ -33,18 +35,27 @@ type AssessedError struct {
 
 func (err *AssessedError) Error() string {
 	raw := err.Err.Error()
-	switch err.Sev {
-	case Control:
-		return "[control] " + raw
-	case Suspicious:
-		return "[suspicious] " + raw
-	case Critical:
-		return "[critical] " + raw
-	default:
+
+	if err.Sev < 0 || err.Sev > Critical {
 		return raw
 	}
+	return fmt.Sprintf("[%v] %v", GetSeverityString(err.Sev), err.Err)
 }
 
 func (err *AssessedError) Severity() Severity {
 	return err.Sev
+}
+
+// GetSeverityString returns the severity level as a string.
+func GetSeverityString(sev Severity) string {
+	switch sev {
+	case Control:
+		return "control"
+	case Suspicious:
+		return "suspicious"
+	case Critical:
+		return "critical"
+	default:
+		return ""
+	}
 }

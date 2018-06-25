@@ -67,3 +67,25 @@ func TestAssessedErrorSeverity(t *testing.T) {
 		})
 	}
 }
+
+func TestGetSeverityString(t *testing.T) {
+	cases := []struct {
+		sev Severity
+		str string
+	}{
+		{Control, "control"},
+		{Suspicious, "suspicious"},
+		{Critical, "critical"},
+		{-1, ""},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			str := GetSeverityString(c.sev)
+
+			if str != c.str {
+				t.Errorf("wrong severity string, was '%v', expected '%v'", str, c.str)
+			}
+		})
+	}
+}
