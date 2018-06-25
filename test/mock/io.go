@@ -11,6 +11,8 @@ import (
 // APIKey is the API key that is used in mocked URLs.
 const APIKey = "00000000000000000000000000000000"
 
+type Resolver func(loc rsrc.Locator) (string, error)
+
 // Path returns loc.Path()
 func Path(loc rsrc.Locator) (string, error) {
 	return loc.Path()
@@ -30,7 +32,7 @@ func URL(loc rsrc.Locator) (string, error) {
 // can safely be copied. They are thread-safe.
 func IO(
 	content map[rsrc.Locator][]byte,
-	resolve func(loc rsrc.Locator) (string, error),
+	resolve Resolver,
 ) (io.SeqReader, io.SeqWriter, error) {
 
 	files := make(map[string][]byte)

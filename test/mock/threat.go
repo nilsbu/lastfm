@@ -21,8 +21,12 @@ func IsThreatCorrect(
 		return "error should have been returned but was not", false
 	}
 
-	f, ok := err.(fail.Threat)
-	if !ok {
+	if ok {
+		return fmt.Sprintf("unexpected error: %v", err), false
+	}
+
+	f, tok := err.(fail.Threat)
+	if !tok {
 		return fmt.Sprintf("error must implement fail.Threat but does not: %v", err), false
 	}
 
@@ -33,5 +37,5 @@ func IsThreatCorrect(
 		return str, false
 	}
 
-	return ":", true
+	return "", true
 }

@@ -11,7 +11,8 @@ import (
 func TestIsThreatCorrect(t *testing.T) {
 	generic := errors.New("A")
 	control := &fail.AssessedError{Sev: fail.Control, Err: errors.New("B")}
-	critical := &fail.AssessedError{Sev: fail.Critical, Err: errors.New("C")}
+	suspicious := &fail.AssessedError{Sev: fail.Suspicious, Err: errors.New("C")}
+	critical := &fail.AssessedError{Sev: fail.Critical, Err: errors.New("D")}
 
 	cases := []struct {
 		err     error
@@ -22,6 +23,7 @@ func TestIsThreatCorrect(t *testing.T) {
 	}{
 		{generic, false, fail.Control, "error must implement fail.Threat but does not", false},
 		{control, false, fail.Control, "", true},
+		{suspicious, true, fail.Suspicious, "unexpected error", false},
 		{control, false, fail.Suspicious, "severity must be 'suspicious' but was 'control'", false},
 		{critical, false, fail.Control, "severity must be 'control' but was 'critical'", false},
 		{nil, true, fail.Control, "", true},
@@ -55,6 +57,10 @@ func TestIsThreatCorrect(t *testing.T) {
 						t.Errorf("message does not fit, has \"%v\", expected \"%v\"",
 							stripped, c.message)
 					}
+				}
+			} else {
+				if message != "" {
+					t.Errorf("message must be \"\" but was \"%v\"", message)
 				}
 			}
 		})
