@@ -92,7 +92,7 @@ func worker(
 
 			if _, ok := content[path]; !ok {
 				job.Back <- &fail.AssessedError{
-					Sev: fail.Control, Err: fmt.Errorf("write at '%v' failed", path)}
+					Sev: fail.Critical, Err: fmt.Errorf("write at '%v' failed", path)}
 			} else {
 				content[path] = job.Data
 				job.Back <- nil
