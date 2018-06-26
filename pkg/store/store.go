@@ -58,22 +58,21 @@ func (p pool) Update(loc rsrc.Locator) (data []byte, err error) {
 }
 
 func (p pool) Write(data []byte, loc rsrc.Locator) error {
-	var ferr fail.Threat
+	var threat fail.Threat
 	for i := len(p.Pools) - 1; i >= 0; i-- {
 		if wErr := <-p.Pools[i].Write(data, loc); wErr != nil {
-			f, ok := wErr.(fail.Threat)
+			var ok bool
+			threat, ok = wErr.(fail.Threat)
 			if !ok {
-				f = io.WrapError(fail.Critical, wErr)
+				threat = io.WrapError(fail.Critical, wErr)
 			}
-			ferr = f
 			break
 		}
 	}
 
-	if ferr != nil && ferr.Severity() == fail.Control {
+	if threat != nil && threat.Severity() == fail.Control {
 		return nil
 	}
 
-	err, _ := ferr.(error)
-	return err
+	return threat
 }

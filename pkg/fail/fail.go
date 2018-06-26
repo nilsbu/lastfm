@@ -22,8 +22,9 @@ const (
 	Critical
 )
 
-// Threat indicates severity levels of an error.
+// Threat is an error with a severity level.
 type Threat interface {
+	error
 	Severity() Severity
 }
 
