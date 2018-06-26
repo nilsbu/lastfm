@@ -279,7 +279,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(300)}, // registered at 0:05
 			rsrc.ToDay(0),
 			[]unpack.DayPlays{},
-			map[rsrc.Locator][]byte{},
+			map[rsrc.Locator][]byte{h0: nil},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			},
@@ -298,8 +298,10 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			map[rsrc.Locator][]byte{
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 				h2: []byte(`{"recenttracks":{"track":[], "@attr":{"totalPages":"1"}}}`),
+				h3: nil,
 			},
 			map[rsrc.Locator][]byte{
+				h1: nil,
 				h2: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				h3: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
