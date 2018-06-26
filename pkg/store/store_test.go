@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
@@ -129,6 +130,108 @@ func TestPoolRead(t *testing.T) {
 				if string(written) != string(c.data) {
 					t.Errorf("read data is wrong\nread:     %v\nexpected: %v",
 						string(written), string(c.data))
+				}
+			}
+		})
+	}
+}
+
+func TestStoreWrite(t *testing.T) {
+	apiKey := rsrc.APIKey()
+	userInfo, _ := rsrc.UserInfo("abc")
+
+	cases := []struct {
+		files   []map[rsrc.Locator][]byte
+		locf    []mock.Resolver
+		data    []byte
+		loc     rsrc.Locator
+		written [][]byte
+		ok      bool
+		sev     fail.Severity
+	}{
+		{ // failed write (critical)
+			[]map[rsrc.Locator][]byte{
+				map[rsrc.Locator][]byte{},
+			},
+			[]mock.Resolver{mock.Path},
+			[]byte("xx"),
+			userInfo,
+			[][]byte{nil},
+			false, fail.Critical,
+		},
+		{ // not written in layer 0 (no URL for APIKey)
+			[]map[rsrc.Locator][]byte{
+				map[rsrc.Locator][]byte{},
+				map[rsrc.Locator][]byte{apiKey: nil},
+			},
+			[]mock.Resolver{mock.URL, mock.Path},
+			[]byte("xx"),
+			apiKey,
+			[][]byte{nil, []byte("xx")},
+			true, fail.Control,
+		},
+		{ // written in neither (0 not reached since 1 fails)
+			[]map[rsrc.Locator][]byte{
+				map[rsrc.Locator][]byte{apiKey: nil},
+				map[rsrc.Locator][]byte{},
+			},
+			[]mock.Resolver{mock.Path, mock.URL},
+			[]byte("xx"),
+			apiKey,
+			[][]byte{nil, nil},
+			true, fail.Control,
+		},
+		{ // written in both layers
+			[]map[rsrc.Locator][]byte{
+				map[rsrc.Locator][]byte{userInfo: nil},
+				map[rsrc.Locator][]byte{userInfo: nil},
+			},
+			[]mock.Resolver{mock.URL, mock.Path},
+			[]byte("xx"),
+			userInfo,
+			[][]byte{[]byte("xx"), []byte("xx")},
+			true, fail.Control,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			var readers [][]io.Reader
+			var writers [][]io.Writer
+			for i := range c.files {
+				r, w, err := mock.IO(c.files[i], c.locf[i])
+				if err != nil {
+					t.Fatal("setup error")
+				}
+				readers = append(readers, []io.Reader{r})
+				writers = append(writers, []io.Writer{w})
+			}
+
+			s, err := New(readers, writers)
+			if err != nil {
+				t.Error("unexpected error in constructor")
+			}
+
+			err = s.Write(c.data, c.loc)
+			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
+				t.Error(str)
+			}
+
+			for i, rs := range readers {
+				data, err := rs[0].Read(c.loc)
+
+				if err != nil {
+					if c.written[i] != nil {
+						if string(data) != string(c.written[i]) {
+							t.Errorf("written data false at level %v:\n"+
+								"has:      '%v'\nexpected: '%v'",
+								i, string(data), string(c.written[i]))
+						}
+					} else {
+						if c.written[i] != nil {
+							t.Errorf("expected written in layer %v but was not", i)
+						}
+					}
 				}
 			}
 		})
