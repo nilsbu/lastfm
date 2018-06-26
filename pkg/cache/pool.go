@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 
+	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -25,10 +26,12 @@ func NewPool(
 	writers []io.Writer,
 ) (Pool, error) {
 	if len(readers) == 0 {
-		return nil, errors.New("pool must have at least one reader")
+		return nil, io.WrapError(fail.Critical,
+			errors.New("pool must have at least one reader"))
 	}
 	if len(writers) == 0 {
-		return nil, errors.New("pool must have at least one writer")
+		return nil, io.WrapError(fail.Critical,
+			errors.New("pool must have at least one writer"))
 	}
 
 	pool := workerPool{

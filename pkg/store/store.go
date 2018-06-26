@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+
 	"github.com/nilsbu/lastfm/pkg/cache"
 	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/io"
@@ -23,7 +25,14 @@ type pool struct {
 func New(
 	readers [][]io.Reader,
 	writers [][]io.Writer) (Store, error) {
-	// TODO check lenghts
+	if len(readers) != len(writers) {
+		return nil, io.WrapError(fail.Critical,
+			errors.New("readers and writers must have equal numbers of layers"))
+	}
+	if len(readers) == 0 {
+		return nil, io.WrapError(fail.Critical,
+			errors.New("readers and writers must have at least one layer"))
+	}
 
 	pools := make([]cache.Pool, len(readers))
 	for i := range readers {
@@ -38,41 +47,67 @@ func New(
 }
 
 func (p pool) Read(loc rsrc.Locator) (data []byte, err error) {
-	result := <-p.Pools[1].Read(loc)
-	data, err = result.Data, result.Err
-	if err == nil {
-		return data, nil
-	}
-
-	return p.Update(loc)
+	data, err = p.read(loc, len(p.Pools)-1, -1)
+	return data, err
 }
 
 func (p pool) Update(loc rsrc.Locator) (data []byte, err error) {
-	result := <-p.Pools[0].Read(loc)
-	data, err = result.Data, result.Err
-	if err == nil {
-		// TODO what happens to the result
-		p.Write(data, loc)
-	}
+	data, err = p.read(loc, 0, 1)
+	// data, _, err := p.read(loc, len(p.Pools)-1, -1)
 	return data, err
 }
 
 func (p pool) Write(data []byte, loc rsrc.Locator) error {
-	var threat fail.Threat
-	for i := len(p.Pools) - 1; i >= 0; i-- {
-		if wErr := <-p.Pools[i].Write(data, loc); wErr != nil {
-			var ok bool
-			threat, ok = wErr.(fail.Threat)
-			if !ok {
-				threat = io.WrapError(fail.Critical, wErr)
+	_, err := p.write(data, loc, len(p.Pools)-1, -1)
+	return err
+}
+
+func (p pool) read(loc rsrc.Locator, start int, di int,
+) (data []byte, err error) {
+
+	idx, err := p.cascade(start, di, func(i int) (bool, error) {
+		result := <-p.Pools[i].Read(loc)
+		var tmpErr error
+		data, tmpErr = result.Data, result.Err
+		if tmpErr == nil {
+			return false, nil
+		}
+		if f, ok := tmpErr.(fail.Threat); ok && f.Severity() == fail.Control {
+			return true, nil
+		}
+		return false, tmpErr
+	})
+
+	if idx < 0 {
+		return nil, io.WrapError(fail.Control, errors.New("not found"))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.write(data, loc, idx+1, 1)
+	return data, err
+}
+
+func (p pool) write(data []byte, loc rsrc.Locator, start int, di int) (int, error) {
+	return p.cascade(start, di, func(i int) (bool, error) {
+		if err := <-p.Pools[i].Write(data, loc); err != nil {
+			if f, ok := err.(fail.Threat); ok && f.Severity() == fail.Control {
+				return true, nil
 			}
-			break
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func (p pool) cascade(start int, di int, f func(i int) (bool, error)) (int, error) {
+	for i := start; i >= 0 && i < len(p.Pools); i += di {
+		if cont, err := f(i); !cont {
+			return i, err
 		}
 	}
 
-	if threat != nil && threat.Severity() == fail.Control {
-		return nil
-	}
-
-	return threat
+	return -1, nil
 }
