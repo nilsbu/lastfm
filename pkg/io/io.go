@@ -76,7 +76,11 @@ func (FileIO) Write(data []byte, loc rsrc.Locator) error {
 	}
 
 	_, err = f.Write(data)
-	return WrapError(fail.Critical, err)
+	if err != nil {
+		return WrapError(fail.Critical, err)
+	}
+
+	return nil
 }
 
 func (FileIO) Remove(loc rsrc.Locator) error {
