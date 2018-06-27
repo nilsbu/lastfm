@@ -31,6 +31,16 @@ type Updater interface {
 	Update(loc rsrc.Locator) (data []byte, err error)
 }
 
+type ReadWriter interface {
+	Reader
+	Writer
+}
+
+type IO interface {
+	ReadWriter
+	Remover
+}
+
 // FileIO privides access to the local file system. It implements Reader,
 // Writer and Remover.
 type FileIO struct{}
