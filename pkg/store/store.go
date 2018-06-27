@@ -10,8 +10,7 @@ import (
 )
 
 type Store interface {
-	io.Reader
-	io.Writer
+	io.ReadWriter // TODO should be IO
 	io.Updater
 }
 
@@ -79,7 +78,7 @@ func (p pool) read(loc rsrc.Locator, start int, di int,
 	})
 
 	if idx < 0 {
-		return nil, io.WrapError(fail.Control, errors.New("not found"))
+		return nil, io.WrapError(fail.Control, errors.New("resource not found"))
 	}
 
 	if err != nil {
