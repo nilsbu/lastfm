@@ -2,6 +2,7 @@ package command
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/nilsbu/lastfm/pkg/io"
@@ -11,26 +12,31 @@ import (
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-type sessionInfo struct{}
+type sessionInfo struct {
+	sid organize.SessionID
+}
 
-func (sessionInfo) Execute(s store.Store) error {
-	sid, err := organize.LoadSessionID(s)
-	if err != nil {
-		fmt.Println("No session is running")
-		// TODO should check the kind of error, only some mean there is no session
-		return err
+func (c sessionInfo) Execute(s store.Store) error {
+	if c.sid == "" {
+		fmt.Println("no session is running")
+	} else {
+		fmt.Printf("a session is running for user '%v'\n", c.sid)
 	}
-
-	fmt.Printf("A session is running for user '%v'\n", sid)
 
 	return nil
 }
 
 type sessionStart struct {
+	sid  organize.SessionID
 	user rsrc.Name
 }
 
 func (c sessionStart) Execute(s store.Store) error {
+	if c.sid != "" {
+		return fmt.Errorf("a session is already running for '%v'", c.sid)
+	}
+
+	// TODO create function
 	sid := &unpack.SessionID{User: string(c.user)}
 	data, err := json.Marshal(sid)
 	if err != nil {
@@ -40,8 +46,14 @@ func (c sessionStart) Execute(s store.Store) error {
 	return s.Write(data, rsrc.SessionID())
 }
 
-type sessionStop struct{}
+type sessionStop struct {
+	sid organize.SessionID
+}
 
-func (sessionStop) Execute(s store.Store) error {
+func (c sessionStop) Execute(s store.Store) error {
+	if c.sid == "" {
+		return errors.New("no session is running")
+	}
+	// TODO crate function
 	return io.FileIO{}.Remove(rsrc.SessionID())
 }

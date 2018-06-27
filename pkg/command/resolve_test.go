@@ -45,6 +45,10 @@ func TestResolve(t *testing.T) {
 			"", sessionInfo{}, true,
 		},
 		{
+			[]string{"lastfm", "session", "info"},
+			"xs", sessionInfo{"xs"}, true,
+		},
+		{
 			[]string{"lastfm", "session", "info", "tim"},
 			"", nil, false,
 		},
@@ -58,7 +62,7 @@ func TestResolve(t *testing.T) {
 		},
 		{
 			[]string{"lastfm", "session", "start", "tim"},
-			"", sessionStart{user: "tim"}, true,
+			"tom", sessionStart{sid: "tom", user: "tim"}, true,
 		},
 		{
 			[]string{"lastfm", "session", "start", "tim", "xs"},
@@ -66,7 +70,7 @@ func TestResolve(t *testing.T) {
 		},
 		{
 			[]string{"lastfm", "session", "stop"},
-			"", sessionStop{}, true,
+			"", sessionStop{""}, true,
 		},
 		{
 			[]string{"lastfm", "session", "stop", "tim"},

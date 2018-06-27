@@ -46,7 +46,7 @@ func resolveLastfm(
 func resolveSession(
 	params []string, sid organize.SessionID) (cmd command, err error) {
 	if len(params) < 1 {
-		return sessionInfo{}, nil
+		return sessionInfo{sid}, nil
 	}
 
 	first, params := params[0], params[1:]
@@ -56,19 +56,19 @@ func resolveSession(
 		if len(params) > 0 {
 			return nil, errors.New("'session info' requires no further parameters")
 		}
-		return sessionInfo{}, nil
+		return sessionInfo{sid}, nil
 	case "start":
 		if len(params) < 1 {
 			return nil, errors.New("'session start' requires a user name")
 		} else if len(params) > 1 {
 			return nil, errors.New("params %v are superfluous")
 		}
-		return sessionStart{user: rsrc.Name(params[0])}, nil
+		return sessionStart{sid: sid, user: rsrc.Name(params[0])}, nil
 	case "stop":
 		if len(params) > 0 {
 			return nil, errors.New("'session stop' requires no further parameters")
 		}
-		return sessionStop{}, nil
+		return sessionStop{sid}, nil
 	default:
 		return nil, fmt.Errorf("parameter '%v' is not supported", first)
 	}
