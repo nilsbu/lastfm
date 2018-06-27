@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-func resolve(args []string) (cmd command, err error) {
+func resolve(args []string, sid organize.SessionID) (cmd command, err error) {
 	if len(args) < 1 {
 		return nil, errors.New("args does not contain the program name")
 	}
@@ -16,13 +17,14 @@ func resolve(args []string) (cmd command, err error) {
 
 	switch first {
 	case "lastfm":
-		return resolveLastfm(params)
+		return resolveLastfm(params, sid)
 	default:
 		return nil, fmt.Errorf("program '%v' is not supported", first)
 	}
 }
 
-func resolveLastfm(params []string) (cmd command, err error) {
+func resolveLastfm(
+	params []string, sid organize.SessionID) (cmd command, err error) {
 	if len(params) < 1 {
 		return help{}, nil
 	}
@@ -33,13 +35,16 @@ func resolveLastfm(params []string) (cmd command, err error) {
 	case "help":
 		return help{}, nil
 	case "session":
-		return resolveSession(params)
+		return resolveSession(params, sid)
+	case "update":
+		return resolveUpdate(params, sid)
 	default:
 		return nil, fmt.Errorf("command '%v' is not supported", first)
 	}
 }
 
-func resolveSession(params []string) (cmd command, err error) {
+func resolveSession(
+	params []string, sid organize.SessionID) (cmd command, err error) {
 	if len(params) < 1 {
 		return sessionInfo{}, nil
 	}
@@ -55,8 +60,7 @@ func resolveSession(params []string) (cmd command, err error) {
 	case "start":
 		if len(params) < 1 {
 			return nil, errors.New("'session start' requires a user name")
-		}
-		if len(params) > 1 {
+		} else if len(params) > 1 {
 			return nil, errors.New("params %v are superfluous")
 		}
 		return sessionStart{user: rsrc.Name(params[0])}, nil
@@ -65,6 +69,25 @@ func resolveSession(params []string) (cmd command, err error) {
 			return nil, errors.New("'session stop' requires no further parameters")
 		}
 		return sessionStop{}, nil
+	default:
+		return nil, fmt.Errorf("parameter '%v' is not supported", first)
+	}
+}
+
+func resolveUpdate(
+	params []string, sid organize.SessionID) (cmd command, err error) {
+	if sid == "" {
+		return nil, errors.New("'update' requires a running session or further parameters")
+	}
+
+	if len(params) < 1 {
+		return updateHistory{sid}, nil
+	}
+
+	first, params := params[0], params[1:]
+
+	switch first {
+	// TODO more update commands
 	default:
 		return nil, fmt.Errorf("parameter '%v' is not supported", first)
 	}

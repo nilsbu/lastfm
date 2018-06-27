@@ -2,76 +2,98 @@ package command
 
 import (
 	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/organize"
 )
 
 func TestResolve(t *testing.T) {
 	cases := []struct {
 		args []string
+		sid  organize.SessionID
 		cmd  command
 		ok   bool
 	}{
 		{
 			[]string{},
-			nil, false},
+			"", nil, false,
+		},
 		{
 			[]string{"grep"},
-			nil, false,
+			"", nil, false,
 		},
 		{
 			[]string{"lastfm"},
-			help{}, true,
+			"", help{}, true,
 		},
 		{
 			[]string{"lastfm", "asjkdfh"},
-			help{}, false,
+			"", help{}, false,
 		},
 		{
 			[]string{"lastfm", "help"},
-			help{}, true,
+			"", help{}, true,
 		},
 		// TODO help for commands
 		{
 			[]string{"lastfm", "session"},
-			sessionInfo{}, true,
+			"", sessionInfo{}, true,
 		},
 		{
 			[]string{"lastfm", "session", "info"},
-			sessionInfo{}, true,
+			"", sessionInfo{}, true,
 		},
 		{
 			[]string{"lastfm", "session", "info", "tim"},
-			nil, false,
+			"", nil, false,
 		},
 		{
 			[]string{"lastfm", "session", "asd"},
-			nil, false,
+			"", nil, false,
 		},
 		{
 			[]string{"lastfm", "session", "start"},
-			nil, false,
+			"", nil, false,
 		},
 		{
 			[]string{"lastfm", "session", "start", "tim"},
-			sessionStart{user: "tim"}, true,
+			"", sessionStart{user: "tim"}, true,
 		},
 		{
 			[]string{"lastfm", "session", "start", "tim", "xs"},
-			nil, false,
+			"", nil, false,
 		},
 		{
 			[]string{"lastfm", "session", "stop"},
-			sessionStop{}, true,
+			"", sessionStop{}, true,
 		},
 		{
 			[]string{"lastfm", "session", "stop", "tim"},
-			nil, false,
+			"", nil, false,
+		},
+		{
+			[]string{"lastfm", "update"},
+			"", nil, false,
+		},
+		{
+			[]string{"lastfm", "update"},
+			"user", updateHistory{"user"}, true,
+		},
+		{
+			[]string{"lastfm", "update", "aargh!"},
+			"user", nil, false,
 		},
 	}
 
 	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			cmd, err := resolve(c.args)
+		str := strings.Join(c.args, " ")
+		if c.sid != "" {
+			str += " (" + string(c.sid) + ")"
+		}
+
+		t.Run(str, func(t *testing.T) {
+			cmd, err := resolve(c.args, c.sid)
 
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
