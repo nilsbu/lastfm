@@ -12,12 +12,13 @@ type Day interface {
 	Midnight() (unix int64, ok bool)
 }
 
-type date time.Time
+// Date is a representation of time. It implements Day.
+type Date time.Time
 
 // ToDay converts a Unix timestamp into a Day. The day is only valid if the
 // time stamp is non-negative.
 func ToDay(timestamp int64) Day {
-	return date(time.Unix(timestamp, 0).UTC())
+	return Date(time.Unix(timestamp, 0).UTC())
 }
 
 // NoDay returns an invalid Day.
@@ -25,7 +26,8 @@ func NoDay() Day {
 	return ToDay(-1)
 }
 
-func (d date) Midnight() (unix int64, ok bool) {
+// Midnight returns the Unix timestamp of a date's midnight.
+func (d Date) Midnight() (unix int64, ok bool) {
 	t := time.Time(d).Unix()
 	if t < 0 {
 		return -1, false
