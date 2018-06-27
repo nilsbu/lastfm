@@ -98,8 +98,12 @@ func (FileIO) Remove(loc rsrc.Locator) error {
 	if err != nil {
 		return err
 	}
+
 	err = os.Remove(path)
-	return WrapError(fail.Critical, err)
+	if err != nil {
+		return WrapError(fail.Critical, err)
+	}
+	return nil
 }
 
 // Downloader is a reader for Last.fm. It implements io.Reader.
