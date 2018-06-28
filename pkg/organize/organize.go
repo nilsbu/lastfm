@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -84,43 +83,6 @@ func ReadAllDayPlays(
 
 	err = json.Unmarshal(jsonData, &plays)
 	return
-}
-
-// ReadBookmark read a bookmark for a user's saved daily plays.
-// TODO Bookmarks should use time.Time
-func ReadBookmark(user string, r rsrc.Reader) (utc int64, err error) {
-	loc, err := rsrc.Bookmark(user)
-	if err != nil {
-		return 0, err
-	}
-	data, err := r.Read(loc)
-	if err != nil {
-		return 0, err
-	}
-
-	bookmark := &unpack.Bookmark{}
-	err = json.Unmarshal(data, bookmark)
-	if err != nil {
-		return 0, err
-	}
-
-	return bookmark.UTC, nil
-}
-
-// WriteBookmark writes a bookmark for a user's saved daily plays.
-func WriteBookmark(utc int64, user string, w rsrc.Writer) error {
-	bookmark := unpack.Bookmark{
-		UTC:        utc,
-		TimeString: time.Unix(utc, 0).UTC().Format("2006-01-02 15:04:05 +0000 UTC"),
-	}
-
-	data, _ := json.Marshal(bookmark)
-	loc, err := rsrc.Bookmark(user)
-	if err != nil {
-		return err
-	}
-	err = w.Write(data, loc)
-	return err
 }
 
 // UpdateAllDayPlays loads saved daily plays from preprocessed all day plays and

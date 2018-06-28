@@ -257,8 +257,6 @@ func TestUserDataConstructors(t *testing.T) {
 	}{
 		{AllDayPlays, "aA", true},
 		{AllDayPlays, "a%", false},
-		{Bookmark, "aAasldfhk", true},
-		{Bookmark, "a%", false},
 	}
 
 	for _, c := range cases {

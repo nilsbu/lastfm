@@ -229,16 +229,6 @@ func AllDayPlays(user string) (*userData, error) {
 	}, nil
 }
 
-func Bookmark(user string) (*userData, error) {
-	if err := checkUserName(user); err != nil {
-		return nil, err
-	}
-	return &userData{
-		method: "bookmark",
-		name:   user,
-	}, nil
-}
-
 func (u userData) URL(apiKey string) (string, error) {
 	return "", fail.WrapError(fail.Control,
 		fmt.Errorf("'%v' cannot be used as a URL", u.method))
