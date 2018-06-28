@@ -51,13 +51,13 @@ func UserInfo(user Name) (*lastFM, error) {
 
 func checkUserName(user Name) error {
 	if len(user) < 2 {
-		return WrapError(fail.Critical,
+		return fail.WrapError(fail.Critical,
 			fmt.Errorf("user name '%v' too short, min length is 2", user))
 	} else if len(user) > 15 {
-		return WrapError(fail.Critical,
+		return fail.WrapError(fail.Critical,
 			fmt.Errorf("user name '%v' too long, max length is 15", user))
 	} else if !isLetter(rune(user[0])) {
-		return WrapError(fail.Critical,
+		return fail.WrapError(fail.Critical,
 			fmt.Errorf("user name '%v' doesn't begin with a character", user))
 	}
 
@@ -67,7 +67,7 @@ func checkUserName(user Name) error {
 		case rune(char) >= rune('0') && rune(char) <= rune('9'):
 		case isLetter(char):
 		default:
-			return WrapError(fail.Critical,
+			return fail.WrapError(fail.Critical,
 				fmt.Errorf("user name contains invalid character '%v'", string(char)))
 		}
 	}
@@ -87,10 +87,10 @@ func History(user Name, page Page, day Day) (*lastFM, error) {
 	if err := checkUserName(user); err != nil {
 		return nil, err
 	} else if page <= 0 {
-		return nil, WrapError(fail.Critical,
+		return nil, fail.WrapError(fail.Critical,
 			fmt.Errorf("page number must be positive, was %v", page))
 	} else if _, ok := day.Midnight(); !ok {
-		return nil, WrapError(fail.Critical,
+		return nil, fail.WrapError(fail.Critical,
 			errors.New("invalid day, must have positive midnight"))
 	}
 
@@ -132,7 +132,7 @@ func (loc *lastFM) URL(apiKey Key) (string, error) {
 
 func checkAPIKey(apiKey Key) error {
 	if len(apiKey) != 32 {
-		return WrapError(fail.Critical,
+		return fail.WrapError(fail.Critical,
 			errors.New("API key does not have length 32"))
 	}
 
@@ -141,7 +141,7 @@ func checkAPIKey(apiKey Key) error {
 		case rune(char) >= rune('a') && rune(char) <= rune('z'):
 		case rune(char) >= rune('0') && rune(char) <= rune('9'):
 		default:
-			return WrapError(fail.Critical,
+			return fail.WrapError(fail.Critical,
 				fmt.Errorf("user name contains invalid character '%v'", string(char)))
 		}
 	}
@@ -212,7 +212,7 @@ func SessionID() *util {
 }
 
 func (u util) URL(apiKey Key) (string, error) {
-	return "", WrapError(fail.Control,
+	return "", fail.WrapError(fail.Control,
 		fmt.Errorf("'%v' cannot be used as a URL", u.method))
 }
 
@@ -249,7 +249,7 @@ func Bookmark(user Name) (*userData, error) {
 }
 
 func (u userData) URL(apiKey Key) (string, error) {
-	return "", WrapError(fail.Control,
+	return "", fail.WrapError(fail.Control,
 		fmt.Errorf("'%v' cannot be used as a URL", u.method))
 }
 

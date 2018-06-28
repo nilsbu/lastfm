@@ -24,11 +24,11 @@ func New(
 	readers [][]rsrc.Reader,
 	writers [][]rsrc.Writer) (Store, error) {
 	if len(readers) != len(writers) {
-		return nil, rsrc.WrapError(fail.Critical,
+		return nil, fail.WrapError(fail.Critical,
 			errors.New("readers and writers must have equal numbers of layers"))
 	}
 	if len(readers) == 0 {
-		return nil, rsrc.WrapError(fail.Critical,
+		return nil, fail.WrapError(fail.Critical,
 			errors.New("readers and writers must have at least one layer"))
 	}
 
@@ -77,7 +77,7 @@ func (p pool) read(loc rsrc.Locator, start int, di int,
 	})
 
 	if idx < 0 {
-		return nil, rsrc.WrapError(fail.Control, errors.New("resource not found"))
+		return nil, fail.WrapError(fail.Control, errors.New("resource not found"))
 	}
 
 	if err != nil {

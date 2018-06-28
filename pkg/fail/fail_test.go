@@ -89,3 +89,16 @@ func TestGetSeverityString(t *testing.T) {
 		})
 	}
 }
+
+func TestErrorConstructors(t *testing.T) {
+	err := WrapError(Suspicious, errors.New("abc"))
+
+	if err.Sev != Suspicious {
+		t.Error("severity must be 'Suspicious'")
+	}
+
+	str := err.Err.Error()
+	if str != "abc" {
+		t.Errorf("wrong error message, was '%v', expected 'abc'", str)
+	}
+}

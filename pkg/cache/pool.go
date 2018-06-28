@@ -26,11 +26,11 @@ func NewPool(
 	writers []rsrc.Writer,
 ) (Pool, error) {
 	if len(readers) == 0 {
-		return nil, io.WrapError(fail.Critical,
+		return nil, rsrc.WrapError(fail.Critical,
 			errors.New("pool must have at least one reader"))
 	}
 	if len(writers) == 0 {
-		return nil, io.WrapError(fail.Critical,
+		return nil, rsrc.WrapError(fail.Critical,
 			errors.New("pool must have at least one writer"))
 	}
 

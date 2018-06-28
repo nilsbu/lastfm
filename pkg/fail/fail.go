@@ -60,3 +60,12 @@ func GetSeverityString(sev Severity) string {
 		return ""
 	}
 }
+
+func WrapError(
+	severity Severity,
+	err error) *AssessedError {
+	return &AssessedError{
+		Sev: severity,
+		Err: err,
+	}
+}

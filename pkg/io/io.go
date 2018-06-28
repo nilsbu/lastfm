@@ -26,10 +26,10 @@ func (FileIO) Read(loc rsrc.Locator) ([]byte, error) {
 	if err != nil {
 		switch err.(type) {
 		case *os.PathError:
-			err = WrapError(fail.Control, err)
+			err = fail.WrapError(fail.Control, err)
 		default:
 			// possible cause: bytes.ErrTooLarge
-			err = WrapError(fail.Critical, err)
+			err = fail.WrapError(fail.Critical, err)
 		}
 	}
 
@@ -46,19 +46,19 @@ func (FileIO) Write(data []byte, loc rsrc.Locator) error {
 		dir := filepath.Dir(path)
 		if err := os.MkdirAll(dir, 0040755); err != nil {
 			// Will be *PathError (?)
-			return WrapError(fail.Critical, err)
+			return fail.WrapError(fail.Critical, err)
 		}
 	}
 
 	f, err := os.Create(path)
 	if err != nil {
 		// Will be *PathError
-		return WrapError(fail.Critical, err)
+		return fail.WrapError(fail.Critical, err)
 	}
 
 	_, err = f.Write(data)
 	if err != nil {
-		return WrapError(fail.Critical, err)
+		return fail.WrapError(fail.Critical, err)
 	}
 
 	return nil
@@ -72,7 +72,7 @@ func (FileIO) Remove(loc rsrc.Locator) error {
 
 	err = os.Remove(path)
 	if err != nil {
-		return WrapError(fail.Critical, err)
+		return fail.WrapError(fail.Critical, err)
 	}
 	return nil
 }
@@ -88,21 +88,21 @@ func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, WrapError(fail.Critical, err)
-	} else {
-		defer resp.Body.Close()
+		return nil, fail.WrapError(fail.Critical, err)
 	}
+
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		switch resp.StatusCode {
 		case 403:
-			err = WrapError(fail.Critical,
+			err = fail.WrapError(fail.Critical,
 				errors.New("forbidden (403), wrong API key?"))
 		case 404:
-			err = WrapError(fail.Suspicious,
+			err = fail.WrapError(fail.Suspicious,
 				errors.New("resouce not found (404)"))
 		default:
-			err = WrapError(fail.Suspicious,
+			err = fail.WrapError(fail.Suspicious,
 				fmt.Errorf("unexpected HTTP status: %v", resp.Status))
 		}
 		return nil, err
@@ -111,7 +111,7 @@ func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
 	data, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		// possible cause: bytes.ErrTooLarge
-		return nil, WrapError(fail.Critical, err)
+		return nil, fail.WrapError(fail.Critical, err)
 	}
 	return data, err
 }
@@ -132,11 +132,11 @@ func (ur updateRedirect) Read(loc rsrc.Locator) (data []byte, err error) {
 type FailIO struct{}
 
 func (FailIO) Read(loc rsrc.Locator) (data []byte, err error) {
-	return nil, WrapError(fail.Control,
+	return nil, fail.WrapError(fail.Control,
 		fmt.Errorf("cannot read on FailIO"))
 }
 
 func (FailIO) Write(data []byte, loc rsrc.Locator) (err error) {
-	return WrapError(fail.Control,
+	return fail.WrapError(fail.Control,
 		fmt.Errorf("cannot write on FailIO"))
 }
