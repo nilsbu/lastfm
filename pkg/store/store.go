@@ -3,7 +3,6 @@ package store
 import (
 	"errors"
 
-	"github.com/nilsbu/lastfm/pkg/cache"
 	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -16,7 +15,7 @@ type Store interface {
 // pool is a pool of IO workers. It contains workers for download, file reading
 // and writing.
 type pool struct {
-	Pools []cache.Pool
+	Pools []Pool
 }
 
 // TODO ...
@@ -32,9 +31,9 @@ func New(
 			errors.New("readers and writers must have at least one layer"))
 	}
 
-	pools := make([]cache.Pool, len(readers))
+	pools := make([]Pool, len(readers))
 	for i := range readers {
-		pool, err := cache.NewPool(readers[i], writers[i])
+		pool, err := NewPool(readers[i], writers[i])
 		if err != nil {
 			return nil, err
 		}
