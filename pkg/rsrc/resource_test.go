@@ -8,7 +8,7 @@ import (
 
 func TestUserInfo(t *testing.T) {
 	cases := []struct {
-		name Name
+		name string
 		ok   bool
 	}{
 		{"aA", true},                // ok
@@ -55,8 +55,8 @@ func TestUserInfo(t *testing.T) {
 
 func TestHistory(t *testing.T) {
 	cases := []struct {
-		name Name
-		page Page
+		name string
+		page int
 		day  Day
 		ok   bool
 	}{
@@ -112,7 +112,7 @@ func TestLastFMURL(t *testing.T) {
 
 	cases := []struct {
 		loc    *lastFM
-		apiKey Key
+		apiKey string
 		url    string
 		ok     bool
 	}{
@@ -251,8 +251,8 @@ func TestUtilPath(t *testing.T) {
 
 func TestUserDataConstructors(t *testing.T) {
 	cases := []struct {
-		function func(Name) (*userData, error)
-		name     Name
+		function func(string) (*userData, error)
+		name     string
 		ok       bool
 	}{
 		{AllDayPlays, "aA", true},

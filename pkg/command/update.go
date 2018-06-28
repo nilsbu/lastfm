@@ -16,7 +16,7 @@ type updateHistory struct {
 
 func (c updateHistory) Execute(s store.Store) error {
 	// TODO turn this into a function
-	name, err := rsrc.UserInfo(rsrc.Name(c.sid))
+	name, err := rsrc.UserInfo(string(c.sid))
 	if err != nil {
 		return err
 	}

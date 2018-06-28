@@ -17,7 +17,7 @@ const path = "../../test/files/temp.txt"
 
 type stubPath string
 
-func (stubPath) URL(rsrc.Key) (string, error) {
+func (stubPath) URL(string) (string, error) {
 	return "", errors.New("no URL")
 }
 
@@ -168,7 +168,7 @@ func (stubURL) Path() (string, error) {
 	return "", errors.New("no path")
 }
 
-func (url stubURL) URL(rsrc.Key) (string, error) {
+func (url stubURL) URL(string) (string, error) {
 	if url == "" {
 		return "", &fail.AssessedError{Sev: fail.Control, Err: errors.New("no URL")}
 	}

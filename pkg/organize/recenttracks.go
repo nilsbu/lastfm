@@ -55,7 +55,7 @@ type LoadDayPlaysResult struct {
 }
 
 func loadDayPlays(
-	user rsrc.Name,
+	user string,
 	time rsrc.Day,
 	r rsrc.Reader,
 ) (unpack.DayPlays, error) {
@@ -69,16 +69,16 @@ func loadDayPlays(
 	}
 
 	back := make(chan LoadDayPlaysResult)
-	for p := 1; p < pages; p++ {
-		go func(p rsrc.Page) {
-			loc, tmpErr := rsrc.History(user, p+1, time)
+	for page := 1; page < pages; page++ {
+		go func(page int) {
+			loc, tmpErr := rsrc.History(user, page+1, time)
 			var tmpDP unpack.DayPlays
 			if tmpErr == nil {
 				tmpDP, _, tmpErr = loadDayPlaysPage(loc, r)
 			}
 
 			back <- LoadDayPlaysResult{tmpDP, tmpErr}
-		}(rsrc.Page(p))
+		}(page)
 	}
 
 	for p := 1; p < pages; p++ {

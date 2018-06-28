@@ -28,7 +28,7 @@ func (c sessionInfo) Execute(s store.Store) error {
 
 type sessionStart struct {
 	sid  organize.SessionID
-	user rsrc.Name
+	user string
 }
 
 func (c sessionStart) Execute(s store.Store) error {

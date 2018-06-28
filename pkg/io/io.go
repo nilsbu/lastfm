@@ -71,11 +71,11 @@ func (FileIO) Remove(loc rsrc.Locator) error {
 }
 
 // Downloader is a reader for Last.fm. It implements io.Reader.
-type Downloader rsrc.Key
+type Downloader string
 
 // TODO test with net/http/httptest
 func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
-	url, err := loc.URL(rsrc.Key(d))
+	url, err := loc.URL(string(d))
 	if err != nil {
 		return nil, err
 	}

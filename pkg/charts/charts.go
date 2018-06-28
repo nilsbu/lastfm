@@ -5,12 +5,11 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 // Charts is table of daily accumulation of plays.
-type Charts map[rsrc.Name][]int
+type Charts map[string][]int
 
 // Sums are special charts where each row consists of the some from the
 // beginning until the current row.
@@ -21,7 +20,7 @@ type Column []Score
 
 // Score is a score with a name attached,
 type Score struct {
-	Name  rsrc.Name
+	Name  string
 	Score int
 }
 

@@ -9,17 +9,8 @@ import (
 	"github.com/nilsbu/lastfm/pkg/fail"
 )
 
-// Page is a page of a multi-page resource. It defaults to 0.
-type Page int
-
-// Name is the name of a user, artist or tag.
-type Name string
-
-// Key represents a API key.
-type Key string
-
 type Locator interface {
-	URL(apiKey Key) (string, error)
+	URL(apiKey string) (string, error)
 	Path() (string, error)
 }
 
@@ -27,15 +18,15 @@ type Locator interface {
 type lastFM struct {
 	method   string
 	nameType string
-	name     Name
-	page     Page
+	name     string
+	page     int
 	day      Day
 	limit    int
 }
 
 // UserInfo returens a locator for the Last.fm API call "user.getInfo". if the
 // user name is malformed, it returns a critical error.
-func UserInfo(user Name) (*lastFM, error) {
+func UserInfo(user string) (*lastFM, error) {
 	if err := checkUserName(user); err != nil {
 		return nil, err
 	}
@@ -49,7 +40,7 @@ func UserInfo(user Name) (*lastFM, error) {
 	}, nil
 }
 
-func checkUserName(user Name) error {
+func checkUserName(user string) error {
 	if len(user) < 2 {
 		return fail.WrapError(fail.Critical,
 			fmt.Errorf("user name '%v' too short, min length is 2", user))
@@ -83,7 +74,7 @@ func isLetter(char rune) bool {
 	return false
 }
 
-func History(user Name, page Page, day Day) (*lastFM, error) {
+func History(user string, page int, day Day) (*lastFM, error) {
 	if err := checkUserName(user); err != nil {
 		return nil, err
 	} else if page <= 0 {
@@ -104,7 +95,7 @@ func History(user Name, page Page, day Day) (*lastFM, error) {
 	}, nil
 }
 
-func (loc *lastFM) URL(apiKey Key) (string, error) {
+func (loc *lastFM) URL(apiKey string) (string, error) {
 	if err := checkAPIKey(apiKey); err != nil {
 		return "", err
 	}
@@ -130,7 +121,7 @@ func (loc *lastFM) URL(apiKey Key) (string, error) {
 	return url, nil
 }
 
-func checkAPIKey(apiKey Key) error {
+func checkAPIKey(apiKey string) error {
 	if len(apiKey) != 32 {
 		return fail.WrapError(fail.Critical,
 			errors.New("API key does not have length 32"))
@@ -163,25 +154,25 @@ func (loc *lastFM) Path() (string, error) {
 	return path + ".json", nil
 }
 
-func escapeBadNames(name Name) Name {
+func escapeBadNames(name string) string {
 	bad := [13]string{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
 		"LPT1", "LPT2", "LPT3", "LPT4", "LST"}
 
 	upperName := strings.ToUpper(string(name))
 	for _, s := range bad {
 		if upperName == s {
-			return Name("_") + name
+			return "_" + name
 		}
 	}
 
 	return name
 }
 
-func parseForPath(name Name) Name {
+func parseForPath(name string) string {
 	escaped := url.PathEscape(string(name))
 	escaped = strings.Replace(escaped, "%20", "+", -1)
 	escaped = strings.Replace(escaped, "/", "+", -1)
-	return escapeBadNames(Name(escaped))
+	return escapeBadNames(escaped)
 }
 
 // TODO docu
@@ -211,7 +202,7 @@ func SessionID() *util {
 	}
 }
 
-func (u util) URL(apiKey Key) (string, error) {
+func (u util) URL(apiKey string) (string, error) {
 	return "", fail.WrapError(fail.Control,
 		fmt.Errorf("'%v' cannot be used as a URL", u.method))
 }
@@ -225,10 +216,10 @@ func (u util) Path() (string, error) {
 
 type userData struct {
 	method string
-	name   Name
+	name   string
 }
 
-func AllDayPlays(user Name) (*userData, error) {
+func AllDayPlays(user string) (*userData, error) {
 	if err := checkUserName(user); err != nil {
 		return nil, err
 	}
@@ -238,7 +229,7 @@ func AllDayPlays(user Name) (*userData, error) {
 	}, nil
 }
 
-func Bookmark(user Name) (*userData, error) {
+func Bookmark(user string) (*userData, error) {
 	if err := checkUserName(user); err != nil {
 		return nil, err
 	}
@@ -248,7 +239,7 @@ func Bookmark(user Name) (*userData, error) {
 	}, nil
 }
 
-func (u userData) URL(apiKey Key) (string, error) {
+func (u userData) URL(apiKey string) (string, error) {
 	return "", fail.WrapError(fail.Control,
 		fmt.Errorf("'%v' cannot be used as a URL", u.method))
 }

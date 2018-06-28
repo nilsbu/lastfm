@@ -18,7 +18,7 @@ func TestLoadAPIKey(t *testing.T) {
 
 	testCases := []struct {
 		json   string
-		apiKey rsrc.Key
+		apiKey string
 		err    fastest.Code
 	}{
 		{"", "", fastest.Fail},
@@ -81,7 +81,7 @@ func TestAllDayPlays(t *testing.T) {
 	// also see TestAllDayPlaysFalseName below
 
 	testCases := []struct {
-		name    rsrc.Name
+		user    string
 		plays   []unpack.DayPlays
 		writeOK bool
 		readOK  bool
@@ -103,7 +103,7 @@ func TestAllDayPlays(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("", func(t *testing.T) {
-			loc, _ := rsrc.AllDayPlays(tc.name)
+			loc, _ := rsrc.AllDayPlays(tc.user)
 			var files map[rsrc.Locator][]byte
 
 			if tc.writeOK {
@@ -113,14 +113,14 @@ func TestAllDayPlays(t *testing.T) {
 			}
 
 			r, w, _ := mock.IO(files, mock.Path)
-			err := WriteAllDayPlays(tc.plays, tc.name, w)
+			err := WriteAllDayPlays(tc.plays, tc.user, w)
 			if err != nil && tc.writeOK {
 				t.Error("unexpected error during write:", err)
 			} else if err == nil && !tc.writeOK {
 				t.Error("expected error during write but none occured")
 			}
 
-			plays, err := ReadAllDayPlays(tc.name, r)
+			plays, err := ReadAllDayPlays(tc.user, r)
 			if err != nil && tc.readOK {
 				t.Error("unexpected error during read:", err)
 			} else if err == nil && !tc.readOK {

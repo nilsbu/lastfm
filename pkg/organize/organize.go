@@ -15,7 +15,7 @@ import (
 // TODO name / what is this file
 
 // LoadAPIKey loads an the API key.
-func LoadAPIKey(r rsrc.Reader) (apiKey rsrc.Key, err error) {
+func LoadAPIKey(r rsrc.Reader) (apiKey string, err error) {
 	data, err := r.Read(rsrc.APIKey())
 	if err != nil {
 		return
@@ -30,11 +30,11 @@ func LoadAPIKey(r rsrc.Reader) (apiKey rsrc.Key, err error) {
 		return "", errors.New("No valid API key was read")
 	}
 
-	return rsrc.Key(unm.Key), nil
+	return unm.Key, nil
 }
 
 // SessionID describes a session.
-type SessionID rsrc.Name
+type SessionID string // TODO should be struct or
 
 // LoadSessionID loads a session ID.
 func LoadSessionID(r rsrc.Reader) (SessionID, error) {
@@ -58,11 +58,11 @@ func LoadSessionID(r rsrc.Reader) (SessionID, error) {
 // WriteAllDayPlays writes a list of day plays.
 func WriteAllDayPlays(
 	plays []unpack.DayPlays,
-	name rsrc.Name,
+	user string,
 	w rsrc.Writer) (err error) {
 	jsonData, _ := json.Marshal(plays)
 
-	loc, err := rsrc.AllDayPlays(name)
+	loc, err := rsrc.AllDayPlays(user)
 	if err != nil {
 		return err
 	}
@@ -71,9 +71,9 @@ func WriteAllDayPlays(
 
 // ReadAllDayPlays reads a list of day plays.
 func ReadAllDayPlays(
-	name rsrc.Name,
+	user string,
 	r rsrc.Reader) (plays []unpack.DayPlays, err error) {
-	loc, err := rsrc.AllDayPlays(name)
+	loc, err := rsrc.AllDayPlays(user)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func ReadAllDayPlays(
 
 // ReadBookmark read a bookmark for a user's saved daily plays.
 // TODO Bookmarks should use time.Time
-func ReadBookmark(user rsrc.Name, r rsrc.Reader) (utc int64, err error) {
+func ReadBookmark(user string, r rsrc.Reader) (utc int64, err error) {
 	loc, err := rsrc.Bookmark(user)
 	if err != nil {
 		return 0, err
@@ -108,7 +108,7 @@ func ReadBookmark(user rsrc.Name, r rsrc.Reader) (utc int64, err error) {
 }
 
 // WriteBookmark writes a bookmark for a user's saved daily plays.
-func WriteBookmark(utc int64, user rsrc.Name, w rsrc.Writer) error {
+func WriteBookmark(utc int64, user string, w rsrc.Writer) error {
 	bookmark := unpack.Bookmark{
 		UTC:        utc,
 		TimeString: time.Unix(utc, 0).UTC().Format("2006-01-02 15:04:05 +0000 UTC"),

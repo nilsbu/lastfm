@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/nilsbu/lastfm/pkg/organize"
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func resolve(args []string, sid organize.SessionID) (cmd command, err error) {
@@ -63,7 +62,7 @@ func resolveSession(
 		} else if len(params) > 1 {
 			return nil, errors.New("params %v are superfluous")
 		}
-		return sessionStart{sid: sid, user: rsrc.Name(params[0])}, nil
+		return sessionStart{sid: sid, user: params[0]}, nil
 	case "stop":
 		if len(params) > 0 {
 			return nil, errors.New("'session stop' requires no further parameters")
