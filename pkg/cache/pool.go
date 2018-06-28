@@ -4,19 +4,35 @@ import (
 	"errors"
 
 	"github.com/nilsbu/lastfm/pkg/fail"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 // Pool is a pool of readers and writers.
 type Pool interface {
-	Read(loc rsrc.Locator) <-chan io.ReadResult
+	Read(loc rsrc.Locator) <-chan ReadResult
 	Write(data []byte, loc rsrc.Locator) <-chan error
 }
 
+// ReadResult is contains the return values of Reader.Read().
+type ReadResult struct {
+	Data []byte
+	Err  error
+}
+
 type workerPool struct {
-	readChan  chan io.ReadJob
-	writeChan chan io.WriteJob
+	readChan  chan readJob
+	writeChan chan writeJob
+}
+
+type readJob struct {
+	Locator rsrc.Locator
+	Back    chan<- ReadResult
+}
+
+type writeJob struct {
+	Data    []byte
+	Locator rsrc.Locator
+	Back    chan<- error
 }
 
 // NewPool constructs a Pool. It requires a non-epty list of workers, which are
@@ -26,17 +42,17 @@ func NewPool(
 	writers []rsrc.Writer,
 ) (Pool, error) {
 	if len(readers) == 0 {
-		return nil, rsrc.WrapError(fail.Critical,
+		return nil, fail.WrapError(fail.Critical,
 			errors.New("pool must have at least one reader"))
 	}
 	if len(writers) == 0 {
-		return nil, rsrc.WrapError(fail.Critical,
+		return nil, fail.WrapError(fail.Critical,
 			errors.New("pool must have at least one writer"))
 	}
 
 	pool := workerPool{
-		make(chan io.ReadJob),
-		make(chan io.WriteJob),
+		make(chan readJob),
+		make(chan writeJob),
 	}
 
 	for _, reader := range readers {
@@ -50,28 +66,28 @@ func NewPool(
 	return pool, nil
 }
 
-func readWorker(jobs <-chan io.ReadJob, r rsrc.Reader) {
+func readWorker(jobs <-chan readJob, r rsrc.Reader) {
 	for j := range jobs {
 		data, err := r.Read(j.Locator)
-		j.Back <- io.ReadResult{Data: data, Err: err}
+		j.Back <- ReadResult{Data: data, Err: err}
 	}
 }
 
-func writeWorker(jobs <-chan io.WriteJob, r rsrc.Writer) {
+func writeWorker(jobs <-chan writeJob, r rsrc.Writer) {
 	for j := range jobs {
 		err := r.Write(j.Data, j.Locator)
 		j.Back <- err
 	}
 }
 
-func (p workerPool) Read(loc rsrc.Locator) <-chan io.ReadResult {
-	resultChan := make(chan io.ReadResult)
-	p.readChan <- io.ReadJob{Locator: loc, Back: resultChan}
+func (p workerPool) Read(loc rsrc.Locator) <-chan ReadResult {
+	resultChan := make(chan ReadResult)
+	p.readChan <- readJob{Locator: loc, Back: resultChan}
 	return resultChan
 }
 
 func (p workerPool) Write(data []byte, loc rsrc.Locator) <-chan error {
 	resultChan := make(chan error)
-	p.writeChan <- io.WriteJob{Data: data, Locator: loc, Back: resultChan}
+	p.writeChan <- writeJob{Data: data, Locator: loc, Back: resultChan}
 	return resultChan
 }

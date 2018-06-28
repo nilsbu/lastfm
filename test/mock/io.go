@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/nilsbu/lastfm/pkg/fail"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -33,7 +32,7 @@ func URL(loc rsrc.Locator) (string, error) {
 func IO(
 	content map[rsrc.Locator][]byte,
 	resolve Resolver,
-) (io.SeqReader, io.SeqWriter, error) {
+) (rsrc.Reader, rsrc.Writer, error) {
 
 	files := make(map[string][]byte)
 	for k, v := range content {
@@ -44,46 +43,38 @@ func IO(
 		files[path] = v
 	}
 
-	r := make(io.SeqReader)
-	w := make(io.SeqWriter)
+	r := make(chanReader)
+	w := make(chanWriter)
 	go worker(files, r, w, resolve)
 	return r, w, nil
 }
 
 func worker(
 	content map[string][]byte,
-	readJobs <-chan io.ReadJob,
-	writeJobs <-chan io.WriteJob,
+	readJobs <-chan readJob,
+	writeJobs <-chan writeJob,
 	resolve func(loc rsrc.Locator) (string, error),
 ) {
 	for {
 		select {
-		case job, ok := <-readJobs:
-			if !ok {
-				break
-			}
-
+		case job := <-readJobs:
 			path, err := resolve(job.Locator)
 			if err != nil {
-				job.Back <- io.ReadResult{Data: nil, Err: err}
+				job.Back <- readResult{Data: nil, Err: err}
 				continue
 			}
 
 			data, ok := content[path]
 			if !ok || data == nil {
-				job.Back <- io.ReadResult{
+				job.Back <- readResult{
 					Data: nil,
 					Err: &fail.AssessedError{
 						Sev: fail.Control, Err: fmt.Errorf("read at '%v' failed", path)},
 				}
 			} else {
-				job.Back <- io.ReadResult{Data: data, Err: nil}
+				job.Back <- readResult{Data: data, Err: nil}
 			}
-		case job, ok := <-writeJobs:
-			if !ok {
-				break
-			}
-
+		case job := <-writeJobs:
 			path, err := resolve(job.Locator)
 			if err != nil {
 				job.Back <- err
@@ -99,4 +90,40 @@ func worker(
 			}
 		}
 	}
+}
+
+// TODO merge chanReader and chanWriter to a true IO (+ remove func)
+
+type chanReader chan readJob
+
+func (r chanReader) Read(loc rsrc.Locator) (data []byte, err error) {
+	back := make(chan readResult)
+
+	r <- readJob{Locator: loc, Back: back}
+	res := <-back
+	return res.Data, res.Err
+}
+
+type chanWriter chan writeJob
+
+func (r chanWriter) Write(data []byte, loc rsrc.Locator) error {
+	back := make(chan error)
+	r <- writeJob{Data: data, Locator: loc, Back: back}
+	return <-back
+}
+
+type readJob struct {
+	Locator rsrc.Locator
+	Back    chan<- readResult
+}
+
+type writeJob struct {
+	Data    []byte
+	Locator rsrc.Locator
+	Back    chan<- error
+}
+
+type readResult struct {
+	Data []byte
+	Err  error
 }

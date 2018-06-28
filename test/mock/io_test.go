@@ -78,8 +78,6 @@ func TestIO(t *testing.T) {
 			}
 
 			data, err := r.Read(c.loc)
-			close(r)
-			close(w)
 
 			if msg, ok := IsThreatCorrect(err, c.readOK, fail.Control); !ok {
 				t.Error(msg)
