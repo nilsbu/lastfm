@@ -27,9 +27,6 @@ func (FileIO) Read(loc rsrc.Locator) ([]byte, error) {
 		switch err.(type) {
 		case *os.PathError:
 			err = fail.WrapError(fail.Control, err)
-		default:
-			// possible cause: bytes.ErrTooLarge
-			err = fail.WrapError(fail.Critical, err)
 		}
 	}
 
@@ -42,9 +39,9 @@ func (FileIO) Write(data []byte, loc rsrc.Locator) error {
 		return err
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err = os.Stat(path); os.IsNotExist(err) {
 		dir := filepath.Dir(path)
-		if err := os.MkdirAll(dir, 0040755); err != nil {
+		if err = os.MkdirAll(dir, 0040755); err != nil {
 			// Will be *PathError (?)
 			return fail.WrapError(fail.Critical, err)
 		}
@@ -57,11 +54,7 @@ func (FileIO) Write(data []byte, loc rsrc.Locator) error {
 	}
 
 	_, err = f.Write(data)
-	if err != nil {
-		return fail.WrapError(fail.Critical, err)
-	}
-
-	return nil
+	return err
 }
 
 func (FileIO) Remove(loc rsrc.Locator) error {
@@ -70,16 +63,17 @@ func (FileIO) Remove(loc rsrc.Locator) error {
 		return err
 	}
 
-	err = os.Remove(path)
-	if err != nil {
-		return fail.WrapError(fail.Critical, err)
+	if _, err = os.Stat(path); os.IsNotExist(err) {
+		return fail.WrapError(fail.Control, errors.New("file does not exist"))
 	}
-	return nil
+
+	return os.Remove(path)
 }
 
 // Downloader is a reader for Last.fm. It implements io.Reader.
 type Downloader rsrc.Key
 
+// TODO test with net/http/httptest
 func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
 	url, err := loc.URL(rsrc.Key(d))
 	if err != nil {
@@ -93,12 +87,12 @@ func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		switch resp.StatusCode {
-		case 403:
+		case http.StatusForbidden:
 			err = fail.WrapError(fail.Critical,
 				errors.New("forbidden (403), wrong API key?"))
-		case 404:
+		case http.StatusNotFound:
 			err = fail.WrapError(fail.Suspicious,
 				errors.New("resouce not found (404)"))
 		default:
@@ -109,10 +103,6 @@ func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
 	}
 
 	data, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		// possible cause: bytes.ErrTooLarge
-		return nil, fail.WrapError(fail.Critical, err)
-	}
 	return data, err
 }
 

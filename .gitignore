@@ -17,3 +17,6 @@ debug
 
 # Data directories
 .lastfm/
+
+# directory for temporary test files
+test/files/*
