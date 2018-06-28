@@ -22,8 +22,8 @@ type workerPool struct {
 // NewPool constructs a Pool. It requires a non-epty list of workers, which are
 // presumed to do identical jobs when provided with the same input.
 func NewPool(
-	readers []io.Reader,
-	writers []io.Writer,
+	readers []rsrc.Reader,
+	writers []rsrc.Writer,
 ) (Pool, error) {
 	if len(readers) == 0 {
 		return nil, io.WrapError(fail.Critical,
@@ -50,14 +50,14 @@ func NewPool(
 	return pool, nil
 }
 
-func readWorker(jobs <-chan io.ReadJob, r io.Reader) {
+func readWorker(jobs <-chan io.ReadJob, r rsrc.Reader) {
 	for j := range jobs {
 		data, err := r.Read(j.Locator)
 		j.Back <- io.ReadResult{Data: data, Err: err}
 	}
 }
 
-func writeWorker(jobs <-chan io.WriteJob, r io.Writer) {
+func writeWorker(jobs <-chan io.WriteJob, r rsrc.Writer) {
 	for j := range jobs {
 		err := r.Write(j.Data, j.Locator)
 		j.Back <- err

@@ -3,7 +3,6 @@ package cache
 import (
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -53,8 +52,8 @@ func TestPool(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			r, w, _ := mock.IO(c.files, mock.Path)
 
-			var readers []io.Reader
-			var writers []io.Writer
+			var readers []rsrc.Reader
+			var writers []rsrc.Writer
 
 			for i := 0; i < c.numReaders; i++ {
 				readers = append(readers, r)

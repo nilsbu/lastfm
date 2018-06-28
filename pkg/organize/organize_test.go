@@ -29,7 +29,7 @@ func TestLoadAPIKey(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			var r io.Reader
+			var r rsrc.Reader
 			if tc.json == "" {
 				r, _, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
 			} else {
@@ -61,7 +61,7 @@ func TestLoadSessionID(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			var r io.Reader
+			var r rsrc.Reader
 			if tc.json == "" {
 				r, _, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
 			} else {
@@ -180,7 +180,7 @@ func TestReadBookmark(t *testing.T) {
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
 			loc, _ := rsrc.Bookmark("Xx")
-			var r io.Reader
+			var r rsrc.Reader
 			if tc.readOK {
 				r, _, _ = mock.IO(
 					map[rsrc.Locator][]byte{loc: []byte(tc.data)},
@@ -358,8 +358,8 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			d, _, _ := mock.IO(tc.tracksDownload, mock.URL)
 
 			pool, _ := store.New(
-				[][]io.Reader{[]io.Reader{d}, []io.Reader{r}},
-				[][]io.Writer{[]io.Writer{io.FailIO{}}, []io.Writer{w}})
+				[][]rsrc.Reader{[]rsrc.Reader{d}, []rsrc.Reader{r}},
+				[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, []rsrc.Writer{w}})
 
 			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
 			if err != nil && tc.ok {

@@ -15,7 +15,7 @@ import (
 // TODO name / what is this file
 
 // LoadAPIKey loads an the API key.
-func LoadAPIKey(r io.Reader) (apiKey rsrc.Key, err error) {
+func LoadAPIKey(r rsrc.Reader) (apiKey rsrc.Key, err error) {
 	data, err := r.Read(rsrc.APIKey())
 	if err != nil {
 		return
@@ -37,7 +37,7 @@ func LoadAPIKey(r io.Reader) (apiKey rsrc.Key, err error) {
 type SessionID rsrc.Name
 
 // LoadSessionID loads a session ID.
-func LoadSessionID(r io.Reader) (SessionID, error) {
+func LoadSessionID(r rsrc.Reader) (SessionID, error) {
 	data, err := r.Read(rsrc.SessionID())
 	if err != nil {
 		return "", err
@@ -59,7 +59,7 @@ func LoadSessionID(r io.Reader) (SessionID, error) {
 func WriteAllDayPlays(
 	plays []unpack.DayPlays,
 	name rsrc.Name,
-	w io.Writer) (err error) {
+	w rsrc.Writer) (err error) {
 	jsonData, _ := json.Marshal(plays)
 
 	loc, err := rsrc.AllDayPlays(name)
@@ -72,7 +72,7 @@ func WriteAllDayPlays(
 // ReadAllDayPlays reads a list of day plays.
 func ReadAllDayPlays(
 	name rsrc.Name,
-	r io.Reader) (plays []unpack.DayPlays, err error) {
+	r rsrc.Reader) (plays []unpack.DayPlays, err error) {
 	loc, err := rsrc.AllDayPlays(name)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func ReadAllDayPlays(
 
 // ReadBookmark read a bookmark for a user's saved daily plays.
 // TODO Bookmarks should use time.Time
-func ReadBookmark(user rsrc.Name, r io.Reader) (utc int64, err error) {
+func ReadBookmark(user rsrc.Name, r rsrc.Reader) (utc int64, err error) {
 	loc, err := rsrc.Bookmark(user)
 	if err != nil {
 		return 0, err
@@ -108,7 +108,7 @@ func ReadBookmark(user rsrc.Name, r io.Reader) (utc int64, err error) {
 }
 
 // WriteBookmark writes a bookmark for a user's saved daily plays.
-func WriteBookmark(utc int64, user rsrc.Name, w io.Writer) error {
+func WriteBookmark(utc int64, user rsrc.Name, w rsrc.Writer) error {
 	bookmark := unpack.Bookmark{
 		UTC:        utc,
 		TimeString: time.Unix(utc, 0).UTC().Format("2006-01-02 15:04:05 +0000 UTC"),

@@ -7,6 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/command"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 )
 
@@ -16,24 +17,24 @@ func createStore() (store.Store, error) {
 		return nil, err
 	}
 
-	var downloaders []io.Reader
+	var downloaders []rsrc.Reader
 	for i := 0; i < 16; i++ {
 		downloaders = append(downloaders, io.Downloader(key))
 	}
 
-	var fileReaders []io.Reader
+	var fileReaders []rsrc.Reader
 	for i := 0; i < 10; i++ {
 		fileReaders = append(fileReaders, io.FileIO{})
 	}
 
-	var fileWriters []io.Writer
+	var fileWriters []rsrc.Writer
 	for i := 0; i < 10; i++ {
 		fileWriters = append(fileWriters, io.FileIO{})
 	}
 
 	st, err := store.New(
-		[][]io.Reader{downloaders, fileReaders},
-		[][]io.Writer{[]io.Writer{io.FailIO{}}, fileWriters})
+		[][]rsrc.Reader{downloaders, fileReaders},
+		[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, fileWriters})
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -14,7 +13,7 @@ import (
 func LoadAllDayPlays(
 	user unpack.User,
 	until rsrc.Day,
-	r io.Reader) ([]unpack.DayPlays, error) {
+	r rsrc.Reader) ([]unpack.DayPlays, error) {
 
 	untilMdn, uOK := until.Midnight()
 	registered, rOK := user.Registered.Midnight()
@@ -58,7 +57,7 @@ type LoadDayPlaysResult struct {
 func loadDayPlays(
 	user rsrc.Name,
 	time rsrc.Day,
-	r io.Reader,
+	r rsrc.Reader,
 ) (unpack.DayPlays, error) {
 	loc, err := rsrc.History(user, 1, time)
 	if err != nil {
@@ -98,7 +97,7 @@ func loadDayPlays(
 }
 
 func loadDayPlaysPage(loc rsrc.Locator,
-	r io.Reader) (dp unpack.DayPlays, pages int, err error) {
+	r rsrc.Reader) (dp unpack.DayPlays, pages int, err error) {
 	data, err := r.Read(loc)
 	if err != nil {
 		return nil, 0, err

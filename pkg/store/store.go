@@ -5,13 +5,12 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/cache"
 	"github.com/nilsbu/lastfm/pkg/fail"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type Store interface {
-	io.ReadWriter // TODO should be IO
-	io.Updater
+	rsrc.ReadWriter // TODO should be IO
+	rsrc.Updater
 }
 
 // pool is a pool of IO workers. It contains workers for download, file reading
@@ -22,14 +21,14 @@ type pool struct {
 
 // TODO ...
 func New(
-	readers [][]io.Reader,
-	writers [][]io.Writer) (Store, error) {
+	readers [][]rsrc.Reader,
+	writers [][]rsrc.Writer) (Store, error) {
 	if len(readers) != len(writers) {
-		return nil, io.WrapError(fail.Critical,
+		return nil, rsrc.WrapError(fail.Critical,
 			errors.New("readers and writers must have equal numbers of layers"))
 	}
 	if len(readers) == 0 {
-		return nil, io.WrapError(fail.Critical,
+		return nil, rsrc.WrapError(fail.Critical,
 			errors.New("readers and writers must have at least one layer"))
 	}
 
@@ -78,7 +77,7 @@ func (p pool) read(loc rsrc.Locator, start int, di int,
 	})
 
 	if idx < 0 {
-		return nil, io.WrapError(fail.Control, errors.New("resource not found"))
+		return nil, rsrc.WrapError(fail.Control, errors.New("resource not found"))
 	}
 
 	if err != nil {

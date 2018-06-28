@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/fail"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -39,18 +38,18 @@ func TestStoreNew(t *testing.T) {
 			files := map[rsrc.Locator][]byte{}
 			r, w, _ := mock.IO(files, mock.Path)
 
-			readers := make([][]io.Reader, len(c.numReaders))
+			readers := make([][]rsrc.Reader, len(c.numReaders))
 			for i := range readers {
-				reads := []io.Reader{}
+				reads := []rsrc.Reader{}
 				for j := 0; j < c.numReaders[i]; j++ {
 					reads = append(reads, r)
 				}
 				readers[i] = reads
 			}
 
-			writers := make([][]io.Writer, len(c.numWriters))
+			writers := make([][]rsrc.Writer, len(c.numWriters))
 			for i := range writers {
-				writes := []io.Writer{}
+				writes := []rsrc.Writer{}
 				for j := 0; j < c.numWriters[i]; j++ {
 					writes = append(writes, w)
 				}
@@ -130,15 +129,15 @@ func TestStoreRead(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			var readers [][]io.Reader
-			var writers [][]io.Writer
+			var readers [][]rsrc.Reader
+			var writers [][]rsrc.Writer
 			for i := range c.files {
 				r, w, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
 					t.Fatal("setup error")
 				}
-				readers = append(readers, []io.Reader{r})
-				writers = append(writers, []io.Writer{w})
+				readers = append(readers, []rsrc.Reader{r})
+				writers = append(writers, []rsrc.Writer{w})
 			}
 
 			s, err := New(readers, writers)
@@ -261,15 +260,15 @@ func TestStoreUpdate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			var readers [][]io.Reader
-			var writers [][]io.Writer
+			var readers [][]rsrc.Reader
+			var writers [][]rsrc.Writer
 			for i := range c.files {
 				r, w, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
 					t.Fatal("setup error")
 				}
-				readers = append(readers, []io.Reader{r})
-				writers = append(writers, []io.Writer{w})
+				readers = append(readers, []rsrc.Reader{r})
+				writers = append(writers, []rsrc.Writer{w})
 			}
 
 			s, err := New(readers, writers)
@@ -361,15 +360,15 @@ func TestStoreWrite(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			var readers [][]io.Reader
-			var writers [][]io.Writer
+			var readers [][]rsrc.Reader
+			var writers [][]rsrc.Writer
 			for i := range c.files {
 				r, w, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
 					t.Fatal("setup error")
 				}
-				readers = append(readers, []io.Reader{r})
-				writers = append(writers, []io.Writer{w})
+				readers = append(readers, []rsrc.Reader{r})
+				writers = append(writers, []rsrc.Writer{w})
 			}
 
 			s, err := New(readers, writers)
