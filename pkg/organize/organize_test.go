@@ -29,15 +29,15 @@ func TestLoadAPIKey(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			var r rsrc.Reader
+			var io rsrc.IO
 			if tc.json == "" {
-				r, _, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
+				io, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
 			} else {
-				r, _, _ = mock.IO(
+				io, _ = mock.IO(
 					map[rsrc.Locator][]byte{rsrc.APIKey(): []byte(tc.json)},
 					mock.Path)
 			}
-			apiKey, err := LoadAPIKey(r)
+			apiKey, err := LoadAPIKey(io)
 			ft.Equals(err != nil, tc.err == fastest.Fail)
 			ft.Only(tc.err == fastest.OK)
 			ft.Equals(apiKey, tc.apiKey)
@@ -61,15 +61,15 @@ func TestLoadSessionID(t *testing.T) {
 
 	for i, tc := range testCases {
 		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			var r rsrc.Reader
+			var io rsrc.IO
 			if tc.json == "" {
-				r, _, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
+				io, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
 			} else {
-				r, _, _ = mock.IO(
+				io, _ = mock.IO(
 					map[rsrc.Locator][]byte{rsrc.SessionID(): []byte(tc.json)},
 					mock.Path)
 			}
-			sid, err := LoadSessionID(r)
+			sid, err := LoadSessionID(io)
 			ft.Equals(err != nil, tc.err == fastest.Fail)
 			ft.Only(tc.err == fastest.OK)
 			ft.DeepEquals(sid, tc.sid)
@@ -112,15 +112,15 @@ func TestAllDayPlays(t *testing.T) {
 				files = map[rsrc.Locator][]byte{}
 			}
 
-			r, w, _ := mock.IO(files, mock.Path)
-			err := WriteAllDayPlays(tc.plays, tc.user, w)
+			io, _ := mock.IO(files, mock.Path)
+			err := WriteAllDayPlays(tc.plays, tc.user, io)
 			if err != nil && tc.writeOK {
 				t.Error("unexpected error during write:", err)
 			} else if err == nil && !tc.writeOK {
 				t.Error("expected error during write but none occured")
 			}
 
-			plays, err := ReadAllDayPlays(tc.user, r)
+			plays, err := ReadAllDayPlays(tc.user, io)
 			if err != nil && tc.readOK {
 				t.Error("unexpected error during read:", err)
 			} else if err == nil && !tc.readOK {
@@ -137,13 +137,13 @@ func TestAllDayPlays(t *testing.T) {
 }
 
 func TestAllDayPlaysFalseName(t *testing.T) {
-	r, w, _ := mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
+	io, _ := mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
 
-	if err := WriteAllDayPlays([]unpack.DayPlays{}, "I", w); err == nil {
+	if err := WriteAllDayPlays([]unpack.DayPlays{}, "I", io); err == nil {
 		t.Error("expected error during write but non occurred")
 	}
 
-	if _, err := ReadAllDayPlays("I", r); err == nil {
+	if _, err := ReadAllDayPlays("I", io); err == nil {
 		t.Error("expected error during read but non occurred")
 	}
 }
@@ -262,19 +262,19 @@ func TestUpdateAllDayPlays(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			loc, _ := rsrc.AllDayPlays(tc.user.Name)
 			tc.tracksFile[loc] = nil
-			r, w, _ := mock.IO(tc.tracksFile, mock.Path)
+			io1, _ := mock.IO(tc.tracksFile, mock.Path)
 			if tc.saved != nil {
-				if err := WriteAllDayPlays(tc.saved, tc.user.Name, w); err != nil {
+				if err := WriteAllDayPlays(tc.saved, tc.user.Name, io1); err != nil {
 					t.Error("unexpected error during write of all day plays:", err)
 				}
 
 			}
 
-			d, _, _ := mock.IO(tc.tracksDownload, mock.URL)
+			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
 
 			pool, _ := store.New(
-				[][]rsrc.Reader{[]rsrc.Reader{d}, []rsrc.Reader{r}},
-				[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, []rsrc.Writer{w}})
+				[][]rsrc.Reader{[]rsrc.Reader{io0}, []rsrc.Reader{io1}},
+				[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, []rsrc.Writer{io1}})
 
 			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
 			if err != nil && tc.ok {

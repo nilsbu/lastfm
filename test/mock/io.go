@@ -10,6 +10,7 @@ import (
 // APIKey is the API key that is used in mocked URLs.
 const APIKey = "00000000000000000000000000000000"
 
+// Resolver is a function that resolves a locator.
 type Resolver func(loc rsrc.Locator) (string, error)
 
 // Path returns loc.Path()
@@ -22,42 +23,43 @@ func URL(loc rsrc.Locator) (string, error) {
 	return loc.URL(APIKey)
 }
 
-// IO constructs a mock reader and a writer. Data what is written using the
-// writer can be read by the reader. The mocked data storage is initialized with
-// content. They keys are the locations and the values the data contained.
-// Locations that are not among the contents during initialization cannot be
-// written to or read from. Locations initialized with value nil are considered
-// to be non-existing files that can however be written to. Reader and writer
-// can safely be copied. They are thread-safe.
+// IO builds a mock reader, writer and remover. The mocked data storage is
+// initialized with content. They keys are the locations and the values the data
+// contained. Locations that are not among the contents during initialization
+// cannot be written to or read from. Locations initialized with value nil are
+// considered to be non-existing files that can however be written to. IO can
+// safely be copied. It is thread-safe.
 func IO(
 	content map[rsrc.Locator][]byte,
 	resolve Resolver,
-) (rsrc.Reader, rsrc.Writer, error) {
+) (rsrc.IO, error) {
 
 	files := make(map[string][]byte)
 	for k, v := range content {
 		path, err := resolve(k)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		files[path] = v
 	}
 
-	r := make(chanReader)
-	w := make(chanWriter)
-	go worker(files, r, w, resolve)
-	return r, w, nil
+	io := mockIO{
+		chanReader:  make(chanReader),
+		chanWriter:  make(chanWriter),
+		chanRemover: make(chanRemover),
+	}
+	go worker(files, io, resolve)
+	return io, nil
 }
 
 func worker(
 	content map[string][]byte,
-	readJobs <-chan readJob,
-	writeJobs <-chan writeJob,
+	io mockIO,
 	resolve func(loc rsrc.Locator) (string, error),
 ) {
 	for {
 		select {
-		case job := <-readJobs:
+		case job := <-io.chanReader:
 			path, err := resolve(job.Locator)
 			if err != nil {
 				job.Back <- readResult{Data: nil, Err: err}
@@ -74,7 +76,7 @@ func worker(
 			} else {
 				job.Back <- readResult{Data: data, Err: nil}
 			}
-		case job := <-writeJobs:
+		case job := <-io.chanWriter:
 			path, err := resolve(job.Locator)
 			if err != nil {
 				job.Back <- err
@@ -88,11 +90,30 @@ func worker(
 				content[path] = job.Data
 				job.Back <- nil
 			}
+		case job := <-io.chanRemover:
+			path, err := resolve(job.Locator)
+			if err != nil {
+				job.Back <- err
+				continue
+			}
+
+			if _, ok := content[path]; !ok {
+				job.Back <- &fail.AssessedError{
+					Sev: fail.Critical, Err: fmt.Errorf("remove '%v' failed", path)}
+			} else {
+				content[path] = nil
+				job.Back <- nil
+			}
 		}
 	}
 }
 
 // TODO merge chanReader and chanWriter to a true IO (+ remove func)
+type mockIO struct {
+	chanReader
+	chanWriter
+	chanRemover
+}
 
 type chanReader chan readJob
 
@@ -106,9 +127,18 @@ func (r chanReader) Read(loc rsrc.Locator) (data []byte, err error) {
 
 type chanWriter chan writeJob
 
-func (r chanWriter) Write(data []byte, loc rsrc.Locator) error {
+func (w chanWriter) Write(data []byte, loc rsrc.Locator) error {
 	back := make(chan error)
-	r <- writeJob{Data: data, Locator: loc, Back: back}
+	w <- writeJob{Data: data, Locator: loc, Back: back}
+	return <-back
+}
+
+type chanRemover chan removeJob
+
+func (r chanRemover) Remove(loc rsrc.Locator) error {
+	back := make(chan error)
+
+	r <- removeJob{Locator: loc, Back: back}
 	return <-back
 }
 
@@ -119,6 +149,11 @@ type readJob struct {
 
 type writeJob struct {
 	Data    []byte
+	Locator rsrc.Locator
+	Back    chan<- error
+}
+
+type removeJob struct {
 	Locator rsrc.Locator
 	Back    chan<- error
 }

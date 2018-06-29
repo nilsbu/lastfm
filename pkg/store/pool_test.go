@@ -50,16 +50,16 @@ func TestPool(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			r, w, _ := mock.IO(c.files, mock.Path)
+			io, _ := mock.IO(c.files, mock.Path)
 
 			var readers []rsrc.Reader
 			var writers []rsrc.Writer
 
 			for i := 0; i < c.numReaders; i++ {
-				readers = append(readers, r)
+				readers = append(readers, io)
 			}
 			for i := 0; i < c.numWriters; i++ {
-				writers = append(writers, w)
+				writers = append(writers, io)
 			}
 			p, err := NewPool(readers, writers)
 			if err != nil {

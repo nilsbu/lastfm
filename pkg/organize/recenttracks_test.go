@@ -63,9 +63,9 @@ func TestLoadAllDayPlays(t *testing.T) {
 					files[loc] = []byte(d)
 				}
 			}
-			r, _, _ := mock.IO(files, mock.Path)
+			io, _ := mock.IO(files, mock.Path)
 
-			dps, err := LoadAllDayPlays(tc.user, tc.until, r)
+			dps, err := LoadAllDayPlays(tc.user, tc.until, io)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
 			ft.Implies(err == nil, tc.err == fastest.OK)
 			ft.DeepEquals(dps, tc.dps)
@@ -143,9 +143,9 @@ func TestLoadDayPlays(t *testing.T) {
 				loc, _ := rsrc.History(tc.user, j+1, rsrc.ToDay(time))
 				files[loc] = []byte(d)
 			}
-			r, _, _ := mock.IO(files, mock.Path)
+			io, _ := mock.IO(files, mock.Path)
 
-			dp, err := loadDayPlays(tc.user, tc.time, r)
+			dp, err := loadDayPlays(tc.user, tc.time, io)
 			ft.Implies(err != nil, tc.err == fastest.Fail, err)
 			ft.Implies(err == nil, tc.err == fastest.OK)
 
