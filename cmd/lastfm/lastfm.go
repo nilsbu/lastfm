@@ -32,9 +32,15 @@ func createStore() (store.Store, error) {
 		fileWriters = append(fileWriters, io.FileIO{})
 	}
 
+	var fileRemovers []rsrc.Remover
+	for i := 0; i < 10; i++ {
+		fileRemovers = append(fileRemovers, io.FileIO{})
+	}
+
 	st, err := store.New(
 		[][]rsrc.Reader{downloaders, fileReaders},
-		[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, fileWriters})
+		[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, fileWriters},
+		[][]rsrc.Remover{[]rsrc.Remover{io.FailIO{}}, fileRemovers})
 	if err != nil {
 		return nil, err
 	}

@@ -274,7 +274,8 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 			pool, _ := store.New(
 				[][]rsrc.Reader{[]rsrc.Reader{io0}, []rsrc.Reader{io1}},
-				[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, []rsrc.Writer{io1}})
+				[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, []rsrc.Writer{io1}},
+				[][]rsrc.Remover{[]rsrc.Remover{io.FailIO{}}, []rsrc.Remover{io.FailIO{}}})
 
 			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
 			if err != nil && tc.ok {

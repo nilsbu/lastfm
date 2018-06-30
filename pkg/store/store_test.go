@@ -11,24 +11,25 @@ import (
 
 func TestStoreNew(t *testing.T) {
 	cases := []struct {
-		numReaders []int
-		numWriters []int
-		ok         bool
+		numReaders  []int
+		numWriters  []int
+		numRemovers []int
+		ok          bool
 	}{
 		{ // must have at least one layer
-			[]int{}, []int{},
+			[]int{}, []int{}, []int{},
 			false,
 		},
 		{ // uploader missing
-			[]int{1, 1}, []int{0, 1},
+			[]int{1, 1}, []int{0, 1}, []int{1, 1},
 			false,
 		},
 		{ // layers are unequal
-			[]int{2, 1, 2}, []int{1, 2},
+			[]int{2, 1, 2}, []int{1, 2}, []int{1, 2},
 			false,
 		},
 		{ // ok
-			[]int{2, 1}, []int{1, 2},
+			[]int{2, 1}, []int{1, 2}, []int{1, 2},
 			true,
 		},
 	}
@@ -56,7 +57,16 @@ func TestStoreNew(t *testing.T) {
 				writers[i] = writes
 			}
 
-			s, err := New(readers, writers)
+			removers := make([][]rsrc.Remover, len(c.numRemovers))
+			for i := range removers {
+				rms := []rsrc.Remover{}
+				for j := 0; j < c.numRemovers[i]; j++ {
+					rms = append(rms, io)
+				}
+				removers[i] = rms
+			}
+
+			s, err := New(readers, writers, removers)
 			if str, ok := mock.IsThreatCorrect(err, c.ok, fail.Critical); !ok {
 				t.Error(str)
 			}
@@ -131,6 +141,7 @@ func TestStoreRead(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			var readers [][]rsrc.Reader
 			var writers [][]rsrc.Writer
+			var removers [][]rsrc.Remover
 			for i := range c.files {
 				io, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
@@ -138,9 +149,10 @@ func TestStoreRead(t *testing.T) {
 				}
 				readers = append(readers, []rsrc.Reader{io})
 				writers = append(writers, []rsrc.Writer{io})
+				removers = append(removers, []rsrc.Remover{io})
 			}
 
-			s, err := New(readers, writers)
+			s, err := New(readers, writers, removers)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -262,6 +274,7 @@ func TestStoreUpdate(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			var readers [][]rsrc.Reader
 			var writers [][]rsrc.Writer
+			var removers [][]rsrc.Remover
 			for i := range c.files {
 				io, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
@@ -269,9 +282,10 @@ func TestStoreUpdate(t *testing.T) {
 				}
 				readers = append(readers, []rsrc.Reader{io})
 				writers = append(writers, []rsrc.Writer{io})
+				removers = append(removers, []rsrc.Remover{io})
 			}
 
-			s, err := New(readers, writers)
+			s, err := New(readers, writers, removers)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -362,6 +376,7 @@ func TestStoreWrite(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			var readers [][]rsrc.Reader
 			var writers [][]rsrc.Writer
+			var removers [][]rsrc.Remover
 			for i := range c.files {
 				io, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
@@ -369,9 +384,10 @@ func TestStoreWrite(t *testing.T) {
 				}
 				readers = append(readers, []rsrc.Reader{io})
 				writers = append(writers, []rsrc.Writer{io})
+				removers = append(removers, []rsrc.Remover{io})
 			}
 
-			s, err := New(readers, writers)
+			s, err := New(readers, writers, removers)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -388,6 +404,89 @@ func TestStoreWrite(t *testing.T) {
 					t.Errorf("written data false at level %v:\n"+
 						"has:      '%v'\nexpected: '%v'",
 						i, string(data), string(c.written[i]))
+				}
+			}
+		})
+	}
+}
+
+func TestStoreRemove(t *testing.T) {
+	apiKey := rsrc.APIKey()
+	userInfo, _ := rsrc.UserInfo("abc")
+
+	cases := []struct {
+		files []map[rsrc.Locator][]byte
+		locf  []mock.Resolver
+		loc   rsrc.Locator
+		exist []bool
+		ok    bool
+		sev   fail.Severity
+	}{
+		{ // failed remove (critical)
+			[]map[rsrc.Locator][]byte{
+				map[rsrc.Locator][]byte{},
+			},
+			[]mock.Resolver{mock.Path},
+			userInfo,
+			[]bool{false},
+			false, fail.Critical,
+		},
+		{ // remove both
+			[]map[rsrc.Locator][]byte{
+				map[rsrc.Locator][]byte{userInfo: []byte("xx")},
+				map[rsrc.Locator][]byte{userInfo: []byte("xx")},
+			},
+			[]mock.Resolver{mock.URL, mock.Path},
+			userInfo,
+			[]bool{false, false},
+			true, fail.Control,
+		},
+		{ // level 0 not removed since 1 failes
+			[]map[rsrc.Locator][]byte{
+				map[rsrc.Locator][]byte{apiKey: []byte("xx")},
+				map[rsrc.Locator][]byte{},
+			},
+			[]mock.Resolver{mock.Path, mock.URL},
+			apiKey,
+			[]bool{true, false},
+			true, fail.Control,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			var readers [][]rsrc.Reader
+			var writers [][]rsrc.Writer
+			var removers [][]rsrc.Remover
+			for i := range c.files {
+				io, err := mock.IO(c.files[i], c.locf[i])
+				if err != nil {
+					t.Fatal("setup error")
+				}
+				readers = append(readers, []rsrc.Reader{io})
+				writers = append(writers, []rsrc.Writer{io})
+				removers = append(removers, []rsrc.Remover{io})
+			}
+
+			s, err := New(readers, writers, removers)
+			if err != nil {
+				t.Error("unexpected error in constructor")
+			}
+
+			err = s.Remove(c.loc)
+			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
+				t.Error(str)
+			}
+
+			if err != nil {
+				for i, rs := range readers {
+					_, err := rs[0].Read(c.loc)
+
+					if err != nil && c.exist[i] {
+						t.Errorf("file at level %v does not exists but should", i)
+					} else if err == nil && !c.exist[i] {
+						t.Errorf("file at level %v exists but should not", i)
+					}
 				}
 			}
 		})

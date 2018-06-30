@@ -4,12 +4,11 @@ import (
 	"errors"
 
 	"github.com/nilsbu/lastfm/pkg/fail"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type Store interface {
-	rsrc.ReadWriter // TODO should be IO
+	rsrc.IO
 	rsrc.Updater
 }
 
@@ -22,7 +21,9 @@ type pool struct {
 // TODO ...
 func New(
 	readers [][]rsrc.Reader,
-	writers [][]rsrc.Writer) (Store, error) {
+	writers [][]rsrc.Writer,
+	removers [][]rsrc.Remover,
+) (Store, error) {
 	if len(readers) != len(writers) {
 		return nil, fail.WrapError(fail.Critical,
 			errors.New("readers and writers must have equal numbers of layers"))
@@ -34,7 +35,7 @@ func New(
 
 	pools := make([]Pool, len(readers))
 	for i := range readers {
-		pool, err := NewPool(readers[i], writers[i], []rsrc.Remover{io.FileIO{}})
+		pool, err := NewPool(readers[i], writers[i], removers[i])
 		if err != nil {
 			return nil, err
 		}
@@ -51,12 +52,16 @@ func (p pool) Read(loc rsrc.Locator) (data []byte, err error) {
 
 func (p pool) Update(loc rsrc.Locator) (data []byte, err error) {
 	data, err = p.read(loc, 0, 1)
-	// data, _, err := p.read(loc, len(p.Pools)-1, -1)
 	return data, err
 }
 
 func (p pool) Write(data []byte, loc rsrc.Locator) error {
 	_, err := p.write(data, loc, len(p.Pools)-1, -1)
+	return err
+}
+
+func (p pool) Remove(loc rsrc.Locator) error {
+	err := p.remove(loc)
 	return err
 }
 
@@ -98,6 +103,20 @@ func (p pool) write(data []byte, loc rsrc.Locator, start int, di int) (int, erro
 		}
 		return true, nil
 	})
+}
+
+func (p pool) remove(loc rsrc.Locator) error {
+	_, err := p.cascade(len(p.Pools)-1, -1, func(i int) (bool, error) {
+		if err := <-p.Pools[i].Remove(loc); err != nil {
+			if f, ok := err.(fail.Threat); ok && f.Severity() == fail.Control {
+				return true, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
+
+	return err
 }
 
 func (p pool) cascade(start int, di int, f func(i int) (bool, error)) (int, error) {
