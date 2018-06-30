@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -272,10 +271,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
 
-			pool, _ := store.New(
-				[][]rsrc.Reader{[]rsrc.Reader{io0}, []rsrc.Reader{io1}},
-				[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, []rsrc.Writer{io1}},
-				[][]rsrc.Remover{[]rsrc.Remover{io.FailIO{}}, []rsrc.Remover{io.FailIO{}}})
+			pool, _ := store.New([][]rsrc.IO{[]rsrc.IO{io0}, []rsrc.IO{io1}})
 
 			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
 			if err != nil && tc.ok {

@@ -17,30 +17,17 @@ func createStore() (store.Store, error) {
 		return nil, err
 	}
 
-	var downloaders []rsrc.Reader
+	var webIOs []rsrc.IO
 	for i := 0; i < 16; i++ {
-		downloaders = append(downloaders, io.Downloader(key))
+		webIOs = append(webIOs, io.NewWebIO(key))
 	}
 
-	var fileReaders []rsrc.Reader
+	var fileIOs []rsrc.IO
 	for i := 0; i < 10; i++ {
-		fileReaders = append(fileReaders, io.FileIO{})
+		fileIOs = append(fileIOs, io.FileIO{})
 	}
 
-	var fileWriters []rsrc.Writer
-	for i := 0; i < 10; i++ {
-		fileWriters = append(fileWriters, io.FileIO{})
-	}
-
-	var fileRemovers []rsrc.Remover
-	for i := 0; i < 10; i++ {
-		fileRemovers = append(fileRemovers, io.FileIO{})
-	}
-
-	st, err := store.New(
-		[][]rsrc.Reader{downloaders, fileReaders},
-		[][]rsrc.Writer{[]rsrc.Writer{io.FailIO{}}, fileWriters},
-		[][]rsrc.Remover{[]rsrc.Remover{io.FailIO{}}, fileRemovers})
+	st, err := store.New([][]rsrc.IO{webIOs, fileIOs})
 	if err != nil {
 		return nil, err
 	}

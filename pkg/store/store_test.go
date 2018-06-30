@@ -11,25 +11,19 @@ import (
 
 func TestStoreNew(t *testing.T) {
 	cases := []struct {
-		numReaders  []int
-		numWriters  []int
-		numRemovers []int
-		ok          bool
+		numIOs []int
+		ok     bool
 	}{
 		{ // must have at least one layer
-			[]int{}, []int{}, []int{},
+			[]int{},
 			false,
 		},
-		{ // uploader missing
-			[]int{1, 1}, []int{0, 1}, []int{1, 1},
-			false,
-		},
-		{ // layers are unequal
-			[]int{2, 1, 2}, []int{1, 2}, []int{1, 2},
+		{ // layer 0 empty
+			[]int{0, 1},
 			false,
 		},
 		{ // ok
-			[]int{2, 1}, []int{1, 2}, []int{1, 2},
+			[]int{2, 1},
 			true,
 		},
 	}
@@ -39,34 +33,16 @@ func TestStoreNew(t *testing.T) {
 			files := map[rsrc.Locator][]byte{}
 			io, _ := mock.IO(files, mock.Path)
 
-			readers := make([][]rsrc.Reader, len(c.numReaders))
-			for i := range readers {
-				reads := []rsrc.Reader{}
-				for j := 0; j < c.numReaders[i]; j++ {
-					reads = append(reads, io)
+			ios := make([][]rsrc.IO, len(c.numIOs))
+			for i := range ios {
+				x := []rsrc.IO{}
+				for j := 0; j < c.numIOs[i]; j++ {
+					x = append(x, io)
 				}
-				readers[i] = reads
+				ios[i] = x
 			}
 
-			writers := make([][]rsrc.Writer, len(c.numWriters))
-			for i := range writers {
-				writes := []rsrc.Writer{}
-				for j := 0; j < c.numWriters[i]; j++ {
-					writes = append(writes, io)
-				}
-				writers[i] = writes
-			}
-
-			removers := make([][]rsrc.Remover, len(c.numRemovers))
-			for i := range removers {
-				rms := []rsrc.Remover{}
-				for j := 0; j < c.numRemovers[i]; j++ {
-					rms = append(rms, io)
-				}
-				removers[i] = rms
-			}
-
-			s, err := New(readers, writers, removers)
+			s, err := New(ios)
 			if str, ok := mock.IsThreatCorrect(err, c.ok, fail.Critical); !ok {
 				t.Error(str)
 			}
@@ -139,20 +115,16 @@ func TestStoreRead(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			var readers [][]rsrc.Reader
-			var writers [][]rsrc.Writer
-			var removers [][]rsrc.Remover
+			var ios [][]rsrc.IO
 			for i := range c.files {
 				io, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
 					t.Fatal("setup error")
 				}
-				readers = append(readers, []rsrc.Reader{io})
-				writers = append(writers, []rsrc.Writer{io})
-				removers = append(removers, []rsrc.Remover{io})
+				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(readers, writers, removers)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -166,8 +138,8 @@ func TestStoreRead(t *testing.T) {
 					string(data), string(c.data))
 			}
 
-			for i, rs := range readers {
-				data, err := rs[0].Read(c.loc)
+			for i, io := range ios {
+				data, err := io[0].Read(c.loc)
 
 				if err == nil && string(data) != string(c.written[i]) {
 					t.Errorf("written data false at level %v:\n"+
@@ -272,20 +244,16 @@ func TestStoreUpdate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			var readers [][]rsrc.Reader
-			var writers [][]rsrc.Writer
-			var removers [][]rsrc.Remover
+			var ios [][]rsrc.IO
 			for i := range c.files {
 				io, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
 					t.Fatal("setup error")
 				}
-				readers = append(readers, []rsrc.Reader{io})
-				writers = append(writers, []rsrc.Writer{io})
-				removers = append(removers, []rsrc.Remover{io})
+				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(readers, writers, removers)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -299,8 +267,8 @@ func TestStoreUpdate(t *testing.T) {
 					string(data), string(c.data))
 			}
 
-			for i, rs := range readers {
-				data, err := rs[0].Read(c.loc)
+			for i, io := range ios {
+				data, err := io[0].Read(c.loc)
 
 				if err == nil {
 					if string(data) != string(c.written[i]) {
@@ -374,20 +342,16 @@ func TestStoreWrite(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			var readers [][]rsrc.Reader
-			var writers [][]rsrc.Writer
-			var removers [][]rsrc.Remover
+			var ios [][]rsrc.IO
 			for i := range c.files {
 				io, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
 					t.Fatal("setup error")
 				}
-				readers = append(readers, []rsrc.Reader{io})
-				writers = append(writers, []rsrc.Writer{io})
-				removers = append(removers, []rsrc.Remover{io})
+				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(readers, writers, removers)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -397,8 +361,8 @@ func TestStoreWrite(t *testing.T) {
 				t.Error(str)
 			}
 
-			for i, rs := range readers {
-				data, err := rs[0].Read(c.loc)
+			for i, io := range ios {
+				data, err := io[0].Read(c.loc)
 
 				if err == nil && string(data) != string(c.written[i]) {
 					t.Errorf("written data false at level %v:\n"+
@@ -455,20 +419,16 @@ func TestStoreRemove(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			var readers [][]rsrc.Reader
-			var writers [][]rsrc.Writer
-			var removers [][]rsrc.Remover
+			var ios [][]rsrc.IO
 			for i := range c.files {
 				io, err := mock.IO(c.files[i], c.locf[i])
 				if err != nil {
 					t.Fatal("setup error")
 				}
-				readers = append(readers, []rsrc.Reader{io})
-				writers = append(writers, []rsrc.Writer{io})
-				removers = append(removers, []rsrc.Remover{io})
+				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(readers, writers, removers)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -479,8 +439,8 @@ func TestStoreRemove(t *testing.T) {
 			}
 
 			if err != nil {
-				for i, rs := range readers {
-					_, err := rs[0].Read(c.loc)
+				for i, io := range ios {
+					_, err := io[0].Read(c.loc)
 
 					if err != nil && c.exist[i] {
 						t.Errorf("file at level %v does not exists but should", i)

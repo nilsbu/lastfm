@@ -20,22 +20,16 @@ type pool struct {
 
 // TODO ...
 func New(
-	readers [][]rsrc.Reader,
-	writers [][]rsrc.Writer,
-	removers [][]rsrc.Remover,
+	ios [][]rsrc.IO,
 ) (Store, error) {
-	if len(readers) != len(writers) {
+	if len(ios) == 0 {
 		return nil, fail.WrapError(fail.Critical,
-			errors.New("readers and writers must have equal numbers of layers"))
-	}
-	if len(readers) == 0 {
-		return nil, fail.WrapError(fail.Critical,
-			errors.New("readers and writers must have at least one layer"))
+			errors.New("store must have at least one layer"))
 	}
 
-	pools := make([]Pool, len(readers))
-	for i := range readers {
-		pool, err := NewPool(readers[i], writers[i], removers[i])
+	pools := make([]Pool, len(ios))
+	for i := range ios {
+		pool, err := NewPool(ios[i])
 		if err != nil {
 			return nil, err
 		}
@@ -43,6 +37,7 @@ func New(
 	}
 
 	return pool{pools}, nil
+	// return nil, nil
 }
 
 func (p pool) Read(loc rsrc.Locator) (data []byte, err error) {

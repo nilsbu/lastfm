@@ -9,50 +9,30 @@ import (
 
 func TestPool(t *testing.T) {
 	cases := []struct {
-		files       map[rsrc.Locator][]byte
-		loc         rsrc.Locator
-		data        []byte
-		numReaders  int
-		numWriters  int
-		numRemovers int
-		ctorOK      bool
-		writeOK     bool
-		remove      bool
-		removeOK    bool
-		readOK      bool
+		files    map[rsrc.Locator][]byte
+		loc      rsrc.Locator
+		data     []byte
+		numIOs   int
+		ctorOK   bool
+		writeOK  bool
+		remove   bool
+		removeOK bool
+		readOK   bool
 	}{
 		{
 			map[rsrc.Locator][]byte{},
 			rsrc.SessionID(),
 			[]byte("asdf"),
-			0, 1, 1,
+			0,
 			false, true,
 			false, false,
-			true,
-		},
-		{
-			map[rsrc.Locator][]byte{},
-			rsrc.SessionID(),
-			[]byte("asdf"),
-			1, 0, 1,
-			false, true,
-			false, false,
-			true,
-		},
-		{
-			map[rsrc.Locator][]byte{},
-			rsrc.SessionID(),
-			[]byte("asdf"),
-			1, 1, 0,
-			false, true,
-			false, false,
-			true,
+			false,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.SessionID(): []byte("asdf")},
 			rsrc.SessionID(),
 			[]byte("asdf"),
-			3, 3, 1,
+			3,
 			true, true,
 			false, false,
 			true,
@@ -61,7 +41,7 @@ func TestPool(t *testing.T) {
 			map[rsrc.Locator][]byte{},
 			rsrc.SessionID(),
 			[]byte("asdf"),
-			1, 1, 1,
+			1,
 			true, false,
 			false, false,
 			false,
@@ -70,7 +50,7 @@ func TestPool(t *testing.T) {
 			map[rsrc.Locator][]byte{},
 			rsrc.SessionID(),
 			[]byte("asdf"),
-			1, 1, 1,
+			1,
 			true, false,
 			true, false,
 			false,
@@ -79,7 +59,7 @@ func TestPool(t *testing.T) {
 			map[rsrc.Locator][]byte{rsrc.SessionID(): []byte("asdf")},
 			rsrc.SessionID(),
 			nil,
-			3, 3, 1,
+			3,
 			true, true,
 			true, true,
 			false,
@@ -88,23 +68,17 @@ func TestPool(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			io, _ := mock.IO(c.files, mock.Path)
-
-			var readers []rsrc.Reader
-			var writers []rsrc.Writer
-			var removers []rsrc.Remover
-
-			for i := 0; i < c.numReaders; i++ {
-				readers = append(readers, io)
-			}
-			for i := 0; i < c.numWriters; i++ {
-				writers = append(writers, io)
-			}
-			for i := 0; i < c.numRemovers; i++ {
-				removers = append(removers, io)
+			io, err := mock.IO(c.files, mock.Path)
+			if err != nil {
+				t.Fatal("setup failed:", err)
 			}
 
-			p, err := NewPool(readers, writers, removers)
+			var ios []rsrc.IO
+			for i := 0; i < c.numIOs; i++ {
+				ios = append(ios, io)
+			}
+
+			p, err := NewPool(ios)
 			if err != nil {
 				if c.ctorOK {
 					t.Error("unexpected error in constructor:", err)
