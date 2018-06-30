@@ -130,3 +130,8 @@ func (FailIO) Write(data []byte, loc rsrc.Locator) (err error) {
 	return fail.WrapError(fail.Control,
 		fmt.Errorf("cannot write on FailIO"))
 }
+
+func (FailIO) Remove(loc rsrc.Locator) (err error) {
+	return fail.WrapError(fail.Control,
+		fmt.Errorf("cannot remove on FailIO"))
+}

@@ -259,3 +259,19 @@ func TestFailWriter(t *testing.T) {
 		}
 	}
 }
+
+func TestFailRemover(t *testing.T) {
+	rm := FailIO{}
+	err := rm.Remove(rsrc.APIKey())
+	if err == nil {
+		t.Error("expected error but none occurred")
+	} else {
+		if f, ok := err.(fail.Threat); ok {
+			if f.Severity() != fail.Control {
+				t.Error("severity must be 'Control':", err)
+			}
+		} else {
+			t.Error("error must implement Threat but does not:", err)
+		}
+	}
+}
