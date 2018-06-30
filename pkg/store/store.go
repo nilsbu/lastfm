@@ -56,8 +56,7 @@ func (p pool) Update(loc rsrc.Locator) (data []byte, err error) {
 }
 
 func (p pool) Write(data []byte, loc rsrc.Locator) error {
-	_, err := p.write(data, loc, len(p.Pools)-1, -1)
-	return err
+	return p.write(data, loc, len(p.Pools)-1, -1)
 }
 
 func (p pool) Remove(loc rsrc.Locator) error {
@@ -89,12 +88,11 @@ func (p pool) read(loc rsrc.Locator, start int, di int,
 		return nil, err
 	}
 
-	_, err = p.write(data, loc, idx+1, 1)
-	return data, err
+	return data, p.write(data, loc, idx+1, 1)
 }
 
-func (p pool) write(data []byte, loc rsrc.Locator, start int, di int) (int, error) {
-	return p.cascade(start, di, func(i int) (bool, error) {
+func (p pool) write(data []byte, loc rsrc.Locator, start int, di int) error {
+	_, err := p.cascade(start, di, func(i int) (bool, error) {
 		if err := <-p.Pools[i].Write(data, loc); err != nil {
 			if f, ok := err.(fail.Threat); ok && f.Severity() == fail.Control {
 				return true, nil
@@ -103,6 +101,7 @@ func (p pool) write(data []byte, loc rsrc.Locator, start int, di int) (int, erro
 		}
 		return true, nil
 	})
+	return err
 }
 
 func (p pool) remove(loc rsrc.Locator) error {
