@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/nilsbu/lastfm/pkg/fail"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -33,7 +34,7 @@ func New(
 
 	pools := make([]Pool, len(readers))
 	for i := range readers {
-		pool, err := NewPool(readers[i], writers[i])
+		pool, err := NewPool(readers[i], writers[i], []rsrc.Remover{io.FileIO{}})
 		if err != nil {
 			return nil, err
 		}
