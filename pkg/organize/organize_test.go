@@ -271,7 +271,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
 
-			pool, _ := store.New([][]rsrc.IO{[]rsrc.IO{io0}, []rsrc.IO{io1}})
+			pool, _ := store.NewCache([][]rsrc.IO{[]rsrc.IO{io0}, []rsrc.IO{io1}})
 
 			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
 			if err != nil && tc.ok {
