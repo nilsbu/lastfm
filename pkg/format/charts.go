@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ChartsFormatter struct {
+type Charts struct {
 	Charts    charts.Charts
 	Column    int
 	Count     int
@@ -19,7 +19,7 @@ type ChartsFormatter struct {
 	Precision int
 }
 
-func (formatter *ChartsFormatter) Plain(w io.Writer) error {
+func (formatter *Charts) Plain(w io.Writer) error {
 	col, err := formatter.Charts.Column(formatter.Column)
 	if err != nil {
 		return errors.Wrap(err,
@@ -27,7 +27,7 @@ func (formatter *ChartsFormatter) Plain(w io.Writer) error {
 	}
 	top := col.Top(formatter.Count)
 
-	colFormatter := &ColumnFormatter{
+	colFormatter := &Column{
 		Column:    top,
 		Numbered:  formatter.Numbered,
 		Precision: formatter.Precision,
@@ -35,13 +35,13 @@ func (formatter *ChartsFormatter) Plain(w io.Writer) error {
 	return colFormatter.Plain(w)
 }
 
-type ColumnFormatter struct {
+type Column struct {
 	Column    charts.Column
 	Numbered  bool
 	Precision int
 }
 
-func (formatter *ColumnFormatter) Plain(w io.Writer) error {
+func (formatter *Column) Plain(w io.Writer) error {
 	if len(formatter.Column) == 0 {
 		return nil
 	}
@@ -84,7 +84,7 @@ func (formatter *ColumnFormatter) Plain(w io.Writer) error {
 	return nil
 }
 
-func (formatter *ColumnFormatter) getMaxNameLen() int {
+func (formatter *Column) getMaxNameLen() int {
 	maxLen := 0
 	for _, score := range formatter.Column {
 		runeCnt := utf8.RuneCountInString(score.Name)

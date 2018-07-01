@@ -66,7 +66,7 @@ func TestChartsPlain(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			buf := new(bytes.Buffer)
-			formatter := &ChartsFormatter{c.charts, c.col, c.n, c.numbered, c.prec}
+			formatter := &Charts{c.charts, c.col, c.n, c.numbered, c.prec}
 			formatter.Plain(buf)
 
 			str := buf.String()
