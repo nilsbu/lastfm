@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/nilsbu/lastfm/pkg/organize"
 )
@@ -37,6 +38,8 @@ func resolveLastfm(
 		return resolveSession(params, sid)
 	case "update":
 		return resolveUpdate(params, sid)
+	case "print":
+		return resolvePrint(params, sid)
 	default:
 		return nil, fmt.Errorf("command '%v' is not supported", first)
 	}
@@ -87,6 +90,37 @@ func resolveUpdate(
 
 	switch first {
 	// TODO more update commands
+	default:
+		return nil, fmt.Errorf("parameter '%v' is not supported", first)
+	}
+}
+
+func resolvePrint(
+	params []string, sid organize.SessionID) (cmd command, err error) {
+	if len(params) < 1 {
+		return nil, errors.New("'print' requires further parameters")
+	}
+
+	if sid == "" {
+		return nil, errors.New("'print' a running session")
+	}
+
+	first, params := params[0], params[1:]
+
+	switch first {
+	case "total":
+		if len(params) < 1 {
+			return printTotal{sid: sid}, nil
+		} else if len(params) == 1 {
+			n, err := strconv.Atoi(params[0])
+			if err != nil {
+				return nil, fmt.Errorf("'%v' must be an int", params[0])
+			}
+			return printTotal{sid: sid, n: n}, nil
+		} else {
+			return nil, errors.New("'print total' accepts no more than one additional parameter")
+		}
+
 	default:
 		return nil, fmt.Errorf("parameter '%v' is not supported", first)
 	}

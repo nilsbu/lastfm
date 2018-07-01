@@ -88,6 +88,34 @@ func TestResolve(t *testing.T) {
 			[]string{"lastfm", "update", "aargh!"},
 			"user", nil, false,
 		},
+		{
+			[]string{"lastfm", "print"},
+			"", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "total"},
+			"", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "total"},
+			"user", printTotal{sid: "user", n: 0}, true,
+		},
+		{
+			[]string{"lastfm", "print", "total", "25"},
+			"user", printTotal{sid: "user", n: 25}, true,
+		},
+		{
+			[]string{"lastfm", "print", "total", "k25"},
+			"user", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "total", "10", "x"},
+			"user", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "asdf"},
+			"user", nil, false,
+		},
 	}
 
 	for _, c := range cases {
