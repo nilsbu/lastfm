@@ -87,7 +87,7 @@ func ReadAllDayPlays(
 // UpdateAllDayPlays loads saved daily plays from preprocessed all day plays and
 // reads the remaining days from raw data. The last saved day gets reloaded.
 func UpdateAllDayPlays(
-	user unpack.User,
+	user *unpack.User,
 	until rsrc.Day,
 	s store.Store,
 ) (plays []unpack.DayPlays, err error) {
@@ -120,4 +120,24 @@ func UpdateAllDayPlays(
 		until, store.NewUpToDate(s))
 
 	return append(oldPlays, newPlays...), err
+}
+
+func LoadUser(user string, r rsrc.Reader) (*unpack.User, error) {
+	name, err := rsrc.UserInfo(user)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := r.Read(name)
+	if err != nil {
+		return nil, err
+	}
+
+	userRaw := unpack.UserInfo{}
+	err = json.Unmarshal(data, &userRaw)
+	if err != nil {
+		return nil, err
+	}
+
+	return unpack.GetUser(&userRaw), nil
 }
