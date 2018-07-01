@@ -24,7 +24,11 @@ func TestMessagePlain(t *testing.T) {
 			formatter.Plain(buf)
 
 			msg := buf.String()
-			if msg != c.msg+"\n" {
+			if c.msg == "" {
+				if msg != "" {
+					t.Error("something was printed despite empty message")
+				}
+			} else if msg != c.msg+"\n" {
 				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", msg, c.msg)
 			}
 		})
