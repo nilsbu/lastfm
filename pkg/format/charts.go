@@ -22,8 +22,8 @@ type Charts struct {
 func (formatter *Charts) Plain(w io.Writer) error {
 	col, err := formatter.Charts.Column(formatter.Column)
 	if err != nil {
-		return errors.Wrap(err,
-			fmt.Sprintf("failed to extract column %v", formatter.Column))
+		return errors.Wrapf(err,
+			"failed to extract column %v", formatter.Column)
 	}
 	top := col.Top(formatter.Count)
 
