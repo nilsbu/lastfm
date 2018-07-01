@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/nilsbu/lastfm/pkg/display"
+	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -16,11 +18,12 @@ type sessionInfo struct {
 	sid organize.SessionID
 }
 
-func (c sessionInfo) Execute(s store.Store) error {
+func (c sessionInfo) Execute(s store.Store, d display.Display) error {
 	if c.sid == "" {
-		fmt.Println("no session is running")
+		d.Display(&format.Message{Msg: "no session is running"})
 	} else {
-		fmt.Printf("a session is running for user '%v'\n", c.sid)
+		d.Display(&format.Message{
+			Msg: fmt.Sprintf("a session is running for user '%v'", c.sid)})
 	}
 
 	return nil
@@ -31,7 +34,7 @@ type sessionStart struct {
 	user string
 }
 
-func (c sessionStart) Execute(s store.Store) error {
+func (c sessionStart) Execute(s store.Store, d display.Display) error {
 	if c.sid != "" {
 		return fmt.Errorf("a session is already running for '%v'", c.sid)
 	}
@@ -50,7 +53,7 @@ type sessionStop struct {
 	sid organize.SessionID
 }
 
-func (c sessionStop) Execute(s store.Store) error {
+func (c sessionStop) Execute(s store.Store, d display.Display) error {
 	if c.sid == "" {
 		return errors.New("no session is running")
 	}
