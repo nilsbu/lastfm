@@ -34,7 +34,7 @@ func (c updateHistory) Execute(s store.Store) error {
 
 	user := unpack.GetUser(&userRaw)
 
-	plays, err := organize.UpdateAllDayPlays(*user, rsrc.Date(time.Now()), s)
+	plays, err := organize.UpdateAllDayPlays(user, rsrc.Date(time.Now()), s)
 	if err != nil {
 		return err
 	}
