@@ -6,6 +6,7 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/command"
 	"github.com/nilsbu/lastfm/pkg/display"
+	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -51,5 +52,8 @@ func main() {
 
 	d := display.NewTerminal()
 
-	command.Execute(os.Args, sid, s, d)
+	err = command.Execute(os.Args, sid, s, d)
+	if err != nil {
+		d.Display(&format.Error{Err: err})
+	}
 }
