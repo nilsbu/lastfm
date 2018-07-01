@@ -9,7 +9,7 @@ import (
 )
 
 // Charts is table of daily accumulation of plays.
-type Charts map[string][]int
+type Charts map[string][]float64
 
 // Sums are special charts where each row consists of the some from the
 // beginning until the current row.
@@ -21,7 +21,7 @@ type Column []Score
 // Score is a score with a name attached,
 type Score struct {
 	Name  string
-	Score int
+	Score float64
 }
 
 // Compile builds Charts from DayPlays.
@@ -31,9 +31,9 @@ func Compile(dayPlays []unpack.DayPlays) Charts {
 	for i, day := range dayPlays {
 		for name, plays := range day {
 			if _, ok := charts[name]; !ok {
-				charts[name] = make([]int, size)
+				charts[name] = make([]float64, size)
 			}
-			charts[name][i] = plays
+			charts[name][i] = float64(plays)
 		}
 	}
 
@@ -44,7 +44,7 @@ func Compile(dayPlays []unpack.DayPlays) Charts {
 func (c Charts) Sum() Sums {
 	sums := make(Sums)
 
-	lines := make(chan [2][]int)
+	lines := make(chan [2][]float64)
 	workers := runtime.NumCPU()
 
 	for i := 0; i < workers; i++ {
@@ -54,7 +54,7 @@ func (c Charts) Sum() Sums {
 					break
 				}
 
-				sum := 0
+				var sum float64
 				for i, x := range job[1] {
 					sum += x
 					job[0][i] = sum
@@ -65,12 +65,12 @@ func (c Charts) Sum() Sums {
 	}
 
 	for name, charts := range c {
-		line := make([]int, len(charts))
+		line := make([]float64, len(charts))
 		sums[name] = line
-		lines <- [2][]int{line, charts}
+		lines <- [2][]float64{line, charts}
 	}
 	for i := 0; i < workers; i++ {
-		lines <- [2][]int{nil, nil}
+		lines <- [2][]float64{nil, nil}
 	}
 	close(lines)
 

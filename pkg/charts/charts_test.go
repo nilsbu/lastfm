@@ -29,7 +29,7 @@ func TestCompile(t *testing.T) {
 				unpack.DayPlays{"WASD": 1},
 				unpack.DayPlays{"ASD": 13, "WASD": 4},
 			},
-			Charts{"ASD": []int{2, 0, 13}, "WASD": []int{0, 1, 4}},
+			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
 		},
 	}
 
@@ -54,12 +54,12 @@ func TestChartsSum(t *testing.T) {
 			Sums{},
 		},
 		{
-			Charts{"X": []int{}},
-			Sums{"X": []int{}},
+			Charts{"X": []float64{}},
+			Sums{"X": []float64{}},
 		},
 		{
-			Charts{"X": []int{1, 3, 4}, "o0o": []int{0, 0, 7}},
-			Sums{"X": []int{1, 4, 8}, "o0o": []int{0, 0, 7}},
+			Charts{"X": []float64{1, 3, 4}, "o0o": []float64{0, 0, 7}},
+			Sums{"X": []float64{1, 4, 8}, "o0o": []float64{0, 0, 7}},
 		},
 	}
 
@@ -88,28 +88,28 @@ func TestChartsColumn(t *testing.T) {
 			false,
 		},
 		{
-			Charts{"X": []int{}},
+			Charts{"X": []float64{}},
 			0,
 			Column{},
 			false,
 		},
 		{
 			Charts{
-				"o0o": []int{0, 0, 7},
-				"lol": []int{1, 2, 3},
-				"X":   []int{1, 3, 4}},
+				"o0o": []float64{0, 0, 7},
+				"lol": []float64{1, 2, 3},
+				"X":   []float64{1, 3, 4}},
 			1,
 			Column{Score{"X", 3}, Score{"lol", 2}, Score{"o0o", 0}},
 			true,
 		},
 		{
-			Charts{"X": []int{1, 3, 4}},
+			Charts{"X": []float64{1, 3, 4}},
 			-1,
 			Column{Score{"X", 4}},
 			true,
 		},
 		{
-			Charts{"X": []int{1, 3, 4}},
+			Charts{"X": []float64{1, 3, 4}},
 			-4,
 			Column{},
 			false,
