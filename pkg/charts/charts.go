@@ -24,7 +24,7 @@ type Column []Score
 // Score is a score with a name attached,
 type Score struct {
 	Name  string
-	Score float64
+	Score float64 // TODO rename Value
 }
 
 // Compile builds Charts from DayPlays.
