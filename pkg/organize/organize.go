@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -90,7 +89,7 @@ func ReadAllDayPlays(
 func UpdateAllDayPlays(
 	user unpack.User,
 	until rsrc.Day,
-	store store.Store,
+	s store.Store,
 ) (plays []unpack.DayPlays, err error) {
 	registeredDay, ok := user.Registered.Midnight()
 	if !ok {
@@ -99,7 +98,7 @@ func UpdateAllDayPlays(
 	}
 	begin := registeredDay
 
-	oldPlays, err := ReadAllDayPlays(user.Name, store)
+	oldPlays, err := ReadAllDayPlays(user.Name, s)
 	if err != nil {
 		oldPlays = []unpack.DayPlays{}
 	} else if len(oldPlays) > 0 {
@@ -118,7 +117,7 @@ func UpdateAllDayPlays(
 
 	newPlays, err := LoadAllDayPlays(
 		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
-		until, io.RedirectUpdate(store))
+		until, store.NewUpToDate(s))
 
 	return append(oldPlays, newPlays...), err
 }
