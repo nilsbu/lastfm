@@ -2,6 +2,7 @@ package charts
 
 import (
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/nilsbu/fastest"
@@ -68,6 +69,40 @@ func TestChartsSum(t *testing.T) {
 			sums := tc.charts.Sum()
 
 			ft.DeepEquals(sums, tc.sums)
+		})
+	}
+}
+
+func TestChartsFade(t *testing.T) {
+	cases := []struct {
+		halflife float64
+		charts   []float64
+		faded    []float64
+	}{
+		{
+			1.0,
+			[]float64{1, 0, 0},
+			[]float64{1, 0.5, 0.25},
+		},
+		{
+			2.0,
+			[]float64{1, 0, 1},
+			[]float64{1, math.Sqrt(0.5), 1.5},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			faded := Charts{"XX": c.charts}.Fade(c.halflife)
+			f := faded["XX"]
+			if len(f) != len(c.faded) {
+				t.Fatalf("line length false: %v != %v", len(f), len(c.faded))
+			}
+			for i := 0; i < len(f); i++ {
+				if math.Abs(f[i]-c.faded[i]) > 1e-6 {
+					t.Errorf("at position %v: %v != %v", i, f[i], c.faded[i])
+				}
+			}
 		})
 	}
 }

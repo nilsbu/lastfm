@@ -2,6 +2,7 @@ package charts
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"sort"
 
@@ -14,6 +15,8 @@ type Charts map[string][]float64
 // Sums are special charts where each row consists of the some from the
 // beginning until the current row.
 type Sums Charts
+
+type Faded Charts
 
 // Column is a column of charts sorted descendingly.
 type Column []Score
@@ -42,7 +45,30 @@ func Compile(dayPlays []unpack.DayPlays) Charts {
 
 // Sum computes partial sums for charts.
 func (c Charts) Sum() Sums {
-	sums := make(Sums)
+	return Sums(c.mapLine(func(in []float64, out []float64) {
+		var sum float64
+		for i, x := range in {
+			sum += x
+			out[i] = sum
+		}
+	}))
+}
+
+func (c Charts) Fade(hl float64) Faded {
+	fac := math.Pow(0.5, 1/hl)
+
+	return Faded(c.mapLine(func(in []float64, out []float64) {
+		sum := float64(0)
+		for i, x := range in {
+			sum *= fac
+			sum += x
+			out[i] = sum
+		}
+	}))
+}
+
+func (c Charts) mapLine(f func(in []float64, out []float64)) Charts {
+	result := make(Charts)
 
 	lines := make(chan [2][]float64)
 	workers := runtime.NumCPU()
@@ -54,11 +80,7 @@ func (c Charts) Sum() Sums {
 					break
 				}
 
-				var sum float64
-				for i, x := range job[1] {
-					sum += x
-					job[0][i] = sum
-				}
+				f(job[0], job[1])
 			}
 
 		}()
@@ -66,15 +88,15 @@ func (c Charts) Sum() Sums {
 
 	for name, charts := range c {
 		line := make([]float64, len(charts))
-		sums[name] = line
-		lines <- [2][]float64{line, charts}
+		result[name] = line
+		lines <- [2][]float64{charts, line}
 	}
 	for i := 0; i < workers; i++ {
 		lines <- [2][]float64{nil, nil}
 	}
 	close(lines)
 
-	return sums
+	return result
 }
 
 // Column returns a column of charts sorted descendingly. Negative indices are
