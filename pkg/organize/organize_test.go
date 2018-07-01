@@ -273,7 +273,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 			pool, _ := store.NewCache([][]rsrc.IO{[]rsrc.IO{io0}, []rsrc.IO{io1}})
 
-			plays, err := UpdateAllDayPlays(tc.user, tc.until, pool)
+			plays, err := UpdateAllDayPlays(&tc.user, tc.until, pool)
 			if err != nil && tc.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !tc.ok {
