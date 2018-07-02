@@ -25,7 +25,12 @@ func (formatter *Charts) Plain(w io.Writer) error {
 		return errors.Wrapf(err,
 			"failed to extract column %v", formatter.Column)
 	}
-	top := col.Top(formatter.Count)
+
+	n := formatter.Count
+	if n == 0 {
+		n = 10
+	}
+	top := col.Top(n)
 
 	colFormatter := &Column{
 		Column:    top,
@@ -61,8 +66,6 @@ func (formatter *Column) Plain(w io.Writer) error {
 	}
 	strLen := strconv.Itoa(maxValueLen)
 	pattern += "%" + strLen + "." + strconv.Itoa(formatter.Precision) + "f\n"
-
-	// _, err := io.WriteString(w, pattern)
 
 	if formatter.Numbered {
 		for i, score := range formatter.Column {

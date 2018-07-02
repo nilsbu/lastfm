@@ -58,7 +58,7 @@ func TestChartsPlain(t *testing.T) {
 				"G": []float64{4}, "H": []float64{3}, "I": []float64{2},
 				"J": []float64{1},
 			},
-			-1, 10, true, 0,
+			-1, 0, true, 0,
 			" 1: A - 10\n 2: B -  9\n 3: C -  8\n 4: D -  7\n 5: E -  6\n 6: F -  5\n 7: G -  4\n 8: H -  3\n 9: I -  2\n10: J -  1\n",
 		},
 	}
