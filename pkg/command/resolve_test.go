@@ -116,6 +116,30 @@ func TestResolve(t *testing.T) {
 			[]string{"lastfm", "print", "asdf"},
 			"user", nil, false,
 		},
+		{
+			[]string{"lastfm", "print", "fade"},
+			"user", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "fade", "30.2"},
+			"user", printFade{sid: "user", n: 0, hl: 30.2}, true,
+		},
+		{
+			[]string{"lastfm", "print", "fade"},
+			"user", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "fade", "30", "10", "too many"},
+			"user", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "fade", "..."},
+			"user", nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "fade", "2", "x"},
+			"user", nil, false,
+		},
 	}
 
 	for _, c := range cases {

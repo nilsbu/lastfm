@@ -35,3 +35,32 @@ func (cmd printTotal) Execute(s store.Store, d display.Display) error {
 
 	return nil
 }
+
+type printFade struct {
+	sid organize.SessionID
+	n   int
+	hl  float64
+}
+
+func (cmd printFade) Execute(s store.Store, d display.Display) error {
+	plays, err := organize.ReadAllDayPlays(string(cmd.sid), s)
+	if err != nil {
+		return err
+	}
+
+	sums := charts.Compile(plays).Fade(cmd.hl)
+	f := &format.Charts{
+		Charts:    charts.Charts(sums),
+		Column:    -1,
+		Count:     cmd.n,
+		Numbered:  true,
+		Precision: 2,
+	}
+
+	err = d.Display(f)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

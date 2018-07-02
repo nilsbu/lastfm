@@ -118,9 +118,30 @@ func resolvePrint(
 			}
 			return printTotal{sid: sid, n: n}, nil
 		} else {
+			return nil, errors.New(
+				"'print total' accepts no more than one additional parameter")
+		}
+	case "fade":
+		if len(params) < 1 {
 			return nil, errors.New("'print total' accepts no more than one additional parameter")
+		} else if len(params) > 2 {
+			return nil, errors.New(
+				"'print total' accepts no more than two additional parameter")
 		}
 
+		hl, err := strconv.ParseFloat(params[0], 64)
+		if err != nil {
+			return nil, fmt.Errorf("'%v' must be a float", params[0])
+		}
+
+		var n int
+		if len(params) == 2 {
+			n, err = strconv.Atoi(params[1])
+			if err != nil {
+				return nil, fmt.Errorf("'%v' must be an int", params[1])
+			}
+		}
+		return printFade{sid: sid, hl: hl, n: n}, nil
 	default:
 		return nil, fmt.Errorf("parameter '%v' is not supported", first)
 	}
