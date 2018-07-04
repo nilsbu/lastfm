@@ -20,7 +20,7 @@ func createStore() (store.Store, error) {
 	}
 
 	var webIOs []rsrc.IO
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 32; i++ {
 		webIOs = append(webIOs, io.NewWebIO(key))
 	}
 
