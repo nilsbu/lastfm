@@ -4,6 +4,12 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
+// User contains relevant core information about a user.
+type User struct {
+	Name       string
+	Registered rsrc.Day
+}
+
 type obUserInfo struct {
 	name string
 }
@@ -32,4 +38,53 @@ func (o *obUserInfo) interpret(raw interface{}) (interface{}, error) {
 
 	utc := ui.User.Registered.UTC
 	return &User{ui.User.Name, rsrc.ToDay(utc)}, nil
+}
+
+// HistoryDayPage is a single page of a day of a user's played tracks.
+type HistoryDayPage struct {
+	Plays map[string]int
+	Pages int
+}
+
+type obHistory struct {
+	user string
+	page int
+	day  rsrc.Day
+}
+
+// LoadHistoryDayPage loads a page of a user's played tracks.
+func LoadHistoryDayPage(
+	user string, page int, day rsrc.Day, r rsrc.Reader) (*HistoryDayPage, error) {
+	data, err := obtain(&obHistory{user, page, day}, r)
+	if err != nil {
+		return nil, err
+	}
+	hist := data.(*HistoryDayPage)
+	return hist, nil
+}
+
+func (o *obHistory) locator() rsrc.Locator {
+	return rsrc.History(o.user, o.page, o.day)
+}
+
+func (o *obHistory) deserializer() interface{} {
+	return &jsonUserRecentTracks{}
+}
+
+func (o *obHistory) interpret(raw interface{}) (interface{}, error) {
+	data := raw.(*jsonUserRecentTracks)
+
+	return &HistoryDayPage{
+		countPlays(data),
+		data.RecentTracks.Attr.TotalPages}, nil
+}
+
+func countPlays(urt *jsonUserRecentTracks) map[string]int {
+	dp := make(map[string]int)
+	for _, track := range urt.RecentTracks.Track {
+		if !track.Attr.NowPlaying {
+			dp[track.Artist.Str]++
+		}
+	}
+	return dp
 }

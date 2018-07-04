@@ -12,8 +12,7 @@ type jsonUser struct {
 	//               playlists, bootstrap
 }
 
-// UserRecentTracks is unmarshaled JSON data from user.getRecentTracks.
-type UserRecentTracks struct {
+type jsonUserRecentTracks struct {
 	RecentTracks recentTracks `json:"recenttracks"`
 }
 

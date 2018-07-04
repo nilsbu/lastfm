@@ -1,19 +1,20 @@
 package organize
 
 import (
-	"encoding/json"
 	"errors"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
+type HistoryDay map[string]int
+
 // LoadAllDayPlays load plays from all days since the registration of the user.
 // TODO consistant naming scheme between read, write, download, load, get etc.
 func LoadAllDayPlays(
 	user unpack.User,
 	until rsrc.Day,
-	r rsrc.Reader) ([]unpack.DayPlays, error) {
+	r rsrc.Reader) ([]HistoryDay, error) {
 
 	untilMdn, uOK := until.Midnight()
 	registered, rOK := user.Registered.Midnight()
@@ -23,7 +24,7 @@ func LoadAllDayPlays(
 		return nil, errors.New("user has no valid registration date")
 	}
 	days := int((untilMdn - registered) / 86400)
-	result := make([]unpack.DayPlays, days+1)
+	result := make([]HistoryDay, days+1)
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
@@ -50,7 +51,7 @@ func LoadAllDayPlays(
 
 // LoadDayPlaysResult is the result of loadDayPlays.
 type LoadDayPlaysResult struct {
-	DayPlays unpack.DayPlays
+	DayPlays map[string]int
 	Err      error
 }
 
@@ -58,49 +59,37 @@ func loadDayPlays(
 	user string,
 	time rsrc.Day,
 	r rsrc.Reader,
-) (unpack.DayPlays, error) {
-	dp, pages, err := loadDayPlaysPage(rsrc.History(user, 1, time), r)
-	if err != nil || pages == 1 {
-		return dp, err
+) (map[string]int, error) {
+	histPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
+	if err != nil {
+		return nil, err
+	} else if histPage.Pages == 1 {
+		return histPage.Plays, nil
 	}
 
 	back := make(chan LoadDayPlaysResult)
-	for page := 1; page < pages; page++ {
+	for page := 1; page < histPage.Pages; page++ {
 		go func(page int) {
-			tmpDP, _, tmpErr := loadDayPlaysPage(rsrc.History(user, page+1, time), r)
-			back <- LoadDayPlaysResult{tmpDP, tmpErr}
+			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page+1, time, r)
+			if tmpErr != nil {
+				back <- LoadDayPlaysResult{nil, tmpErr}
+			} else {
+				back <- LoadDayPlaysResult{histPage.Plays, nil}
+			}
 		}(page)
 	}
 
-	for p := 1; p < pages; p++ {
+	for p := 1; p < histPage.Pages; p++ {
 		dpr := <-back
 		if dpr.Err != nil {
 			return nil, dpr.Err
 		}
 
 		for k, v := range dpr.DayPlays {
-			dp[k] += v
+			histPage.Plays[k] += v
 		}
 	}
 	close(back)
 
-	return dp, err
-}
-
-func loadDayPlaysPage(loc rsrc.Locator,
-	r rsrc.Reader) (dp unpack.DayPlays, pages int, err error) {
-	data, err := r.Read(loc)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	urt := &unpack.UserRecentTracks{}
-	err = json.Unmarshal(data, urt)
-	if err != nil {
-		return
-	}
-
-	dp = unpack.CountPlays(urt)
-	pages = unpack.GetTracksPages(urt)
-	return
+	return histPage.Plays, err
 }

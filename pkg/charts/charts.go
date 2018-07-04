@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"sort"
 
-	"github.com/nilsbu/lastfm/pkg/unpack"
+	"github.com/nilsbu/lastfm/pkg/organize"
 )
 
 // Charts is table of daily accumulation of plays.
@@ -28,7 +28,7 @@ type Score struct {
 }
 
 // Compile builds Charts from DayPlays.
-func Compile(dayPlays []unpack.DayPlays) Charts {
+func Compile(dayPlays []organize.HistoryDay) Charts {
 	size := len(dayPlays)
 	charts := make(Charts)
 	for i, day := range dayPlays {

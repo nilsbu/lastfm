@@ -57,7 +57,7 @@ func LoadSessionID(r rsrc.Reader) (SessionID, error) {
 
 // WriteAllDayPlays writes a list of day plays.
 func WriteAllDayPlays(
-	plays []unpack.DayPlays,
+	plays []HistoryDay,
 	user string,
 	w rsrc.Writer) (err error) {
 	jsonData, _ := json.Marshal(plays)
@@ -68,7 +68,7 @@ func WriteAllDayPlays(
 // ReadAllDayPlays reads a list of day plays.
 func ReadAllDayPlays(
 	user string,
-	r rsrc.Reader) (plays []unpack.DayPlays, err error) {
+	r rsrc.Reader) (plays []HistoryDay, err error) {
 
 	jsonData, err := r.Read(rsrc.AllDayPlays(user))
 	if err != nil {
@@ -85,7 +85,7 @@ func UpdateAllDayPlays(
 	user *unpack.User,
 	until rsrc.Day,
 	s store.Store,
-) (plays []unpack.DayPlays, err error) {
+) (plays []HistoryDay, err error) {
 	registeredDay, ok := user.Registered.Midnight()
 	if !ok {
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
@@ -95,7 +95,7 @@ func UpdateAllDayPlays(
 
 	oldPlays, err := ReadAllDayPlays(user.Name, s)
 	if err != nil {
-		oldPlays = []unpack.DayPlays{}
+		oldPlays = []HistoryDay{}
 	} else if len(oldPlays) > 0 {
 		begin = registeredDay + int64(86400*(len(oldPlays)-1))
 		oldPlays = oldPlays[:len(oldPlays)-1]

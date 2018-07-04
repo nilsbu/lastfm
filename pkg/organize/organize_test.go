@@ -81,20 +81,20 @@ func TestAllDayPlays(t *testing.T) {
 
 	testCases := []struct {
 		user    string
-		plays   []unpack.DayPlays
+		plays   []HistoryDay
 		writeOK bool
 		readOK  bool
 	}{
 		{
 			"XX",
-			[]unpack.DayPlays{unpack.DayPlays{"BTS": 2, "XX": 1, "12": 1}},
+			[]HistoryDay{HistoryDay{"BTS": 2, "XX": 1, "12": 1}},
 			true, true,
 		},
 		{
 			"XX",
-			[]unpack.DayPlays{
-				unpack.DayPlays{"as": 42, "": 1, "12": 100},
-				unpack.DayPlays{"ギルガメッシュ": 1000},
+			[]HistoryDay{
+				HistoryDay{"as": 42, "": 1, "12": 100},
+				HistoryDay{"ギルガメッシュ": 1000},
 			},
 			false, false,
 		},
@@ -136,7 +136,7 @@ func TestAllDayPlays(t *testing.T) {
 func TestAllDayPlaysFalseName(t *testing.T) {
 	io, _ := mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
 
-	if err := WriteAllDayPlays([]unpack.DayPlays{}, "I", io); err == nil {
+	if err := WriteAllDayPlays([]HistoryDay{}, "I", io); err == nil {
 		t.Error("expected error during write but non occurred")
 	}
 
@@ -154,10 +154,10 @@ func TestUpdateAllDayPlays(t *testing.T) {
 	testCases := []struct {
 		user           unpack.User
 		until          rsrc.Day
-		saved          []unpack.DayPlays
+		saved          []HistoryDay
 		tracksFile     map[rsrc.Locator][]byte
 		tracksDownload map[rsrc.Locator][]byte
-		plays          []unpack.DayPlays
+		plays          []HistoryDay
 		ok             bool
 	}{
 		{ // No data
@@ -166,7 +166,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.DayPlays{},
+			[]HistoryDay{},
 			false,
 		},
 		{ // Registration day invalid
@@ -175,7 +175,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.DayPlays{},
+			[]HistoryDay{},
 			false,
 		},
 		{ // Begin no valid day
@@ -184,28 +184,28 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.DayPlays{},
+			[]HistoryDay{},
 			false,
 		},
 		{ // download one day
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(300)}, // registered at 0:05
 			rsrc.ToDay(0),
-			[]unpack.DayPlays{},
+			[]HistoryDay{},
 			map[rsrc.Locator][]byte{h0: nil},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]unpack.DayPlays{
-				unpack.DayPlays{"ASDF": 1},
+			[]HistoryDay{
+				HistoryDay{"ASDF": 1},
 			},
 			true,
 		},
 		{ // download some, have some
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(86400)},
 			rsrc.ToDay(3 * 86400),
-			[]unpack.DayPlays{
-				unpack.DayPlays{"XX": 4},
-				unpack.DayPlays{}, // will be overwritten
+			[]HistoryDay{
+				HistoryDay{"XX": 4},
+				HistoryDay{}, // will be overwritten
 			},
 			map[rsrc.Locator][]byte{
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
@@ -217,40 +217,40 @@ func TestUpdateAllDayPlays(t *testing.T) {
 				h2: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				h3: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]unpack.DayPlays{
-				unpack.DayPlays{"XX": 4},
-				unpack.DayPlays{"ASDF": 1},
-				unpack.DayPlays{"B": 1},
+			[]HistoryDay{
+				HistoryDay{"XX": 4},
+				HistoryDay{"ASDF": 1},
+				HistoryDay{"B": 1},
 			},
 			true,
 		},
 		{ // have more than want
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(86400),
-			[]unpack.DayPlays{
-				unpack.DayPlays{"XX": 2},
-				unpack.DayPlays{"A": 1},
-				unpack.DayPlays{"DropMe": 1},
-				unpack.DayPlays{"DropMeToo": 100},
+			[]HistoryDay{
+				HistoryDay{"XX": 2},
+				HistoryDay{"A": 1},
+				HistoryDay{"DropMe": 1},
+				HistoryDay{"DropMeToo": 100},
 			},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
 			},
 			map[rsrc.Locator][]byte{},
-			[]unpack.DayPlays{
-				unpack.DayPlays{"XX": 2},
-				unpack.DayPlays{"A": 1},
+			[]HistoryDay{
+				HistoryDay{"XX": 2},
+				HistoryDay{"A": 1},
 			},
 			true,
 		},
 		{ // download error
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(0),
-			[]unpack.DayPlays{},
+			[]HistoryDay{},
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.DayPlays{},
+			[]HistoryDay{},
 			false,
 		},
 	}
