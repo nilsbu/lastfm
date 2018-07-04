@@ -24,12 +24,8 @@ type lastFM struct {
 	limit    int
 }
 
-// UserInfo returns a locator for the Last.fm API call "user.getInfo". If the
-// user name is malformed, it returns a critical error.
-func UserInfo(user string) (*lastFM, error) {
-	if err := checkUserName(user); err != nil {
-		return nil, err
-	}
+// UserInfo returns a locator for the Last.fm API call "user.getInfo".
+func UserInfo(user string) Locator {
 	return &lastFM{
 		method:   "user.getInfo",
 		nameType: "user",
@@ -37,8 +33,10 @@ func UserInfo(user string) (*lastFM, error) {
 		page:     -1,
 		day:      NoDay(),
 		limit:    -1,
-	}, nil
+	}
 }
+
+// TODO checkUserName is not used.
 
 func checkUserName(user string) error {
 	if len(user) < 2 {
@@ -74,17 +72,7 @@ func isLetter(char rune) bool {
 	return false
 }
 
-func History(user string, page int, day Day) (*lastFM, error) {
-	if err := checkUserName(user); err != nil {
-		return nil, err
-	} else if page <= 0 {
-		return nil, fail.WrapError(fail.Critical,
-			fmt.Errorf("page number must be positive, was %v", page))
-	} else if _, ok := day.Midnight(); !ok {
-		return nil, fail.WrapError(fail.Critical,
-			errors.New("invalid day, must have positive midnight"))
-	}
-
+func History(user string, page int, day Day) Locator {
 	return &lastFM{
 		method:   "user.getRecentTracks",
 		nameType: "user",
@@ -92,16 +80,11 @@ func History(user string, page int, day Day) (*lastFM, error) {
 		page:     page,
 		day:      day,
 		limit:    200,
-	}, nil
+	}
 }
 
-// ArtistInfo returns a locator for the Last.fm API call "artist.getInfo". If
-// the artist name is empty, it returns a critical error.
-func ArtistInfo(artist string) (*lastFM, error) {
-	if artist == "" {
-		return nil, &fail.AssessedError{Sev: fail.Critical,
-			Err: errors.New("artist name cannot be empty")}
-	}
+// ArtistInfo returns a locator for the Last.fm API call "artist.getInfo".
+func ArtistInfo(artist string) Locator {
 	return &lastFM{
 		method:   "artist.getInfo",
 		nameType: "artist",
@@ -109,16 +92,11 @@ func ArtistInfo(artist string) (*lastFM, error) {
 		page:     -1,
 		day:      NoDay(),
 		limit:    -1,
-	}, nil
+	}
 }
 
-// ArtistTags returns a locator for the Last.fm API call "artist.getTopTags". If
-// the artist name is empty, it returns a critical error.
-func ArtistTags(artist string) (*lastFM, error) {
-	if artist == "" {
-		return nil, &fail.AssessedError{Sev: fail.Critical,
-			Err: errors.New("artist name cannot be empty")}
-	}
+// ArtistTags returns a locator for the Last.fm API call "artist.getTopTags".
+func ArtistTags(artist string) Locator {
 	return &lastFM{
 		method:   "artist.getTopTags",
 		nameType: "artist",
@@ -126,7 +104,7 @@ func ArtistTags(artist string) (*lastFM, error) {
 		page:     -1,
 		day:      NoDay(),
 		limit:    -1,
-	}, nil
+	}
 }
 
 func (loc *lastFM) URL(apiKey string) (string, error) {
@@ -253,14 +231,11 @@ type userData struct {
 	name   string
 }
 
-func AllDayPlays(user string) (*userData, error) {
-	if err := checkUserName(user); err != nil {
-		return nil, err
-	}
+func AllDayPlays(user string) Locator {
 	return &userData{
 		method: "alldayplays",
 		name:   user,
-	}, nil
+	}
 }
 
 func (u userData) URL(apiKey string) (string, error) {

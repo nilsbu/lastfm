@@ -102,11 +102,9 @@ func TestAllDayPlays(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("", func(t *testing.T) {
-			loc, _ := rsrc.AllDayPlays(tc.user)
 			var files map[rsrc.Locator][]byte
-
 			if tc.writeOK {
-				files = map[rsrc.Locator][]byte{loc: nil}
+				files = map[rsrc.Locator][]byte{rsrc.AllDayPlays(tc.user): nil}
 			} else {
 				files = map[rsrc.Locator][]byte{}
 			}
@@ -148,10 +146,10 @@ func TestAllDayPlaysFalseName(t *testing.T) {
 }
 
 func TestUpdateAllDayPlays(t *testing.T) {
-	h0, _ := rsrc.History("AA", 1, rsrc.ToDay(0*86400))
-	h1, _ := rsrc.History("AA", 1, rsrc.ToDay(1*86400))
-	h2, _ := rsrc.History("AA", 1, rsrc.ToDay(2*86400))
-	h3, _ := rsrc.History("AA", 1, rsrc.ToDay(3*86400))
+	h0 := rsrc.History("AA", 1, rsrc.ToDay(0*86400))
+	h1 := rsrc.History("AA", 1, rsrc.ToDay(1*86400))
+	h2 := rsrc.History("AA", 1, rsrc.ToDay(2*86400))
+	h3 := rsrc.History("AA", 1, rsrc.ToDay(3*86400))
 
 	testCases := []struct {
 		user           unpack.User
@@ -259,8 +257,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("", func(t *testing.T) {
-			loc, _ := rsrc.AllDayPlays(tc.user.Name)
-			tc.tracksFile[loc] = nil
+			tc.tracksFile[rsrc.AllDayPlays(tc.user.Name)] = nil
 			io1, _ := mock.IO(tc.tracksFile, mock.Path)
 			if tc.saved != nil {
 				if err := WriteAllDayPlays(tc.saved, tc.user.Name, io1); err != nil {
@@ -290,7 +287,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 }
 
 func TestLoadUser(t *testing.T) {
-	userInfo, _ := rsrc.UserInfo("xy")
+	userInfo := rsrc.UserInfo("xy")
 	cases := []struct {
 		files map[rsrc.Locator][]byte
 		name  string
@@ -347,7 +344,7 @@ func TestLoadUser(t *testing.T) {
 }
 
 func TestReadARtistTags(t *testing.T) {
-	artistTags, _ := rsrc.ArtistTags("xy")
+	artistTags := rsrc.ArtistTags("xy")
 	cases := []struct {
 		files  map[rsrc.Locator][]byte
 		artist string

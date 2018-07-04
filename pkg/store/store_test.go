@@ -54,9 +54,6 @@ func TestStoreNew(t *testing.T) {
 }
 
 func TestStoreRead(t *testing.T) {
-	apiKey := rsrc.APIKey()
-	userInfo, _ := rsrc.UserInfo("abc")
-
 	cases := []struct {
 		files   []map[rsrc.Locator][]byte
 		locf    []mock.Resolver
@@ -72,42 +69,42 @@ func TestStoreRead(t *testing.T) {
 			},
 			[]mock.Resolver{mock.Path},
 			nil,
-			apiKey,
+			rsrc.APIKey(),
 			[][]byte{nil},
 			false, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: []byte("xx")},
-				map[rsrc.Locator][]byte{userInfo: nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("xx"), []byte("xx")},
 			true, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
 				map[rsrc.Locator][]byte{},
-				map[rsrc.Locator][]byte{userInfo: []byte("9")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("9")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("9"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{nil, []byte("9")},
 			true, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: nil},
-				map[rsrc.Locator][]byte{userInfo: []byte("xx")},
-				map[rsrc.Locator][]byte{userInfo: nil},
-				map[rsrc.Locator][]byte{userInfo: nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.Path, mock.Path, mock.Path, mock.Path},
 			[]byte("xx"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{nil, []byte("xx"), []byte("xx"), []byte("xx")},
 			true, fail.Control,
 		},
@@ -152,9 +149,6 @@ func TestStoreRead(t *testing.T) {
 }
 
 func TestStoreUpdate(t *testing.T) {
-	apiKey := rsrc.APIKey()
-	userInfo, _ := rsrc.UserInfo("abc")
-
 	cases := []struct {
 		files   []map[rsrc.Locator][]byte
 		locf    []mock.Resolver
@@ -170,73 +164,73 @@ func TestStoreUpdate(t *testing.T) {
 			},
 			[]mock.Resolver{mock.Path},
 			nil,
-			apiKey,
+			rsrc.APIKey(),
 			[][]byte{nil},
 			false, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: []byte("xx")},
-				map[rsrc.Locator][]byte{userInfo: nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("xx"), []byte("xx")},
 			true, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
 				map[rsrc.Locator][]byte{},
-				map[rsrc.Locator][]byte{apiKey: []byte("9")},
+				map[rsrc.Locator][]byte{rsrc.APIKey(): []byte("9")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("9"),
-			apiKey,
+			rsrc.APIKey(),
 			[][]byte{nil, []byte("9")},
 			true, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: nil},
-				map[rsrc.Locator][]byte{userInfo: []byte("9")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("9")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("9"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{nil, []byte("9")},
 			true, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: nil},
-				map[rsrc.Locator][]byte{userInfo: nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.Path, mock.Path},
 			nil,
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{nil, nil},
 			false, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{apiKey: []byte("9")},
+				map[rsrc.Locator][]byte{rsrc.APIKey(): []byte("9")},
 				map[rsrc.Locator][]byte{},
 			},
 			[]mock.Resolver{mock.Path, mock.URL},
 			[]byte("9"),
-			apiKey,
+			rsrc.APIKey(),
 			[][]byte{[]byte("9"), nil},
 			true, fail.Control,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: []byte("9")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("9")},
 				map[rsrc.Locator][]byte{},
 			},
 			[]mock.Resolver{mock.Path, mock.Path},
 			[]byte("9"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("9"), nil},
 			false, fail.Critical,
 		},
@@ -283,9 +277,6 @@ func TestStoreUpdate(t *testing.T) {
 }
 
 func TestStoreWrite(t *testing.T) {
-	apiKey := rsrc.APIKey()
-	userInfo, _ := rsrc.UserInfo("abc")
-
 	cases := []struct {
 		files   []map[rsrc.Locator][]byte
 		locf    []mock.Resolver
@@ -301,40 +292,40 @@ func TestStoreWrite(t *testing.T) {
 			},
 			[]mock.Resolver{mock.Path},
 			[]byte("xx"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{nil},
 			false, fail.Critical,
 		},
 		{ // not written in layer 0 (no URL for APIKey)
 			[]map[rsrc.Locator][]byte{
 				map[rsrc.Locator][]byte{},
-				map[rsrc.Locator][]byte{apiKey: nil},
+				map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
-			apiKey,
+			rsrc.APIKey(),
 			[][]byte{nil, []byte("xx")},
 			true, fail.Control,
 		},
 		{ // written in neither (0 not reached since 1 fails)
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{apiKey: nil},
+				map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 				map[rsrc.Locator][]byte{},
 			},
 			[]mock.Resolver{mock.Path, mock.URL},
 			[]byte("xx"),
-			apiKey,
+			rsrc.APIKey(),
 			[][]byte{[]byte("xx"), nil},
 			true, fail.Control,
 		},
 		{ // written in both layers
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: nil},
-				map[rsrc.Locator][]byte{userInfo: nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("xx"), []byte("xx")},
 			true, fail.Control,
 		},
@@ -375,9 +366,6 @@ func TestStoreWrite(t *testing.T) {
 }
 
 func TestStoreRemove(t *testing.T) {
-	apiKey := rsrc.APIKey()
-	userInfo, _ := rsrc.UserInfo("abc")
-
 	cases := []struct {
 		files []map[rsrc.Locator][]byte
 		locf  []mock.Resolver
@@ -391,27 +379,27 @@ func TestStoreRemove(t *testing.T) {
 				map[rsrc.Locator][]byte{},
 			},
 			[]mock.Resolver{mock.Path},
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[]bool{false},
 			false, fail.Critical,
 		},
 		{ // remove both
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{userInfo: []byte("xx")},
-				map[rsrc.Locator][]byte{userInfo: []byte("xx")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
+				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
-			userInfo,
+			rsrc.UserInfo("abc"),
 			[]bool{false, false},
 			true, fail.Control,
 		},
 		{ // level 0 not removed since 1 failes
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{apiKey: []byte("xx")},
+				map[rsrc.Locator][]byte{rsrc.APIKey(): []byte("xx")},
 				map[rsrc.Locator][]byte{},
 			},
 			[]mock.Resolver{mock.Path, mock.URL},
-			apiKey,
+			rsrc.APIKey(),
 			[]bool{true, false},
 			true, fail.Control,
 		},

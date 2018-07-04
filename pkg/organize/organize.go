@@ -62,22 +62,15 @@ func WriteAllDayPlays(
 	w rsrc.Writer) (err error) {
 	jsonData, _ := json.Marshal(plays)
 
-	loc, err := rsrc.AllDayPlays(user)
-	if err != nil {
-		return err
-	}
-	return w.Write(jsonData, loc)
+	return w.Write(jsonData, rsrc.AllDayPlays(user))
 }
 
 // ReadAllDayPlays reads a list of day plays.
 func ReadAllDayPlays(
 	user string,
 	r rsrc.Reader) (plays []unpack.DayPlays, err error) {
-	loc, err := rsrc.AllDayPlays(user)
-	if err != nil {
-		return nil, err
-	}
-	jsonData, err := r.Read(loc)
+
+	jsonData, err := r.Read(rsrc.AllDayPlays(user))
 	if err != nil {
 		return
 	}
@@ -125,12 +118,7 @@ func UpdateAllDayPlays(
 }
 
 func LoadUser(user string, r rsrc.Reader) (*unpack.User, error) {
-	name, err := rsrc.UserInfo(user)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := r.Read(name)
+	data, err := r.Read(rsrc.UserInfo(user))
 	if err != nil {
 		return nil, err
 	}
@@ -150,12 +138,7 @@ type TagCount struct {
 }
 
 func ReadArtistTags(artist string, r rsrc.Reader) ([]TagCount, error) {
-	rs, err := rsrc.ArtistTags(artist)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := r.Read(rs)
+	data, err := r.Read(rsrc.ArtistTags(artist))
 	if err != nil {
 		return nil, err
 	}
