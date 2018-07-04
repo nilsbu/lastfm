@@ -1,11 +1,10 @@
 package unpack
 
-// UserInfo is unmarshaled JSON data from user.getInfo.
-type UserInfo struct {
-	User userUser `json:"user"`
+type jsonUserInfo struct {
+	User jsonUser `json:"user"`
 }
 
-type userUser struct {
+type jsonUser struct {
 	Name       string `json:"name"`
 	PlayCount  int    `json:"playcount"`
 	Registered time   `json:"registered"`

@@ -1,8 +1,9 @@
 package command
 
 import (
-	"encoding/json"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/organize"
@@ -16,28 +17,19 @@ type updateHistory struct {
 }
 
 func (c updateHistory) Execute(s store.Store, d display.Display) error {
-	// TODO turn this into a function
-	data, err := s.Read(rsrc.UserInfo(string(c.sid)))
+	user, err := unpack.LoadUserInfo(string(c.sid), s)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to load user info")
 	}
-
-	userRaw := unpack.UserInfo{}
-	err = json.Unmarshal(data, &userRaw)
-	if err != nil {
-		return err
-	}
-
-	user := unpack.GetUser(&userRaw)
 
 	plays, err := organize.UpdateAllDayPlays(user, rsrc.Date(time.Now()), s)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to update user history")
 	}
 
 	err = organize.WriteAllDayPlays(plays, user.Name, s)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to write alldayplays")
 	}
 
 	return nil

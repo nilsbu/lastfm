@@ -5,33 +5,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
-
-func TestGetUser(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
-		ui   *UserInfo
-		user *User
-	}{
-		{&UserInfo{
-			User: userUser{Name: "X", PlayCount: 2, Registered: time{114004225884}},
-		},
-			&User{"X", rsrc.ToDay(114004195200)}},
-	}
-
-	for i, tc := range testCases {
-		s := fmt.Sprintf("#%v", i)
-		ft.Seq(s, func(ft fastest.T) {
-			user := GetUser(tc.ui)
-			ft.Equals(user.Name, tc.user.Name)
-			midn1, _ := user.Registered.Midnight()
-			midn2, _ := user.Registered.Midnight()
-			ft.Equals(midn1, midn2)
-		})
-	}
-}
 
 func TestGetTracksPages(t *testing.T) {
 	ft := fastest.T{T: t}

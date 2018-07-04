@@ -117,21 +117,6 @@ func UpdateAllDayPlays(
 	return append(oldPlays, newPlays...), err
 }
 
-func LoadUser(user string, r rsrc.Reader) (*unpack.User, error) {
-	data, err := r.Read(rsrc.UserInfo(user))
-	if err != nil {
-		return nil, err
-	}
-
-	userRaw := unpack.UserInfo{}
-	err = json.Unmarshal(data, &userRaw)
-	if err != nil {
-		return nil, err
-	}
-
-	return unpack.GetUser(&userRaw), nil
-}
-
 type TagCount struct {
 	Name  string
 	Count int

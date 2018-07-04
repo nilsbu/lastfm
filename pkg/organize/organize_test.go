@@ -286,63 +286,6 @@ func TestUpdateAllDayPlays(t *testing.T) {
 	}
 }
 
-func TestLoadUser(t *testing.T) {
-	userInfo := rsrc.UserInfo("xy")
-	cases := []struct {
-		files map[rsrc.Locator][]byte
-		name  string
-		user  *unpack.User
-		ok    bool
-	}{
-		{ // no file
-			map[rsrc.Locator][]byte{userInfo: nil},
-			"xy",
-			nil,
-			false,
-		},
-		{ // invalid user
-			map[rsrc.Locator][]byte{userInfo: nil},
-			"x",
-			nil,
-			false,
-		},
-		{ // broken file
-			map[rsrc.Locator][]byte{userInfo: []byte(`{"user":{"name":"x`)},
-			"xy",
-			nil,
-			false,
-		},
-		{ // ok
-			map[rsrc.Locator][]byte{userInfo: []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
-			"xy",
-			&unpack.User{Name: "xy", Registered: rsrc.ToDay(86400)},
-			true,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			io, err := mock.IO(c.files, mock.Path)
-			if err != nil {
-				t.Fatal("setup error:", err)
-			}
-
-			user, err := LoadUser(c.name, io)
-			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
-			} else if err == nil && !c.ok {
-				t.Error("expected error but none occurred")
-			}
-			if err == nil {
-				if !reflect.DeepEqual(user, c.user) {
-					t.Errorf("read user faulty:\nhas:      %v\nexpected: %v",
-						user, c.user)
-				}
-			}
-		})
-	}
-}
-
 func TestReadARtistTags(t *testing.T) {
 	artistTags := rsrc.ArtistTags("xy")
 	cases := []struct {

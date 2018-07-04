@@ -9,36 +9,6 @@ import (
 	"github.com/nilsbu/fastest"
 )
 
-func TestUserInfo(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
-		json []byte
-		ui   *UserInfo
-		err  fastest.Code
-	}{
-		{
-			[]byte(`{"user":{"name":"What","playcount":1928,"registered":{"unixtime":1144225884}}}`),
-			&UserInfo{
-				User: userUser{Name: "What", PlayCount: 1928, Registered: time{1144225884}},
-			},
-			fastest.OK,
-		},
-	}
-
-	for i, tc := range testCases {
-		s := fmt.Sprintf("#%v", i)
-		ft.Seq(s, func(ft fastest.T) {
-			ui := &UserInfo{}
-			err := json.Unmarshal(tc.json, ui)
-
-			ft.Implies(tc.err == fastest.Fail, err != nil)
-			ft.Only(tc.err == fastest.OK)
-			ft.DeepEquals(ui, tc.ui)
-		})
-	}
-}
-
 func TestUserRecentTracks(t *testing.T) {
 	ft := fastest.T{T: t}
 
