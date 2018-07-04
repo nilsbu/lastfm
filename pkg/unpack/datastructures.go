@@ -59,6 +59,33 @@ type text struct {
 	// Not included: mbid
 }
 
+type ArtistInfo struct {
+	Artist artistArtist `json:"artist"`
+}
+
+type artistArtist struct {
+	Name  string      `json:"name"`
+	Stats artistStats `json:"stats"`
+}
+
+type artistStats struct {
+	Listeners int64 `json:"listeners,string"`
+	PlayCount int64 `json:"playcount,string"`
+}
+
+type ArtistTags struct {
+	TopTags topTags `json:"toptags"`
+}
+
+type topTags struct {
+	Tags []tag `json:"tag"`
+}
+
+type tag struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
 // APIKey is an unmarshaled JSON API key.
 type APIKey struct {
 	Key string `json:"apikey"`

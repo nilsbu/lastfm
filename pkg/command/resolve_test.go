@@ -140,6 +140,15 @@ func TestResolve(t *testing.T) {
 			[]string{"lastfm", "print", "fade", "2", "x"},
 			"user", nil, false,
 		},
+		{
+			[]string{"lastfm", "print", "tags", "Add"},
+			"user", printTags{"Add"}, true,
+		},
+
+		{
+			[]string{"lastfm", "print", "tags", "Add", "xx"},
+			"user", nil, false,
+		},
 	}
 
 	for _, c := range cases {

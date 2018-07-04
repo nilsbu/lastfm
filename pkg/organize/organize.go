@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	errs "github.com/pkg/errors"
+
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -140,4 +142,39 @@ func LoadUser(user string, r rsrc.Reader) (*unpack.User, error) {
 	}
 
 	return unpack.GetUser(&userRaw), nil
+}
+
+type TagCount struct {
+	Name  string
+	Count int
+}
+
+func ReadArtistTags(artist string, r rsrc.Reader) ([]TagCount, error) {
+	rs, err := rsrc.ArtistTags(artist)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := r.Read(rs)
+	if err != nil {
+		return nil, err
+	}
+
+	at := unpack.ArtistTags{}
+	err = json.Unmarshal(data, &at)
+	if err != nil {
+		return nil, errs.Wrap(err, "")
+	}
+
+	len := len(at.TopTags.Tags)
+	if len == 0 {
+		return nil, fmt.Errorf("no tags were read for '%v'", artist)
+	}
+
+	tags := make([]TagCount, len)
+	for i, tag := range at.TopTags.Tags {
+		tags[i] = TagCount{Name: tag.Name, Count: tag.Count}
+	}
+
+	return tags, nil
 }

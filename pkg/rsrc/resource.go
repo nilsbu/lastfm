@@ -24,7 +24,7 @@ type lastFM struct {
 	limit    int
 }
 
-// UserInfo returens a locator for the Last.fm API call "user.getInfo". if the
+// UserInfo returns a locator for the Last.fm API call "user.getInfo". If the
 // user name is malformed, it returns a critical error.
 func UserInfo(user string) (*lastFM, error) {
 	if err := checkUserName(user); err != nil {
@@ -92,6 +92,40 @@ func History(user string, page int, day Day) (*lastFM, error) {
 		page:     page,
 		day:      day,
 		limit:    200,
+	}, nil
+}
+
+// ArtistInfo returns a locator for the Last.fm API call "artist.getInfo". If
+// the artist name is empty, it returns a critical error.
+func ArtistInfo(artist string) (*lastFM, error) {
+	if artist == "" {
+		return nil, &fail.AssessedError{Sev: fail.Critical,
+			Err: errors.New("artist name cannot be empty")}
+	}
+	return &lastFM{
+		method:   "artist.getInfo",
+		nameType: "artist",
+		name:     artist,
+		page:     -1,
+		day:      NoDay(),
+		limit:    -1,
+	}, nil
+}
+
+// ArtistTags returns a locator for the Last.fm API call "artist.getTopTags". If
+// the artist name is empty, it returns a critical error.
+func ArtistTags(artist string) (*lastFM, error) {
+	if artist == "" {
+		return nil, &fail.AssessedError{Sev: fail.Critical,
+			Err: errors.New("artist name cannot be empty")}
+	}
+	return &lastFM{
+		method:   "artist.getTopTags",
+		nameType: "artist",
+		name:     artist,
+		page:     -1,
+		day:      NoDay(),
+		limit:    -1,
 	}, nil
 }
 

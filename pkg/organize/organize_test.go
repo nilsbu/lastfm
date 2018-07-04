@@ -345,3 +345,66 @@ func TestLoadUser(t *testing.T) {
 		})
 	}
 }
+
+func TestReadARtistTags(t *testing.T) {
+	artistTags, _ := rsrc.ArtistTags("xy")
+	cases := []struct {
+		files  map[rsrc.Locator][]byte
+		artist string
+		tags   []TagCount
+		ok     bool
+	}{
+		{ // no file
+			map[rsrc.Locator][]byte{artistTags: nil},
+			"xy",
+			nil,
+			false,
+		},
+		{ // invalid user
+			map[rsrc.Locator][]byte{artistTags: nil},
+			"",
+			nil,
+			false,
+		},
+		{ // broken file
+			map[rsrc.Locator][]byte{artistTags: []byte(`{"user":{"name":"x`)},
+			"xy",
+			nil,
+			false,
+		},
+		{ // wrong content
+			map[rsrc.Locator][]byte{artistTags: []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
+			"xy",
+			nil,
+			false,
+		},
+		{ // ok
+			map[rsrc.Locator][]byte{artistTags: []byte(`{"toptags":{"tag":[{"name":"bui", "count":100},{"count":12,"name":"asdf"}]}}`)},
+			"xy",
+			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(c.files, mock.Path)
+			if err != nil {
+				t.Fatal("setup error:", err)
+			}
+
+			tags, err := ReadArtistTags(c.artist, io)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error but none occurred")
+			}
+			if err == nil {
+				if !reflect.DeepEqual(tags, c.tags) {
+					t.Errorf("read user faulty:\nhas:      %v\nexpected: %v",
+						tags, c.tags)
+				}
+			}
+		})
+	}
+}

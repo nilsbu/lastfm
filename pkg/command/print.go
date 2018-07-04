@@ -64,3 +64,30 @@ func (cmd printFade) Execute(s store.Store, d display.Display) error {
 
 	return nil
 }
+
+type printTags struct {
+	artist string
+}
+
+func (cmd printTags) Execute(s store.Store, d display.Display) error {
+	tags, err := organize.ReadArtistTags(cmd.artist, s)
+	if err != nil {
+		return err
+	}
+
+	col := make(charts.Column, len(tags))
+	for i, tag := range tags {
+		col[i] = charts.Score{Name: tag.Name, Score: float64(tag.Count)}
+	}
+
+	f := &format.Column{
+		Column:   col,
+		Numbered: true}
+
+	err = d.Display(f)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

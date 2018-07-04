@@ -105,6 +105,94 @@ func TestHistory(t *testing.T) {
 	}
 }
 
+func TestArtistInfo(t *testing.T) {
+	cases := []struct {
+		name string
+		ok   bool
+	}{
+		{"", false},
+		{"afew", true},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			loc, err := ArtistInfo(c.name)
+
+			if err != nil {
+				if f, ok := err.(fail.Threat); ok {
+					if f.Severity() != fail.Critical {
+						t.Error("severity must be 'Critical':", err)
+					}
+				} else {
+					t.Error("error must implement Threat but does not:", err)
+				}
+				if c.ok {
+					t.Error("unexpected error:", err)
+				}
+			} else if err == nil && !c.ok {
+				t.Errorf("name '%v' should not have been accepted", c.name)
+			}
+
+			if err == nil {
+				if loc.name != c.name {
+					t.Errorf("got name '%v', expected '%v'", loc.name, c.name)
+				}
+				if _, ok := loc.day.Midnight(); ok {
+					t.Error("must not have a valid midnight")
+				}
+				if loc.page > 0 {
+					t.Error("must not have a valid page")
+				}
+				// assume other fields without check
+			}
+		})
+	}
+}
+
+func TestArtistTags(t *testing.T) {
+	cases := []struct {
+		name string
+		ok   bool
+	}{
+		{"", false},
+		{"afew", true},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			loc, err := ArtistTags(c.name)
+
+			if err != nil {
+				if f, ok := err.(fail.Threat); ok {
+					if f.Severity() != fail.Critical {
+						t.Error("severity must be 'Critical':", err)
+					}
+				} else {
+					t.Error("error must implement Threat but does not:", err)
+				}
+				if c.ok {
+					t.Error("unexpected error:", err)
+				}
+			} else if err == nil && !c.ok {
+				t.Errorf("name '%v' should not have been accepted", c.name)
+			}
+
+			if err == nil {
+				if loc.name != c.name {
+					t.Errorf("got name '%v', expected '%v'", loc.name, c.name)
+				}
+				if _, ok := loc.day.Midnight(); ok {
+					t.Error("must not have a valid midnight")
+				}
+				if loc.page > 0 {
+					t.Error("must not have a valid page")
+				}
+				// assume other fields without check
+			}
+		})
+	}
+}
+
 func TestLastFMURL(t *testing.T) {
 	base := "http://ws.audioscrobbler.com/2.0/?format=json&"
 	userInfo, _ := UserInfo("user1")

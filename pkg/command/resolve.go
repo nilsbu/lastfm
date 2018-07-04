@@ -102,7 +102,8 @@ func resolvePrint(
 	}
 
 	if sid == "" {
-		return nil, errors.New("'print' a running session")
+		// TODO should not be needed when no user is required
+		return nil, errors.New("'print' requires a running session")
 	}
 
 	first, params := params[0], params[1:]
@@ -142,6 +143,12 @@ func resolvePrint(
 			}
 		}
 		return printFade{sid: sid, hl: hl, n: n}, nil
+	case "tags":
+		if len(params) == 1 {
+			return printTags{params[0]}, nil
+		} else {
+			return nil, errors.New("'print tags' requires exactly one parameter")
+		}
 	default:
 		return nil, fmt.Errorf("parameter '%v' is not supported", first)
 	}
