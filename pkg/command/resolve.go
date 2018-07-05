@@ -4,152 +4,274 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
+type node struct {
+	cmd   *cmd
+	nodes nodes
+}
+
+type nodes map[string]node
+
+type cmd struct {
+	descr   string
+	get     func(params []interface{}, opts map[string]interface{}) command
+	params  params
+	options options
+	session bool
+}
+
+type param struct {
+	name  string
+	descr string
+	kind  string // TODO
+}
+
+type params []*param
+
+type option struct {
+	param
+	value string
+}
+
+type options map[string]*option
+
+var cmdRoot = node{
+	nodes: map[string]node{
+		"lastfm": cmdLastfm,
+	},
+}
+
+var cmdLastfm = node{
+	cmd: exeHelp,
+	nodes: map[string]node{
+		"help":    cmdHelp,
+		"print":   cmdPrint,
+		"session": cmdSession,
+		"update":  cmdUpdate,
+	},
+}
+
+var cmdHelp = node{
+	cmd: exeHelp,
+}
+
+var cmdPrint = node{
+	nodes: nodes{
+		"fade":  node{cmd: exePrintFade},
+		"tags":  node{cmd: exePrintTags},
+		"total": node{cmd: exePrintTotal},
+	},
+}
+
+var cmdSession = node{
+	cmd: exeSessionInfo,
+	nodes: nodes{
+		"info":  node{cmd: exeSessionInfo},
+		"start": node{cmd: exeSessionStart},
+		"stop":  node{cmd: exeSessionStop},
+	},
+}
+
+var cmdUpdate = node{
+	cmd: &cmd{
+		descr: "updates a user's history",
+		get: func(params []interface{}, opts map[string]interface{}) command {
+			return updateHistory{}
+		},
+		session: true,
+	},
+}
+
+var exeHelp = &cmd{
+	descr: "gives help",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return help{}
+	},
+}
+
+var exePrintFade = &cmd{
+	descr: "prints a user's top artists in fading charts",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printFade{opts["n"].(int), params[0].(float64)}
+	},
+	params: params{&param{
+		"half-life",
+		"span of days over which a 'scrobble' loses half its value",
+		"float",
+	}},
+	options: options{"n": optArtistCount},
+	session: true,
+}
+
+var exePrintTags = &cmd{
+	descr: "prints the top tags of an artist",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printTags{params[0].(string)}
+	},
+	params: params{parArtistName},
+}
+
+var exePrintTotal = &cmd{
+	descr: "prints a user's top artists by total number of plays",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+
+		return printTotal{opts["n"].(int)}
+	},
+	options: options{
+		"n": optArtistCount,
+	},
+	session: true,
+}
+
+var exeSessionInfo = &cmd{
+	descr: "report information about the currently running session, if one is running",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return sessionInfo{}
+	},
+}
+
+var exeSessionStart = &cmd{
+	descr: "starts a session if none is currently running",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return sessionStart{params[0].(string)}
+	},
+	params: params{parUserName},
+}
+
+var exeSessionStop = &cmd{
+	descr: "stops the currently running session if none is currently running",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return sessionStop{}
+	},
+}
+
+var parUserName = &param{
+	"user name",
+	"a Last.fm user name",
+	"string",
+}
+
+var parArtistName = &param{
+	"artist name",
+	"the name of an artist",
+	"string",
+}
+
+var optArtistCount = &option{
+	param{"count",
+		"number of artists",
+		"int"},
+	"10",
+}
+
 func resolve(args []string, session *unpack.SessionInfo) (cmd command, err error) {
-	if len(args) < 1 {
-		return nil, errors.New("args does not contain the program name")
-	}
-
-	first, params := args[0], args[1:]
-
-	switch first {
-	case "lastfm":
-		return resolveLastfm(params, session)
-	default:
-		return nil, fmt.Errorf("program '%v' is not supported", first)
-	}
+	return resolveTree(args, session, cmdRoot)
 }
 
-func resolveLastfm(
-	params []string, session *unpack.SessionInfo) (cmd command, err error) {
-	if len(params) < 1 {
-		return help{}, nil
+func resolveTree(
+	args []string,
+	session *unpack.SessionInfo,
+	tree node,
+) (command, error) {
+	if len(args) > 0 && args[0][0] != '-' {
+		if cmd, ok := tree.nodes[args[0]]; ok {
+			return resolveTree(args[1:], session, cmd)
+		}
 	}
 
-	first, params := params[0], params[1:]
-
-	switch first {
-	case "help":
-		return help{}, nil
-	case "session":
-		return resolveSession(params, session)
-	case "update":
-		return resolveUpdate(params, session)
-	case "print":
-		return resolvePrint(params, session)
-	default:
-		return nil, fmt.Errorf("command '%v' is not supported", first)
+	if tree.cmd == nil {
+		// TODO more details
+		return nil, errors.New("command does not exist, are more arguments missing?")
 	}
+
+	if tree.cmd.session && session == nil {
+		return nil, errors.New("command can only be executed when a session is running")
+	}
+
+	params, opts, err := parseArguments(args, tree.cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return tree.cmd.get(params, opts), nil
+
 }
 
-func resolveSession(
-	params []string, session *unpack.SessionInfo) (cmd command, err error) {
-	if len(params) < 1 {
-		return sessionInfo{}, nil
+func parseArguments(args []string, cmd *cmd,
+) (params []interface{},
+	opts map[string]interface{},
+	err error) {
+	if len(args) < len(cmd.params) {
+		return nil, nil, errors.New("too few params")
 	}
 
-	first, params := params[0], params[1:]
+	params = make([]interface{}, len(cmd.params))
 
-	switch first {
-	case "info":
-		if len(params) > 0 {
-			return nil, errors.New("'session info' requires no further parameters")
-		}
-		return sessionInfo{}, nil
-	case "start":
-		if len(params) < 1 {
-			return nil, errors.New("'session start' requires a user name")
-		} else if len(params) > 1 {
-			return nil, errors.New("params %v are superfluous")
-		}
-		return sessionStart{user: params[0]}, nil
-	case "stop":
-		if len(params) > 0 {
-			return nil, errors.New("'session stop' requires no further parameters")
-		}
-		return sessionStop{}, nil
-	default:
-		return nil, fmt.Errorf("parameter '%v' is not supported", first)
-	}
-}
-
-func resolveUpdate(
-	params []string, session *unpack.SessionInfo) (cmd command, err error) {
-	if session == nil {
-		return nil, errors.New("'update' requires a running session or further parameters")
-	}
-
-	if len(params) < 1 {
-		return updateHistory{}, nil
-	}
-
-	first, params := params[0], params[1:]
-
-	switch first {
-	// TODO more update commands
-	default:
-		return nil, fmt.Errorf("parameter '%v' is not supported", first)
-	}
-}
-
-func resolvePrint(
-	params []string, session *unpack.SessionInfo) (cmd command, err error) {
-	if len(params) < 1 {
-		return nil, errors.New("'print' requires further parameters")
-	}
-
-	if session == nil {
-		// TODO should not be needed when no user is required
-		return nil, errors.New("'print' requires a running session")
-	}
-
-	first, params := params[0], params[1:]
-
-	switch first {
-	case "total":
-		if len(params) < 1 {
-			return printTotal{}, nil
-		} else if len(params) == 1 {
-			n, err := strconv.Atoi(params[0])
-			if err != nil {
-				return nil, fmt.Errorf("'%v' must be an int", params[0])
-			}
-			return printTotal{n: n}, nil
-		} else {
-			return nil, errors.New(
-				"'print total' accepts no more than one additional parameter")
-		}
-	case "fade":
-		if len(params) < 1 {
-			return nil, errors.New("'print fade' needs one more additional parameter")
-		} else if len(params) > 2 {
-			return nil, errors.New(
-				"'print total' accepts no more than two additional parameter")
-		}
-
-		hl, err := strconv.ParseFloat(params[0], 64)
+	for i := 0; i < len(cmd.params); i++ {
+		value, err := parseArgument(args[i], cmd.params[i].kind)
 		if err != nil {
-			return nil, fmt.Errorf("'%v' must be a float", params[0])
+			return nil, nil, err
 		}
 
-		var n int
-		if len(params) == 2 {
-			n, err = strconv.Atoi(params[1])
-			if err != nil {
-				return nil, fmt.Errorf("'%v' must be an int", params[1])
-			}
-		}
-		return printFade{hl: hl, n: n}, nil
-	case "tags":
-		if len(params) == 1 {
-			return printTags{params[0]}, nil
-		} else {
-			return nil, errors.New("'print tags' requires exactly one parameter")
-		}
-	default:
-		return nil, fmt.Errorf("parameter '%v' is not supported", first)
+		params[i] = value
 	}
+
+	rawOpts := make(map[string]string)
+	opts = make(map[string]interface{})
+
+	for i := len(cmd.params); i < len(args); i++ {
+		if args[i][0] != '-' {
+			return nil, nil, fmt.Errorf("parameter '%v' is unexpected", args[i])
+		}
+
+		idx := strings.Index(args[i], "=")
+		if idx < 0 {
+			return nil, nil,
+				fmt.Errorf("option must be of format '-key=value', '%v' is not", args[i])
+		}
+
+		key := args[i][1:idx]
+		_, ok := cmd.options[key]
+		if !ok {
+			return nil, nil, fmt.Errorf("option '%v' is not supported", key)
+		}
+
+		rawOpts[key] = args[i][idx+1:]
+	}
+
+	for key, opt := range cmd.options {
+		if _, ok := rawOpts[key]; !ok {
+			rawOpts[key] = opt.value
+		}
+	}
+
+	for key, raw := range rawOpts {
+		value, err := parseArgument(raw, cmd.options[key].kind)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		opts[key] = value
+	}
+
+	return params, opts, nil
+}
+
+func parseArgument(arg, kind string) (value interface{}, err error) {
+	switch kind {
+	case "float":
+		value, err = strconv.ParseFloat(arg, 64)
+	case "int":
+		value, err = strconv.Atoi(arg)
+	case "string":
+		value = arg
+	default:
+		// Cannot be reached
+	}
+
+	return
 }
