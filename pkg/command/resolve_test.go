@@ -47,7 +47,7 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "session", "info"},
 			&unpack.SessionInfo{User: "xs"},
-			sessionInfo{&unpack.SessionInfo{User: "xs"}}, true,
+			sessionInfo{}, true,
 		},
 		{
 			[]string{"lastfm", "session", "info", "tim"},
@@ -64,7 +64,7 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "session", "start", "tim"},
 			&unpack.SessionInfo{User: "tom"},
-			sessionStart{session: &unpack.SessionInfo{User: "tom"}, user: "tim"}, true,
+			sessionStart{user: "tim"}, true,
 		},
 		{
 			[]string{"lastfm", "session", "start", "tim", "xs"},
@@ -85,7 +85,7 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "update"},
 			&unpack.SessionInfo{User: "user"},
-			updateHistory{&unpack.SessionInfo{User: "user"}}, true,
+			updateHistory{}, true,
 		},
 		{
 			[]string{"lastfm", "update", "aargh!"},
@@ -102,12 +102,12 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{session: &unpack.SessionInfo{User: "user"}, n: 0}, true,
+			printTotal{n: 0}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "25"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{session: &unpack.SessionInfo{User: "user"}, n: 25}, true,
+			printTotal{n: 25}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "k25"},
@@ -128,7 +128,7 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "fade", "30.2"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{session: &unpack.SessionInfo{User: "user"}, n: 0, hl: 30.2}, true,
+			printFade{n: 0, hl: 30.2}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade"},

@@ -48,7 +48,7 @@ func resolveLastfm(
 func resolveSession(
 	params []string, session *unpack.SessionInfo) (cmd command, err error) {
 	if len(params) < 1 {
-		return sessionInfo{session}, nil
+		return sessionInfo{}, nil
 	}
 
 	first, params := params[0], params[1:]
@@ -58,19 +58,19 @@ func resolveSession(
 		if len(params) > 0 {
 			return nil, errors.New("'session info' requires no further parameters")
 		}
-		return sessionInfo{session}, nil
+		return sessionInfo{}, nil
 	case "start":
 		if len(params) < 1 {
 			return nil, errors.New("'session start' requires a user name")
 		} else if len(params) > 1 {
 			return nil, errors.New("params %v are superfluous")
 		}
-		return sessionStart{session: session, user: params[0]}, nil
+		return sessionStart{user: params[0]}, nil
 	case "stop":
 		if len(params) > 0 {
 			return nil, errors.New("'session stop' requires no further parameters")
 		}
-		return sessionStop{session}, nil
+		return sessionStop{}, nil
 	default:
 		return nil, fmt.Errorf("parameter '%v' is not supported", first)
 	}
@@ -83,7 +83,7 @@ func resolveUpdate(
 	}
 
 	if len(params) < 1 {
-		return updateHistory{session}, nil
+		return updateHistory{}, nil
 	}
 
 	first, params := params[0], params[1:]
@@ -111,13 +111,13 @@ func resolvePrint(
 	switch first {
 	case "total":
 		if len(params) < 1 {
-			return printTotal{session: session}, nil
+			return printTotal{}, nil
 		} else if len(params) == 1 {
 			n, err := strconv.Atoi(params[0])
 			if err != nil {
 				return nil, fmt.Errorf("'%v' must be an int", params[0])
 			}
-			return printTotal{session: session, n: n}, nil
+			return printTotal{n: n}, nil
 		} else {
 			return nil, errors.New(
 				"'print total' accepts no more than one additional parameter")
@@ -142,7 +142,7 @@ func resolvePrint(
 				return nil, fmt.Errorf("'%v' must be an int", params[1])
 			}
 		}
-		return printFade{session: session, hl: hl, n: n}, nil
+		return printFade{hl: hl, n: n}, nil
 	case "tags":
 		if len(params) == 1 {
 			return printTags{params[0]}, nil

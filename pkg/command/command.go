@@ -7,7 +7,7 @@ import (
 )
 
 type command interface {
-	Execute(s store.Store, d display.Display) error
+	Execute(session *unpack.SessionInfo, s store.Store, d display.Display) error
 }
 
 // Execute executes the command described in the arguments.
@@ -21,5 +21,5 @@ func Execute(
 		return err
 	}
 
-	return cmd.Execute(s, d)
+	return cmd.Execute(session, s, d)
 }

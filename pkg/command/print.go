@@ -10,12 +10,12 @@ import (
 )
 
 type printTotal struct {
-	session *unpack.SessionInfo
-	n       int
+	n int
 }
 
-func (cmd printTotal) Execute(s store.Store, d display.Display) error {
-	plays, err := organize.ReadAllDayPlays(cmd.session.User, s)
+func (cmd printTotal) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	plays, err := organize.ReadAllDayPlays(session.User, s)
 	if err != nil {
 		return err
 	}
@@ -38,13 +38,13 @@ func (cmd printTotal) Execute(s store.Store, d display.Display) error {
 }
 
 type printFade struct {
-	session *unpack.SessionInfo
-	n       int
-	hl      float64
+	n  int
+	hl float64
 }
 
-func (cmd printFade) Execute(s store.Store, d display.Display) error {
-	plays, err := organize.ReadAllDayPlays(cmd.session.User, s)
+func (cmd printFade) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	plays, err := organize.ReadAllDayPlays(session.User, s)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,8 @@ type printTags struct {
 	artist string
 }
 
-func (cmd printTags) Execute(s store.Store, d display.Display) error {
+func (cmd printTags) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
 	tags, err := organize.ReadArtistTags(cmd.artist, s)
 	if err != nil {
 		return err

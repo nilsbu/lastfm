@@ -12,12 +12,11 @@ import (
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-type updateHistory struct {
-	session *unpack.SessionInfo
-}
+type updateHistory struct{}
 
-func (cmd updateHistory) Execute(s store.Store, d display.Display) error {
-	user, err := unpack.LoadUserInfo(cmd.session.User, s)
+func (cmd updateHistory) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	user, err := unpack.LoadUserInfo(session.User, s)
 	if err != nil {
 		return errors.Wrap(err, "failed to load user info")
 	}
