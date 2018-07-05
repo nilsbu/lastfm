@@ -13,10 +13,10 @@ type jsonUser struct {
 }
 
 type jsonUserRecentTracks struct {
-	RecentTracks recentTracks `json:"recenttracks"`
+	RecentTracks jsonRecentTracks `json:"recenttracks"`
 }
 
-type recentTracks struct {
+type jsonRecentTracks struct {
 	Track []track          `json:"track"`
 	Attr  recentTracksAttr `json:"@attr"`
 }
@@ -84,8 +84,7 @@ type tag struct {
 	Count int    `json:"count"`
 }
 
-// APIKey is an unmarshaled JSON API key.
-type APIKey struct {
+type jsonAPIKey struct {
 	Key string `json:"apikey"`
 }
 

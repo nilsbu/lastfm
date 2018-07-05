@@ -108,7 +108,7 @@ func ArtistTags(artist string) Locator {
 }
 
 func (loc *lastFM) URL(apiKey string) (string, error) {
-	if err := checkAPIKey(apiKey); err != nil {
+	if err := CheckAPIKey(apiKey); err != nil {
 		return "", err
 	}
 	base := "http://ws.audioscrobbler.com/2.0/"
@@ -133,7 +133,9 @@ func (loc *lastFM) URL(apiKey string) (string, error) {
 	return url, nil
 }
 
-func checkAPIKey(apiKey string) error {
+// CheckAPIKey checks if an API key is a 32 digit hex string. Letters
+// have to be lower case.
+func CheckAPIKey(apiKey string) error {
 	if len(apiKey) != 32 {
 		return fail.WrapError(fail.Critical,
 			errors.New("API key does not have length 32"))

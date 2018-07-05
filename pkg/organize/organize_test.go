@@ -12,38 +12,6 @@ import (
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
-func TestLoadAPIKey(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
-		json   string
-		apiKey string
-		err    fastest.Code
-	}{
-		{"", "", fastest.Fail},
-		{`{`, "", fastest.Fail},
-		{`{}`, "", fastest.Fail},
-		{`{"apikey":"asdf"}`, "asdf", fastest.OK},
-	}
-
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			var io rsrc.IO
-			if tc.json == "" {
-				io, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
-			} else {
-				io, _ = mock.IO(
-					map[rsrc.Locator][]byte{rsrc.APIKey(): []byte(tc.json)},
-					mock.Path)
-			}
-			apiKey, err := LoadAPIKey(io)
-			ft.Equals(err != nil, tc.err == fastest.Fail)
-			ft.Only(tc.err == fastest.OK)
-			ft.Equals(apiKey, tc.apiKey)
-		})
-	}
-}
-
 func TestLoadSessionID(t *testing.T) {
 	ft := fastest.T{T: t}
 

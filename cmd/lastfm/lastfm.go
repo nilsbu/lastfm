@@ -11,10 +11,11 @@ import (
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 func createStore() (store.Store, error) {
-	key, err := organize.LoadAPIKey(io.FileIO{})
+	key, err := unpack.LoadAPIKey(io.FileIO{})
 	if err != nil {
 		return nil, err
 	}

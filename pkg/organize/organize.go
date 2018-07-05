@@ -14,25 +14,6 @@ import (
 
 // TODO name / what is this file
 
-// LoadAPIKey loads an the API key.
-func LoadAPIKey(r rsrc.Reader) (apiKey string, err error) {
-	data, err := r.Read(rsrc.APIKey())
-	if err != nil {
-		return
-	}
-
-	unm := &unpack.APIKey{}
-	err = json.Unmarshal(data, unm)
-	if err != nil {
-		return
-	}
-	if unm.Key == "" {
-		return "", errors.New("No valid API key was read")
-	}
-
-	return unm.Key, nil
-}
-
 // SessionID describes a session.
 type SessionID string // TODO should be struct or
 

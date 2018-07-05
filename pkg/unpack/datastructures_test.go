@@ -83,33 +83,6 @@ func TestArtistTags(t *testing.T) {
 	}
 }
 
-func TestAPIKey(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
-		json []byte
-		key  *APIKey
-		err  fastest.Code
-	}{
-		{
-			[]byte(`{"apikey":"asdf97"}`),
-			&APIKey{"asdf97"},
-			fastest.OK,
-		},
-	}
-
-	for i, tc := range testCases {
-		s := fmt.Sprintf("#%v", i)
-		ft.Seq(s, func(ft fastest.T) {
-			key := &APIKey{}
-			err := json.Unmarshal(tc.json, key)
-
-			ft.Equals(tc.err == fastest.Fail, err != nil)
-			ft.DeepEquals(key, tc.key)
-		})
-	}
-}
-
 func TestSessionID(t *testing.T) {
 	ft := fastest.T{T: t}
 
