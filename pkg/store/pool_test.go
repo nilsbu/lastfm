@@ -21,7 +21,7 @@ func TestPool(t *testing.T) {
 	}{
 		{
 			map[rsrc.Locator][]byte{},
-			rsrc.SessionID(),
+			rsrc.SessionInfo(),
 			[]byte("asdf"),
 			0,
 			false, true,
@@ -29,8 +29,8 @@ func TestPool(t *testing.T) {
 			false,
 		},
 		{
-			map[rsrc.Locator][]byte{rsrc.SessionID(): []byte("asdf")},
-			rsrc.SessionID(),
+			map[rsrc.Locator][]byte{rsrc.SessionInfo(): []byte("asdf")},
+			rsrc.SessionInfo(),
 			[]byte("asdf"),
 			3,
 			true, true,
@@ -39,7 +39,7 @@ func TestPool(t *testing.T) {
 		},
 		{
 			map[rsrc.Locator][]byte{},
-			rsrc.SessionID(),
+			rsrc.SessionInfo(),
 			[]byte("asdf"),
 			1,
 			true, false,
@@ -48,7 +48,7 @@ func TestPool(t *testing.T) {
 		},
 		{
 			map[rsrc.Locator][]byte{},
-			rsrc.SessionID(),
+			rsrc.SessionInfo(),
 			[]byte("asdf"),
 			1,
 			true, false,
@@ -56,8 +56,8 @@ func TestPool(t *testing.T) {
 			false,
 		},
 		{
-			map[rsrc.Locator][]byte{rsrc.SessionID(): []byte("asdf")},
-			rsrc.SessionID(),
+			map[rsrc.Locator][]byte{rsrc.SessionInfo(): []byte("asdf")},
+			rsrc.SessionInfo(),
 			nil,
 			3,
 			true, true,

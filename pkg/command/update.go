@@ -13,11 +13,11 @@ import (
 )
 
 type updateHistory struct {
-	sid organize.SessionID
+	session *unpack.SessionInfo
 }
 
-func (c updateHistory) Execute(s store.Store, d display.Display) error {
-	user, err := unpack.LoadUserInfo(string(c.sid), s)
+func (cmd updateHistory) Execute(s store.Store, d display.Display) error {
+	user, err := unpack.LoadUserInfo(cmd.session.User, s)
 	if err != nil {
 		return errors.Wrap(err, "failed to load user info")
 	}

@@ -88,7 +88,6 @@ type jsonAPIKey struct {
 	Key string `json:"apikey"`
 }
 
-// SessionID is an unmarshaled JSON session identifier.
-type SessionID struct {
+type jsonSessionInfo struct {
 	User string `json:"user"`
 }

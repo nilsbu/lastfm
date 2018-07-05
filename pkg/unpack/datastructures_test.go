@@ -2,11 +2,8 @@ package unpack
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
-
-	"github.com/nilsbu/fastest"
 )
 
 func TestArtistInfo(t *testing.T) {
@@ -79,33 +76,6 @@ func TestArtistTags(t *testing.T) {
 					t.Errorf("false result\nhas:  %v\nwant: %v", tags, c.at)
 				}
 			}
-		})
-	}
-}
-
-func TestSessionID(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
-		json []byte
-		sid  *SessionID
-		err  fastest.Code
-	}{
-		{
-			[]byte(`{"user":"somename"}`),
-			&SessionID{"somename"},
-			fastest.OK,
-		},
-	}
-
-	for i, tc := range testCases {
-		s := fmt.Sprintf("#%v", i)
-		ft.Seq(s, func(ft fastest.T) {
-			sid := &SessionID{}
-			err := json.Unmarshal(tc.json, sid)
-
-			ft.Equals(tc.err == fastest.Fail, err != nil)
-			ft.DeepEquals(sid, tc.sid)
 		})
 	}
 }

@@ -6,15 +6,16 @@ import (
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/store"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 type printTotal struct {
-	sid organize.SessionID
-	n   int
+	session *unpack.SessionInfo
+	n       int
 }
 
 func (cmd printTotal) Execute(s store.Store, d display.Display) error {
-	plays, err := organize.ReadAllDayPlays(string(cmd.sid), s)
+	plays, err := organize.ReadAllDayPlays(cmd.session.User, s)
 	if err != nil {
 		return err
 	}
@@ -37,13 +38,13 @@ func (cmd printTotal) Execute(s store.Store, d display.Display) error {
 }
 
 type printFade struct {
-	sid organize.SessionID
-	n   int
-	hl  float64
+	session *unpack.SessionInfo
+	n       int
+	hl      float64
 }
 
 func (cmd printFade) Execute(s store.Store, d display.Display) error {
-	plays, err := organize.ReadAllDayPlays(string(cmd.sid), s)
+	plays, err := organize.ReadAllDayPlays(cmd.session.User, s)
 	if err != nil {
 		return err
 	}

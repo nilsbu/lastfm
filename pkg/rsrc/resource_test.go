@@ -134,7 +134,7 @@ func TestUtilPath(t *testing.T) {
 	}{
 		{Supertags(), "data/util/supertags.json"},
 		{APIKey(), ".lastfm/util/apikey.json"},
-		{SessionID(), ".lastfm/util/sessionid.json"},
+		{SessionInfo(), ".lastfm/util/session.json"},
 	}
 
 	for _, c := range cases {

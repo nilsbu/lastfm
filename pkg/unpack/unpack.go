@@ -28,3 +28,16 @@ func obtain(o obtainer, r rsrc.Reader) (interface{}, error) {
 
 	return o.interpret(raw)
 }
+
+type depositer interface {
+	locator() rsrc.Locator
+	raw(obj interface{}) interface{}
+}
+
+func deposite(obj interface{}, d depositer, w rsrc.Writer) error {
+	raw := d.raw(obj)
+
+	data, _ := json.Marshal(raw)
+
+	return w.Write(data, d.locator())
+}

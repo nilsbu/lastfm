@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/nilsbu/lastfm/pkg/organize"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-func resolve(args []string, sid organize.SessionID) (cmd command, err error) {
+func resolve(args []string, session *unpack.SessionInfo) (cmd command, err error) {
 	if len(args) < 1 {
 		return nil, errors.New("args does not contain the program name")
 	}
@@ -17,14 +17,14 @@ func resolve(args []string, sid organize.SessionID) (cmd command, err error) {
 
 	switch first {
 	case "lastfm":
-		return resolveLastfm(params, sid)
+		return resolveLastfm(params, session)
 	default:
 		return nil, fmt.Errorf("program '%v' is not supported", first)
 	}
 }
 
 func resolveLastfm(
-	params []string, sid organize.SessionID) (cmd command, err error) {
+	params []string, session *unpack.SessionInfo) (cmd command, err error) {
 	if len(params) < 1 {
 		return help{}, nil
 	}
@@ -35,20 +35,20 @@ func resolveLastfm(
 	case "help":
 		return help{}, nil
 	case "session":
-		return resolveSession(params, sid)
+		return resolveSession(params, session)
 	case "update":
-		return resolveUpdate(params, sid)
+		return resolveUpdate(params, session)
 	case "print":
-		return resolvePrint(params, sid)
+		return resolvePrint(params, session)
 	default:
 		return nil, fmt.Errorf("command '%v' is not supported", first)
 	}
 }
 
 func resolveSession(
-	params []string, sid organize.SessionID) (cmd command, err error) {
+	params []string, session *unpack.SessionInfo) (cmd command, err error) {
 	if len(params) < 1 {
-		return sessionInfo{sid}, nil
+		return sessionInfo{session}, nil
 	}
 
 	first, params := params[0], params[1:]
@@ -58,32 +58,32 @@ func resolveSession(
 		if len(params) > 0 {
 			return nil, errors.New("'session info' requires no further parameters")
 		}
-		return sessionInfo{sid}, nil
+		return sessionInfo{session}, nil
 	case "start":
 		if len(params) < 1 {
 			return nil, errors.New("'session start' requires a user name")
 		} else if len(params) > 1 {
 			return nil, errors.New("params %v are superfluous")
 		}
-		return sessionStart{sid: sid, user: params[0]}, nil
+		return sessionStart{session: session, user: params[0]}, nil
 	case "stop":
 		if len(params) > 0 {
 			return nil, errors.New("'session stop' requires no further parameters")
 		}
-		return sessionStop{sid}, nil
+		return sessionStop{session}, nil
 	default:
 		return nil, fmt.Errorf("parameter '%v' is not supported", first)
 	}
 }
 
 func resolveUpdate(
-	params []string, sid organize.SessionID) (cmd command, err error) {
-	if sid == "" {
+	params []string, session *unpack.SessionInfo) (cmd command, err error) {
+	if session == nil {
 		return nil, errors.New("'update' requires a running session or further parameters")
 	}
 
 	if len(params) < 1 {
-		return updateHistory{sid}, nil
+		return updateHistory{session}, nil
 	}
 
 	first, params := params[0], params[1:]
@@ -96,12 +96,12 @@ func resolveUpdate(
 }
 
 func resolvePrint(
-	params []string, sid organize.SessionID) (cmd command, err error) {
+	params []string, session *unpack.SessionInfo) (cmd command, err error) {
 	if len(params) < 1 {
 		return nil, errors.New("'print' requires further parameters")
 	}
 
-	if sid == "" {
+	if session == nil {
 		// TODO should not be needed when no user is required
 		return nil, errors.New("'print' requires a running session")
 	}
@@ -111,13 +111,13 @@ func resolvePrint(
 	switch first {
 	case "total":
 		if len(params) < 1 {
-			return printTotal{sid: sid}, nil
+			return printTotal{session: session}, nil
 		} else if len(params) == 1 {
 			n, err := strconv.Atoi(params[0])
 			if err != nil {
 				return nil, fmt.Errorf("'%v' must be an int", params[0])
 			}
-			return printTotal{sid: sid, n: n}, nil
+			return printTotal{session: session, n: n}, nil
 		} else {
 			return nil, errors.New(
 				"'print total' accepts no more than one additional parameter")
@@ -142,7 +142,7 @@ func resolvePrint(
 				return nil, fmt.Errorf("'%v' must be an int", params[1])
 			}
 		}
-		return printFade{sid: sid, hl: hl, n: n}, nil
+		return printFade{session: session, hl: hl, n: n}, nil
 	case "tags":
 		if len(params) == 1 {
 			return printTags{params[0]}, nil

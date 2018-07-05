@@ -209,9 +209,9 @@ func APIKey() *util {
 	}
 }
 
-func SessionID() *util {
+func SessionInfo() *util {
 	return &util{
-		method: "sessionid",
+		method: "session",
 		public: false,
 	}
 }

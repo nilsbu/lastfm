@@ -1,48 +1,14 @@
 package organize
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
-
-func TestLoadSessionID(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
-		json string
-		sid  SessionID
-		err  fastest.Code
-	}{
-		{"", "", fastest.Fail},
-		{`{`, "", fastest.Fail},
-		{`{}`, "", fastest.Fail},
-		{`{"user":"asdf"}`, "asdf", fastest.OK},
-	}
-
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			var io rsrc.IO
-			if tc.json == "" {
-				io, _ = mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
-			} else {
-				io, _ = mock.IO(
-					map[rsrc.Locator][]byte{rsrc.SessionID(): []byte(tc.json)},
-					mock.Path)
-			}
-			sid, err := LoadSessionID(io)
-			ft.Equals(err != nil, tc.err == fastest.Fail)
-			ft.Only(tc.err == fastest.OK)
-			ft.DeepEquals(sid, tc.sid)
-		})
-	}
-}
 
 func TestAllDayPlays(t *testing.T) {
 	// also see TestAllDayPlaysFalseName below

@@ -2,8 +2,8 @@ package command
 
 import (
 	"github.com/nilsbu/lastfm/pkg/display"
-	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/store"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 type command interface {
@@ -13,10 +13,10 @@ type command interface {
 // Execute executes the command described in the arguments.
 func Execute(
 	args []string,
-	sid organize.SessionID,
+	session *unpack.SessionInfo,
 	s store.Store,
 	d display.Display) error {
-	cmd, err := resolve(args, sid)
+	cmd, err := resolve(args, session)
 	if err != nil {
 		return err
 	}

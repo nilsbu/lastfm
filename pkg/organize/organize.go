@@ -14,28 +14,6 @@ import (
 
 // TODO name / what is this file
 
-// SessionID describes a session.
-type SessionID string // TODO should be struct or
-
-// LoadSessionID loads a session ID.
-func LoadSessionID(r rsrc.Reader) (SessionID, error) {
-	data, err := r.Read(rsrc.SessionID())
-	if err != nil {
-		return "", err
-	}
-
-	unm := &unpack.SessionID{}
-	err = json.Unmarshal(data, unm)
-	if err != nil {
-		return "", err
-	}
-	if unm.User == "" {
-		return "", errors.New("No valid user was read")
-	}
-
-	return SessionID(unm.User), nil
-}
-
 // WriteAllDayPlays writes a list of day plays.
 func WriteAllDayPlays(
 	plays []HistoryDay,
