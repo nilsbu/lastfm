@@ -124,7 +124,7 @@ func resolvePrint(
 		}
 	case "fade":
 		if len(params) < 1 {
-			return nil, errors.New("'print total' accepts no more than one additional parameter")
+			return nil, errors.New("'print fade' needs one more additional parameter")
 		} else if len(params) > 2 {
 			return nil, errors.New(
 				"'print total' accepts no more than two additional parameter")
