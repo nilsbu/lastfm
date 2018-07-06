@@ -40,9 +40,12 @@ func (o *obUserInfo) interpret(raw interface{}) (interface{}, error) {
 	return &User{ui.User.Name, rsrc.ToDay(utc)}, nil
 }
 
+// PlayCount assigns artists a play count.
+type PlayCount map[string]int
+
 // HistoryDayPage is a single page of a day of a user's played tracks.
 type HistoryDayPage struct {
-	Plays map[string]int
+	Plays PlayCount
 	Pages int
 }
 
@@ -79,8 +82,8 @@ func (o *obHistory) interpret(raw interface{}) (interface{}, error) {
 		data.RecentTracks.Attr.TotalPages}, nil
 }
 
-func countPlays(urt *jsonUserRecentTracks) map[string]int {
-	dp := make(map[string]int)
+func countPlays(urt *jsonUserRecentTracks) PlayCount {
+	dp := make(PlayCount)
 	for _, track := range urt.RecentTracks.Track {
 		if !track.Attr.NowPlaying {
 			dp[track.Artist.Str]++

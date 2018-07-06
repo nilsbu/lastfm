@@ -15,7 +15,7 @@ type printTotal struct {
 
 func (cmd printTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	plays, err := organize.ReadAllDayPlays(session.User, s)
+	plays, err := unpack.LoadAllDayPlays(session.User, s)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ type printFade struct {
 
 func (cmd printFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	plays, err := organize.ReadAllDayPlays(session.User, s)
+	plays, err := unpack.LoadAllDayPlays(session.User, s)
 	if err != nil {
 		return err
 	}

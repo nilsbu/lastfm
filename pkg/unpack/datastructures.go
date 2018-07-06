@@ -5,9 +5,9 @@ type jsonUserInfo struct {
 }
 
 type jsonUser struct {
-	Name       string `json:"name"`
-	PlayCount  int    `json:"playcount"`
-	Registered time   `json:"registered"`
+	Name       string   `json:"name"`
+	PlayCount  int      `json:"playcount"`
+	Registered jsonTime `json:"registered"`
 	// Not Included: realname, image, url, country, age, gender, subscriber, type
 	//               playlists, bootstrap
 }
@@ -17,11 +17,11 @@ type jsonUserRecentTracks struct {
 }
 
 type jsonRecentTracks struct {
-	Track []track          `json:"track"`
-	Attr  recentTracksAttr `json:"@attr"`
+	Track []jsonTrack          `json:"track"`
+	Attr  jsonRecentTracksAttr `json:"@attr"`
 }
 
-type recentTracksAttr struct {
+type jsonRecentTracksAttr struct {
 	User       string `json:"user"`
 	Page       int    `json:"page,string"`
 	PerPage    int    `json:"perPage,string"`
@@ -29,30 +29,30 @@ type recentTracksAttr struct {
 	Total      int    `json:"total,string"`
 }
 
-type date struct {
+type jsonDate struct {
 	UTC int64 `json:"uts,string"`
 	// Not included: #text
 }
 
-type time struct {
+type jsonTime struct {
 	UTC int64 `json:"unixtime"`
 	// Not included: #text
 }
 
-type track struct {
-	Artist text      `json:"artist"`
-	Name   string    `json:"name"`
-	Album  text      `json:"album"`
-	Date   date      `json:"date"`
-	Attr   trackAttr `json:"@attr"`
+type jsonTrack struct {
+	Artist jsonText      `json:"artist"`
+	Name   string        `json:"name"`
+	Album  jsonText      `json:"album"`
+	Date   jsonDate      `json:"date"`
+	Attr   jsonTrackAttr `json:"@attr"`
 	// Not included: streamable, mbid, url, image
 }
 
-type trackAttr struct {
+type jsonTrackAttr struct {
 	NowPlaying bool `json:"nowplaying,string"`
 }
 
-type text struct {
+type jsonText struct {
 	Str string `json:"#text"`
 	// Not included: mbid
 }

@@ -6,29 +6,29 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/pkg/organize"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 func TestCompile(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
-		dps    []organize.HistoryDay
+		dps    []unpack.PlayCount
 		charts Charts
 	}{
 		{
-			[]organize.HistoryDay{},
+			[]unpack.PlayCount{},
 			Charts{},
 		},
 		{
-			[]organize.HistoryDay{organize.HistoryDay{}},
+			[]unpack.PlayCount{unpack.PlayCount{}},
 			Charts{},
 		},
 		{
-			[]organize.HistoryDay{
-				organize.HistoryDay{"ASD": 2},
-				organize.HistoryDay{"WASD": 1},
-				organize.HistoryDay{"ASD": 13, "WASD": 4},
+			[]unpack.PlayCount{
+				unpack.PlayCount{"ASD": 2},
+				unpack.PlayCount{"WASD": 1},
+				unpack.PlayCount{"ASD": 13, "WASD": 4},
 			},
 			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
 		},

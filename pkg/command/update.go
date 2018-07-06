@@ -26,7 +26,7 @@ func (cmd updateHistory) Execute(
 		return errors.Wrap(err, "failed to update user history")
 	}
 
-	err = organize.WriteAllDayPlays(plays, user.Name, s)
+	err = unpack.WriteAllDayPlays(plays, user.Name, s)
 	if err != nil {
 		return errors.Wrap(err, "failed to write alldayplays")
 	}

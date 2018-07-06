@@ -10,75 +10,6 @@ import (
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
-func TestAllDayPlays(t *testing.T) {
-	// also see TestAllDayPlaysFalseName below
-
-	testCases := []struct {
-		user    string
-		plays   []HistoryDay
-		writeOK bool
-		readOK  bool
-	}{
-		{
-			"XX",
-			[]HistoryDay{HistoryDay{"BTS": 2, "XX": 1, "12": 1}},
-			true, true,
-		},
-		{
-			"XX",
-			[]HistoryDay{
-				HistoryDay{"as": 42, "": 1, "12": 100},
-				HistoryDay{"ギルガメッシュ": 1000},
-			},
-			false, false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run("", func(t *testing.T) {
-			var files map[rsrc.Locator][]byte
-			if tc.writeOK {
-				files = map[rsrc.Locator][]byte{rsrc.AllDayPlays(tc.user): nil}
-			} else {
-				files = map[rsrc.Locator][]byte{}
-			}
-
-			io, _ := mock.IO(files, mock.Path)
-			err := WriteAllDayPlays(tc.plays, tc.user, io)
-			if err != nil && tc.writeOK {
-				t.Error("unexpected error during write:", err)
-			} else if err == nil && !tc.writeOK {
-				t.Error("expected error during write but none occured")
-			}
-
-			plays, err := ReadAllDayPlays(tc.user, io)
-			if err != nil && tc.readOK {
-				t.Error("unexpected error during read:", err)
-			} else if err == nil && !tc.readOK {
-				t.Error("expected error during read but none occurred")
-			}
-			if err == nil {
-				if !reflect.DeepEqual(plays, tc.plays) {
-					t.Errorf("read plays differ from written:\nread:    %v\nwritten: %v",
-						plays, tc.plays)
-				}
-			}
-		})
-	}
-}
-
-func TestAllDayPlaysFalseName(t *testing.T) {
-	io, _ := mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
-
-	if err := WriteAllDayPlays([]HistoryDay{}, "I", io); err == nil {
-		t.Error("expected error during write but non occurred")
-	}
-
-	if _, err := ReadAllDayPlays("I", io); err == nil {
-		t.Error("expected error during read but non occurred")
-	}
-}
-
 func TestUpdateAllDayPlays(t *testing.T) {
 	h0 := rsrc.History("AA", 1, rsrc.ToDay(0*86400))
 	h1 := rsrc.History("AA", 1, rsrc.ToDay(1*86400))
@@ -88,10 +19,10 @@ func TestUpdateAllDayPlays(t *testing.T) {
 	testCases := []struct {
 		user           unpack.User
 		until          rsrc.Day
-		saved          []HistoryDay
+		saved          []unpack.PlayCount
 		tracksFile     map[rsrc.Locator][]byte
 		tracksDownload map[rsrc.Locator][]byte
-		plays          []HistoryDay
+		plays          []unpack.PlayCount
 		ok             bool
 	}{
 		{ // No data
@@ -100,7 +31,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]HistoryDay{},
+			[]unpack.PlayCount{},
 			false,
 		},
 		{ // Registration day invalid
@@ -109,7 +40,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]HistoryDay{},
+			[]unpack.PlayCount{},
 			false,
 		},
 		{ // Begin no valid day
@@ -118,28 +49,28 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]HistoryDay{},
+			[]unpack.PlayCount{},
 			false,
 		},
 		{ // download one day
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(300)}, // registered at 0:05
 			rsrc.ToDay(0),
-			[]HistoryDay{},
+			[]unpack.PlayCount{},
 			map[rsrc.Locator][]byte{h0: nil},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]HistoryDay{
-				HistoryDay{"ASDF": 1},
+			[]unpack.PlayCount{
+				unpack.PlayCount{"ASDF": 1},
 			},
 			true,
 		},
 		{ // download some, have some
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(86400)},
 			rsrc.ToDay(3 * 86400),
-			[]HistoryDay{
-				HistoryDay{"XX": 4},
-				HistoryDay{}, // will be overwritten
+			[]unpack.PlayCount{
+				unpack.PlayCount{"XX": 4},
+				unpack.PlayCount{}, // will be overwritten
 			},
 			map[rsrc.Locator][]byte{
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
@@ -151,40 +82,40 @@ func TestUpdateAllDayPlays(t *testing.T) {
 				h2: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				h3: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]HistoryDay{
-				HistoryDay{"XX": 4},
-				HistoryDay{"ASDF": 1},
-				HistoryDay{"B": 1},
+			[]unpack.PlayCount{
+				unpack.PlayCount{"XX": 4},
+				unpack.PlayCount{"ASDF": 1},
+				unpack.PlayCount{"B": 1},
 			},
 			true,
 		},
 		{ // have more than want
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(86400),
-			[]HistoryDay{
-				HistoryDay{"XX": 2},
-				HistoryDay{"A": 1},
-				HistoryDay{"DropMe": 1},
-				HistoryDay{"DropMeToo": 100},
+			[]unpack.PlayCount{
+				unpack.PlayCount{"XX": 2},
+				unpack.PlayCount{"A": 1},
+				unpack.PlayCount{"DropMe": 1},
+				unpack.PlayCount{"DropMeToo": 100},
 			},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
 			},
 			map[rsrc.Locator][]byte{},
-			[]HistoryDay{
-				HistoryDay{"XX": 2},
-				HistoryDay{"A": 1},
+			[]unpack.PlayCount{
+				unpack.PlayCount{"XX": 2},
+				unpack.PlayCount{"A": 1},
 			},
 			true,
 		},
 		{ // download error
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(0),
-			[]HistoryDay{},
+			[]unpack.PlayCount{},
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]HistoryDay{},
+			[]unpack.PlayCount{},
 			false,
 		},
 	}
@@ -194,7 +125,7 @@ func TestUpdateAllDayPlays(t *testing.T) {
 			tc.tracksFile[rsrc.AllDayPlays(tc.user.Name)] = nil
 			io1, _ := mock.IO(tc.tracksFile, mock.Path)
 			if tc.saved != nil {
-				if err := WriteAllDayPlays(tc.saved, tc.user.Name, io1); err != nil {
+				if err := unpack.WriteAllDayPlays(tc.saved, tc.user.Name, io1); err != nil {
 					t.Error("unexpected error during write of all day plays:", err)
 				}
 

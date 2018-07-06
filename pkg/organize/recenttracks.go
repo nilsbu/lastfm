@@ -7,14 +7,12 @@ import (
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-type HistoryDay map[string]int
-
 // LoadAllDayPlays load plays from all days since the registration of the user.
 // TODO consistant naming scheme between read, write, download, load, get etc.
 func LoadAllDayPlays(
 	user unpack.User,
 	until rsrc.Day,
-	r rsrc.Reader) ([]HistoryDay, error) {
+	r rsrc.Reader) ([]unpack.PlayCount, error) {
 
 	untilMdn, uOK := until.Midnight()
 	registered, rOK := user.Registered.Midnight()
@@ -24,7 +22,7 @@ func LoadAllDayPlays(
 		return nil, errors.New("user has no valid registration date")
 	}
 	days := int((untilMdn - registered) / 86400)
-	result := make([]HistoryDay, days+1)
+	result := make([]unpack.PlayCount, days+1)
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
@@ -51,7 +49,7 @@ func LoadAllDayPlays(
 
 // LoadDayPlaysResult is the result of loadDayPlays.
 type LoadDayPlaysResult struct {
-	DayPlays map[string]int
+	DayPlays unpack.PlayCount
 	Err      error
 }
 
@@ -59,7 +57,7 @@ func loadDayPlays(
 	user string,
 	time rsrc.Day,
 	r rsrc.Reader,
-) (map[string]int, error) {
+) (unpack.PlayCount, error) {
 	histPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
 	if err != nil {
 		return nil, err

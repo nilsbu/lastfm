@@ -17,7 +17,7 @@ func TestLoadAllDayPlays(t *testing.T) {
 		user  unpack.User
 		until rsrc.Day
 		data  [][]string
-		dps   []HistoryDay
+		dps   []unpack.PlayCount
 		err   fastest.Code
 	}{
 		{
@@ -34,7 +34,7 @@ func TestLoadAllDayPlays(t *testing.T) {
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`},
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"XXX"}}], "@attr":{"totalPages":"1"}}}`},
 			},
-			[]HistoryDay{HistoryDay{"ASDF": 1}, HistoryDay{"XXX": 1}},
+			[]unpack.PlayCount{unpack.PlayCount{"ASDF": 1}, unpack.PlayCount{"XXX": 1}},
 			fastest.OK,
 		},
 		{
@@ -47,7 +47,7 @@ func TestLoadAllDayPlays(t *testing.T) {
 					`{"recenttracks":{"track":[{"artist":{"#text":"Z"}}, {"artist":{"#text":"X"}}], "@attr":{"page":"3","totalPages":"3"}}}`,
 				},
 			},
-			[]HistoryDay{HistoryDay{"X": 2, "Y": 1, "Z": 1}},
+			[]unpack.PlayCount{unpack.PlayCount{"X": 2, "Y": 1, "Z": 1}},
 			fastest.OK,
 		},
 		{
