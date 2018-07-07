@@ -57,31 +57,42 @@ type jsonText struct {
 	// Not included: mbid
 }
 
-type ArtistInfo struct {
-	Artist artistArtist `json:"artist"`
+type jsonArtistInfo struct {
+	Artist jsonArtistArtist `json:"artist"`
 }
 
-type artistArtist struct {
-	Name  string      `json:"name"`
-	Stats artistStats `json:"stats"`
+type jsonArtistArtist struct {
+	Name  string          `json:"name"`
+	Stats jsonArtistStats `json:"stats"`
 }
 
-type artistStats struct {
+type jsonArtistStats struct {
 	Listeners int64 `json:"listeners,string"`
 	PlayCount int64 `json:"playcount,string"`
 }
 
-type ArtistTags struct {
-	TopTags topTags `json:"toptags"`
+type jsonArtistTags struct {
+	TopTags jsonTopTags `json:"toptags"`
 }
 
-type topTags struct {
-	Tags []tag `json:"tag"`
+type jsonTopTags struct {
+	Tags []jsonTag `json:"tag"`
 }
 
-type tag struct {
+type jsonTag struct {
 	Name  string `json:"name"`
 	Count int    `json:"count"`
+}
+
+type jsonTagInfo struct {
+	Tag jsonTagTag `json:"tag"`
+}
+
+type jsonTagTag struct {
+	Name  string `json:"name"`
+	Total int64  `json:"total"`
+	Reach int64  `json:"reach"`
+	// Not included: wiki
 }
 
 type jsonAPIKey struct {

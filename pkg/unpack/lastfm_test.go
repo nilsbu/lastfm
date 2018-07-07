@@ -114,3 +114,149 @@ func TestLoadHistoryDayPage(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadArtistTags(t *testing.T) {
+	cases := []struct {
+		files  map[rsrc.Locator][]byte
+		artist string
+		tags   []TagCount
+		ok     bool
+	}{
+		{
+			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): nil},
+			"xy",
+			[]TagCount{},
+			false,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
+			"xy",
+			[]TagCount{},
+			false,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"toptags":{"tag":[{"name":"bui", "count":100},{"count":12,"name":"asdf"}]}}`)},
+			"xy",
+			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(c.files, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			tags, err := LoadArtistTags(c.artist, io)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error")
+			}
+
+			if err == nil {
+				if !reflect.DeepEqual(tags, c.tags) {
+					t.Errorf("wrong data:\n has:  %v\nwant: %v",
+						tags, c.tags)
+				}
+			}
+		})
+	}
+}
+
+func TestLoadTagInfo(t *testing.T) {
+	cases := []struct {
+		files map[rsrc.Locator][]byte
+		names [][]string
+		tags  []*Tag
+		ok    bool
+	}{
+		{
+			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): nil},
+			[][]string{[]string{"african"}},
+			[]*Tag{nil},
+			false,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
+			[][]string{[]string{"african"}},
+			[]*Tag{nil},
+			false,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
+			[][]string{[]string{"african", "african"}},
+			[]*Tag{
+				&Tag{Name: "african", Total: 55266, Reach: 10493},
+				&Tag{Name: "african", Total: 55266, Reach: 10493},
+			},
+			true,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
+			[][]string{[]string{"african"}, []string{"african"}},
+			[]*Tag{
+				&Tag{Name: "african", Total: 55266, Reach: 10493},
+				&Tag{Name: "african", Total: 55266, Reach: 10493},
+			},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(c.files, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			buf := NewCachedTagLoader(io)
+
+			n := 0
+			for _, names := range c.names {
+				n += len(names)
+			}
+
+			tags := make([]*Tag, n)
+			feedback := make(chan error)
+			errs := []error{}
+
+			n = 0
+			for _, names := range c.names {
+				for i := range names {
+					go func(i int) {
+						res, err := buf.LoadTagInfo(names[i])
+						tags[i+n] = res
+						feedback <- err
+					}(i)
+				}
+
+				for range names {
+					if err := <-feedback; err != nil {
+						errs = append(errs, err)
+						if c.ok {
+							t.Error("unexpected error :", err)
+						}
+					}
+				}
+
+				n += len(names)
+			}
+
+			if len(errs) == 0 {
+				if !c.ok {
+					t.Error("expected error but none occurred")
+				}
+
+				for i, want := range c.tags {
+					if !reflect.DeepEqual(tags[i], want) {
+						t.Errorf("wrong data at position %v\nhas:  %v\nwant: %v",
+							i, tags[i], want)
+					}
+				}
+			}
+		})
+	}
+}

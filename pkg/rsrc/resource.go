@@ -107,6 +107,18 @@ func ArtistTags(artist string) Locator {
 	}
 }
 
+// TagInfo returns a locator for the Last.fm API call "tag.getInfo".
+func TagInfo(tag string) Locator {
+	return &lastFM{
+		method:   "tag.getInfo",
+		nameType: "tag",
+		name:     tag,
+		page:     -1,
+		day:      NoDay(),
+		limit:    -1,
+	}
+}
+
 func (loc *lastFM) URL(apiKey string) (string, error) {
 	if err := CheckAPIKey(apiKey); err != nil {
 		return "", err

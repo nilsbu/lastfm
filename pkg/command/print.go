@@ -4,7 +4,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
-	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -72,7 +71,8 @@ type printTags struct {
 
 func (cmd printTags) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	tags, err := organize.ReadArtistTags(cmd.artist, s)
+
+	tags, err := unpack.LoadArtistTags(cmd.artist, s)
 	if err != nil {
 		return err
 	}

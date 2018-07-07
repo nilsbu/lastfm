@@ -29,6 +29,11 @@ func TestLastFMURL(t *testing.T) {
 			base + "api_key=a3ee123098128acf29ca9f0cf29ca9f0&method=artist.getTopTags&artist=dido",
 			true,
 		},
+		{ // ok
+			TagInfo("blub"), "a3ee123098128acf29ca9f0cf29ca9f0",
+			base + "api_key=a3ee123098128acf29ca9f0cf29ca9f0&method=tag.getInfo&tag=blub",
+			true,
+		},
 		{ // invalid API key
 			UserInfo("user1"), "a3ee",
 			"",
