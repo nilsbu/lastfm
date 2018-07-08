@@ -88,16 +88,20 @@ func TestLastFMPath(t *testing.T) {
 		// path is always ok, since input is considered valid
 	}{
 		{
+			UserInfo("user2"),
+			".lastfm/raw/user.getInfo/60/25/d18fe48abd45168528f18a82e265dd98d421a7084aa09f61b341703901a3.json",
+		},
+		{
 			UserInfo("user1"),
-			".lastfm/data/user.getInfo/user1.json",
+			".lastfm/raw/user.getInfo/0a/04/1b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90.json",
 		},
 		{ // name must be escaped for Windows
 			UserInfo("aux"),
-			".lastfm/data/user.getInfo/_aux.json",
+			".lastfm/raw/user.getInfo/32/1f/68140efca2b301c8c9e9cd67f0e0e3f89a6b24ca923c13bade1ee6552073.json",
 		},
 		{
-			History("abc", 1, ToDay(86400)),
-			".lastfm/data/user.getRecentTracks/abc.86400(1).json",
+			History("abc", 1, ToDay(2*86400)),
+			".lastfm/raw/user.getRecentTracks/abc/86400/172800-1.json",
 		},
 	}
 
@@ -133,7 +137,7 @@ func TestUtilURL(t *testing.T) {
 
 func TestUtilPath(t *testing.T) {
 	cases := []struct {
-		loc  *util
+		loc  Locator
 		path string
 		// path is always ok, since input is considered valid
 	}{

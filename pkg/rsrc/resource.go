@@ -1,6 +1,8 @@
 package rsrc
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/url"
@@ -167,17 +169,19 @@ func CheckAPIKey(apiKey string) error {
 }
 
 func (loc *lastFM) Path() (string, error) {
-	path := fmt.Sprintf(".lastfm/data/%v/%v",
-		loc.method, parseForPath(loc.name))
-
-	if timestamp, ok := loc.day.Midnight(); ok {
-		path += fmt.Sprintf(".%d", timestamp)
+	var path string
+	switch loc.method {
+	case "user.getRecentTracks":
+		midnight, _ := loc.day.Midnight()
+		path = fmt.Sprintf("%v/%v/%v-%v",
+			loc.name, 86400, midnight, loc.page)
+	default:
+		h8 := sha256.Sum256([]byte(loc.name))
+		hash := hex.EncodeToString(h8[:])
+		path = fmt.Sprintf("%v/%v/%v", hash[0:2], hash[2:4], hash[4:])
 	}
-	if loc.page > 0 {
-		path += fmt.Sprintf("(%v)", loc.page)
-	}
 
-	return path + ".json", nil
+	return fmt.Sprintf(".lastfm/raw/%v/%v.json", loc.method, path), nil
 }
 
 func escapeBadNames(name string) string {
@@ -194,34 +198,27 @@ func escapeBadNames(name string) string {
 	return name
 }
 
-func parseForPath(name string) string {
-	escaped := url.PathEscape(string(name))
-	escaped = strings.Replace(escaped, "%20", "+", -1)
-	escaped = strings.Replace(escaped, "/", "+", -1)
-	return escapeBadNames(escaped)
-}
-
 // TODO docu
 type util struct {
 	method string
 	public bool
 }
 
-func Supertags() *util {
+func Supertags() Locator {
 	return &util{
 		method: "supertags",
 		public: true,
 	}
 }
 
-func APIKey() *util {
+func APIKey() Locator {
 	return &util{
 		method: "apikey",
 		public: false,
 	}
 }
 
-func SessionInfo() *util {
+func SessionInfo() Locator {
 	return &util{
 		method: "session",
 		public: false,
