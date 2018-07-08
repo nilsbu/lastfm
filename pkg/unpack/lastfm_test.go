@@ -133,10 +133,10 @@ func TestLoadArtistTags(t *testing.T) {
 			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
 			"xy",
 			[]TagCount{},
-			false,
+			true, // no error thrown, we'll have to except that wrong data is accepted
 		},
 		{
-			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"toptags":{"tag":[{"name":"bui", "count":100},{"count":12,"name":"asdf"}]}}`)},
+			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"toptags":{"tag":[{"name":"bui", "count":100},{"count":12,"name":"asdf"}],"@attr":{"artist":"xy"}}}`)},
 			"xy",
 			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
 			true,
@@ -171,36 +171,36 @@ func TestLoadTagInfo(t *testing.T) {
 	cases := []struct {
 		files map[rsrc.Locator][]byte
 		names [][]string
-		tags  []*Tag
+		tags  []*charts.Tag
 		ok    bool
 	}{
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): nil},
 			[][]string{[]string{"african"}},
-			[]*Tag{nil},
+			[]*charts.Tag{nil},
 			false,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
 			[][]string{[]string{"african"}},
-			[]*Tag{nil},
-			false,
+			[]*charts.Tag{&charts.Tag{}},
+			true, // no error is thrown, therefore this is acceppted
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
 			[][]string{[]string{"african", "african"}},
-			[]*Tag{
-				&Tag{Name: "african", Total: 55266, Reach: 10493},
-				&Tag{Name: "african", Total: 55266, Reach: 10493},
+			[]*charts.Tag{
+				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
 			},
 			true,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
 			[][]string{[]string{"african"}, []string{"african"}},
-			[]*Tag{
-				&Tag{Name: "african", Total: 55266, Reach: 10493},
-				&Tag{Name: "african", Total: 55266, Reach: 10493},
+			[]*charts.Tag{
+				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
 			},
 			true,
 		},
@@ -220,7 +220,7 @@ func TestLoadTagInfo(t *testing.T) {
 				n += len(names)
 			}
 
-			tags := make([]*Tag, n)
+			tags := make([]*charts.Tag, n)
 			feedback := make(chan error)
 			errs := []error{}
 

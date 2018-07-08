@@ -117,6 +117,11 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},
 		{
+			[]string{"lastfm", "print", "total", "super", "-n=25"},
+			&unpack.SessionInfo{User: "user"},
+			printTotalSuper{n: 25}, true,
+		},
+		{
 			[]string{"lastfm", "print", "asdf"},
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},

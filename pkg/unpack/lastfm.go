@@ -1,8 +1,6 @@
 package unpack
 
 import (
-	"fmt"
-
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -128,22 +126,12 @@ func (o *obArtistTags) interpret(raw interface{}) (interface{}, error) {
 	at := raw.(*jsonArtistTags)
 
 	len := len(at.TopTags.Tags)
-	if len == 0 {
-		return nil, fmt.Errorf("no tags were read for '%v'", o.name)
-	}
 
 	tags := make([]TagCount, len)
 	for i, tag := range at.TopTags.Tags {
 		tags[i] = TagCount{Name: tag.Name, Count: tag.Count}
 	}
 	return tags, nil
-}
-
-// Tag contains information about a tag.
-type Tag struct {
-	Name  string
-	Total int64
-	Reach int64
 }
 
 // CachedTagLoader if a buffer that stores tag information.
@@ -159,7 +147,7 @@ type tagRequest struct {
 
 type tagResult struct {
 	name string
-	tag  *Tag
+	tag  *charts.Tag
 	err  error
 }
 
@@ -198,7 +186,7 @@ func (buf *CachedTagLoader) worker() {
 					if err != nil {
 						resultChan <- tagResult{request.name, nil, err}
 					} else {
-						tag := data.(*Tag)
+						tag := data.(*charts.Tag)
 						resultChan <- tagResult{request.name, tag, nil}
 					}
 				}(request)
@@ -218,7 +206,7 @@ func (buf *CachedTagLoader) worker() {
 }
 
 // LoadTagInfo loads tag information.
-func (buf *CachedTagLoader) LoadTagInfo(artist string) (*Tag, error) {
+func (buf *CachedTagLoader) LoadTagInfo(artist string) (*charts.Tag, error) {
 	back := make(chan tagResult)
 
 	buf.requestChan <- tagRequest{
@@ -245,8 +233,8 @@ func (o *obTagInfo) deserializer() interface{} {
 func (o *obTagInfo) interpret(raw interface{}) (interface{}, error) {
 	tag := raw.(*jsonTagInfo)
 
-	if tag.Tag.Name != o.name {
-		return nil, fmt.Errorf("tag could not be read '%v'", o.name)
-	}
-	return &Tag{Name: tag.Tag.Name, Total: tag.Tag.Total, Reach: tag.Tag.Reach}, nil
+	return &charts.Tag{
+		Name:  tag.Tag.Name,
+		Total: tag.Tag.Total,
+		Reach: tag.Tag.Reach}, nil
 }

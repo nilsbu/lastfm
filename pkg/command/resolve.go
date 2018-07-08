@@ -61,9 +61,14 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
-		"fade":  node{cmd: exePrintFade},
-		"tags":  node{cmd: exePrintTags},
-		"total": node{cmd: exePrintTotal},
+		"fade": node{cmd: exePrintFade},
+		"tags": node{cmd: exePrintTags},
+		"total": node{
+			cmd: exePrintTotal,
+			nodes: nodes{
+				"super": node{cmd: exePrintTotalSuper},
+			},
+		},
 	},
 }
 
@@ -118,8 +123,18 @@ var exePrintTags = &cmd{
 var exePrintTotal = &cmd{
 	descr: "prints a user's top artists by total number of plays",
 	get: func(params []interface{}, opts map[string]interface{}) command {
-
 		return printTotal{opts["n"].(int)}
+	},
+	options: options{
+		"n": optArtistCount,
+	},
+	session: true,
+}
+
+var exePrintTotalSuper = &cmd{
+	descr: "prints super tags by total number of plays",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printTotalSuper{opts["n"].(int)}
 	},
 	options: options{
 		"n": optArtistCount,

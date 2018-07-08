@@ -76,12 +76,17 @@ type jsonArtistTags struct {
 }
 
 type jsonTopTags struct {
-	Tags []jsonTag `json:"tag"`
+	Tags []jsonTag      `json:"tag"`
+	Attr jsonTopTagAttr `json:"@attr"`
 }
 
 type jsonTag struct {
 	Name  string `json:"name"`
 	Count int    `json:"count"`
+}
+
+type jsonTopTagAttr struct {
+	Artist string `json:"artist"`
 }
 
 type jsonTagInfo struct {
