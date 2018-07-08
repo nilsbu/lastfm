@@ -128,3 +128,12 @@ func (c Column) Top(n int) (top Column) {
 	}
 	return c[:n]
 }
+
+// Keys returns the keys of the charts.
+func (c Charts) Keys() []string {
+	keys := []string{}
+	for key := range c {
+		keys = append(keys, key)
+	}
+	return keys
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/nilsbu/fastest"
@@ -199,6 +200,38 @@ func TestColumnTop(t *testing.T) {
 			top := tc.column.Top(tc.n)
 
 			ft.DeepEquals(top, tc.top)
+		})
+	}
+}
+
+func TestChartsKeys(t *testing.T) {
+	cases := []struct {
+		charts Charts
+		keys   []string
+	}{
+		{
+			Charts{},
+			[]string{},
+		},
+		{
+			Charts{
+				"xx": []float64{32, 45},
+				"yy": []float64{32, 45},
+			},
+			[]string{"xx", "yy"},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			keys := c.charts.Keys()
+
+			sort.Strings(keys)
+			sort.Strings(c.keys)
+			if !reflect.DeepEqual(keys, c.keys) {
+				t.Errorf("wrong data (sorted):\nhas:  %v\nwant: %v",
+					keys, c.keys)
+			}
 		})
 	}
 }
