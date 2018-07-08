@@ -64,6 +64,7 @@ func (FileWriter) Write(data []byte, loc rsrc.Locator) error {
 	}
 
 	_, err = f.Write(data)
+	f.Close()
 	return err
 }
 
