@@ -3,50 +3,49 @@ package charts
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"testing"
 
 	"github.com/nilsbu/fastest"
-	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 func TestCompile(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
-		dps    []unpack.PlayCount
+	cases := []struct {
+		days   []Charts
 		charts Charts
 	}{
 		{
-			[]unpack.PlayCount{},
+			[]Charts{},
 			Charts{},
 		},
 		{
-			[]unpack.PlayCount{unpack.PlayCount{}},
+			[]Charts{Charts{}},
 			Charts{},
 		},
 		{
-			[]unpack.PlayCount{
-				unpack.PlayCount{"ASD": 2},
-				unpack.PlayCount{"WASD": 1},
-				unpack.PlayCount{"ASD": 13, "WASD": 4},
+			[]Charts{
+				Charts{"ASD": []float64{2}},
+				Charts{"WASD": []float64{1}},
+				Charts{"ASD": []float64{13}, "WASD": []float64{4}},
 			},
 			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			charts := Compile(tc.dps)
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			charts := Compile(c.days)
 
-			ft.DeepEquals(charts, tc.charts)
+			if !reflect.DeepEqual(charts, c.charts) {
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+					charts, c.charts)
+			}
 		})
 	}
 }
 
 func TestChartsSum(t *testing.T) {
-	ft := fastest.T{T: t}
-
-	testCases := []struct {
+	cases := []struct {
 		charts Charts
 		sums   Charts
 	}{
@@ -64,11 +63,14 @@ func TestChartsSum(t *testing.T) {
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
-			sums := tc.charts.Sum()
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			sums := c.charts.Sum()
 
-			ft.DeepEquals(sums, tc.sums)
+			if !reflect.DeepEqual(sums, c.sums) {
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+					sums, c.sums)
+			}
 		})
 	}
 }

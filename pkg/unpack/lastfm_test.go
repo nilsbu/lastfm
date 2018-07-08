@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -82,9 +83,9 @@ func TestLoadHistoryDayPage(t *testing.T) {
 			false,
 		},
 		{
-			[]byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
+			[]byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}},{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			"user", rsrc.ToDay(86400), 1,
-			&HistoryDayPage{map[string]int{"ASDF": 1}, 1},
+			&HistoryDayPage{charts.Charts{"ASDF": []float64{2}}, 1},
 			true,
 		},
 	}

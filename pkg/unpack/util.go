@@ -1,8 +1,9 @@
 package unpack
 
 import (
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/pkg/errors"
+
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type obAPIKey struct{}

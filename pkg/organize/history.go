@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -13,7 +14,7 @@ import (
 func LoadHistory(
 	user unpack.User,
 	until rsrc.Day,
-	r rsrc.Reader) ([]unpack.PlayCount, error) {
+	r rsrc.Reader) ([]charts.Charts, error) {
 
 	untilMdn, uOK := until.Midnight()
 	registered, rOK := user.Registered.Midnight()
@@ -23,7 +24,7 @@ func LoadHistory(
 		return nil, errors.New("user has no valid registration date")
 	}
 	days := int((untilMdn - registered) / 86400)
-	result := make([]unpack.PlayCount, days+1)
+	result := make([]charts.Charts, days+1)
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
@@ -50,7 +51,7 @@ func LoadHistory(
 
 // LoadDayPlaysResult is the result of loadDayPlays.
 type LoadDayPlaysResult struct {
-	DayPlays unpack.PlayCount
+	DayPlays charts.Charts
 	Err      error
 }
 
@@ -58,7 +59,7 @@ func loadDayPlays(
 	user string,
 	time rsrc.Day,
 	r rsrc.Reader,
-) (unpack.PlayCount, error) {
+) (charts.Charts, error) {
 	histPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
 	if err != nil {
 		return nil, err
@@ -85,7 +86,11 @@ func loadDayPlays(
 		}
 
 		for k, v := range dpr.DayPlays {
-			histPage.Plays[k] += v
+			if _, ok := histPage.Plays[k]; ok {
+				histPage.Plays[k][0] += v[0]
+			} else {
+				histPage.Plays[k] = v
+			}
 		}
 	}
 	close(back)
@@ -99,7 +104,7 @@ func UpdateHistory(
 	user *unpack.User,
 	until rsrc.Day,
 	s store.Store,
-) (plays []unpack.PlayCount, err error) {
+) (plays []charts.Charts, err error) {
 	registeredDay, ok := user.Registered.Midnight()
 	if !ok {
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
@@ -109,7 +114,7 @@ func UpdateHistory(
 
 	oldPlays, err := unpack.LoadAllDayPlays(user.Name, s)
 	if err != nil {
-		oldPlays = []unpack.PlayCount{}
+		oldPlays = []charts.Charts{}
 	} else if len(oldPlays) > 0 {
 		begin = registeredDay + int64(86400*(len(oldPlays)-1))
 		oldPlays = oldPlays[:len(oldPlays)-1]

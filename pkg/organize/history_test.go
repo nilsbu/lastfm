@@ -6,24 +6,39 @@ import (
 	"testing"
 
 	"github.com/nilsbu/fastest"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
-func TestLoadAllDayPlays(t *testing.T) {
+func TestLoadHistory(t *testing.T) {
 	ft := fastest.T{T: t}
 
 	testCases := []struct {
 		user  unpack.User
 		until rsrc.Day
 		data  [][]string
-		dps   []unpack.PlayCount
+		dps   []charts.Charts
 		err   fastest.Code
 	}{
 		{
 			unpack.User{Name: "", Registered: rsrc.ToDay(0)},
+			rsrc.ToDay(86400),
+			[][]string{[]string{}, []string{}},
+			nil,
+			fastest.Fail,
+		},
+		{
+			unpack.User{Name: "", Registered: rsrc.ToDay(0)},
+			rsrc.NoDay(),
+			[][]string{[]string{}, []string{}},
+			nil,
+			fastest.Fail,
+		},
+		{
+			unpack.User{Name: "", Registered: rsrc.NoDay()},
 			rsrc.ToDay(86400),
 			[][]string{[]string{}, []string{}},
 			nil,
@@ -36,7 +51,7 @@ func TestLoadAllDayPlays(t *testing.T) {
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`},
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"XXX"}}], "@attr":{"totalPages":"1"}}}`},
 			},
-			[]unpack.PlayCount{unpack.PlayCount{"ASDF": 1}, unpack.PlayCount{"XXX": 1}},
+			[]charts.Charts{charts.Charts{"ASDF": []float64{1}}, charts.Charts{"XXX": []float64{1}}},
 			fastest.OK,
 		},
 		{
@@ -49,7 +64,7 @@ func TestLoadAllDayPlays(t *testing.T) {
 					`{"recenttracks":{"track":[{"artist":{"#text":"Z"}}, {"artist":{"#text":"X"}}], "@attr":{"page":"3","totalPages":"3"}}}`,
 				},
 			},
-			[]unpack.PlayCount{unpack.PlayCount{"X": 2, "Y": 1, "Z": 1}},
+			[]charts.Charts{charts.Charts{"X": []float64{2}, "Y": []float64{1}, "Z": []float64{1}}},
 			fastest.OK,
 		},
 		{
@@ -95,10 +110,10 @@ func TestUpdateHistory(t *testing.T) {
 	testCases := []struct {
 		user           unpack.User
 		until          rsrc.Day
-		saved          []unpack.PlayCount
+		saved          []charts.Charts
 		tracksFile     map[rsrc.Locator][]byte
 		tracksDownload map[rsrc.Locator][]byte
-		plays          []unpack.PlayCount
+		plays          []charts.Charts
 		ok             bool
 	}{
 		{ // No data
@@ -107,7 +122,7 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.PlayCount{},
+			[]charts.Charts{},
 			false,
 		},
 		{ // Registration day invalid
@@ -116,7 +131,7 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.PlayCount{},
+			[]charts.Charts{},
 			false,
 		},
 		{ // Begin no valid day
@@ -125,28 +140,28 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.PlayCount{},
+			[]charts.Charts{},
 			false,
 		},
 		{ // download one day
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(300)}, // registered at 0:05
 			rsrc.ToDay(0),
-			[]unpack.PlayCount{},
+			[]charts.Charts{},
 			map[rsrc.Locator][]byte{h0: nil},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]unpack.PlayCount{
-				unpack.PlayCount{"ASDF": 1},
+			[]charts.Charts{
+				charts.Charts{"ASDF": []float64{1}},
 			},
 			true,
 		},
 		{ // download some, have some
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(86400)},
 			rsrc.ToDay(3 * 86400),
-			[]unpack.PlayCount{
-				unpack.PlayCount{"XX": 4},
-				unpack.PlayCount{}, // will be overwritten
+			[]charts.Charts{
+				charts.Charts{"XX": []float64{4}},
+				charts.Charts{}, // will be overwritten
 			},
 			map[rsrc.Locator][]byte{
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
@@ -158,40 +173,40 @@ func TestUpdateHistory(t *testing.T) {
 				h2: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				h3: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]unpack.PlayCount{
-				unpack.PlayCount{"XX": 4},
-				unpack.PlayCount{"ASDF": 1},
-				unpack.PlayCount{"B": 1},
+			[]charts.Charts{
+				charts.Charts{"XX": []float64{4}},
+				charts.Charts{"ASDF": []float64{1}},
+				charts.Charts{"B": []float64{1}},
 			},
 			true,
 		},
 		{ // have more than want
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(86400),
-			[]unpack.PlayCount{
-				unpack.PlayCount{"XX": 2},
-				unpack.PlayCount{"A": 1},
-				unpack.PlayCount{"DropMe": 1},
-				unpack.PlayCount{"DropMeToo": 100},
+			[]charts.Charts{
+				charts.Charts{"XX": []float64{2}},
+				charts.Charts{"A": []float64{1}},
+				charts.Charts{"DropMe": []float64{1}},
+				charts.Charts{"DropMeToo": []float64{100}},
 			},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
 			},
 			map[rsrc.Locator][]byte{},
-			[]unpack.PlayCount{
-				unpack.PlayCount{"XX": 2},
-				unpack.PlayCount{"A": 1},
+			[]charts.Charts{
+				charts.Charts{"XX": []float64{2}},
+				charts.Charts{"A": []float64{1}},
 			},
 			true,
 		},
 		{ // download error
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(0),
-			[]unpack.PlayCount{},
+			[]charts.Charts{},
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]unpack.PlayCount{},
+			[]charts.Charts{},
 			false,
 		},
 	}

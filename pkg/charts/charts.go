@@ -5,8 +5,6 @@ import (
 	"math"
 	"runtime"
 	"sort"
-
-	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 // Charts is table of daily accumulation of plays.
@@ -21,16 +19,16 @@ type Score struct {
 	Score float64 // TODO rename Value
 }
 
-// Compile builds Charts from DayPlays.
-func Compile(dayPlays []unpack.PlayCount) Charts {
-	size := len(dayPlays)
+// Compile builds Charts from single day plays.
+func Compile(days []Charts) Charts {
+	size := len(days)
 	charts := make(Charts)
-	for i, day := range dayPlays {
+	for i, day := range days {
 		for name, plays := range day {
 			if _, ok := charts[name]; !ok {
 				charts[name] = make([]float64, size)
 			}
-			charts[name][i] = float64(plays)
+			charts[name][i] = plays[0]
 		}
 	}
 

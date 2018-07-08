@@ -3,6 +3,7 @@ package unpack
 import (
 	"fmt"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -42,12 +43,9 @@ func (o *obUserInfo) interpret(raw interface{}) (interface{}, error) {
 	return &User{ui.User.Name, rsrc.ToDay(utc)}, nil
 }
 
-// PlayCount assigns artists a play count.
-type PlayCount map[string]int
-
 // HistoryDayPage is a single page of a day of a user's played tracks.
 type HistoryDayPage struct {
-	Plays PlayCount
+	Plays charts.Charts
 	Pages int
 }
 
@@ -84,14 +82,18 @@ func (o *obHistory) interpret(raw interface{}) (interface{}, error) {
 		data.RecentTracks.Attr.TotalPages}, nil
 }
 
-func countPlays(urt *jsonUserRecentTracks) PlayCount {
-	dp := make(PlayCount)
+func countPlays(urt *jsonUserRecentTracks) charts.Charts {
+	plays := charts.Charts{}
 	for _, track := range urt.RecentTracks.Track {
 		if !track.Attr.NowPlaying {
-			dp[track.Artist.Str]++
+			if cnt, ok := plays[track.Artist.Str]; ok {
+				cnt[0]++
+			} else {
+				plays[track.Artist.Str] = []float64{1}
+			}
 		}
 	}
-	return dp
+	return plays
 }
 
 // TagCount assigns a tag a value.
