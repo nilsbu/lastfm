@@ -21,7 +21,7 @@ func (cmd printTotal) Execute(
 
 	sums := charts.Compile(plays).Sum()
 	f := &format.Charts{
-		Charts:    charts.Charts(sums),
+		Charts:    sums,
 		Column:    -1,
 		Count:     cmd.n,
 		Numbered:  true,
@@ -50,7 +50,7 @@ func (cmd printFade) Execute(
 
 	sums := charts.Compile(plays).Fade(cmd.hl)
 	f := &format.Charts{
-		Charts:    charts.Charts(sums),
+		Charts:    sums,
 		Column:    -1,
 		Count:     cmd.n,
 		Numbered:  true,

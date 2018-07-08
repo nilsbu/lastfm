@@ -12,12 +12,6 @@ import (
 // Charts is table of daily accumulation of plays.
 type Charts map[string][]float64
 
-// Sums are special charts where each row consists of the some from the
-// beginning until the current row.
-type Sums Charts
-
-type Faded Charts
-
 // Column is a column of charts sorted descendingly.
 type Column []Score
 
@@ -44,27 +38,27 @@ func Compile(dayPlays []unpack.PlayCount) Charts {
 }
 
 // Sum computes partial sums for charts.
-func (c Charts) Sum() Sums {
-	return Sums(c.mapLine(func(in []float64, out []float64) {
+func (c Charts) Sum() Charts {
+	return c.mapLine(func(in []float64, out []float64) {
 		var sum float64
 		for i, x := range in {
 			sum += x
 			out[i] = sum
 		}
-	}))
+	})
 }
 
-func (c Charts) Fade(hl float64) Faded {
+func (c Charts) Fade(hl float64) Charts {
 	fac := math.Pow(0.5, 1/hl)
 
-	return Faded(c.mapLine(func(in []float64, out []float64) {
+	return c.mapLine(func(in []float64, out []float64) {
 		sum := float64(0)
 		for i, x := range in {
 			sum *= fac
 			sum += x
 			out[i] = sum
 		}
-	}))
+	})
 }
 
 func (c Charts) mapLine(f func(in []float64, out []float64)) Charts {

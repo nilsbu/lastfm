@@ -48,19 +48,19 @@ func TestChartsSum(t *testing.T) {
 
 	testCases := []struct {
 		charts Charts
-		sums   Sums
+		sums   Charts
 	}{
 		{
 			Charts{},
-			Sums{},
+			Charts{},
 		},
 		{
 			Charts{"X": []float64{}},
-			Sums{"X": []float64{}},
+			Charts{"X": []float64{}},
 		},
 		{
 			Charts{"X": []float64{1, 3, 4}, "o0o": []float64{0, 0, 7}},
-			Sums{"X": []float64{1, 4, 8}, "o0o": []float64{0, 0, 7}},
+			Charts{"X": []float64{1, 4, 8}, "o0o": []float64{0, 0, 7}},
 		},
 	}
 
