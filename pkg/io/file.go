@@ -80,7 +80,3 @@ func (FileRemover) Remove(loc rsrc.Locator) error {
 
 	return os.Remove(path)
 }
-
-type updateRedirect struct {
-	updater rsrc.Updater
-}
