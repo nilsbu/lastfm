@@ -61,14 +61,9 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
-		"fade": node{cmd: exePrintFade},
-		"tags": node{cmd: exePrintTags},
-		"total": node{
-			cmd: exePrintTotal,
-			nodes: nodes{
-				"super": node{cmd: exePrintTotalSuper},
-			},
-		},
+		"fade":  node{cmd: exePrintFade},
+		"tags":  node{cmd: exePrintTags},
+		"total": node{cmd: exePrintTotal},
 	},
 }
 
@@ -101,14 +96,23 @@ var exeHelp = &cmd{
 var exePrintFade = &cmd{
 	descr: "prints a user's top artists in fading charts",
 	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printFade{opts["n"].(int), params[0].(float64)}
+		return printFade{
+			by:   opts["by"].(string),
+			name: opts["name"].(string),
+			n:    opts["n"].(int),
+			hl:   params[0].(float64),
+		}
 	},
 	params: params{&param{
 		"half-life",
 		"span of days over which a 'scrobble' loses half its value",
 		"float",
 	}},
-	options: options{"n": optArtistCount},
+	options: options{
+		"by":   optChartType,
+		"name": optGenericName,
+		"n":    optArtistCount,
+	},
 	session: true,
 }
 
@@ -123,21 +127,16 @@ var exePrintTags = &cmd{
 var exePrintTotal = &cmd{
 	descr: "prints a user's top artists by total number of plays",
 	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printTotal{opts["n"].(int)}
+		return printTotal{
+			by:   opts["by"].(string),
+			name: opts["name"].(string),
+			n:    opts["n"].(int),
+		}
 	},
 	options: options{
-		"n": optArtistCount,
-	},
-	session: true,
-}
-
-var exePrintTotalSuper = &cmd{
-	descr: "prints super tags by total number of plays",
-	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printTotalSuper{opts["n"].(int)}
-	},
-	options: options{
-		"n": optArtistCount,
+		"by":   optChartType,
+		"name": optGenericName,
+		"n":    optArtistCount,
 	},
 	session: true,
 }
@@ -174,6 +173,20 @@ var parArtistName = &param{
 	"artist name",
 	"the name of an artist",
 	"string",
+}
+
+var optChartType = &option{
+	param{"chart type",
+		"'all' or 'super'",
+		"string"}, // TODO make something like an enum
+	"all",
+}
+
+var optGenericName = &option{
+	param{"name",
+		"some name", // TODO be more specific
+		"string"},
+	"",
 }
 
 var optArtistCount = &option{

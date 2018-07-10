@@ -97,12 +97,12 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{n: 10}, true,
+			printTotal{by: "all", name: "", n: 10}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-n=25"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{n: 25}, true,
+			printTotal{by: "all", name: "", n: 25}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-n=k25"},
@@ -117,9 +117,9 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},
 		{
-			[]string{"lastfm", "print", "total", "super", "-n=25"},
+			[]string{"lastfm", "print", "total", "-by=super", "-n=25"},
 			&unpack.SessionInfo{User: "user"},
-			printTotalSuper{n: 25}, true,
+			printTotal{by: "super", name: "", n: 25}, true,
 		},
 		{
 			[]string{"lastfm", "print", "asdf"},
@@ -132,7 +132,12 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "fade", "30.2"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{n: 10, hl: 30.2}, true,
+			printFade{by: "all", name: "", n: 10, hl: 30.2}, true,
+		},
+		{
+			[]string{"lastfm", "print", "fade", "30.2", "-name=DYD"},
+			&unpack.SessionInfo{User: "user"},
+			printFade{by: "all", name: "DYD", n: 10, hl: 30.2}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade"},
