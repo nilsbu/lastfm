@@ -48,3 +48,31 @@ func initSupertagCharts(supertags map[string]string, len int) Charts {
 
 	return charts
 }
+
+func (c Charts) SplitBySupertag(
+	tags map[string][]Tag,
+	supertags map[string]string,
+) map[string]Charts {
+
+	buckets := map[string]Charts{}
+
+	for _, supertag := range supertags {
+		buckets[supertag] = Charts{}
+	}
+
+	buckets[""] = Charts{}
+
+	for name, values := range c {
+		var supertag string
+		for _, tag := range tags[name] {
+			if stag, ok := supertags[tag.Name]; ok {
+				supertag = stag
+				break
+			}
+		}
+
+		buckets[supertag][name] = values
+	}
+
+	return buckets
+}
