@@ -122,16 +122,30 @@ func TestLastFMPath(t *testing.T) {
 }
 
 func TestUtilURL(t *testing.T) {
-	_, err := APIKey().URL("a3ee123098128acf29ca9f0cf29ca9f0")
-	if err == nil {
-		t.Error("util resources should not yield a valid URL")
+	cases := []struct {
+		loc Locator
+		// URL is never ok
+	}{
+		{Supertags()},
+		{APIKey()},
+		{SessionInfo()},
 	}
-	if f, ok := err.(fail.Threat); ok {
-		if f.Severity() != fail.Control {
-			t.Error("severity must be 'Control':", err)
-		}
-	} else {
-		t.Error("error must implement Threat but does not:", err)
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			_, err := c.loc.URL("a3ee123098128acf29ca9f0cf29ca9f0")
+
+			if err == nil {
+				t.Error("util resources should not yield a valid URL")
+			}
+			if f, ok := err.(fail.Threat); ok {
+				if f.Severity() != fail.Control {
+					t.Error("severity must be 'Control':", err)
+				}
+			} else {
+				t.Error("error must implement Threat but does not:", err)
+			}
+		})
 	}
 }
 
@@ -163,16 +177,28 @@ func TestUtilPath(t *testing.T) {
 }
 
 func TestUserDataURL(t *testing.T) {
-	_, err := AllDayPlays("user1").URL("a3ee123098128acf29ca9f0cf29ca9f0")
-	if err == nil {
-		t.Error("user data should not yield a valid URL")
+	cases := []struct {
+		loc Locator
+		// URL is never ok
+	}{
+		{AllDayPlays("user1")},
 	}
-	if f, ok := err.(fail.Threat); ok {
-		if f.Severity() != fail.Control {
-			t.Error("severity must be 'Control':", err)
-		}
-	} else {
-		t.Error("error must implement Threat but does not:", err)
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			_, err := c.loc.URL("a3ee123098128acf29ca9f0cf29ca9f0")
+
+			if err == nil {
+				t.Error("user resources should not yield a valid URL")
+			}
+			if f, ok := err.(fail.Threat); ok {
+				if f.Severity() != fail.Control {
+					t.Error("severity must be 'Control':", err)
+				}
+			} else {
+				t.Error("error must implement Threat but does not:", err)
+			}
+		})
 	}
 }
 
