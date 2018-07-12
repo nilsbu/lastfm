@@ -59,3 +59,32 @@ func (o obAllDayPlays) interpret(raw interface{}) (interface{}, error) {
 func (o obAllDayPlays) raw(obj interface{}) interface{} {
 	return obj
 }
+
+type obArtistCorrections struct {
+	user string
+}
+
+func LoadArtistCorrections(user string, r rsrc.Reader,
+) (map[string]string, error) {
+	data, err := obtain(obArtistCorrections{user}, r)
+	if err != nil {
+		return nil, err
+	}
+
+	corr := data.(map[string]string)
+	return corr, nil
+}
+
+func (o obArtistCorrections) locator() rsrc.Locator {
+	return rsrc.ArtistCorrections(o.user)
+}
+
+func (o obArtistCorrections) deserializer() interface{} {
+	return &jsonArtistCorrections{}
+}
+
+func (o obArtistCorrections) interpret(raw interface{}) (interface{}, error) {
+	key := raw.(*jsonArtistCorrections)
+
+	return key.Corrections, nil
+}

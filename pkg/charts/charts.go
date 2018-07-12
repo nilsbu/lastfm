@@ -137,3 +137,28 @@ func (c Charts) Keys() []string {
 	}
 	return keys
 }
+
+func (c Charts) Correct(replace map[string]string) Charts {
+	corrected := Charts{}
+
+	for key, values := range c {
+		corrected[key] = values
+	}
+
+	for key := range c {
+		if with, ok := replace[key]; ok {
+			dest := corrected[with]
+			src := corrected[key]
+			sum := make([]float64, len(dest))
+
+			for i := range dest {
+				sum[i] = src[i] + dest[i]
+			}
+
+			delete(corrected, key)
+			corrected[with] = sum
+		}
+	}
+
+	return corrected
+}

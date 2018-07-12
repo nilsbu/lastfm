@@ -235,3 +235,34 @@ func TestChartsKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestChartsCorrect(t *testing.T) {
+	cases := []struct {
+		charts     Charts
+		correction map[string]string
+		corrected  Charts
+	}{
+		{
+			Charts{
+				"o0o": []float64{0, 0, 7},
+				"lol": []float64{1, 2, 3},
+				"X":   []float64{1, 3, 4}},
+			map[string]string{"X": "o0o"},
+			Charts{
+				"o0o": []float64{1, 3, 11},
+				"lol": []float64{1, 2, 3},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			corrected := c.charts.Correct(c.correction)
+
+			if !reflect.DeepEqual(corrected, c.corrected) {
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+					corrected, c.corrected)
+			}
+		})
+	}
+}

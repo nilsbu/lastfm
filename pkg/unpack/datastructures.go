@@ -107,3 +107,7 @@ type jsonAPIKey struct {
 type jsonSessionInfo struct {
 	User string `json:"user"`
 }
+
+type jsonArtistCorrections struct {
+	Corrections map[string]string `json:"corrections"`
+}

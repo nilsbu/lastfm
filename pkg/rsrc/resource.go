@@ -249,6 +249,13 @@ func AllDayPlays(user string) Locator {
 	}
 }
 
+func ArtistCorrections(user string) Locator {
+	return &userData{
+		method: "artistcorrections",
+		name:   user,
+	}
+}
+
 func (u userData) URL(apiKey string) (string, error) {
 	return "", fail.WrapError(fail.Control,
 		fmt.Errorf("'%v' cannot be used as a URL", u.method))

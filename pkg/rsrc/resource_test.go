@@ -209,6 +209,7 @@ func TestUserDataPath(t *testing.T) {
 		// path is always ok, since input is considered valid
 	}{
 		{AllDayPlays("user1"), ".lastfm/user/user1/alldayplays.json"},
+		{ArtistCorrections("user1"), ".lastfm/user/user1/artistcorrections.json"},
 	}
 
 	for _, c := range cases {

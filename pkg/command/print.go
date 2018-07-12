@@ -29,6 +29,12 @@ func (cmd printTotal) Execute(
 
 	sums := charts.Compile(plays).Sum()
 
+	replace, err := unpack.LoadArtistCorrections(session.User, s)
+	if err != nil {
+		return err
+	}
+	sums = sums.Correct(replace)
+
 	out, err := getOutCharts(cmd.by, cmd.name, sums, s)
 	if err != nil {
 		return err
@@ -65,6 +71,12 @@ func (cmd printFade) Execute(
 	}
 
 	fade := charts.Compile(plays).Fade(cmd.hl)
+
+	replace, err := unpack.LoadArtistCorrections(session.User, s)
+	if err != nil {
+		return err
+	}
+	fade = fade.Correct(replace)
 
 	out, err := getOutCharts(cmd.by, cmd.name, fade, s)
 	if err != nil {
