@@ -78,5 +78,6 @@ func (FileRemover) Remove(loc rsrc.Locator) error {
 		return fail.WrapError(fail.Control, errors.New("file does not exist"))
 	}
 
-	return os.Remove(path)
+	os.Remove(path)
+	return nil
 }
