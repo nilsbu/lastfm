@@ -15,16 +15,8 @@ type Remover interface {
 	Remove(loc Locator) error
 }
 
-type Updater interface {
-	Update(loc Locator) (data []byte, err error)
-}
-
-type ReadWriter interface {
+type IO interface {
 	Reader
 	Writer
-}
-
-type IO interface {
-	ReadWriter
 	Remover
 }

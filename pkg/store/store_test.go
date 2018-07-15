@@ -64,9 +64,7 @@ func TestStoreRead(t *testing.T) {
 		sev     fail.Severity
 	}{
 		{
-			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{},
-			},
+			[]map[rsrc.Locator][]byte{{}},
 			[]mock.Resolver{mock.Path},
 			nil,
 			rsrc.APIKey(),
@@ -75,8 +73,8 @@ func TestStoreRead(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): []byte("xx")},
+				{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
@@ -86,8 +84,8 @@ func TestStoreRead(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("9")},
+				{},
+				{rsrc.UserInfo("abc"): []byte("9")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("9"),
@@ -97,10 +95,10 @@ func TestStoreRead(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): []byte("xx")},
+				{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.Path, mock.Path, mock.Path, mock.Path},
 			[]byte("xx"),
@@ -159,9 +157,7 @@ func TestStoreUpdate(t *testing.T) {
 		sev     fail.Severity
 	}{
 		{
-			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{},
-			},
+			[]map[rsrc.Locator][]byte{{}},
 			[]mock.Resolver{mock.Path},
 			nil,
 			rsrc.APIKey(),
@@ -170,8 +166,8 @@ func TestStoreUpdate(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): []byte("xx")},
+				{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
@@ -181,8 +177,8 @@ func TestStoreUpdate(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{},
-				map[rsrc.Locator][]byte{rsrc.APIKey(): []byte("9")},
+				{},
+				{rsrc.APIKey(): []byte("9")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("9"),
@@ -192,8 +188,8 @@ func TestStoreUpdate(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("9")},
+				{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): []byte("9")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("9"),
@@ -203,8 +199,8 @@ func TestStoreUpdate(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.Path, mock.Path},
 			nil,
@@ -214,8 +210,8 @@ func TestStoreUpdate(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.APIKey(): []byte("9")},
-				map[rsrc.Locator][]byte{},
+				{rsrc.APIKey(): []byte("9")},
+				{},
 			},
 			[]mock.Resolver{mock.Path, mock.URL},
 			[]byte("9"),
@@ -225,8 +221,8 @@ func TestStoreUpdate(t *testing.T) {
 		},
 		{
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("9")},
-				map[rsrc.Locator][]byte{},
+				{rsrc.UserInfo("abc"): []byte("9")},
+				{},
 			},
 			[]mock.Resolver{mock.Path, mock.Path},
 			[]byte("9"),
@@ -287,9 +283,7 @@ func TestStoreWrite(t *testing.T) {
 		sev     fail.Severity
 	}{
 		{ // failed write (critical)
-			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{},
-			},
+			[]map[rsrc.Locator][]byte{{}},
 			[]mock.Resolver{mock.Path},
 			[]byte("xx"),
 			rsrc.UserInfo("abc"),
@@ -298,8 +292,8 @@ func TestStoreWrite(t *testing.T) {
 		},
 		{ // not written in layer 0 (no URL for APIKey)
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{},
-				map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
+				{},
+				{rsrc.APIKey(): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
@@ -309,8 +303,8 @@ func TestStoreWrite(t *testing.T) {
 		},
 		{ // written in neither (0 not reached since 1 fails)
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
-				map[rsrc.Locator][]byte{},
+				{rsrc.APIKey(): nil},
+				{},
 			},
 			[]mock.Resolver{mock.Path, mock.URL},
 			[]byte("xx"),
@@ -320,8 +314,8 @@ func TestStoreWrite(t *testing.T) {
 		},
 		{ // written in both layers
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): nil},
+				{rsrc.UserInfo("abc"): nil},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			[]byte("xx"),
@@ -375,9 +369,7 @@ func TestStoreRemove(t *testing.T) {
 		sev   fail.Severity
 	}{
 		{ // failed remove (critical)
-			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{},
-			},
+			[]map[rsrc.Locator][]byte{{}},
 			[]mock.Resolver{mock.Path},
 			rsrc.UserInfo("abc"),
 			[]bool{false},
@@ -385,8 +377,8 @@ func TestStoreRemove(t *testing.T) {
 		},
 		{ // remove both
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
-				map[rsrc.Locator][]byte{rsrc.UserInfo("abc"): []byte("xx")},
+				{rsrc.UserInfo("abc"): []byte("xx")},
+				{rsrc.UserInfo("abc"): []byte("xx")},
 			},
 			[]mock.Resolver{mock.URL, mock.Path},
 			rsrc.UserInfo("abc"),
@@ -395,8 +387,8 @@ func TestStoreRemove(t *testing.T) {
 		},
 		{ // level 0 not removed since 1 failes
 			[]map[rsrc.Locator][]byte{
-				map[rsrc.Locator][]byte{rsrc.APIKey(): []byte("xx")},
-				map[rsrc.Locator][]byte{},
+				{rsrc.APIKey(): []byte("xx")},
+				{},
 			},
 			[]mock.Resolver{mock.Path, mock.URL},
 			rsrc.APIKey(),

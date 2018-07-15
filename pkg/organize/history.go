@@ -131,7 +131,7 @@ func UpdateHistory(
 
 	newPlays, err := LoadHistory(
 		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
-		until, store.NewUpToDate(s))
+		until, store.Fresh(s))
 
 	return append(oldPlays, newPlays...), err
 }
