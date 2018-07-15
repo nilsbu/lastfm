@@ -48,10 +48,21 @@ var cmdRoot = node{
 var cmdLastfm = node{
 	cmd: exeHelp,
 	nodes: map[string]node{
+		"cache":   cmdCache,
 		"help":    cmdHelp,
 		"print":   cmdPrint,
 		"session": cmdSession,
 		"update":  cmdUpdate,
+	},
+}
+
+var cmdCache = node{
+	cmd: &cmd{
+		descr: "runs cache server",
+		get: func(params []interface{}, opts map[string]interface{}) command {
+			return cache{opts["p"].(int)}
+		},
+		options: options{"p": optCachePort},
 	},
 }
 
@@ -163,6 +174,12 @@ var exeSessionStop = &cmd{
 	},
 }
 
+var parPort = &param{
+	"port",
+	"a TCP port number",
+	"int",
+}
+
 var parUserName = &param{
 	"user name",
 	"a Last.fm user name",
@@ -173,6 +190,11 @@ var parArtistName = &param{
 	"artist name",
 	"the name of an artist",
 	"string",
+}
+
+var optCachePort = &option{
+	*parPort,
+	"14003",
 }
 
 var optChartType = &option{

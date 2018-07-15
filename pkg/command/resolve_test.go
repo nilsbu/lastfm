@@ -32,6 +32,14 @@ func TestResolve(t *testing.T) {
 			nil, help{}, false,
 		},
 		{
+			[]string{"lastfm", "cache"},
+			nil, cache{14003}, true,
+		},
+		{
+			[]string{"lastfm", "cache", "-p=8080"},
+			nil, cache{8080}, true,
+		},
+		{
 			[]string{"lastfm", "help"},
 			nil, help{}, true,
 		},
