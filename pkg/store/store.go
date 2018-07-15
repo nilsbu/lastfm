@@ -3,7 +3,6 @@ package store
 import (
 	"errors"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -24,9 +23,9 @@ import (
 // it finds the resource it overwrites potentially outdated versions in all
 // closer layers.
 //
-// Write() writes the resource to all layers.
+// Write() writes the resource to all layers. The error is always nil.
 //
-// Remove() removes the resource from all layers.
+// Remove() removes the resource from all layers. The error is always nil.
 //
 // TODO What role does fail.Threat play? Thread-safety?
 type Store interface {
@@ -46,8 +45,7 @@ func New(
 	ios [][]rsrc.IO,
 ) (Store, error) {
 	if len(ios) == 0 {
-		return nil, fail.WrapError(fail.Critical,
-			errors.New("store must have at least one layer"))
+		return nil, errors.New("store must have at least one layer")
 	}
 
 	pools := make([]pool, len(ios))
@@ -71,73 +69,53 @@ func (s *cache) Update(loc rsrc.Locator) (data []byte, err error) {
 }
 
 func (s *cache) Write(data []byte, loc rsrc.Locator) error {
-	return s.write(data, loc, len(s.layers)-1, -1)
+	s.write(data, loc, len(s.layers)-1, -1)
+	return nil
 }
 
 func (s *cache) Remove(loc rsrc.Locator) error {
-	return s.remove(loc)
+	s.cascade(len(s.layers)-1, -1, func(i int) bool {
+		<-s.layers[i].remove(loc)
+		return false
+	})
+
+	return nil
 }
 
 func (s *cache) read(loc rsrc.Locator, start int, di int,
 ) (data []byte, err error) {
 
-	idx, err := s.cascade(start, di, func(i int) (bool, error) {
+	idx, found := s.cascade(start, di, func(i int) bool {
 		result := <-s.layers[i].read(loc)
-		var tmpErr error
-		data, tmpErr = result.data, result.err
-		if tmpErr == nil {
-			return false, nil
-		}
-		if f, ok := tmpErr.(fail.Threat); ok && f.Severity() == fail.Control {
-			return true, nil
-		}
-		return false, tmpErr
+		data = result.data
+		return result.err == nil
 	})
 
-	if idx < 0 {
-		return nil, fail.WrapError(fail.Control, errors.New("resource not found"))
+	if !found {
+		return nil, errors.New("resource not found")
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	return data, s.write(data, loc, idx+1, 1)
+	s.write(data, loc, idx+1, 1)
+	return data, nil
 }
 
-func (s *cache) write(data []byte, loc rsrc.Locator, start int, di int) error {
-	_, err := s.cascade(start, di, func(i int) (bool, error) {
-		if err := <-s.layers[i].write(data, loc); err != nil {
-			if f, ok := err.(fail.Threat); ok && f.Severity() == fail.Control {
-				return true, nil
-			}
-			return false, err
-		}
-		return true, nil
+func (s *cache) write(data []byte, loc rsrc.Locator, start int, di int) {
+	s.cascade(start, di, func(i int) bool {
+		<-s.layers[i].write(data, loc)
+		return false
 	})
-	return err
 }
 
-func (s *cache) remove(loc rsrc.Locator) error {
-	_, err := s.cascade(len(s.layers)-1, -1, func(i int) (bool, error) {
-		if err := <-s.layers[i].remove(loc); err != nil {
-			if f, ok := err.(fail.Threat); ok && f.Severity() == fail.Control {
-				return true, nil
-			}
-			return false, err
-		}
-		return true, nil
-	})
+func (s *cache) cascade(
+	start, di int,
+	f func(i int) (found bool),
+) (idx int, found bool) {
 
-	return err
-}
-
-func (s *cache) cascade(start int, di int, f func(i int) (bool, error)) (int, error) {
 	for i := start; i >= 0 && i < len(s.layers); i += di {
-		if cont, err := f(i); !cont {
-			return i, err
+		if f(i) {
+			return i, true
 		}
 	}
 
-	return -1, nil
+	return -1, false
 }

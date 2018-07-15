@@ -1,10 +1,6 @@
 package rsrc
 
-import (
-	"testing"
-
-	"github.com/nilsbu/lastfm/pkg/fail"
-)
+import "testing"
 
 func TestLastFMURL(t *testing.T) {
 	base := "http://ws.audioscrobbler.com/2.0/?format=json&"
@@ -54,18 +50,8 @@ func TestLastFMURL(t *testing.T) {
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
 			url, err := c.loc.URL(c.apiKey)
-
-			if err != nil {
-				if f, ok := err.(fail.Threat); ok {
-					if f.Severity() != fail.Critical {
-						t.Error("severity must be 'Critical':", err)
-					}
-				} else {
-					t.Error("error must implement Threat but does not:", err)
-				}
-				if c.ok {
-					t.Error("unexpected error:", err)
-				}
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
 				t.Errorf("URL() should have thrown an error but did not")
 			}
@@ -132,17 +118,8 @@ func TestUtilURL(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			_, err := c.loc.URL("a3ee123098128acf29ca9f0cf29ca9f0")
-
-			if err == nil {
+			if _, err := c.loc.URL("a3ee123098128acf29ca9f0cf29ca9f0"); err == nil {
 				t.Error("util resources should not yield a valid URL")
-			}
-			if f, ok := err.(fail.Threat); ok {
-				if f.Severity() != fail.Control {
-					t.Error("severity must be 'Control':", err)
-				}
-			} else {
-				t.Error("error must implement Threat but does not:", err)
 			}
 		})
 	}
@@ -184,17 +161,8 @@ func TestUserDataURL(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			_, err := c.loc.URL("a3ee123098128acf29ca9f0cf29ca9f0")
-
-			if err == nil {
+			if _, err := c.loc.URL("a3ee123098128acf29ca9f0cf29ca9f0"); err == nil {
 				t.Error("user resources should not yield a valid URL")
-			}
-			if f, ok := err.(fail.Threat); ok {
-				if f.Severity() != fail.Control {
-					t.Error("severity must be 'Control':", err)
-				}
-			} else {
-				t.Error("error must implement Threat but does not:", err)
 			}
 		})
 	}

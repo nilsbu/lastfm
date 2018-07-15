@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -43,9 +42,12 @@ func TestStoreNew(t *testing.T) {
 			}
 
 			s, err := New(ios)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, fail.Critical); !ok {
-				t.Error(str)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error but non occurred")
 			}
+
 			if err == nil && s == nil {
 				t.Error("store cannot be nil if no error was returned")
 			}
@@ -61,7 +63,6 @@ func TestStoreRead(t *testing.T) {
 		loc     rsrc.Locator
 		written [][]byte
 		ok      bool
-		sev     fail.Severity
 	}{
 		{
 			[]map[rsrc.Locator][]byte{{}},
@@ -69,7 +70,7 @@ func TestStoreRead(t *testing.T) {
 			nil,
 			rsrc.APIKey(),
 			[][]byte{nil},
-			false, fail.Control,
+			false,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -80,7 +81,7 @@ func TestStoreRead(t *testing.T) {
 			[]byte("xx"),
 			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("xx"), []byte("xx")},
-			true, fail.Control,
+			true,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -91,7 +92,7 @@ func TestStoreRead(t *testing.T) {
 			[]byte("9"),
 			rsrc.UserInfo("abc"),
 			[][]byte{nil, []byte("9")},
-			true, fail.Control,
+			true,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -104,7 +105,7 @@ func TestStoreRead(t *testing.T) {
 			[]byte("xx"),
 			rsrc.UserInfo("abc"),
 			[][]byte{nil, []byte("xx"), []byte("xx"), []byte("xx")},
-			true, fail.Control,
+			true,
 		},
 	}
 
@@ -125,9 +126,12 @@ func TestStoreRead(t *testing.T) {
 			}
 
 			data, err := s.Read(c.loc)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error but non occurred")
 			}
+
 			if string(data) != string(c.data) {
 				t.Errorf("read data is wrong:\nhas:      '%v'\nexpected: '%v'",
 					string(data), string(c.data))
@@ -154,7 +158,6 @@ func TestStoreUpdate(t *testing.T) {
 		loc     rsrc.Locator
 		written [][]byte
 		ok      bool
-		sev     fail.Severity
 	}{
 		{
 			[]map[rsrc.Locator][]byte{{}},
@@ -162,7 +165,7 @@ func TestStoreUpdate(t *testing.T) {
 			nil,
 			rsrc.APIKey(),
 			[][]byte{nil},
-			false, fail.Control,
+			false,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -173,7 +176,7 @@ func TestStoreUpdate(t *testing.T) {
 			[]byte("xx"),
 			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("xx"), []byte("xx")},
-			true, fail.Control,
+			true,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -184,7 +187,7 @@ func TestStoreUpdate(t *testing.T) {
 			[]byte("9"),
 			rsrc.APIKey(),
 			[][]byte{nil, []byte("9")},
-			true, fail.Control,
+			true,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -195,7 +198,7 @@ func TestStoreUpdate(t *testing.T) {
 			[]byte("9"),
 			rsrc.UserInfo("abc"),
 			[][]byte{nil, []byte("9")},
-			true, fail.Control,
+			true,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -206,7 +209,7 @@ func TestStoreUpdate(t *testing.T) {
 			nil,
 			rsrc.UserInfo("abc"),
 			[][]byte{nil, nil},
-			false, fail.Control,
+			false,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -217,7 +220,7 @@ func TestStoreUpdate(t *testing.T) {
 			[]byte("9"),
 			rsrc.APIKey(),
 			[][]byte{[]byte("9"), nil},
-			true, fail.Control,
+			true,
 		},
 		{
 			[]map[rsrc.Locator][]byte{
@@ -228,7 +231,7 @@ func TestStoreUpdate(t *testing.T) {
 			[]byte("9"),
 			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("9"), nil},
-			false, fail.Critical,
+			true,
 		},
 	}
 
@@ -249,9 +252,12 @@ func TestStoreUpdate(t *testing.T) {
 			}
 
 			data, err := s.Update(c.loc)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error but non occurred")
 			}
+
 			if string(data) != string(c.data) {
 				t.Errorf("read data is wrong:\nhas:      '%v'\nexpected: '%v'",
 					string(data), string(c.data))
@@ -279,8 +285,6 @@ func TestStoreWrite(t *testing.T) {
 		data    []byte
 		loc     rsrc.Locator
 		written [][]byte
-		ok      bool
-		sev     fail.Severity
 	}{
 		{ // failed write (critical)
 			[]map[rsrc.Locator][]byte{{}},
@@ -288,7 +292,6 @@ func TestStoreWrite(t *testing.T) {
 			[]byte("xx"),
 			rsrc.UserInfo("abc"),
 			[][]byte{nil},
-			false, fail.Critical,
 		},
 		{ // not written in layer 0 (no URL for APIKey)
 			[]map[rsrc.Locator][]byte{
@@ -299,7 +302,6 @@ func TestStoreWrite(t *testing.T) {
 			[]byte("xx"),
 			rsrc.APIKey(),
 			[][]byte{nil, []byte("xx")},
-			true, fail.Control,
 		},
 		{ // written in neither (0 not reached since 1 fails)
 			[]map[rsrc.Locator][]byte{
@@ -310,7 +312,6 @@ func TestStoreWrite(t *testing.T) {
 			[]byte("xx"),
 			rsrc.APIKey(),
 			[][]byte{[]byte("xx"), nil},
-			true, fail.Control,
 		},
 		{ // written in both layers
 			[]map[rsrc.Locator][]byte{
@@ -321,7 +322,6 @@ func TestStoreWrite(t *testing.T) {
 			[]byte("xx"),
 			rsrc.UserInfo("abc"),
 			[][]byte{[]byte("xx"), []byte("xx")},
-			true, fail.Control,
 		},
 	}
 
@@ -342,8 +342,8 @@ func TestStoreWrite(t *testing.T) {
 			}
 
 			err = s.Write(c.data, c.loc)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil {
+				t.Error("unexpected error:", err)
 			}
 
 			for i, io := range ios {
@@ -365,15 +365,12 @@ func TestStoreRemove(t *testing.T) {
 		locf  []mock.Resolver
 		loc   rsrc.Locator
 		exist []bool
-		ok    bool
-		sev   fail.Severity
 	}{
 		{ // failed remove (critical)
 			[]map[rsrc.Locator][]byte{{}},
 			[]mock.Resolver{mock.Path},
 			rsrc.UserInfo("abc"),
 			[]bool{false},
-			false, fail.Critical,
 		},
 		{ // remove both
 			[]map[rsrc.Locator][]byte{
@@ -383,7 +380,6 @@ func TestStoreRemove(t *testing.T) {
 			[]mock.Resolver{mock.URL, mock.Path},
 			rsrc.UserInfo("abc"),
 			[]bool{false, false},
-			true, fail.Control,
 		},
 		{ // level 0 not removed since 1 failes
 			[]map[rsrc.Locator][]byte{
@@ -393,7 +389,6 @@ func TestStoreRemove(t *testing.T) {
 			[]mock.Resolver{mock.Path, mock.URL},
 			rsrc.APIKey(),
 			[]bool{true, false},
-			true, fail.Control,
 		},
 	}
 
@@ -414,8 +409,8 @@ func TestStoreRemove(t *testing.T) {
 			}
 
 			err = s.Remove(c.loc)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil {
+				t.Error("unexpected error:", err)
 			}
 
 			if err != nil {

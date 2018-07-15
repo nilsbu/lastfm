@@ -3,31 +3,28 @@ package mock
 import (
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func TestIO(t *testing.T) {
 	cases := []struct {
-		resolve   func(loc rsrc.Locator) (string, error)
-		files     map[rsrc.Locator][]byte
-		loc       rsrc.Locator
-		data      []byte
-		ctorOK    bool
-		writeOK   bool
-		writeSev  fail.Severity
-		remove    bool
-		removeOK  bool
-		removeSev fail.Severity
-		readOK    bool
+		resolve  func(loc rsrc.Locator) (string, error)
+		files    map[rsrc.Locator][]byte
+		loc      rsrc.Locator
+		data     []byte
+		ctorOK   bool
+		writeOK  bool
+		remove   bool
+		removeOK bool
+		readOK   bool
 	}{
 		{ // read what was written
 			Path,
 			map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 			rsrc.APIKey(),
 			[]byte("xxd"),
-			true, true, fail.Control,
-			false, false, fail.Control,
+			true, true,
+			false, false,
 			true,
 		},
 		{ // write fails (key not contained in files)
@@ -35,8 +32,8 @@ func TestIO(t *testing.T) {
 			map[rsrc.Locator][]byte{},
 			rsrc.APIKey(),
 			[]byte("xxd"),
-			true, false, fail.Critical,
-			true, false, fail.Critical,
+			true, false,
+			true, false,
 			false,
 		},
 		{ // read from nil is not possible
@@ -44,8 +41,8 @@ func TestIO(t *testing.T) {
 			map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 			rsrc.APIKey(),
 			nil,
-			true, true, fail.Control,
-			false, false, fail.Control,
+			true, true,
+			false, false,
 			false,
 		},
 		{ // resolve of file path fails
@@ -53,8 +50,8 @@ func TestIO(t *testing.T) {
 			map[rsrc.Locator][]byte{},
 			rsrc.APIKey(),
 			[]byte(""),
-			true, false, fail.Control,
-			false, false, fail.Control,
+			true, false,
+			false, false,
 			false,
 		},
 		{ // unresolvable url in ctor
@@ -62,8 +59,8 @@ func TestIO(t *testing.T) {
 			map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 			rsrc.APIKey(),
 			[]byte(""),
-			false, false, fail.Control,
-			false, false, fail.Control,
+			false, false,
+			false, false,
 			false,
 		},
 		{ // written and remove
@@ -71,8 +68,8 @@ func TestIO(t *testing.T) {
 			map[rsrc.Locator][]byte{rsrc.APIKey(): nil},
 			rsrc.APIKey(),
 			[]byte("xxd"),
-			true, true, fail.Control,
-			true, true, fail.Control,
+			true, true,
+			true, true,
 			false,
 		},
 		{ // written and remove
@@ -80,8 +77,8 @@ func TestIO(t *testing.T) {
 			map[rsrc.Locator][]byte{},
 			rsrc.APIKey(),
 			[]byte("xxd"),
-			true, false, fail.Control,
-			true, false, fail.Control,
+			true, false,
+			true, false,
 			false,
 		},
 	}
@@ -97,22 +94,28 @@ func TestIO(t *testing.T) {
 			}
 
 			err = io.Write(c.data, c.loc)
-			if msg, ok := IsThreatCorrect(err, c.writeOK, c.writeSev); !ok {
-				t.Error(msg)
+			if err != nil && c.writeOK {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.writeOK {
+				t.Errorf("expected error but none occurred")
 			}
 
 			if c.remove {
 				err = io.Remove(c.loc)
-				if msg, ok := IsThreatCorrect(err, c.removeOK, c.removeSev); !ok {
-					t.Error(msg)
+				if err != nil && c.removeOK {
+					t.Error("unexpected error:", err)
+				} else if err == nil && !c.removeOK {
+					t.Errorf("expected error but none occurred")
 				}
 			}
 
 			data, err := io.Read(c.loc)
-
-			if msg, ok := IsThreatCorrect(err, c.readOK, fail.Control); !ok {
-				t.Error(msg)
+			if err != nil && c.readOK {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.readOK {
+				t.Errorf("expected error but none occurred")
 			}
+
 			if err == nil {
 				if string(data) != string(c.data) {
 					t.Errorf("result does not match:\nresult:   %v\nexpected: %v",

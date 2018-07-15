@@ -3,7 +3,6 @@ package store
 import (
 	"errors"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -38,8 +37,7 @@ func newPool(
 	ios []rsrc.IO,
 ) (pool, error) {
 	if len(ios) == 0 {
-		return nil, fail.WrapError(fail.Critical,
-			errors.New("pool must have at least one IO"))
+		return nil, errors.New("pool must have at least one IO")
 	}
 
 	r := make(readWorker)

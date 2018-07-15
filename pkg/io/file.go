@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -32,15 +31,7 @@ func (FileReader) Read(loc rsrc.Locator) ([]byte, error) {
 		return nil, err
 	}
 
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		switch err.(type) {
-		case *os.PathError:
-			err = fail.WrapError(fail.Control, err)
-		}
-	}
-
-	return data, err
+	return ioutil.ReadFile(path)
 }
 
 func (FileWriter) Write(data []byte, loc rsrc.Locator) error {
@@ -53,14 +44,14 @@ func (FileWriter) Write(data []byte, loc rsrc.Locator) error {
 		dir := filepath.Dir(path)
 		if err = os.MkdirAll(dir, 0040755); err != nil {
 			// Will be *PathError (?)
-			return fail.WrapError(fail.Critical, err)
+			return err
 		}
 	}
 
 	f, err := os.Create(path)
 	if err != nil {
 		// Will be *PathError
-		return fail.WrapError(fail.Critical, err)
+		return err
 	}
 
 	_, err = f.Write(data)
@@ -75,7 +66,7 @@ func (FileRemover) Remove(loc rsrc.Locator) error {
 	}
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
-		return fail.WrapError(fail.Control, errors.New("file does not exist"))
+		return errors.New("file does not exist")
 	}
 
 	os.Remove(path)

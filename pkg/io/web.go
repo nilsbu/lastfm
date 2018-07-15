@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -34,7 +33,7 @@ func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fail.WrapError(fail.Critical, err)
+		return nil, err
 	}
 
 	defer resp.Body.Close()
@@ -42,14 +41,11 @@ func (d Downloader) Read(loc rsrc.Locator) (data []byte, err error) {
 	if resp.StatusCode != http.StatusOK {
 		switch resp.StatusCode {
 		case http.StatusForbidden:
-			err = fail.WrapError(fail.Critical,
-				errors.New("forbidden (403), wrong API key?"))
+			err = errors.New("forbidden (403), wrong API key?")
 		case http.StatusNotFound:
-			err = fail.WrapError(fail.Suspicious,
-				errors.New("resouce not found (404)"))
+			err = errors.New("resouce not found (404)")
 		default:
-			err = fail.WrapError(fail.Suspicious,
-				fmt.Errorf("unexpected HTTP status: %v", resp.Status))
+			err = fmt.Errorf("unexpected HTTP status: %v", resp.Status)
 		}
 		return nil, err
 	}

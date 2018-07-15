@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-
-	"github.com/nilsbu/lastfm/pkg/fail"
 )
 
 type Locator interface {
@@ -113,8 +111,7 @@ func (loc *lastFM) URL(apiKey string) (string, error) {
 // have to be lower case.
 func CheckAPIKey(apiKey string) error {
 	if len(apiKey) != 32 {
-		return fail.WrapError(fail.Critical,
-			errors.New("API key does not have length 32"))
+		return errors.New("API key does not have length 32")
 	}
 
 	for _, char := range apiKey[1:] {
@@ -122,8 +119,8 @@ func CheckAPIKey(apiKey string) error {
 		case rune(char) >= rune('a') && rune(char) <= rune('z'):
 		case rune(char) >= rune('0') && rune(char) <= rune('9'):
 		default:
-			return fail.WrapError(fail.Critical,
-				fmt.Errorf("user name contains invalid character '%v'", string(char)))
+			return fmt.Errorf("user name contains invalid character '%v'",
+				string(char))
 		}
 	}
 
@@ -167,8 +164,7 @@ func SessionInfo() Locator {
 }
 
 func (u util) URL(apiKey string) (string, error) {
-	return "", fail.WrapError(fail.Control,
-		fmt.Errorf("'%v' cannot be used as a URL", u.method))
+	return "", fmt.Errorf("'%v' cannot be used as a URL", u.method)
 }
 
 func (u util) Path() (string, error) {
@@ -202,8 +198,7 @@ func SupertagCorrections(user string) Locator {
 }
 
 func (u userData) URL(apiKey string) (string, error) {
-	return "", fail.WrapError(fail.Control,
-		fmt.Errorf("'%v' cannot be used as a URL", u.method))
+	return "", fmt.Errorf("'%v' cannot be used as a URL", u.method)
 }
 
 func (u userData) Path() (string, error) {

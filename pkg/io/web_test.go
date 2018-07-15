@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
@@ -19,7 +18,7 @@ func (stubURL) Path() (string, error) {
 
 func (url stubURL) URL(string) (string, error) {
 	if url == "" {
-		return "", &fail.AssessedError{Sev: fail.Control, Err: errors.New("no URL")}
+		return "", errors.New("no URL")
 	}
 	return string(url), nil
 }
@@ -30,14 +29,13 @@ func TestDownloaderRead(t *testing.T) {
 		connectionOK bool
 		httpCode     int
 		ok           bool
-		sev          fail.Severity
 	}{
-		{false, true, http.StatusOK, false, fail.Control},
-		{true, true, http.StatusOK, true, fail.Control},
-		{true, true, http.StatusForbidden, false, fail.Critical},
-		{true, true, http.StatusNotFound, false, fail.Suspicious},
-		{true, true, http.StatusTeapot, false, fail.Suspicious},
-		{true, false, http.StatusOK, false, fail.Critical},
+		{false, true, http.StatusOK, false},
+		{true, true, http.StatusOK, true},
+		{true, true, http.StatusForbidden, false},
+		{true, true, http.StatusNotFound, false},
+		{true, true, http.StatusTeapot, false},
+		{true, false, http.StatusOK, false},
 	}
 
 	for _, c := range cases {
@@ -63,8 +61,10 @@ func TestDownloaderRead(t *testing.T) {
 			}
 
 			data, err := io.Read(stubURL(url))
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Errorf("expected error but none occurred")
 			}
 
 			if err == nil && string(data) != "response" {
@@ -84,9 +84,8 @@ func TestWebIOWrite(t *testing.T) {
 
 	io := NewWebIO(mock.APIKey)
 
-	err := io.Write([]byte("x"), stubURL(server.URL))
-	if str, ok := mock.IsThreatCorrect(err, false, fail.Control); !ok {
-		t.Error(str)
+	if err := io.Write([]byte("x"), stubURL(server.URL)); err == nil {
+		t.Error("expected error but none occurred")
 	}
 }
 
@@ -100,8 +99,7 @@ func TestWebIORemove(t *testing.T) {
 
 	io := NewWebIO(mock.APIKey)
 
-	err := io.Remove(stubURL(server.URL))
-	if str, ok := mock.IsThreatCorrect(err, false, fail.Control); !ok {
-		t.Error(str)
+	if err := io.Remove(stubURL(server.URL)); err == nil {
+		t.Error("expected error but none occurred")
 	}
 }

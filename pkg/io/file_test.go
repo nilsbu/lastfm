@@ -5,9 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/test/mock"
 )
 
 const path = "../../test/files/temp.txt"
@@ -20,8 +18,7 @@ func (stubPath) URL(string) (string, error) {
 
 func (path stubPath) Path() (string, error) {
 	if path == "" {
-		return "",
-			&fail.AssessedError{Sev: fail.Control, Err: errors.New("no path")}
+		return "", errors.New("no path")
 	}
 	return string(path), nil
 }
@@ -31,11 +28,10 @@ func TestFileIORead(t *testing.T) {
 		hasPath bool
 		hasFile bool
 		ok      bool
-		sev     fail.Severity
 	}{
-		{true, true, true, fail.Control},
-		{false, true, false, fail.Control},
-		{true, false, false, fail.Control},
+		{true, true, true},
+		{false, true, false},
+		{true, false, false},
 	}
 
 	for _, c := range cases {
@@ -52,17 +48,17 @@ func TestFileIORead(t *testing.T) {
 					err = io.Remove(loc)
 				}
 				if err != nil {
-					if f, ok := err.(fail.Threat); !ok || f.Severity() > fail.Control {
-						t.Fatal("unexpected error during setup:", err)
-					}
+					t.Fatal("unexpected error during setup:", err)
 				}
 			} else {
 				loc = stubPath("")
 			}
 
 			data, err := io.Read(loc)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Errorf("expected error but none occurred")
 			}
 
 			if err == nil && string(data) != "some text" {
@@ -77,10 +73,9 @@ func TestFileIOWrite(t *testing.T) {
 	cases := []struct {
 		hasPath bool
 		ok      bool
-		sev     fail.Severity
 	}{
-		{true, true, fail.Control},
-		{false, false, fail.Control},
+		{true, true},
+		{false, false},
 	}
 
 	for _, c := range cases {
@@ -95,8 +90,10 @@ func TestFileIOWrite(t *testing.T) {
 			}
 
 			err := io.Write([]byte("some text"), loc)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Errorf("expected error but none occurred")
 			}
 			if err != nil {
 				return
@@ -119,11 +116,10 @@ func TestFileIORemove(t *testing.T) {
 		hasPath bool
 		hasFile bool
 		ok      bool
-		sev     fail.Severity
 	}{
-		{true, true, true, fail.Control},
-		{false, true, false, fail.Control},
-		{true, false, false, fail.Control},
+		{true, true, true},
+		{false, true, false},
+		{true, false, false},
 	}
 
 	for _, c := range cases {
@@ -145,8 +141,10 @@ func TestFileIORemove(t *testing.T) {
 			}
 
 			err := io.Remove(loc)
-			if str, ok := mock.IsThreatCorrect(err, c.ok, c.sev); !ok {
-				t.Error(str)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Errorf("expected error but none occurred")
 			}
 			if err != nil {
 				return

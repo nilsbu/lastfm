@@ -3,7 +3,6 @@ package io
 import (
 	"fmt"
 
-	"github.com/nilsbu/lastfm/pkg/fail"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -24,16 +23,13 @@ type FailIO struct {
 }
 
 func (FailReader) Read(loc rsrc.Locator) (data []byte, err error) {
-	return nil, fail.WrapError(fail.Control,
-		fmt.Errorf("cannot read on FailIO"))
+	return nil, fmt.Errorf("cannot read on FailIO")
 }
 
 func (FailWriter) Write(data []byte, loc rsrc.Locator) (err error) {
-	return fail.WrapError(fail.Control,
-		fmt.Errorf("cannot write on FailIO"))
+	return fmt.Errorf("cannot write on FailIO")
 }
 
 func (FailRemover) Remove(loc rsrc.Locator) (err error) {
-	return fail.WrapError(fail.Control,
-		fmt.Errorf("cannot remove on FailIO"))
+	return fmt.Errorf("cannot remove on FailIO")
 }
