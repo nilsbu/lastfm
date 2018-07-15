@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/nilsbu/lastfm/pkg/fail"
 )
@@ -16,7 +15,6 @@ type Locator interface {
 	Path() (string, error)
 }
 
-// TODO docu
 type lastFM struct {
 	method   string
 	nameType string
@@ -36,42 +34,6 @@ func UserInfo(user string) Locator {
 		day:      NoDay(),
 		limit:    -1,
 	}
-}
-
-// TODO checkUserName is not used.
-
-func checkUserName(user string) error {
-	if len(user) < 2 {
-		return fail.WrapError(fail.Critical,
-			fmt.Errorf("user name '%v' too short, min length is 2", user))
-	} else if len(user) > 15 {
-		return fail.WrapError(fail.Critical,
-			fmt.Errorf("user name '%v' too long, max length is 15", user))
-	} else if !isLetter(rune(user[0])) {
-		return fail.WrapError(fail.Critical,
-			fmt.Errorf("user name '%v' doesn't begin with a character", user))
-	}
-
-	for _, char := range user[1:] {
-		switch {
-		case rune(char) == rune('-') || rune(char) == rune('_'):
-		case rune(char) >= rune('0') && rune(char) <= rune('9'):
-		case isLetter(char):
-		default:
-			return fail.WrapError(fail.Critical,
-				fmt.Errorf("user name contains invalid character '%v'", string(char)))
-		}
-	}
-	return nil
-}
-
-func isLetter(char rune) bool {
-	if rune(char) >= rune('A') && rune(char) <= rune('Z') {
-		return true
-	} else if rune(char) >= rune('a') && rune(char) <= rune('z') {
-		return true
-	}
-	return false
 }
 
 func History(user string, page int, day Day) Locator {
@@ -184,20 +146,6 @@ func (loc *lastFM) Path() (string, error) {
 	return fmt.Sprintf(".lastfm/raw/%v/%v.json", loc.method, path), nil
 }
 
-func escapeBadNames(name string) string {
-	bad := [13]string{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
-		"LPT1", "LPT2", "LPT3", "LPT4", "LST"}
-
-	upperName := strings.ToUpper(string(name))
-	for _, s := range bad {
-		if upperName == s {
-			return "_" + name
-		}
-	}
-
-	return name
-}
-
 // TODO docu
 type util struct {
 	method string
@@ -224,9 +172,6 @@ func (u util) URL(apiKey string) (string, error) {
 }
 
 func (u util) Path() (string, error) {
-	if u.public {
-		return fmt.Sprintf("data/util/%v.json", u.method), nil
-	}
 	return fmt.Sprintf(".lastfm/util/%v.json", u.method), nil
 }
 
