@@ -6,12 +6,11 @@ type Error struct {
 	Err error
 }
 
-func (f *Error) Plain(w io.Writer) error {
+func (f *Error) Plain(w io.Writer) {
 	if f.Err == nil {
-		return nil
+		return
 	}
 
 	io.WriteString(w, f.Err.Error())
 	io.WriteString(w, "\n")
-	return nil
 }

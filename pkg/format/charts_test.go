@@ -76,3 +76,33 @@ func TestChartsPlain(t *testing.T) {
 		})
 	}
 }
+
+func TestColumnPlain(t *testing.T) {
+	cases := []struct {
+		name     string
+		col      charts.Column
+		numbered bool
+		prec     int
+		str      string
+	}{
+		{
+			"empty column",
+			charts.Column{},
+			false, 3,
+			"",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			formatter := &Column{c.col, c.numbered, c.prec}
+			formatter.Plain(buf)
+
+			str := buf.String()
+			if str != c.str {
+				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", str, c.str)
+			}
+		})
+	}
+}

@@ -8,7 +8,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
-	"github.com/pkg/errors"
 )
 
 type Charts struct {
@@ -19,11 +18,10 @@ type Charts struct {
 	Precision int
 }
 
-func (formatter *Charts) Plain(w io.Writer) error {
+func (formatter *Charts) Plain(w io.Writer) {
 	col, err := formatter.Charts.Column(formatter.Column)
 	if err != nil {
-		return errors.Wrapf(err,
-			"failed to extract column %v", formatter.Column)
+		return
 	}
 
 	n := formatter.Count
@@ -37,7 +35,8 @@ func (formatter *Charts) Plain(w io.Writer) error {
 		Numbered:  formatter.Numbered,
 		Precision: formatter.Precision,
 	}
-	return colFormatter.Plain(w)
+
+	colFormatter.Plain(w)
 }
 
 type Column struct {
@@ -46,10 +45,11 @@ type Column struct {
 	Precision int
 }
 
-func (formatter *Column) Plain(w io.Writer) error {
+func (formatter *Column) Plain(w io.Writer) {
 	if len(formatter.Column) == 0 {
-		return nil
+		return
 	}
+
 	var pattern string
 
 	if formatter.Numbered {
@@ -70,21 +70,14 @@ func (formatter *Column) Plain(w io.Writer) error {
 	if formatter.Numbered {
 		for i, score := range formatter.Column {
 			str := fmt.Sprintf(pattern, i+1, score.Name, score.Score)
-			_, err := io.WriteString(w, str)
-			if err != nil {
-				return err
-			}
+			io.WriteString(w, str)
 		}
 	} else {
 		for _, score := range formatter.Column {
 			str := fmt.Sprintf(pattern, score.Name, score.Score)
-			_, err := io.WriteString(w, str)
-			if err != nil {
-				return err
-			}
+			io.WriteString(w, str)
 		}
 	}
-	return nil
 }
 
 func (formatter *Column) getMaxNameLen() int {

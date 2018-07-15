@@ -16,5 +16,6 @@ func NewTerminal() *Terminal {
 }
 
 func (d Terminal) Display(f format.Formatter) error {
-	return f.Plain(d.Writer)
+	f.Plain(d.Writer)
+	return nil
 }
