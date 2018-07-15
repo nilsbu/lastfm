@@ -35,7 +35,7 @@ func (cmd printTotal) Execute(
 	}
 	sums = sums.Correct(replace)
 
-	out, err := getOutCharts(cmd.by, cmd.name, sums, s)
+	out, err := getOutCharts(session.User, cmd.by, cmd.name, sums, s)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (cmd printFade) Execute(
 	}
 	fade = fade.Correct(replace)
 
-	out, err := getOutCharts(cmd.by, cmd.name, fade, s)
+	out, err := getOutCharts(session.User, cmd.by, cmd.name, fade, s)
 	if err != nil {
 		return err
 	}
@@ -99,8 +99,24 @@ func (cmd printFade) Execute(
 	return nil
 }
 
+func getSupertags(
+	c charts.Charts,
+	user string,
+	r rsrc.Reader,
+) (charts.Partition, error) {
+
+	tags, err := organize.LoadArtistTags(c.Keys(), r)
+	if err != nil {
+		return nil, err
+	}
+
+	corrections, _ := unpack.LoadSupertagCorrections(user, r)
+
+	return charts.Supertags(tags, config.Supertags, corrections), nil
+}
+
 func getOutCharts(
-	by, name string,
+	user, by, name string,
 	cha charts.Charts,
 	r rsrc.Reader) (charts.Charts, error) {
 	if name == "" {
@@ -108,12 +124,12 @@ func getOutCharts(
 		case "all":
 			return cha, nil
 		case "super":
-			tags, err := organize.LoadArtistTags(cha.Keys(), r)
+			supertags, err := getSupertags(cha, user, r)
 			if err != nil {
 				return nil, err
 			}
 
-			return cha.Supertags(tags, config.Supertags), nil
+			return cha.Group(supertags), nil
 		default:
 			return nil, fmt.Errorf("chart type '%v' not supported", by)
 		}
@@ -123,12 +139,12 @@ func getOutCharts(
 		case "all":
 			return nil, errors.New("name must be empty for chart type 'all'")
 		case "super":
-			tags, err := organize.LoadArtistTags(cha.Keys(), r)
+			supertags, err := getSupertags(cha, user, r)
 			if err != nil {
 				return nil, err
 			}
 
-			container = cha.SplitBySupertag(tags, config.Supertags)
+			container = cha.Split(supertags)
 		default:
 			return nil, fmt.Errorf("chart type '%v' not supported", by)
 		}

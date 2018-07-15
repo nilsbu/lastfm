@@ -104,3 +104,45 @@ func TestLoadArtistCorrections(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadSupertagCorrections(t *testing.T) {
+	cases := []struct {
+		json        []byte
+		corrections map[string]string
+		ok          bool
+	}{
+		{
+			nil, nil, false,
+		},
+		{
+			[]byte(`{"corrections":{"abc":"x","yy":"x"}}`),
+			map[string]string{"abc": "x", "yy": "x"},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{rsrc.SupertagCorrections("user"): c.json},
+				mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			corrections, err := LoadSupertagCorrections("user", io)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error but none occurred")
+			}
+
+			if err == nil {
+				if !reflect.DeepEqual(corrections, c.corrections) {
+					t.Errorf("wrong data\nhas:  '%v'\nwant: '%v'",
+						corrections, c.corrections)
+				}
+			}
+		})
+	}
+}

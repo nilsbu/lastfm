@@ -60,13 +60,16 @@ func (o obAllDayPlays) raw(obj interface{}) interface{} {
 	return obj
 }
 
-type obArtistCorrections struct {
+type obCorrections struct {
 	user string
+	fn   func(string) rsrc.Locator
 }
 
+// LoadArtistCorrections loads corrections for artist names. The result is a map
+// with the false names as keys and correct names as values.
 func LoadArtistCorrections(user string, r rsrc.Reader,
 ) (map[string]string, error) {
-	data, err := obtain(obArtistCorrections{user}, r)
+	data, err := obtain(obCorrections{user, rsrc.ArtistCorrections}, r)
 	if err != nil {
 		return nil, err
 	}
@@ -75,16 +78,29 @@ func LoadArtistCorrections(user string, r rsrc.Reader,
 	return corr, nil
 }
 
-func (o obArtistCorrections) locator() rsrc.Locator {
-	return rsrc.ArtistCorrections(o.user)
+// LoadSupertagCorrections loads corrections for artist's supertags. The result
+// is a map with the artist names as keys and intended supertags as values.
+func LoadSupertagCorrections(user string, r rsrc.Reader,
+) (map[string]string, error) {
+	data, err := obtain(obCorrections{user, rsrc.SupertagCorrections}, r)
+	if err != nil {
+		return nil, err
+	}
+
+	corr := data.(map[string]string)
+	return corr, nil
 }
 
-func (o obArtistCorrections) deserializer() interface{} {
-	return &jsonArtistCorrections{}
+func (o obCorrections) locator() rsrc.Locator {
+	return o.fn(o.user)
 }
 
-func (o obArtistCorrections) interpret(raw interface{}) (interface{}, error) {
-	key := raw.(*jsonArtistCorrections)
+func (o obCorrections) deserializer() interface{} {
+	return &jsonCorrections{}
+}
+
+func (o obCorrections) interpret(raw interface{}) (interface{}, error) {
+	key := raw.(*jsonCorrections)
 
 	return key.Corrections, nil
 }

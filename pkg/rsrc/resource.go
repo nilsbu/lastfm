@@ -204,13 +204,6 @@ type util struct {
 	public bool
 }
 
-func Supertags() Locator {
-	return &util{
-		method: "supertags",
-		public: true,
-	}
-}
-
 func APIKey() Locator {
 	return &util{
 		method: "apikey",
@@ -252,6 +245,13 @@ func AllDayPlays(user string) Locator {
 func ArtistCorrections(user string) Locator {
 	return &userData{
 		method: "artistcorrections",
+		name:   user,
+	}
+}
+
+func SupertagCorrections(user string) Locator {
+	return &userData{
+		method: "supertagcorrections",
 		name:   user,
 	}
 }

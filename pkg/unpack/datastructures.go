@@ -108,6 +108,6 @@ type jsonSessionInfo struct {
 	User string `json:"user"`
 }
 
-type jsonArtistCorrections struct {
+type jsonCorrections struct {
 	Corrections map[string]string `json:"corrections"`
 }

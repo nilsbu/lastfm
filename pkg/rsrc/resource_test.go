@@ -126,7 +126,6 @@ func TestUtilURL(t *testing.T) {
 		loc Locator
 		// URL is never ok
 	}{
-		{Supertags()},
 		{APIKey()},
 		{SessionInfo()},
 	}
@@ -155,7 +154,6 @@ func TestUtilPath(t *testing.T) {
 		path string
 		// path is always ok, since input is considered valid
 	}{
-		{Supertags(), "data/util/supertags.json"},
 		{APIKey(), ".lastfm/util/apikey.json"},
 		{SessionInfo(), ".lastfm/util/session.json"},
 	}
@@ -210,6 +208,7 @@ func TestUserDataPath(t *testing.T) {
 	}{
 		{AllDayPlays("user1"), ".lastfm/user/user1/alldayplays.json"},
 		{ArtistCorrections("user1"), ".lastfm/user/user1/artistcorrections.json"},
+		{SupertagCorrections("user1"), ".lastfm/user/user1/supertagcorrections.json"},
 	}
 
 	for _, c := range cases {
