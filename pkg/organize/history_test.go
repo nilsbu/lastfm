@@ -1,11 +1,9 @@
 package organize
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/nilsbu/fastest"
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
@@ -14,35 +12,33 @@ import (
 )
 
 func TestLoadHistory(t *testing.T) {
-	ft := fastest.T{T: t}
-
 	testCases := []struct {
 		user  unpack.User
 		until rsrc.Day
 		data  [][]string
 		dps   []charts.Charts
-		err   fastest.Code
+		ok    bool
 	}{
 		{
 			unpack.User{Name: "", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(86400),
 			[][]string{[]string{}, []string{}},
 			nil,
-			fastest.Fail,
+			false,
 		},
 		{
 			unpack.User{Name: "", Registered: rsrc.ToDay(0)},
 			rsrc.NoDay(),
 			[][]string{[]string{}, []string{}},
 			nil,
-			fastest.Fail,
+			false,
 		},
 		{
 			unpack.User{Name: "", Registered: rsrc.NoDay()},
 			rsrc.ToDay(86400),
 			[][]string{[]string{}, []string{}},
 			nil,
-			fastest.Fail,
+			false,
 		},
 		{
 			unpack.User{Name: "ASDF", Registered: rsrc.ToDay(86400)},
@@ -52,7 +48,7 @@ func TestLoadHistory(t *testing.T) {
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"XXX"}}], "@attr":{"totalPages":"1"}}}`},
 			},
 			[]charts.Charts{charts.Charts{"ASDF": []float64{1}}, charts.Charts{"XXX": []float64{1}}},
-			fastest.OK,
+			true,
 		},
 		{
 			unpack.User{Name: "ASDF", Registered: rsrc.ToDay(0)},
@@ -65,7 +61,7 @@ func TestLoadHistory(t *testing.T) {
 				},
 			},
 			[]charts.Charts{charts.Charts{"X": []float64{2}, "Y": []float64{1}, "Z": []float64{1}}},
-			fastest.OK,
+			true,
 		},
 		{
 			unpack.User{Name: "ASDF", Registered: rsrc.ToDay(0)},
@@ -77,12 +73,12 @@ func TestLoadHistory(t *testing.T) {
 				},
 			},
 			nil,
-			fastest.Fail,
+			false,
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
 			files := make(map[rsrc.Locator][]byte)
 			for j, day := range tc.data {
 				for k, d := range day {
@@ -94,9 +90,17 @@ func TestLoadHistory(t *testing.T) {
 			io, _ := mock.IO(files, mock.Path)
 
 			dps, err := LoadHistory(tc.user, tc.until, io)
-			ft.Implies(err != nil, tc.err == fastest.Fail, err)
-			ft.Implies(err == nil, tc.err == fastest.OK)
-			ft.DeepEquals(dps, tc.dps)
+			if err != nil && tc.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !tc.ok {
+				t.Error("expected error but none occurred")
+			}
+			if err == nil {
+				if !reflect.DeepEqual(dps, tc.dps) {
+					t.Errorf("wrong data:\nhas:      %v\nexpected: %v",
+						dps, tc.dps)
+				}
+			}
 		})
 	}
 }

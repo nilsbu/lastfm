@@ -1,13 +1,10 @@
 package charts
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 	"sort"
 	"testing"
-
-	"github.com/nilsbu/fastest"
 )
 
 func TestCompile(t *testing.T) {
@@ -111,8 +108,6 @@ func TestChartsFade(t *testing.T) {
 }
 
 func TestChartsColumn(t *testing.T) {
-	ft := fastest.T{T: t}
-
 	testCases := []struct {
 		charts Charts
 		i      int
@@ -154,20 +149,26 @@ func TestChartsColumn(t *testing.T) {
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
 			column, err := tc.charts.Column(tc.i)
+			if err != nil && tc.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !tc.ok {
+				t.Error("expected error but none occurred")
+			}
 
-			ft.Implies(err == nil, tc.ok)
-			ft.Implies(err != nil, !tc.ok, err)
-			ft.DeepEquals(column, tc.column)
+			if err == nil {
+				if !reflect.DeepEqual(column, tc.column) {
+					t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+						column, tc.column)
+				}
+			}
 		})
 	}
 }
 
 func TestColumnTop(t *testing.T) {
-	ft := fastest.T{T: t}
-
 	testCases := []struct {
 		column Column
 		n      int
@@ -195,11 +196,13 @@ func TestColumnTop(t *testing.T) {
 		},
 	}
 
-	for i, tc := range testCases {
-		ft.Seq(fmt.Sprintf("#%v", i), func(ft fastest.T) {
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
 			top := tc.column.Top(tc.n)
 
-			ft.DeepEquals(top, tc.top)
+			if !reflect.DeepEqual(top, tc.top) {
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v", top, tc.top)
+			}
 		})
 	}
 }
