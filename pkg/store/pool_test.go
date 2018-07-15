@@ -78,7 +78,7 @@ func TestPool(t *testing.T) {
 				ios = append(ios, io)
 			}
 
-			p, err := NewPool(ios)
+			p, err := newPool(ios)
 			if err != nil {
 				if c.ctorOK {
 					t.Error("unexpected error in constructor:", err)
@@ -86,7 +86,7 @@ func TestPool(t *testing.T) {
 				return
 			}
 
-			err = <-p.Write(c.data, c.loc)
+			err = <-p.write(c.data, c.loc)
 			if err != nil && c.writeOK {
 				t.Error("unexpected error during write:", err)
 			} else if err == nil && !c.writeOK {
@@ -94,7 +94,7 @@ func TestPool(t *testing.T) {
 			}
 
 			if c.remove {
-				err = <-p.Remove(c.loc)
+				err = <-p.remove(c.loc)
 				if err != nil && c.removeOK {
 					t.Error("unexpected error during remove:", err)
 				} else if err == nil && !c.removeOK {
@@ -105,8 +105,8 @@ func TestPool(t *testing.T) {
 				return
 			}
 
-			readResult := <-p.Read(c.loc)
-			data, err := readResult.Data, readResult.Err
+			readResult := <-p.read(c.loc)
+			data, err := readResult.data, readResult.err
 			if err != nil && c.readOK {
 				t.Error("unexpected error during read:", err)
 			} else if err == nil && !c.readOK {

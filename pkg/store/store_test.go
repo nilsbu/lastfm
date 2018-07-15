@@ -42,7 +42,7 @@ func TestStoreNew(t *testing.T) {
 				ios[i] = x
 			}
 
-			s, err := NewCache(ios)
+			s, err := New(ios)
 			if str, ok := mock.IsThreatCorrect(err, c.ok, fail.Critical); !ok {
 				t.Error(str)
 			}
@@ -121,7 +121,7 @@ func TestStoreRead(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := NewCache(ios)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -247,7 +247,7 @@ func TestStoreUpdate(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := NewCache(ios)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -342,7 +342,7 @@ func TestStoreWrite(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := NewCache(ios)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -416,7 +416,7 @@ func TestStoreRemove(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := NewCache(ios)
+			s, err := New(ios)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}

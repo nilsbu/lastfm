@@ -228,9 +228,9 @@ func TestUpdateHistory(t *testing.T) {
 
 			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
 
-			pool, _ := store.NewCache([][]rsrc.IO{[]rsrc.IO{io0}, []rsrc.IO{io1}})
+			store, _ := store.New([][]rsrc.IO{[]rsrc.IO{io0}, []rsrc.IO{io1}})
 
-			plays, err := UpdateHistory(&tc.user, tc.until, pool)
+			plays, err := UpdateHistory(&tc.user, tc.until, store)
 			if err != nil && tc.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !tc.ok {
