@@ -120,6 +120,16 @@ func (c Column) Len() int           { return len(c) }
 func (c Column) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c Column) Less(i, j int) bool { return c[i].Score > c[j].Score }
 
+func (c Column) Sum() (sum float64) {
+	for _, line := range c {
+		sum += line.Score
+	}
+
+	return sum
+}
+
+// TODO sort file by receiver
+
 // Top returns the top n entries of col. If n is larger than len(col) the whole
 // column is returned.
 func (c Column) Top(n int) (top Column) {

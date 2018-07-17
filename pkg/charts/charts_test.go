@@ -207,6 +207,25 @@ func TestColumnTop(t *testing.T) {
 	}
 }
 
+func TestColumnSum(t *testing.T) {
+	cases := []struct {
+		col Column
+		sum float64
+	}{
+		{Column{}, 0},
+		{Column{{"a", 10}, {"b", 2.5}}, 12.5},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			sum := c.col.Sum()
+			if sum != c.sum {
+				t.Errorf("got %v, expected %v", sum, c.sum)
+			}
+		})
+	}
+}
+
 func TestChartsKeys(t *testing.T) {
 	cases := []struct {
 		charts Charts
