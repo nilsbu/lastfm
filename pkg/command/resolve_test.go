@@ -105,6 +105,11 @@ func TestResolve(t *testing.T) {
 			printTotal{by: "all", name: "", n: 25}, true,
 		},
 		{
+			[]string{"lastfm", "print", "total", "-%=TRUE"},
+			&unpack.SessionInfo{User: "user"},
+			printTotal{by: "all", name: "", n: 10, percentage: true}, true,
+		},
+		{
 			[]string{"lastfm", "print", "total", "-n=k25"},
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},
@@ -140,6 +145,15 @@ func TestResolve(t *testing.T) {
 			printFade{by: "all", name: "DYD", n: 10, hl: 30.2}, true,
 		},
 		{
+			[]string{"lastfm", "print", "fade", "30.2", "-name"},
+			&unpack.SessionInfo{User: "user"}, nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "fade", "10", "-%"},
+			&unpack.SessionInfo{User: "user"},
+			printFade{by: "all", n: 10, hl: 10, percentage: true}, true,
+		},
+		{
 			[]string{"lastfm", "print", "fade"},
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},
@@ -154,6 +168,16 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "fade", "2", "x"},
 			&unpack.SessionInfo{User: "user"}, nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "period", "2015"},
+			&unpack.SessionInfo{User: "user"},
+			printPeriod{period: "2015", by: "all", name: "", n: 10}, true,
+		},
+		{
+			[]string{"lastfm", "print", "period", "2015", "-%=1"},
+			&unpack.SessionInfo{User: "user"},
+			printPeriod{period: "2015", by: "all", name: "", n: 10, percentage: true}, true,
 		},
 		{
 			[]string{"lastfm", "print", "tags", "Add"},

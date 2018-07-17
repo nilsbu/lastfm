@@ -61,9 +61,10 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
-		"fade":  node{cmd: exePrintFade},
-		"tags":  node{cmd: exePrintTags},
-		"total": node{cmd: exePrintTotal},
+		"fade":   node{cmd: exePrintFade},
+		"period": node{cmd: exePrintPeriod},
+		"tags":   node{cmd: exePrintTags},
+		"total":  node{cmd: exePrintTotal},
 	},
 }
 
@@ -94,13 +95,14 @@ var exeHelp = &cmd{
 }
 
 var exePrintFade = &cmd{
-	descr: "prints a user's top artists in fading charts",
+	descr: "prints a user's top artists in fading charts", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printFade{
-			by:   opts["by"].(string),
-			name: opts["name"].(string),
-			n:    opts["n"].(int),
-			hl:   params[0].(float64),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			hl:         params[0].(float64),
 		}
 	},
 	params: params{&param{
@@ -112,6 +114,32 @@ var exePrintFade = &cmd{
 		"by":   optChartType,
 		"name": optGenericName,
 		"n":    optArtistCount,
+		"%":    optChartsPercentage,
+	},
+	session: true,
+}
+
+var exePrintPeriod = &cmd{
+	descr: "", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printPeriod{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			period:     params[0].(string),
+		}
+	},
+	params: params{&param{
+		"period",
+		"", // TODO
+		"string",
+	}},
+	options: options{
+		"by":   optChartType,
+		"name": optGenericName,
+		"n":    optArtistCount,
+		"%":    optChartsPercentage,
 	},
 	session: true,
 }
@@ -125,18 +153,20 @@ var exePrintTags = &cmd{
 }
 
 var exePrintTotal = &cmd{
-	descr: "prints a user's top artists by total number of plays",
+	descr: "prints a user's top artists by total number of plays", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printTotal{
-			by:   opts["by"].(string),
-			name: opts["name"].(string),
-			n:    opts["n"].(int),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
 		}
 	},
 	options: options{
 		"by":   optChartType,
 		"name": optGenericName,
 		"n":    optArtistCount,
+		"%":    optChartsPercentage,
 	},
 	session: true,
 }
@@ -194,6 +224,13 @@ var optArtistCount = &option{
 		"number of artists",
 		"int"},
 	"10",
+}
+
+var optChartsPercentage = &option{
+	param{"percentage",
+		"if charts are in percentage",
+		"bool"},
+	"false",
 }
 
 func resolve(args []string, session *unpack.SessionInfo) (cmd command, err error) {
@@ -258,8 +295,16 @@ func parseArguments(args []string, cmd *cmd,
 
 		idx := strings.Index(args[i], "=")
 		if idx < 0 {
-			return nil, nil,
-				fmt.Errorf("option must be of format '-key=value', '%v' is not", args[i])
+			// special case: bool needs no '-k=v' format
+			key := args[i][1:]
+			if opt, ok := cmd.options[key]; ok && opt.param.kind == "bool" {
+				rawOpts[key] = "true"
+				continue
+			} else {
+				return nil, nil, fmt.Errorf(
+					"option must be of format '-key=value', '%v' is not",
+					args[i])
+			}
 		}
 
 		key := args[i][1:idx]
@@ -297,9 +342,11 @@ func parseArgument(arg, kind string) (value interface{}, err error) {
 		value, err = strconv.Atoi(arg)
 	case "string":
 		value = arg
+	case "bool":
+		value, err = strconv.ParseBool(arg)
 	default:
 		// Cannot be reached
 	}
 
-	return
+	return value, err
 }

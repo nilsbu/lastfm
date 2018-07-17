@@ -15,9 +15,10 @@ import (
 )
 
 type printTotal struct {
-	by   string
-	name string
-	n    int
+	by         string
+	name       string
+	percentage bool
+	n          int
 }
 
 func (cmd printTotal) Execute(
@@ -40,12 +41,17 @@ func (cmd printTotal) Execute(
 		return err
 	}
 
+	prec := 0
+	if cmd.percentage {
+		prec = 2
+	}
 	f := &format.Charts{
-		Charts:    out,
-		Column:    -1,
-		Count:     cmd.n,
-		Numbered:  true,
-		Precision: 0,
+		Charts:     out,
+		Column:     -1,
+		Count:      cmd.n,
+		Numbered:   true,
+		Precision:  prec,
+		Percentage: cmd.percentage,
 	}
 
 	err = d.Display(f)
@@ -57,10 +63,11 @@ func (cmd printTotal) Execute(
 }
 
 type printFade struct {
-	by   string
-	name string
-	n    int
-	hl   float64
+	by         string
+	name       string
+	n          int
+	percentage bool
+	hl         float64
 }
 
 func (cmd printFade) Execute(
@@ -84,11 +91,12 @@ func (cmd printFade) Execute(
 	}
 
 	f := &format.Charts{
-		Charts:    out,
-		Column:    -1,
-		Count:     cmd.n,
-		Numbered:  true,
-		Precision: 2,
+		Charts:     out,
+		Column:     -1,
+		Count:      cmd.n,
+		Numbered:   true,
+		Precision:  2,
+		Percentage: cmd.percentage,
 	}
 
 	err = d.Display(f)
@@ -156,6 +164,68 @@ func getOutCharts(
 
 		return out, nil
 	}
+}
+
+type printPeriod struct {
+	period     string
+	by         string
+	name       string
+	n          int
+	percentage bool
+}
+
+func (cmd printPeriod) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	plays, err := unpack.LoadAllDayPlays(session.User, s)
+	if err != nil {
+		return err
+	}
+
+	sum := charts.Compile(plays).Sum()
+
+	replace, err := unpack.LoadArtistCorrections(session.User, s)
+	if err != nil {
+		return err
+	}
+	sum = sum.Correct(replace)
+
+	out, err := getOutCharts(session.User, cmd.by, cmd.name, sum, s)
+	if err != nil {
+		return err
+	}
+
+	user, err := unpack.LoadUserInfo(session.User, s)
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
+	}
+
+	period, err := charts.Period(cmd.period)
+	if err != nil {
+		return err
+	}
+
+	col := out.Interval(period, user.Registered)
+	sumTotal := col.Sum()
+	col = col.Top(cmd.n)
+
+	prec := 0
+	if cmd.percentage {
+		prec = 2
+	}
+	f := &format.Column{
+		Column:     col,
+		Numbered:   true,
+		Percentage: cmd.percentage,
+		Precision:  prec,
+		SumTotal:   sumTotal,
+	}
+
+	err = d.Display(f)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type printTags struct {
