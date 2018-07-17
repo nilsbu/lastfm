@@ -21,6 +21,15 @@ func ToDay(timestamp int64) Day {
 	return Date(time.Unix(timestamp, 0).UTC())
 }
 
+func ParseDay(date string) Day {
+	t, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return NoDay()
+	}
+
+	return Date(t)
+}
+
 // NoDay returns an invalid Day.
 func NoDay() Day {
 	return ToDay(-1)

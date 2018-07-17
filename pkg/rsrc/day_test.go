@@ -11,6 +11,8 @@ func TestDate(t *testing.T) {
 		{ToDay(917740800), 917740800, true}, // same time
 		{ToDay(917741200), 917740800, true}, // some hours later
 		{NoDay(), 0, false},                 // no valid midnight
+		{ParseDay("2017-04-04"), 1491264000, true},
+		{ParseDay("2017-04-04T"), 0, false},
 	}
 
 	for _, c := range cases {
