@@ -9,18 +9,19 @@ import (
 
 func TestChartsPlain(t *testing.T) {
 	cases := []struct {
-		name     string
-		charts   charts.Charts
-		col      int
-		n        int
-		numbered bool
-		prec     int
-		str      string
+		name       string
+		charts     charts.Charts
+		col        int
+		n          int
+		numbered   bool
+		precision  int
+		percentage bool
+		str        string
 	}{
 		{
 			"empty charts",
 			charts.Charts{},
-			-1, 3, false, 0,
+			-1, 3, false, 0, false,
 			"",
 		},
 		{
@@ -28,7 +29,7 @@ func TestChartsPlain(t *testing.T) {
 			charts.Charts{
 				"ABC": []float64{1, 2, 3},
 			},
-			-1, 3, false, 0,
+			-1, 3, false, 0, false,
 			"ABC - 3\n",
 		},
 		{
@@ -38,7 +39,7 @@ func TestChartsPlain(t *testing.T) {
 				"AB":          []float64{3},
 				"Týrs":        []float64{12},
 			},
-			0, 2, false, 0,
+			0, 2, false, 0, false,
 			"Týrs - 12\nAB   -  3\n",
 		},
 		{
@@ -47,7 +48,7 @@ func TestChartsPlain(t *testing.T) {
 				"ABC": []float64{123.4},
 				"X":   []float64{1.238},
 			},
-			-1, 2, false, 2,
+			-1, 2, false, 2, false,
 			"ABC - 123.40\nX   -   1.24\n",
 		},
 		{
@@ -58,15 +59,40 @@ func TestChartsPlain(t *testing.T) {
 				"G": []float64{4}, "H": []float64{3}, "I": []float64{2},
 				"J": []float64{1},
 			},
-			-1, 0, true, 0,
+			-1, 0, true, 0, false,
 			" 1: A - 10\n 2: B -  9\n 3: C -  8\n 4: D -  7\n 5: E -  6\n 6: F -  5\n 7: G -  4\n 8: H -  3\n 9: I -  2\n10: J -  1\n",
+		},
+		{
+			"percentage with sum total",
+			charts.Charts{
+				"AKSLJDHLJKH": []float64{1},
+				"AB":          []float64{3},
+				"Týrs":        []float64{4},
+			},
+			0, 2, false, 1, true,
+			"Týrs - 50.0%\nAB   - 37.5%\n",
+		},
+		{
+			"zero percentage",
+			charts.Charts{
+				"AB": []float64{0},
+			},
+			0, 2, true, 0, true,
+			"1: AB - 0%\n",
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			buf := new(bytes.Buffer)
-			formatter := &Charts{c.charts, c.col, c.n, c.numbered, c.prec}
+			formatter := &Charts{
+				Charts:     c.charts,
+				Column:     c.col,
+				Count:      c.n,
+				Numbered:   c.numbered,
+				Precision:  c.precision,
+				Percentage: c.percentage,
+			}
 			formatter.Plain(buf)
 
 			str := buf.String()
@@ -79,24 +105,39 @@ func TestChartsPlain(t *testing.T) {
 
 func TestColumnPlain(t *testing.T) {
 	cases := []struct {
-		name     string
-		col      charts.Column
-		numbered bool
-		prec     int
-		str      string
+		name       string
+		col        charts.Column
+		numbered   bool
+		precision  int
+		percentage bool
+		sumTotal   float64
+		str        string
 	}{
 		{
 			"empty column",
 			charts.Column{},
-			false, 3,
+			false, 3, false, 0,
 			"",
 		},
+		{
+			"percentage with no total",
+			charts.Column{{Name: "a", Score: 12}, {Name: "b", Score: 4}},
+			false, 0, true, 0,
+			"a - 75%\nb - 25%\n",
+		},
+		// rest is covered by TestChartsPlain
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			buf := new(bytes.Buffer)
-			formatter := &Column{c.col, c.numbered, c.prec}
+			formatter := &Column{
+				Column:     c.col,
+				Numbered:   c.numbered,
+				Precision:  c.precision,
+				Percentage: c.percentage,
+				SumTotal:   c.sumTotal,
+			}
 			formatter.Plain(buf)
 
 			str := buf.String()
