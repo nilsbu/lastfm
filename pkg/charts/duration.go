@@ -2,9 +2,7 @@ package charts
 
 import (
 	"fmt"
-	"math"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -40,53 +38,36 @@ func Period(descr string) (Interval, error) {
 }
 
 func year(descr string) (Interval, error) {
-	y, err := parse(descr)
+	begin, err := time.Parse("2006", descr)
 	if err != nil {
 		return nil, err
 	}
 
-	begin, _ := time.Parse("2006-01-02", fmt.Sprintf("%04v-01-01", y))
-	before, _ := time.Parse("2006-01-02", fmt.Sprintf("%04v-01-01", y+1))
-
-	return &period{begin, before}, nil
+	return yearPeriod(begin), nil
 }
 
 func month(descr string) (Interval, error) {
-	y, err := parse(descr[:4])
+	begin, err := time.Parse("2006-01", descr)
 	if err != nil {
 		return nil, err
 	}
-	m, err := parse(descr[5:7])
-	if err != nil {
-		return nil, err
-	}
-	if descr[4] != '-' {
-		return nil, fmt.Errorf("'%v' does not obey 'YYYY-MM' format", descr)
-	}
-
-	begin, _ := time.Parse("2006-01-02", fmt.Sprintf("%04v-%02v-01", y, m))
-
-	if m == 12 {
-		y++
-		m = 1
-	} else {
-		m++
-	}
-	before, _ := time.Parse("2006-01-02", fmt.Sprintf("%04v-%02v-01", y, m))
-
-	return &period{begin, before}, nil
+	return monthPeriod(begin), nil
 }
 
-func parse(str string) (int, error) {
-	x, err := strconv.Atoi(str)
-	if err != nil {
-		return 0, err
-	} else if x < 0 {
-		// upper bound is ensured by # of digits
-		return 0, fmt.Errorf("'%v' is invalid, must be in range [0-%v]",
-			x, int(math.Pow(float64(x), float64(len(str)))))
+func yearPeriod(t time.Time) Interval {
+	y := t.Year()
+	return &period{
+		begin:  time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC),
+		before: time.Date(y+1, time.January, 1, 0, 0, 0, 0, time.UTC),
 	}
-	return x, nil
+}
+
+func monthPeriod(t time.Time) Interval {
+	y, m := t.Year(), t.Month()
+	return &period{
+		begin:  time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC),
+		before: time.Date(y, time.Month(m+1), 1, 0, 0, 0, 0, time.UTC),
+	}
 }
 
 func (c Charts) Interval(i Interval, registered rsrc.Day) Column {

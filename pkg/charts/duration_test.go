@@ -95,7 +95,7 @@ func TestChartsPeriod(t *testing.T) {
 				col := c.cha.Sum().Interval(period, c.registered)
 
 				if !reflect.DeepEqual(col, c.col) {
-					t.Errorf("wrong data:\nhas:  %v\nwand: %v", col, c.col)
+					t.Errorf("wrong data:\nhas:  %v\nwant: %v", col, c.col)
 				}
 			}
 		})
