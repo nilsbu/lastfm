@@ -72,11 +72,7 @@ func Supertags(
 }
 
 func (c Charts) Group(partitions Partition) (tagcharts Charts) {
-	var size int
-	for _, line := range c {
-		size = len(line)
-		break
-	}
+	size := c.Len()
 
 	tagcharts = make(Charts)
 	for _, supertag := range partitions.Partitions() {

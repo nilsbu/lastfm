@@ -91,14 +91,18 @@ func (c Charts) mapLine(f func(in []float64, out []float64)) Charts {
 	return result
 }
 
+func (c Charts) Len() int {
+	for _, line := range c {
+		return len(line)
+	}
+
+	return 0
+}
+
 // Column returns a column of charts sorted descendingly. Negative indices are
 // used to index the chartes from behind.
 func (c Charts) Column(i int) (column Column, err error) {
-	var size int
-	for _, line := range c {
-		size = len(line)
-		break
-	}
+	size := c.Len()
 	if i >= size {
 		return Column{}, fmt.Errorf("Index %d >= %d (size)", i, size)
 	}

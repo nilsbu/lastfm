@@ -71,11 +71,7 @@ func monthPeriod(t time.Time) Interval {
 }
 
 func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
-	var size int
-	for _, line := range c {
-		size = len(line)
-		break
-	}
+	size := c.Len()
 
 	offset, _ := registered.Midnight()
 	offset /= 86400
