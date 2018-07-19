@@ -288,3 +288,33 @@ func TestChartsCorrect(t *testing.T) {
 		})
 	}
 }
+
+func TestChartsTotal(t *testing.T) {
+	cases := []struct {
+		charts Charts
+		total  []float64
+	}{
+		{
+			Charts{},
+			[]float64{},
+		},
+		{
+			Charts{"o0o": []float64{0, 0, 7}},
+			[]float64{0, 0, 7},
+		},
+		{
+			Charts{
+				"o0o": []float64{0, 0, 7},
+				"lol": []float64{1, 2, 3}},
+			[]float64{1, 2, 10},
+		},
+	}
+
+	for _, c := range cases {
+		total := c.charts.Total()
+		if !reflect.DeepEqual(total, c.total) {
+			t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+				total, c.total)
+		}
+	}
+}

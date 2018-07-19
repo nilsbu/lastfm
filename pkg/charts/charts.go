@@ -176,3 +176,17 @@ func (c Charts) Correct(replace map[string]string) Charts {
 
 	return corrected
 }
+
+type totalPartition struct{}
+
+func (totalPartition) Partitions() []string {
+	return []string{""}
+}
+
+func (totalPartition) Get(key string) string {
+	return ""
+}
+
+func (c Charts) Total() []float64 {
+	return c.Group(totalPartition{})[""]
+}
