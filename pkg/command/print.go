@@ -22,6 +22,66 @@ type printCharts struct {
 	n          int
 }
 
+func (cmd printCharts) getOutCharts(
+	user string,
+	cha charts.Charts,
+	f func(charts.Charts) charts.Charts,
+	r rsrc.Reader) (charts.Charts, error) {
+	replace, err := unpack.LoadArtistCorrections(user, r)
+	if err != nil {
+		return nil, err
+	}
+	cha = cha.Correct(replace)
+
+	if cmd.normalized {
+		nm := charts.GaussianNormalizer{
+			Sigma:       30,
+			MirrorFront: true,
+			MirrorBack:  true}
+		cha = nm.Normalize(cha)
+	}
+
+	cha = f(cha)
+
+	if cmd.name == "" {
+		switch cmd.by {
+		case "all":
+			return cha, nil
+		case "super":
+			supertags, err := getSupertags(cha, user, r)
+			if err != nil {
+				return nil, err
+			}
+
+			return cha.Group(supertags), nil
+		default:
+			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
+		}
+	} else {
+		var container map[string]charts.Charts
+		switch cmd.by {
+		case "all":
+			return nil, errors.New("name must be empty for chart type 'all'")
+		case "super":
+			supertags, err := getSupertags(cha, user, r)
+			if err != nil {
+				return nil, err
+			}
+
+			container = cha.Split(supertags)
+		default:
+			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
+		}
+
+		out, ok := container[cmd.name]
+		if !ok {
+			return nil, fmt.Errorf("name '%v' not found", cmd.name)
+		}
+
+		return out, nil
+	}
+}
+
 type printTotal struct {
 	printCharts
 }
@@ -119,66 +179,6 @@ func getSupertags(
 	corrections, _ := unpack.LoadSupertagCorrections(user, r)
 
 	return charts.Supertags(tags, config.Supertags, corrections), nil
-}
-
-func (cmd printCharts) getOutCharts(
-	user string,
-	cha charts.Charts,
-	f func(charts.Charts) charts.Charts,
-	r rsrc.Reader) (charts.Charts, error) {
-	replace, err := unpack.LoadArtistCorrections(user, r)
-	if err != nil {
-		return nil, err
-	}
-	cha = cha.Correct(replace)
-
-	if cmd.normalized {
-		nm := charts.GaussianNormalizer{
-			Sigma:       30,
-			MirrorFront: true,
-			MirrorBack:  true}
-		cha = nm.Normalize(cha)
-	}
-
-	cha = f(cha)
-
-	if cmd.name == "" {
-		switch cmd.by {
-		case "all":
-			return cha, nil
-		case "super":
-			supertags, err := getSupertags(cha, user, r)
-			if err != nil {
-				return nil, err
-			}
-
-			return cha.Group(supertags), nil
-		default:
-			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
-		}
-	} else {
-		var container map[string]charts.Charts
-		switch cmd.by {
-		case "all":
-			return nil, errors.New("name must be empty for chart type 'all'")
-		case "super":
-			supertags, err := getSupertags(cha, user, r)
-			if err != nil {
-				return nil, err
-			}
-
-			container = cha.Split(supertags)
-		default:
-			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
-		}
-
-		out, ok := container[cmd.name]
-		if !ok {
-			return nil, fmt.Errorf("name '%v' not found", cmd.name)
-		}
-
-		return out, nil
-	}
 }
 
 type printPeriod struct {
