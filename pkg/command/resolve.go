@@ -27,7 +27,7 @@ type cmd struct {
 type param struct {
 	name  string
 	descr string
-	kind  string // TODO
+	kind  string
 }
 
 type params []*param
@@ -97,12 +97,14 @@ var exeHelp = &cmd{
 var exePrintFade = &cmd{
 	descr: "prints a user's top artists in fading charts", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printFade{
+		return printFade{printCharts: printCharts{
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
-			hl:         params[0].(float64),
+			normalized: opts["normalized"].(bool),
+		},
+			hl: params[0].(float64),
 		}
 	},
 	params: params{&param{
@@ -111,10 +113,11 @@ var exePrintFade = &cmd{
 		"float",
 	}},
 	options: options{
-		"by":   optChartType,
-		"name": optGenericName,
-		"n":    optArtistCount,
-		"%":    optChartsPercentage,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
 	},
 	session: true,
 }
@@ -122,12 +125,14 @@ var exePrintFade = &cmd{
 var exePrintPeriod = &cmd{
 	descr: "", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printPeriod{
+		return printPeriod{printCharts: printCharts{
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
-			period:     params[0].(string),
+			normalized: opts["normalized"].(bool),
+		},
+			period: params[0].(string),
 		}
 	},
 	params: params{&param{
@@ -136,10 +141,11 @@ var exePrintPeriod = &cmd{
 		"string",
 	}},
 	options: options{
-		"by":   optChartType,
-		"name": optGenericName,
-		"n":    optArtistCount,
-		"%":    optChartsPercentage,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
 	},
 	session: true,
 }
@@ -155,18 +161,20 @@ var exePrintTags = &cmd{
 var exePrintTotal = &cmd{
 	descr: "prints a user's top artists by total number of plays", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printTotal{
+		return printTotal{printCharts{
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
-		}
+			normalized: opts["normalized"].(bool),
+		}}
 	},
 	options: options{
-		"by":   optChartType,
-		"name": optGenericName,
-		"n":    optArtistCount,
-		"%":    optChartsPercentage,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
 	},
 	session: true,
 }
@@ -229,6 +237,13 @@ var optArtistCount = &option{
 var optChartsPercentage = &option{
 	param{"percentage",
 		"if charts are in percentage",
+		"bool"},
+	"false",
+}
+
+var optChartsNormalized = &option{
+	param{"normalized",
+		"if charts are in normalized",
 		"bool"},
 	"false",
 }

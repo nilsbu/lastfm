@@ -14,11 +14,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-type printTotal struct {
+type printCharts struct {
 	by         string
 	name       string
 	percentage bool
+	normalized bool
 	n          int
+}
+
+type printTotal struct {
+	printCharts
 }
 
 func (cmd printTotal) Execute(
@@ -28,21 +33,19 @@ func (cmd printTotal) Execute(
 		return err
 	}
 
-	sums := charts.Compile(plays).Sum()
+	cha := charts.Compile(plays)
 
-	replace, err := unpack.LoadArtistCorrections(session.User, s)
-	if err != nil {
-		return err
-	}
-	sums = sums.Correct(replace)
-
-	out, err := getOutCharts(session.User, cmd.by, cmd.name, sums, s)
+	out, err := cmd.printCharts.getOutCharts(
+		session.User,
+		cha,
+		func(c charts.Charts) charts.Charts { return c.Sum() },
+		s)
 	if err != nil {
 		return err
 	}
 
 	prec := 0
-	if cmd.percentage {
+	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
 	f := &format.Charts{
@@ -63,11 +66,8 @@ func (cmd printTotal) Execute(
 }
 
 type printFade struct {
-	by         string
-	name       string
-	n          int
-	percentage bool
-	hl         float64
+	printCharts
+	hl float64
 }
 
 func (cmd printFade) Execute(
@@ -77,15 +77,13 @@ func (cmd printFade) Execute(
 		return err
 	}
 
-	fade := charts.Compile(plays).Fade(cmd.hl)
+	cha := charts.Compile(plays)
 
-	replace, err := unpack.LoadArtistCorrections(session.User, s)
-	if err != nil {
-		return err
-	}
-	fade = fade.Correct(replace)
-
-	out, err := getOutCharts(session.User, cmd.by, cmd.name, fade, s)
+	out, err := cmd.printCharts.getOutCharts(
+		session.User,
+		cha,
+		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
+		s)
 	if err != nil {
 		return err
 	}
@@ -123,12 +121,29 @@ func getSupertags(
 	return charts.Supertags(tags, config.Supertags, corrections), nil
 }
 
-func getOutCharts(
-	user, by, name string,
+func (cmd printCharts) getOutCharts(
+	user string,
 	cha charts.Charts,
+	f func(charts.Charts) charts.Charts,
 	r rsrc.Reader) (charts.Charts, error) {
-	if name == "" {
-		switch by {
+	replace, err := unpack.LoadArtistCorrections(user, r)
+	if err != nil {
+		return nil, err
+	}
+	cha = cha.Correct(replace)
+
+	if cmd.normalized {
+		nm := charts.GaussianNormalizer{
+			Sigma:       30,
+			MirrorFront: true,
+			MirrorBack:  true}
+		cha = nm.Normalize(cha)
+	}
+
+	cha = f(cha)
+
+	if cmd.name == "" {
+		switch cmd.by {
 		case "all":
 			return cha, nil
 		case "super":
@@ -139,11 +154,11 @@ func getOutCharts(
 
 			return cha.Group(supertags), nil
 		default:
-			return nil, fmt.Errorf("chart type '%v' not supported", by)
+			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
 		}
 	} else {
 		var container map[string]charts.Charts
-		switch by {
+		switch cmd.by {
 		case "all":
 			return nil, errors.New("name must be empty for chart type 'all'")
 		case "super":
@@ -154,12 +169,12 @@ func getOutCharts(
 
 			container = cha.Split(supertags)
 		default:
-			return nil, fmt.Errorf("chart type '%v' not supported", by)
+			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
 		}
 
-		out, ok := container[name]
+		out, ok := container[cmd.name]
 		if !ok {
-			return nil, fmt.Errorf("name '%v' not found", name)
+			return nil, fmt.Errorf("name '%v' not found", cmd.name)
 		}
 
 		return out, nil
@@ -167,11 +182,8 @@ func getOutCharts(
 }
 
 type printPeriod struct {
-	period     string
-	by         string
-	name       string
-	n          int
-	percentage bool
+	printCharts
+	period string
 }
 
 func (cmd printPeriod) Execute(
@@ -181,15 +193,13 @@ func (cmd printPeriod) Execute(
 		return err
 	}
 
-	sum := charts.Compile(plays).Sum()
+	cha := charts.Compile(plays)
 
-	replace, err := unpack.LoadArtistCorrections(session.User, s)
-	if err != nil {
-		return err
-	}
-	sum = sum.Correct(replace)
-
-	out, err := getOutCharts(session.User, cmd.by, cmd.name, sum, s)
+	out, err := cmd.printCharts.getOutCharts(
+		session.User,
+		cha,
+		func(c charts.Charts) charts.Charts { return c.Sum() },
+		s)
 	if err != nil {
 		return err
 	}
@@ -209,7 +219,7 @@ func (cmd printPeriod) Execute(
 	col = col.Top(cmd.n)
 
 	prec := 0
-	if cmd.percentage {
+	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
 	f := &format.Column{
