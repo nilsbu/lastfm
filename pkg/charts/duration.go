@@ -116,8 +116,8 @@ func Period(descr string) (Interval, error) {
 func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 	size := c.Len()
 
-	from := index(i.Begin, registered)
-	to := index(i.Before, registered)
+	from := Index(i.Begin, registered)
+	to := Index(i.Before, registered)
 	if to < 0 {
 		return Column{}
 	} else if to >= size {
@@ -141,7 +141,7 @@ func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 	return column
 }
 
-func index(t time.Time, registered rsrc.Day) int {
+func Index(t time.Time, registered rsrc.Day) int {
 	offset, _ := registered.Midnight()
 	return int((t.Unix()-offset)/86400 - 1)
 }

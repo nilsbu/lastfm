@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -97,17 +98,17 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts{by: "all", name: "", n: 10}}, true,
+			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-n=25"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts{by: "all", name: "", n: 25}}, true,
+			printTotal{printCharts: printCharts{by: "all", name: "", n: 25}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-%=TRUE"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts{by: "all", name: "", n: 10, percentage: true}}, true,
+			printTotal{printCharts: printCharts{by: "all", name: "", n: 10, percentage: true}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-n=k25"},
@@ -124,12 +125,12 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total", "-by=super", "-n=25"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts{by: "super", name: "", n: 25}}, true,
+			printTotal{printCharts: printCharts{by: "super", name: "", n: 25}}, true,
 		},
 		{
-			[]string{"lastfm", "print", "total", "-by=super", "-normalized"},
+			[]string{"lastfm", "print", "total", "-by=super", "-normalized", "-date=2018-02-01"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts{by: "super", name: "", normalized: true, n: 10}}, true,
+			printTotal{printCharts: printCharts{by: "super", name: "", normalized: true, n: 10}, date: time.Date(2018, time.February, 1, 0, 0, 0, 0, time.UTC)}, true,
 		},
 		{
 			[]string{"lastfm", "print", "asdf"},
@@ -159,9 +160,9 @@ func TestResolve(t *testing.T) {
 			printFade{printCharts: printCharts{by: "all", n: 10, percentage: true}, hl: 10}, true,
 		},
 		{
-			[]string{"lastfm", "print", "fade", "10", "-normalized=True"},
+			[]string{"lastfm", "print", "fade", "10", "-normalized=True", "-date=2000-01-01"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{printCharts: printCharts{by: "all", n: 10, normalized: true}, hl: 10}, true,
+			printFade{printCharts: printCharts{by: "all", n: 10, normalized: true}, hl: 10, date: time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade"},

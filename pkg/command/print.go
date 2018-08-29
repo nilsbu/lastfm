@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/nilsbu/lastfm/config"
 	"github.com/nilsbu/lastfm/pkg/charts"
@@ -37,7 +38,7 @@ func (cmd printCharts) getOutCharts(
 		nm := charts.GaussianNormalizer{
 			Sigma:       30,
 			MirrorFront: true,
-			MirrorBack:  true}
+			MirrorBack:  false}
 		cha = nm.Normalize(cha)
 	}
 
@@ -84,6 +85,7 @@ func (cmd printCharts) getOutCharts(
 
 type printTotal struct {
 	printCharts
+	date time.Time
 }
 
 func (cmd printTotal) Execute(
@@ -104,13 +106,25 @@ func (cmd printTotal) Execute(
 		return err
 	}
 
+	col := -1
+	var null time.Time
+	null = time.Time{}
+	if cmd.date != null {
+		var user *unpack.User
+		user, err = unpack.LoadUserInfo(session.User, s)
+		if err != nil {
+			return errors.Wrap(err, "failed to load user info")
+		}
+		col = charts.Index(cmd.date, user.Registered)
+	}
+
 	prec := 0
 	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
 	f := &format.Charts{
 		Charts:     out,
-		Column:     -1,
+		Column:     col,
 		Count:      cmd.n,
 		Numbered:   true,
 		Precision:  prec,
@@ -127,7 +141,8 @@ func (cmd printTotal) Execute(
 
 type printFade struct {
 	printCharts
-	hl float64
+	hl   float64
+	date time.Time
 }
 
 func (cmd printFade) Execute(
@@ -148,9 +163,21 @@ func (cmd printFade) Execute(
 		return err
 	}
 
+	col := -1
+	var null time.Time
+	null = time.Time{}
+	if cmd.date != null {
+		var user *unpack.User
+		user, err = unpack.LoadUserInfo(session.User, s)
+		if err != nil {
+			return errors.Wrap(err, "failed to load user info")
+		}
+		col = charts.Index(cmd.date, user.Registered)
+	}
+
 	f := &format.Charts{
 		Charts:     out,
-		Column:     -1,
+		Column:     col,
 		Count:      cmd.n,
 		Numbered:   true,
 		Precision:  2,

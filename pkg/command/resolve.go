@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -104,7 +105,8 @@ var exePrintFade = &cmd{
 			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
 		},
-			hl: params[0].(float64),
+			hl:   params[0].(float64),
+			date: opts["date"].(time.Time),
 		}
 	},
 	params: params{&param{
@@ -118,6 +120,7 @@ var exePrintFade = &cmd{
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
+		"date":       optDate,
 	},
 	session: true,
 }
@@ -161,13 +164,15 @@ var exePrintTags = &cmd{
 var exePrintTotal = &cmd{
 	descr: "prints a user's top artists by total number of plays", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printTotal{printCharts{
+		return printTotal{printCharts: printCharts{
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
-		}}
+		},
+			date: opts["date"].(time.Time),
+		}
 	},
 	options: options{
 		"by":         optChartType,
@@ -175,6 +180,7 @@ var exePrintTotal = &cmd{
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
+		"date":       optDate,
 	},
 	session: true,
 }
@@ -246,6 +252,13 @@ var optChartsNormalized = &option{
 		"if charts are in normalized",
 		"bool"},
 	"false",
+}
+
+var optDate = &option{
+	param{"date",
+		"a date in the format YYYY-MM-DD",
+		"time"},
+	"",
 }
 
 func resolve(args []string, session *unpack.SessionInfo) (cmd command, err error) {
@@ -359,6 +372,12 @@ func parseArgument(arg, kind string) (value interface{}, err error) {
 		value = arg
 	case "bool":
 		value, err = strconv.ParseBool(arg)
+	case "time":
+		if arg == "" {
+			value = time.Time{}
+		} else {
+			value, err = time.Parse("2006-01-02", arg)
+		}
 	default:
 		// Cannot be reached
 	}
