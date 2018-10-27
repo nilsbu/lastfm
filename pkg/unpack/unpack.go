@@ -34,7 +34,7 @@ type depositer interface {
 	raw(obj interface{}) interface{}
 }
 
-func deposite(obj interface{}, d depositer, w rsrc.Writer) error {
+func deposit(obj interface{}, d depositer, w rsrc.Writer) error {
 	raw := d.raw(obj)
 
 	data, _ := json.Marshal(raw)

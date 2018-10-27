@@ -55,7 +55,7 @@ func LoadSessionInfo(r rsrc.Reader) (*SessionInfo, error) {
 }
 
 func WriteSessionInfo(session *SessionInfo, w rsrc.Writer) error {
-	return deposite(session, obSessionInfo{}, w)
+	return deposit(session, obSessionInfo{}, w)
 }
 
 func (o obSessionInfo) locator() rsrc.Locator {

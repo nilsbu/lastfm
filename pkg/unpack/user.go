@@ -41,7 +41,7 @@ func WriteAllDayPlays(days []charts.Charts, user string, w rsrc.Writer) error {
 		plays[i] = day
 	}
 
-	return deposite(plays, obAllDayPlays{user}, w)
+	return deposit(plays, obAllDayPlays{user}, w)
 }
 
 func (o obAllDayPlays) locator() rsrc.Locator {
