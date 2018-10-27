@@ -6,7 +6,6 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -47,5 +46,5 @@ func (cmd sessionStop) Execute(
 		return errors.New("no session is running")
 	}
 
-	return io.FileIO{}.Remove(rsrc.SessionInfo())
+	return s.Remove(rsrc.SessionInfo())
 }
