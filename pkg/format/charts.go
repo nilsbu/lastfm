@@ -68,17 +68,28 @@ type Column struct {
 }
 
 func (formatter *Column) CSV(w io.Writer, decimal string) error {
-	return formatter.format(formatter.getCSVPattern(), decimal, w)
+	var header string
+	if formatter.Numbered {
+		header = "\"#\";\"Name\";\"Value\";\n"
+	} else {
+		header = "\"Name\";\"Value\";\n"
+	}
+
+	return formatter.format(header, formatter.getCSVPattern(), decimal, w)
 }
 
 func (formatter *Column) Plain(w io.Writer) error {
-	return formatter.format(formatter.getPlainPattern(), ".", w)
+	return formatter.format("", formatter.getPlainPattern(), ".", w)
 }
 
 func (formatter *Column) format(
-	pattern, decimal string, w io.Writer) error {
+	header, pattern, decimal string, w io.Writer) error {
 	if len(formatter.Column) == 0 {
 		return nil
+	}
+
+	if _, err := io.WriteString(w, header); err != nil {
+		return err
 	}
 
 	var outCol charts.Column
@@ -112,11 +123,8 @@ func (formatter *Column) getCSVPattern() (pattern string) {
 	if formatter.Numbered {
 		pattern = "%d;"
 	}
-	if formatter.Percentage {
-		pattern += "\"%v\";%v;\n"
-	} else {
-		pattern += "\"%v\";%v;\n"
-	}
+
+	pattern += "\"%v\";%v;\n"
 
 	return pattern
 }
