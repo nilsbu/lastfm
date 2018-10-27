@@ -7,6 +7,53 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 )
 
+func TestChartsCSV(t *testing.T) {
+	cases := []struct {
+		charts     charts.Charts
+		col        int
+		n          int
+		numbered   bool
+		precision  int
+		percentage bool
+		decimal    string
+		str        string
+	}{
+		{
+			charts.Charts{},
+			-1, 3, false, 0, false, ".",
+			"",
+		},
+		{
+			charts.Charts{
+				"ABC": []float64{123.4},
+				"X":   []float64{1.238},
+			},
+			-1, 2, false, 2, false, ",",
+			"\"ABC\";123,40;\n\"X\";  1,24;\n",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			formatter := &Charts{
+				Charts:     c.charts,
+				Column:     c.col,
+				Count:      c.n,
+				Numbered:   c.numbered,
+				Precision:  c.precision,
+				Percentage: c.percentage,
+			}
+			formatter.CSV(buf, c.decimal)
+
+			str := buf.String()
+			if str != c.str {
+				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", str, c.str)
+			}
+		})
+	}
+}
+
 func TestChartsPlain(t *testing.T) {
 	cases := []struct {
 		name       string
@@ -94,6 +141,58 @@ func TestChartsPlain(t *testing.T) {
 				Percentage: c.percentage,
 			}
 			formatter.Plain(buf)
+
+			str := buf.String()
+			if str != c.str {
+				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", str, c.str)
+			}
+		})
+	}
+}
+
+func TestColumnCSV(t *testing.T) {
+	cases := []struct {
+		name       string
+		col        charts.Column
+		numbered   bool
+		precision  int
+		percentage bool
+		sumTotal   float64
+		decimal    string
+		str        string
+	}{
+		{
+			"empty column",
+			charts.Column{},
+			false, 3, false, 0, ".",
+			"",
+		},
+		{
+			"percentage with no total",
+			charts.Column{{Name: "a", Score: 12}, {Name: "b", Score: 4}},
+			false, 0, true, 0, ".",
+			"\"a\";75%;\n\"b\";25%;\n",
+		},
+		{
+			"percentage with no total",
+			charts.Column{{Name: "a", Score: 12.1}, {Name: "b", Score: 4}},
+			true, 1, false, 0, ",",
+			"1;\"a\";12,1;\n2;\"b\"; 4,0;\n",
+		},
+		// rest is covered by TestChartsCSV
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			formatter := &Column{
+				Column:     c.col,
+				Numbered:   c.numbered,
+				Precision:  c.precision,
+				Percentage: c.percentage,
+				SumTotal:   c.sumTotal,
+			}
+			formatter.CSV(buf, c.decimal)
 
 			str := buf.String()
 			if str != c.str {

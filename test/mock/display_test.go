@@ -12,12 +12,12 @@ func TestDisplay(t *testing.T) {
 		fs []format.Formatter
 	}{
 		{
-			[]format.Formatter{format.Message{Msg: "A"}},
+			[]format.Formatter{&format.Message{Msg: "A"}},
 		},
 		{
 			[]format.Formatter{
-				format.Message{Msg: "A"},
-				format.Message{Msg: "LOL"}},
+				&format.Message{Msg: "A"},
+				&format.Message{Msg: "LOL"}},
 		},
 	}
 

@@ -1,9 +1,23 @@
 package format
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 type Error struct {
 	Err error
+}
+
+func (f *Error) CSV(w io.Writer, decimal string) error {
+	if f.Err == nil {
+		return nil
+	}
+
+	str := fmt.Sprintf("\"%v\";\n", f.Err.Error())
+
+	_, err := io.WriteString(w, str)
+	return err
 }
 
 func (f *Error) Plain(w io.Writer) error {
@@ -11,11 +25,8 @@ func (f *Error) Plain(w io.Writer) error {
 		return nil
 	}
 
-	if _, err := io.WriteString(w, f.Err.Error()); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, "\n"); err != nil {
-		return err
-	}
-	return nil
+	str := fmt.Sprintf("%v\n", f.Err.Error())
+
+	_, err := io.WriteString(w, str)
+	return err
 }

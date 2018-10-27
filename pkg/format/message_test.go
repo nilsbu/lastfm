@@ -5,6 +5,38 @@ import (
 	"testing"
 )
 
+func TestMessageCSV(t *testing.T) {
+	cases := []struct {
+		msg string
+		str string
+	}{
+		{
+			"", "",
+		},
+		{
+			"some text\nnew line",
+			"\"some text\";\n\"new line\";\n",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			formatter := &Message{Msg: c.msg}
+			formatter.CSV(buf, ".")
+
+			msg := buf.String()
+			if c.msg == "" {
+				if msg != "" {
+					t.Error("something was printed despite empty message")
+				}
+			} else if msg != c.str {
+				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", msg, c.str)
+			}
+		})
+	}
+}
+
 func TestMessagePlain(t *testing.T) {
 	cases := []struct {
 		msg string
