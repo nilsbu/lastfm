@@ -199,10 +199,14 @@ func TestResolve(t *testing.T) {
 			[]string{"lastfm", "print", "tags", "Add"},
 			&unpack.SessionInfo{User: "user"}, printTags{"Add"}, true,
 		},
-
 		{
 			[]string{"lastfm", "print", "tags", "Add", "xx"},
 			&unpack.SessionInfo{User: "user"}, nil, false,
+		},
+		{
+			[]string{"lastfm-csv", "print", "total"},
+			&unpack.SessionInfo{User: "user"},
+			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
 		},
 	}
 

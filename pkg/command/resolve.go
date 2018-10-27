@@ -42,7 +42,8 @@ type options map[string]*option
 
 var cmdRoot = node{
 	nodes: map[string]node{
-		"lastfm": cmdLastfm,
+		"lastfm":     cmdLastfm,
+		"lastfm-csv": cmdLastfm,
 	},
 }
 
