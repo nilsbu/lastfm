@@ -35,6 +35,25 @@ func Compile(days []Charts) Charts {
 	return charts
 }
 
+// UnravelDays takes Charts and disassembles it into single day plays. It acts
+// as an inverse to Compile().
+func (c Charts) UnravelDays() []Charts {
+	days := []Charts{}
+	for i := 0; i < c.Len(); i++ {
+		day := make(Charts)
+
+		for name, line := range c {
+			if line[i] != 0 {
+				day[name] = []float64{line[i]}
+			}
+		}
+
+		days = append(days, day)
+	}
+
+	return days
+}
+
 // Sum computes partial sums for charts.
 func (c Charts) Sum() Charts {
 	return c.mapLine(func(in []float64, out []float64) {

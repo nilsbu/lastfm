@@ -35,8 +35,41 @@ func TestCompile(t *testing.T) {
 			charts := Compile(c.days)
 
 			if !reflect.DeepEqual(charts, c.charts) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-					charts, c.charts)
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v", charts, c.charts)
+			}
+		})
+	}
+}
+
+func TestChartsUnravelDays(t *testing.T) {
+	cases := []struct {
+		charts Charts
+		days   []Charts
+	}{
+		{
+			Charts{},
+			[]Charts{},
+		},
+		{
+			Charts{"A": []float64{}},
+			[]Charts{},
+		},
+		{
+			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
+			[]Charts{
+				Charts{"ASD": []float64{2}},
+				Charts{"WASD": []float64{1}},
+				Charts{"ASD": []float64{13}, "WASD": []float64{4}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			days := c.charts.UnravelDays()
+
+			if !reflect.DeepEqual(days, c.days) {
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v", days, c.days)
 			}
 		})
 	}
