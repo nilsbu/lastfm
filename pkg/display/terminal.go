@@ -15,6 +15,6 @@ func NewTerminal() *Terminal {
 	return &Terminal{Writer: os.Stdout}
 }
 
-func (d Terminal) Display(f format.Formatter) error {
+func (d *Terminal) Display(f format.Formatter) error {
 	return f.Plain(d.Writer)
 }
