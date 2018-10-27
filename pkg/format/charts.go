@@ -20,31 +20,31 @@ type Charts struct {
 	Percentage bool
 }
 
-func (formatter *Charts) CSV(w io.Writer, decimal string) error {
-	colFormatter := formatter.column()
+func (f *Charts) CSV(w io.Writer, decimal string) error {
+	colFormatter := f.column()
 	if colFormatter == nil {
 		return nil
 	}
 	return colFormatter.CSV(w, decimal)
 }
 
-func (formatter *Charts) Plain(w io.Writer) error {
-	colFormatter := formatter.column()
+func (f *Charts) Plain(w io.Writer) error {
+	colFormatter := f.column()
 	if colFormatter == nil {
 		return nil
 	}
 	return colFormatter.Plain(w)
 }
 
-func (formatter *Charts) column() *Column {
-	col, err := formatter.Charts.Column(formatter.Column)
+func (f *Charts) column() *Column {
+	col, err := f.Charts.Column(f.Column)
 	if err != nil {
 		return nil
 	}
 
 	sumTotal := col.Sum()
 
-	n := formatter.Count
+	n := f.Count
 	if n == 0 {
 		n = 10
 	}
@@ -52,9 +52,9 @@ func (formatter *Charts) column() *Column {
 
 	return &Column{
 		Column:     top,
-		Numbered:   formatter.Numbered,
-		Precision:  formatter.Precision,
-		Percentage: formatter.Percentage,
+		Numbered:   f.Numbered,
+		Precision:  f.Precision,
+		Percentage: f.Percentage,
 		SumTotal:   sumTotal,
 	}
 }
@@ -67,24 +67,24 @@ type Column struct {
 	SumTotal   float64
 }
 
-func (formatter *Column) CSV(w io.Writer, decimal string) error {
+func (f *Column) CSV(w io.Writer, decimal string) error {
 	var header string
-	if formatter.Numbered {
+	if f.Numbered {
 		header = "\"#\";\"Name\";\"Value\";\n"
 	} else {
 		header = "\"Name\";\"Value\";\n"
 	}
 
-	return formatter.format(header, formatter.getCSVPattern(), decimal, w)
+	return f.format(header, f.getCSVPattern(), decimal, w)
 }
 
-func (formatter *Column) Plain(w io.Writer) error {
-	return formatter.format("", formatter.getPlainPattern(), ".", w)
+func (f *Column) Plain(w io.Writer) error {
+	return f.format("", f.getPlainPattern(), ".", w)
 }
 
-func (formatter *Column) format(
+func (f *Column) format(
 	header, pattern, decimal string, w io.Writer) error {
-	if len(formatter.Column) == 0 {
+	if len(f.Column) == 0 {
 		return nil
 	}
 
@@ -93,20 +93,20 @@ func (formatter *Column) format(
 	}
 
 	var outCol charts.Column
-	if formatter.Percentage {
-		outCol = formatter.getPercentageColumn()
+	if f.Percentage {
+		outCol = f.getPercentageColumn()
 	} else {
-		outCol = formatter.Column
+		outCol = f.Column
 	}
 
 	for i, score := range outCol {
-		sscore := fmt.Sprintf(formatter.getScorePattern(), score.Score)
+		sscore := fmt.Sprintf(f.getScorePattern(), score.Score)
 		if decimal != "." {
 			sscore = strings.Replace(sscore, ".", decimal, 1)
 		}
 
 		var str string
-		if formatter.Numbered {
+		if f.Numbered {
 			str = fmt.Sprintf(pattern, i+1, score.Name, sscore)
 		} else {
 			str = fmt.Sprintf(pattern, score.Name, sscore)
@@ -119,8 +119,8 @@ func (formatter *Column) format(
 	return nil
 }
 
-func (formatter *Column) getCSVPattern() (pattern string) {
-	if formatter.Numbered {
+func (f *Column) getCSVPattern() (pattern string) {
+	if f.Numbered {
 		pattern = "%d;"
 	}
 
@@ -129,56 +129,56 @@ func (formatter *Column) getCSVPattern() (pattern string) {
 	return pattern
 }
 
-func (formatter *Column) getPlainPattern() (pattern string) {
-	if formatter.Numbered {
-		width := int(math.Log10(float64(len(formatter.Column)))) + 1
+func (f *Column) getPlainPattern() (pattern string) {
+	if f.Numbered {
+		width := int(math.Log10(float64(len(f.Column)))) + 1
 		pattern = "%" + strconv.Itoa(width) + "d: "
 	}
 
-	maxNameLen := strconv.Itoa(formatter.getMaxNameLen())
+	maxNameLen := strconv.Itoa(f.getMaxNameLen())
 	pattern += "%-" + maxNameLen + "v - %v\n"
 
 	return pattern
 }
 
-func (formatter *Column) getScorePattern() (pattern string) {
+func (f *Column) getScorePattern() (pattern string) {
 	var maxValueLen int
-	if len(formatter.Column) == 0 || formatter.Column[0].Score == 0 {
+	if len(f.Column) == 0 || f.Column[0].Score == 0 {
 		maxValueLen = 1
 	} else {
-		maxValueLen = int(math.Log10(formatter.Column[0].Score)) + 1
+		maxValueLen = int(math.Log10(f.Column[0].Score)) + 1
 	}
-	if formatter.Precision > 0 {
-		maxValueLen += 1 + formatter.Precision
+	if f.Precision > 0 {
+		maxValueLen += 1 + f.Precision
 	}
 
 	strLen := strconv.Itoa(maxValueLen)
-	pattern += "%" + strLen + "." + strconv.Itoa(formatter.Precision) + "f"
+	pattern += "%" + strLen + "." + strconv.Itoa(f.Precision) + "f"
 
-	if formatter.Percentage {
+	if f.Percentage {
 		pattern += "%%"
 	}
 
 	return pattern
 }
 
-func (formatter *Column) getPercentageColumn() charts.Column {
+func (f *Column) getPercentageColumn() charts.Column {
 	var sum float64
-	if formatter.SumTotal == 0.0 {
-		sum = formatter.Column.Sum()
+	if f.SumTotal == 0.0 {
+		sum = f.Column.Sum()
 	} else {
-		sum = formatter.SumTotal
+		sum = f.SumTotal
 	}
 
 	result := charts.Column{}
 	if sum > 0 {
-		for _, line := range formatter.Column {
+		for _, line := range f.Column {
 			result = append(result, charts.Score{
 				Name:  line.Name,
 				Score: 100 * line.Score / sum})
 		}
 	} else {
-		for _, line := range formatter.Column {
+		for _, line := range f.Column {
 			result = append(result, charts.Score{Name: line.Name, Score: 0})
 		}
 	}
@@ -186,9 +186,9 @@ func (formatter *Column) getPercentageColumn() charts.Column {
 	return result
 }
 
-func (formatter *Column) getMaxNameLen() int {
+func (f *Column) getMaxNameLen() int {
 	maxLen := 0
-	for _, score := range formatter.Column {
+	for _, score := range f.Column {
 		runeCnt := utf8.RuneCountInString(score.Name)
 		if maxLen < runeCnt {
 			maxLen = runeCnt
