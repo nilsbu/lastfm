@@ -4,5 +4,7 @@ import "io"
 
 // Formatter contains functions to format something in various formats.
 type Formatter interface {
-	Plain(io.Writer)
+	Plain(io.Writer) error
 }
+
+// TODO return error from Plain()

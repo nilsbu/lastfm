@@ -6,11 +6,16 @@ type Message struct {
 	Msg string
 }
 
-func (f Message) Plain(w io.Writer) {
+func (f Message) Plain(w io.Writer) error {
 	if f.Msg == "" {
-		return
+		return nil
 	}
 
-	io.WriteString(w, f.Msg)
-	io.WriteString(w, "\n")
+	if _, err := io.WriteString(w, f.Msg); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, "\n"); err != nil {
+		return err
+	}
+	return nil
 }

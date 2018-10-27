@@ -19,10 +19,10 @@ type Charts struct {
 	Percentage bool
 }
 
-func (formatter *Charts) Plain(w io.Writer) {
+func (formatter *Charts) Plain(w io.Writer) error {
 	col, err := formatter.Charts.Column(formatter.Column)
 	if err != nil {
-		return
+		return nil
 	}
 
 	sumTotal := col.Sum()
@@ -41,7 +41,7 @@ func (formatter *Charts) Plain(w io.Writer) {
 		SumTotal:   sumTotal,
 	}
 
-	colFormatter.Plain(w)
+	return colFormatter.Plain(w)
 }
 
 type Column struct {
@@ -52,9 +52,9 @@ type Column struct {
 	SumTotal   float64
 }
 
-func (formatter *Column) Plain(w io.Writer) {
+func (formatter *Column) Plain(w io.Writer) error {
 	if len(formatter.Column) == 0 {
-		return
+		return nil
 	}
 
 	var outCol charts.Column
@@ -69,14 +69,20 @@ func (formatter *Column) Plain(w io.Writer) {
 	if formatter.Numbered {
 		for i, score := range outCol {
 			str := fmt.Sprintf(pattern, i+1, score.Name, score.Score)
-			io.WriteString(w, str)
+			if _, err := io.WriteString(w, str); err != nil {
+				return err
+			}
 		}
 	} else {
 		for _, score := range outCol {
 			str := fmt.Sprintf(pattern, score.Name, score.Score)
-			io.WriteString(w, str)
+			if _, err := io.WriteString(w, str); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
 func (formatter *Column) getPlainPattern() (pattern string) {
