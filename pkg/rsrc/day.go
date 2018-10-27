@@ -21,6 +21,8 @@ func ToDay(timestamp int64) Day {
 	return Date(time.Unix(timestamp, 0).UTC())
 }
 
+// ParseDay parses a date from a string in the format YYYY-MM-DD. It returns
+//NoDay if the string is not a valid date.
 func ParseDay(date string) Day {
 	t, err := time.Parse("2006-01-02", date)
 	if err != nil {

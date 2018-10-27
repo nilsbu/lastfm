@@ -15,6 +15,7 @@ type Remover interface {
 	Remove(loc Locator) error
 }
 
+// IO is an interface for reading, writing and removing resources.
 type IO interface {
 	Reader
 	Writer
