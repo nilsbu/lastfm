@@ -67,6 +67,49 @@ func TestLoadUserInfo(t *testing.T) {
 	}
 }
 
+func TestWriteUserInfo(t *testing.T) {
+	cases := []struct {
+		user *User
+		json []byte
+		ok   bool
+	}{
+		{
+			&User{"What", rsrc.ToDay(114004195200)},
+			[]byte(`{"user":{"name":"What","playcount":0,"registered":{"unixtime":114004195200}}}`),
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{rsrc.UserInfo(c.user.Name): nil},
+				mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			err = WriteUserInfo(c.user, io)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error")
+			}
+
+			if err == nil {
+				json, err := io.Read(rsrc.UserInfo(c.user.Name))
+				if err != nil {
+					t.Fatalf("load error: %v", err)
+				}
+
+				if string(json) != string(c.json) {
+					t.Errorf("wrong data: '%v' != '%v'", string(json), string(c.json))
+				}
+			}
+		})
+	}
+}
+
 func TestLoadHistoryDayPage(t *testing.T) {
 	cases := []struct {
 		json []byte

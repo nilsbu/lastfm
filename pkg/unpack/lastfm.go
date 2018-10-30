@@ -26,6 +26,11 @@ func LoadUserInfo(name string, r rsrc.Reader) (*User, error) {
 	return user, nil
 }
 
+// WriteUserInfo writes a user's registration date. The playcount is set to 0.
+func WriteUserInfo(user *User, w rsrc.Writer) error {
+	return deposit(user, &obUserInfo{user.Name}, w)
+}
+
 func (o *obUserInfo) locator() rsrc.Locator {
 	return rsrc.UserInfo(o.name)
 }
@@ -39,6 +44,17 @@ func (o *obUserInfo) interpret(raw interface{}) (interface{}, error) {
 
 	utc := ui.User.Registered.UTC
 	return &User{ui.User.Name, rsrc.ToDay(utc)}, nil
+}
+
+func (o *obUserInfo) raw(obj interface{}) interface{} {
+	user := obj.(*User)
+	utc, _ := user.Registered.Midnight()
+	js := jsonUserInfo{User: jsonUser{
+		Name:       user.Name,
+		PlayCount:  0,
+		Registered: jsonTime{UTC: utc},
+	}}
+	return js
 }
 
 // HistoryDayPage is a single page of a day of a user's played tracks.
