@@ -29,10 +29,9 @@ func (cmd printCharts) getOutCharts(
 	f func(charts.Charts) charts.Charts,
 	r rsrc.Reader) (charts.Charts, error) {
 	replace, err := unpack.LoadArtistCorrections(user, r)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		cha = cha.Correct(replace)
 	}
-	cha = cha.Correct(replace)
 
 	if cmd.normalized {
 		nm := charts.GaussianNormalizer{

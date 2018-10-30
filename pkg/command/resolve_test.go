@@ -208,6 +208,11 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"},
 			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
 		},
+		{
+			[]string{"lastfm", "table", "total"},
+			&unpack.SessionInfo{User: "user"},
+			tableTotal{printCharts: printCharts{by: "all", name: "", n: 10}, step: 1}, true,
+		},
 	}
 
 	for _, c := range cases {

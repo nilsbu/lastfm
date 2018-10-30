@@ -45,7 +45,7 @@ func main() {
 	}
 
 	session, _ := unpack.LoadSessionInfo(s)
-	d := display.NewCSV("file.csv", ",") // TODO file name as param
+	d := display.NewCSV("total.csv", ",") // TODO file name as param
 
 	err = command.Execute(os.Args, session, s, d)
 	if err != nil {

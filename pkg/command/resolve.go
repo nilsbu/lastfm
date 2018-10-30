@@ -53,6 +53,7 @@ var cmdLastfm = node{
 		"help":    cmdHelp,
 		"print":   cmdPrint,
 		"session": cmdSession,
+		"table":   cmdTable,
 		"update":  cmdUpdate,
 	},
 }
@@ -67,6 +68,15 @@ var cmdPrint = node{
 		"period": node{cmd: exePrintPeriod},
 		"tags":   node{cmd: exePrintTags},
 		"total":  node{cmd: exePrintTotal},
+	},
+}
+
+var cmdTable = node{
+	nodes: nodes{
+		// "fade":   node{cmd: exeTableFade}, TODO
+		// "period": node{cmd: exeTablePeriod}, TODO
+		// "tags":   node{cmd: exeTableTags}, TODO
+		"total": node{cmd: exeTableTotal},
 	},
 }
 
@@ -163,7 +173,7 @@ var exePrintTags = &cmd{
 }
 
 var exePrintTotal = &cmd{
-	descr: "prints a user's top artists by total number of plays", // TODO
+	descr: "tables a user's top artists by total number of plays",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printTotal{printCharts: printCharts{
 			by:         opts["by"].(string),
@@ -182,6 +192,30 @@ var exePrintTotal = &cmd{
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
 		"date":       optDate,
+	},
+	session: true,
+}
+
+var exeTableTotal = &cmd{
+	descr: "prints a user's top artists by total number of plays", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return tableTotal{printCharts: printCharts{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+		},
+			step: opts["step"].(int),
+		}
+	},
+	options: options{
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"step":       optStep,
 	},
 	session: true,
 }
@@ -260,6 +294,13 @@ var optDate = &option{
 		"a date in the format YYYY-MM-DD",
 		"time"},
 	"",
+}
+
+var optStep = &option{
+	param{"step",
+		"date step", // TODO
+		"int"},
+	"1",
 }
 
 func resolve(args []string, session *unpack.SessionInfo) (cmd command, err error) {
