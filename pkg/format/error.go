@@ -14,10 +14,9 @@ func (f *Error) CSV(w io.Writer, decimal string) error {
 		return nil
 	}
 
-	str := fmt.Sprintf("\"%v\";\n", f.Err.Error())
+	fmt.Fprintf(w, "\"%v\"\n", f.Err.Error())
 
-	_, err := io.WriteString(w, str)
-	return err
+	return nil
 }
 
 func (f *Error) Plain(w io.Writer) error {

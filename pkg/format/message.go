@@ -16,13 +16,11 @@ func (f *Message) CSV(w io.Writer, decimal string) error {
 	}
 
 	lines := strings.Split(f.Msg, "\n")
-	var str string
 	for _, line := range lines {
-		str += fmt.Sprintf("\"%v\";\n", line)
+		fmt.Fprintf(w, "\"%v\"\n", line)
 	}
 
-	_, err := io.WriteString(w, str)
-	return err
+	return nil
 }
 
 func (f *Message) Plain(w io.Writer) error {
@@ -30,8 +28,8 @@ func (f *Message) Plain(w io.Writer) error {
 		return nil
 	}
 
-	str := fmt.Sprintf("%v\n", f.Msg)
+	fmt.Fprintf(w, "%v", f.Msg)
+	io.WriteString(w, "\n")
 
-	_, err := io.WriteString(w, str)
-	return err
+	return nil
 }

@@ -29,7 +29,7 @@ func TestChartsCSV(t *testing.T) {
 				"X":   []float64{1.238},
 			},
 			-1, 2, false, 2, false, ",",
-			"\"Name\";\"Value\";\n\"ABC\";123,40;\n\"X\";  1,24;\n",
+			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";  1,24\n",
 		},
 	}
 
@@ -171,13 +171,13 @@ func TestColumnCSV(t *testing.T) {
 			"percentage with no total",
 			charts.Column{{Name: "a", Score: 12}, {Name: "b", Score: 4}},
 			false, 0, true, 0, ".",
-			"\"Name\";\"Value\";\n\"a\";75%;\n\"b\";25%;\n",
+			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
 		},
 		{
 			"percentage with no total",
 			charts.Column{{Name: "a", Score: 12.1}, {Name: "b", Score: 4}},
 			true, 1, false, 0, ",",
-			"\"#\";\"Name\";\"Value\";\n1;\"a\";12,1;\n2;\"b\"; 4,0;\n",
+			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\"; 4,0\n",
 		},
 		// rest is covered by TestChartsCSV
 	}

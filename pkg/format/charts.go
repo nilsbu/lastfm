@@ -70,9 +70,9 @@ type Column struct {
 func (f *Column) CSV(w io.Writer, decimal string) error {
 	var header string
 	if f.Numbered {
-		header = "\"#\";\"Name\";\"Value\";\n"
+		header = "\"#\";\"Name\";\"Value\"\n"
 	} else {
-		header = "\"Name\";\"Value\";\n"
+		header = "\"Name\";\"Value\"\n"
 	}
 
 	return f.format(header, f.getCSVPattern(), decimal, w)
@@ -88,9 +88,7 @@ func (f *Column) format(
 		return nil
 	}
 
-	if _, err := io.WriteString(w, header); err != nil {
-		return err
-	}
+	io.WriteString(w, header)
 
 	var outCol charts.Column
 	if f.Percentage {
@@ -105,14 +103,10 @@ func (f *Column) format(
 			sscore = strings.Replace(sscore, ".", decimal, 1)
 		}
 
-		var str string
 		if f.Numbered {
-			str = fmt.Sprintf(pattern, i+1, score.Name, sscore)
+			fmt.Fprintf(w, pattern, i+1, score.Name, sscore)
 		} else {
-			str = fmt.Sprintf(pattern, score.Name, sscore)
-		}
-		if _, err := io.WriteString(w, str); err != nil {
-			return err
+			fmt.Fprintf(w, pattern, score.Name, sscore)
 		}
 	}
 
@@ -124,7 +118,7 @@ func (f *Column) getCSVPattern() (pattern string) {
 		pattern = "%d;"
 	}
 
-	pattern += "\"%v\";%v;\n"
+	pattern += "\"%v\";%v\n"
 
 	return pattern
 }

@@ -16,7 +16,7 @@ func TestErrorCSV(t *testing.T) {
 			nil, "",
 		},
 		{
-			errors.New("fail"), "\"fail\";\n",
+			errors.New("fail"), "\"fail\"\n",
 		},
 	}
 
@@ -31,7 +31,7 @@ func TestErrorCSV(t *testing.T) {
 				t.Error("no message was printed but error was not nil")
 			}
 			if c.err != nil && err != c.str {
-				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", err, c.err)
+				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", err, c.str)
 			}
 		})
 	}

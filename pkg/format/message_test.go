@@ -15,7 +15,7 @@ func TestMessageCSV(t *testing.T) {
 		},
 		{
 			"some text\nnew line",
-			"\"some text\";\n\"new line\";\n",
+			"\"some text\"\n\"new line\"\n",
 		},
 	}
 
