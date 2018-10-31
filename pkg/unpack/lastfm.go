@@ -130,6 +130,11 @@ func LoadArtistTags(artist string, r rsrc.Reader) ([]TagCount, error) {
 	return tags, nil
 }
 
+// WriteArtistTags writes the top tags of an artist.
+func WriteArtistTags(artist string, tags []TagCount, w rsrc.Writer) error {
+	return deposit(tags, &obArtistTags{name: artist}, w)
+}
+
 func (o *obArtistTags) locator() rsrc.Locator {
 	return rsrc.ArtistTags(o.name)
 }
@@ -148,6 +153,20 @@ func (o *obArtistTags) interpret(raw interface{}) (interface{}, error) {
 		tags[i] = TagCount{Name: tag.Name, Count: tag.Count}
 	}
 	return tags, nil
+}
+
+func (o *obArtistTags) raw(obj interface{}) interface{} {
+	tags := obj.([]TagCount)
+	jsTags := []jsonTag{}
+	for _, tag := range tags {
+		jsTags = append(jsTags, jsonTag{Name: tag.Name, Count: tag.Count})
+	}
+
+	js := jsonArtistTags{TopTags: jsonTopTags{
+		Tags: jsTags,
+		Attr: jsonTopTagAttr{Artist: ""}, // Artist name isn't available here
+	}}
+	return js
 }
 
 // CachedTagLoader if a buffer that stores tag information.
@@ -222,11 +241,11 @@ func (buf *CachedTagLoader) worker() {
 }
 
 // LoadTagInfo loads tag information.
-func (buf *CachedTagLoader) LoadTagInfo(artist string) (*charts.Tag, error) {
+func (buf *CachedTagLoader) LoadTagInfo(tag string) (*charts.Tag, error) {
 	back := make(chan tagResult)
 
 	buf.requestChan <- tagRequest{
-		name: artist,
+		name: tag,
 		back: back,
 	}
 

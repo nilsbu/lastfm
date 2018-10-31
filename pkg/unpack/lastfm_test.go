@@ -210,6 +210,45 @@ func TestLoadArtistTags(t *testing.T) {
 	}
 }
 
+func TestWriteLoadArtistTags(t *testing.T) {
+	// WriteArtistTags only tested in combination with loading for simplicity.
+	cases := []struct {
+		artist string
+		tags   []TagCount
+	}{
+		{
+			"xy",
+			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{rsrc.ArtistTags(c.artist): nil},
+				mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			err = WriteArtistTags(c.artist, c.tags, io)
+			if err != nil {
+				t.Fatal("unexpected error:", err)
+			}
+
+			tags, err := LoadArtistTags(c.artist, io)
+			if err != nil {
+				t.Fatal("unexpected error:", err)
+			}
+
+			if !reflect.DeepEqual(tags, c.tags) {
+				t.Errorf("wrong data:\n has:  %v\nwant: %v",
+					tags, c.tags)
+			}
+		})
+	}
+}
+
 func TestLoadTagInfo(t *testing.T) {
 	cases := []struct {
 		files map[rsrc.Locator][]byte
