@@ -130,12 +130,7 @@ func (cmd printTotal) Execute(
 		Percentage: cmd.percentage,
 	}
 
-	err = d.Display(f)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.Display(f)
 }
 
 type printFade struct {
