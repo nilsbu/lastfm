@@ -343,3 +343,43 @@ func TestLoadTagInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestWriteLoadTagInfo(t *testing.T) {
+	// WriteTagInfo only tested in combination with loading for simplicity.
+	cases := []struct {
+		tag *charts.Tag
+	}{
+		{
+			&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{
+					rsrc.TagInfo(c.tag.Name): nil},
+				mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			ctl := NewCachedTagLoader(io)
+
+			err = WriteTagInfo(c.tag, io)
+			if err != nil {
+				t.Fatal("unexpected error:", err)
+			}
+
+			tag, err := ctl.LoadTagInfo(c.tag.Name)
+			if err != nil {
+				t.Fatal("unexpected error:", err)
+			}
+
+			if !reflect.DeepEqual(tag, c.tag) {
+				t.Errorf("wrong data:\n has:  %v\nwant: %v",
+					tag, c.tag)
+			}
+		})
+	}
+}

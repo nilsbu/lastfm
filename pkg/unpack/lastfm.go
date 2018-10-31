@@ -257,6 +257,11 @@ func (buf *CachedTagLoader) LoadTagInfo(tag string) (*charts.Tag, error) {
 	return result.tag, nil
 }
 
+// WriteTagInfo writes tag infos.
+func WriteTagInfo(tag *charts.Tag, w rsrc.Writer) error {
+	return deposit(tag, &obTagInfo{name: tag.Name}, w)
+}
+
 func (o *obTagInfo) locator() rsrc.Locator {
 	return rsrc.TagInfo(o.name)
 }
@@ -272,4 +277,14 @@ func (o *obTagInfo) interpret(raw interface{}) (interface{}, error) {
 		Name:  tag.Tag.Name,
 		Total: tag.Tag.Total,
 		Reach: tag.Tag.Reach}, nil
+}
+
+func (o *obTagInfo) raw(obj interface{}) interface{} {
+	tag := obj.(*charts.Tag)
+	js := jsonTagInfo{Tag: jsonTagTag{
+		Name:  tag.Name,
+		Total: tag.Total,
+		Reach: tag.Reach,
+	}}
+	return js
 }
