@@ -24,11 +24,17 @@ type printCharts struct {
 }
 
 func (cmd printCharts) getOutCharts(
-	user string,
-	cha charts.Charts,
+	session *unpack.SessionInfo,
 	f func(charts.Charts) charts.Charts,
 	r rsrc.Reader) (charts.Charts, error) {
-	replace, err := unpack.LoadArtistCorrections(user, r)
+	plays, err := unpack.LoadAllDayPlays(session.User, r)
+	if err != nil {
+		return nil, err
+	}
+
+	cha := charts.Compile(plays)
+
+	replace, err := unpack.LoadArtistCorrections(session.User, r)
 	if err == nil {
 		cha = cha.Correct(replace)
 	}
@@ -48,7 +54,7 @@ func (cmd printCharts) getOutCharts(
 		case "all":
 			return cha, nil
 		case "super":
-			supertags, err := getSupertags(cha, user, r)
+			supertags, err := getSupertags(cha, session.User, r)
 			if err != nil {
 				return nil, err
 			}
@@ -63,7 +69,7 @@ func (cmd printCharts) getOutCharts(
 		case "all":
 			return nil, errors.New("name must be empty for chart type 'all'")
 		case "super":
-			supertags, err := getSupertags(cha, user, r)
+			supertags, err := getSupertags(cha, session.User, r)
 			if err != nil {
 				return nil, err
 			}
@@ -89,16 +95,8 @@ type printTotal struct {
 
 func (cmd printTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	plays, err := unpack.LoadAllDayPlays(session.User, s)
-	if err != nil {
-		return err
-	}
-
-	cha := charts.Compile(plays)
-
 	out, err := cmd.printCharts.getOutCharts(
-		session.User,
-		cha,
+		session,
 		func(c charts.Charts) charts.Charts { return c.Sum() },
 		s)
 	if err != nil {
@@ -141,17 +139,9 @@ type printFade struct {
 
 func (cmd printFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	plays, err := unpack.LoadAllDayPlays(session.User, s)
-	if err != nil {
-		return err
-	}
-
-	cha := charts.Compile(plays)
-
 	out, err := cmd.printCharts.getOutCharts(
-		session.User,
-		cha,
-		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
+		session,
+		func(c charts.Charts) charts.Charts { return c.Sum() },
 		s)
 	if err != nil {
 		return err
@@ -209,16 +199,8 @@ type printPeriod struct {
 
 func (cmd printPeriod) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	plays, err := unpack.LoadAllDayPlays(session.User, s)
-	if err != nil {
-		return err
-	}
-
-	cha := charts.Compile(plays)
-
 	out, err := cmd.printCharts.getOutCharts(
-		session.User,
-		cha,
+		session,
 		func(c charts.Charts) charts.Charts { return c.Sum() },
 		s)
 	if err != nil {

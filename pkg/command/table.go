@@ -16,16 +16,8 @@ type tableTotal struct {
 
 func (cmd tableTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	plays, err := unpack.LoadAllDayPlays(session.User, s)
-	if err != nil {
-		return err
-	}
-
-	cha := charts.Compile(plays)
-
 	out, err := cmd.printCharts.getOutCharts(
-		session.User,
-		cha,
+		session,
 		func(c charts.Charts) charts.Charts { return c.Sum() },
 		s)
 	if err != nil {
@@ -60,17 +52,9 @@ type tableFade struct {
 
 func (cmd tableFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	plays, err := unpack.LoadAllDayPlays(session.User, s)
-	if err != nil {
-		return err
-	}
-
-	cha := charts.Compile(plays)
-
 	out, err := cmd.printCharts.getOutCharts(
-		session.User,
-		cha,
-		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
+		session,
+		func(c charts.Charts) charts.Charts { return c.Sum() },
 		s)
 	if err != nil {
 		return err
