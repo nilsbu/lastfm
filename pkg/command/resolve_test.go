@@ -213,6 +213,16 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"},
 			tableTotal{printCharts: printCharts{by: "all", name: "", n: 10}, step: 1}, true,
 		},
+		{
+			[]string{"lastfm", "table", "total", "-step=200"},
+			&unpack.SessionInfo{User: "user"},
+			tableTotal{printCharts: printCharts{by: "all", name: "", n: 10}, step: 200}, true,
+		},
+		{
+			[]string{"lastfm-csv", "table", "fade", "10"},
+			&unpack.SessionInfo{User: "user"},
+			tableFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 10, step: 1}, true,
+		},
 	}
 
 	for _, c := range cases {

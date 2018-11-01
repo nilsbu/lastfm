@@ -73,9 +73,7 @@ var cmdPrint = node{
 
 var cmdTable = node{
 	nodes: nodes{
-		// "fade":   node{cmd: exeTableFade}, TODO
-		// "period": node{cmd: exeTablePeriod}, TODO
-		// "tags":   node{cmd: exeTableTags}, TODO
+		"fade":  node{cmd: exeTableFade},
 		"total": node{cmd: exeTableTotal},
 	},
 }
@@ -120,11 +118,7 @@ var exePrintFade = &cmd{
 			date: opts["date"].(time.Time),
 		}
 	},
-	params: params{&param{
-		"half-life",
-		"span of days over which a 'scrobble' loses half its value",
-		"float",
-	}},
+	params: params{parHL},
 	options: options{
 		"by":         optChartType,
 		"name":       optGenericName,
@@ -196,8 +190,34 @@ var exePrintTotal = &cmd{
 	session: true,
 }
 
+var exeTableFade = &cmd{
+	descr: "tables a user's top artists in fading charts",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return tableFade{printCharts: printCharts{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+		},
+			hl:   params[0].(float64),
+			step: opts["step"].(int),
+		}
+	},
+	params: params{parHL},
+	options: options{
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"step":       optStep,
+	},
+	session: true,
+}
+
 var exeTableTotal = &cmd{
-	descr: "prints a user's top artists by total number of plays", // TODO
+	descr: "tables a user's top artists by total number of plays",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return tableTotal{printCharts: printCharts{
 			by:         opts["by"].(string),
@@ -252,6 +272,12 @@ var parArtistName = &param{
 	"artist name",
 	"the name of an artist",
 	"string",
+}
+
+var parHL = &param{
+	"half-life",
+	"span of days over which a 'scrobble' loses half its value",
+	"float",
 }
 
 var optChartType = &option{

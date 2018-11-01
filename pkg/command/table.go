@@ -26,7 +26,51 @@ func (cmd tableTotal) Execute(
 	out, err := cmd.printCharts.getOutCharts(
 		session.User,
 		cha,
-		func(c charts.Charts) charts.Charts { return c.Sum() }, // TODO
+		func(c charts.Charts) charts.Charts { return c.Sum() },
+		s)
+	if err != nil {
+		return err
+	}
+
+	user, err := unpack.LoadUserInfo(session.User, s)
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
+	}
+
+	f := &format.Table{
+		Charts: out,
+		First:  user.Registered,
+		Step:   cmd.step,
+		Count:  cmd.n,
+	}
+
+	err = d.Display(f)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type tableFade struct {
+	printCharts
+	step int
+	hl   float64
+}
+
+func (cmd tableFade) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	plays, err := unpack.LoadAllDayPlays(session.User, s)
+	if err != nil {
+		return err
+	}
+
+	cha := charts.Compile(plays)
+
+	out, err := cmd.printCharts.getOutCharts(
+		session.User,
+		cha,
+		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
 		s)
 	if err != nil {
 		return err
