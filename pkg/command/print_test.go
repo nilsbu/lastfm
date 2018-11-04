@@ -217,6 +217,62 @@ func TestPrintTotal(t *testing.T) {
 			nil,
 			false,
 		},
+		{
+			"by year",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{100, 1, 1},
+				"Y": []float64{99, 1, 0}},
+			printTotal{
+				printCharts: printCharts{
+					by:         "year",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+			},
+			&format.Charts{
+				Charts: charts.Charts{
+					"2017": []float64{100, 101, 102},
+					"2018": []float64{99, 100, 100},
+					"":     []float64{0, 0, 0},
+				},
+				Column:     -1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+			},
+			true,
+		},
+		{
+			"by year 2017",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{100, 1, 1},
+				"Y": []float64{99, 1, 0}},
+			printTotal{
+				printCharts: printCharts{
+					by:         "year",
+					name:       "2017",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+			},
+			&format.Charts{
+				Charts: charts.Charts{
+					"X": []float64{100, 101, 102},
+				},
+				Column:     -1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+			},
+			true,
+		},
 		// TODO test corrections (in other test)
 		// TODO test normalized (in other test)
 	}

@@ -133,6 +133,16 @@ func TestResolve(t *testing.T) {
 			printTotal{printCharts: printCharts{by: "super", name: "", normalized: true, n: 10}, date: time.Date(2018, time.February, 1, 0, 0, 0, 0, time.UTC)}, true,
 		},
 		{
+			[]string{"lastfm", "print", "total", "-by=year"},
+			&unpack.SessionInfo{User: "user"},
+			printTotal{printCharts: printCharts{by: "year", name: "", n: 10}}, true,
+		},
+		{
+			[]string{"lastfm", "print", "total", "-by=year", "-name=2018"},
+			&unpack.SessionInfo{User: "user"},
+			printTotal{printCharts: printCharts{by: "year", name: "2018", n: 10}}, true,
+		},
+		{
 			[]string{"lastfm", "print", "asdf"},
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},

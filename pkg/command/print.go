@@ -60,6 +60,17 @@ func (cmd printCharts) getOutCharts(
 			}
 
 			return cha.Group(supertags), nil
+		case "year":
+			user, err := unpack.LoadUserInfo(session.User, r)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to load user info")
+			}
+			year := cha.GetYearPartition(user.Registered, 100)
+			if err != nil {
+				return nil, err
+			}
+
+			return cha.Group(year), nil
 		default:
 			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
 		}
@@ -75,6 +86,17 @@ func (cmd printCharts) getOutCharts(
 			}
 
 			container = cha.Split(supertags)
+		case "year":
+			user, err := unpack.LoadUserInfo(session.User, r)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to load user info")
+			}
+			year := cha.GetYearPartition(user.Registered, 100)
+			if err != nil {
+				return nil, err
+			}
+
+			container = cha.Split(year)
 		default:
 			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
 		}
