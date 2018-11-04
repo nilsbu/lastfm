@@ -24,6 +24,7 @@ const (
 	Year
 )
 
+// TODO mix between int64 and time.Time
 type intervalIterator struct {
 	step     Step
 	interval Interval
@@ -146,6 +147,7 @@ func Index(t time.Time, registered rsrc.Day) int {
 	return int((t.Unix()-offset)/86400 - 1)
 }
 
+// TODO use in table formatting
 func (c Charts) Intervals(step Step, registered rsrc.Day) Charts {
 	reg, _ := registered.Midnight()
 	ii := newIntervalIterator(
