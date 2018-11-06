@@ -113,6 +113,7 @@ var exePrintFade = &cmd{
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
 		},
 			hl:   params[0].(float64),
 			date: opts["date"].(time.Time),
@@ -125,6 +126,7 @@ var exePrintFade = &cmd{
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
 		"date":       optDate,
 	},
 	session: true,
@@ -139,6 +141,7 @@ var exePrintPeriod = &cmd{
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
 		},
 			period: params[0].(string),
 		}
@@ -154,6 +157,7 @@ var exePrintPeriod = &cmd{
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
 	},
 	session: true,
 }
@@ -175,6 +179,7 @@ var exePrintTotal = &cmd{
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
 		},
 			date: opts["date"].(time.Time),
 		}
@@ -185,6 +190,7 @@ var exePrintTotal = &cmd{
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
 		"date":       optDate,
 	},
 	session: true,
@@ -199,6 +205,7 @@ var exeTableFade = &cmd{
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
 		},
 			hl:   params[0].(float64),
 			step: opts["step"].(int),
@@ -211,6 +218,7 @@ var exeTableFade = &cmd{
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
 		"step":       optStep,
 	},
 	session: true,
@@ -225,6 +233,7 @@ var exeTableTotal = &cmd{
 			n:          opts["n"].(int),
 			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
 		},
 			step: opts["step"].(int),
 		}
@@ -235,6 +244,7 @@ var exeTableTotal = &cmd{
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
 		"step":       optStep,
 	},
 	session: true,
@@ -313,6 +323,13 @@ var optChartsNormalized = &option{
 		"if charts are in normalized",
 		"bool"},
 	"false",
+}
+
+var optChartsEntry = &option{
+	param{"entry",
+		"threshold for charts entry",
+		"float"},
+	"0",
 }
 
 var optDate = &option{

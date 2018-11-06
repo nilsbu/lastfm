@@ -20,6 +20,7 @@ type printCharts struct {
 	name       string
 	percentage bool
 	normalized bool
+	entry      float64
 	n          int
 }
 
@@ -65,7 +66,16 @@ func (cmd printCharts) getOutCharts(
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to load user info")
 			}
-			year := cha.GetYearPartition(user.Registered, 100)
+
+			entry := cmd.entry
+			if entry == 0 {
+				if cmd.normalized {
+					entry = 2.0
+				} else {
+					entry = 100
+				}
+			}
+			year := cha.GetYearPartition(user.Registered, entry)
 			if err != nil {
 				return nil, err
 			}
@@ -91,7 +101,16 @@ func (cmd printCharts) getOutCharts(
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to load user info")
 			}
-			year := cha.GetYearPartition(user.Registered, 100)
+
+			entry := cmd.entry
+			if entry == 0 {
+				if cmd.normalized {
+					entry = 2.0
+				} else {
+					entry = 100
+				}
+			}
+			year := cha.GetYearPartition(user.Registered, entry)
 			if err != nil {
 				return nil, err
 			}
