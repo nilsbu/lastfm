@@ -54,7 +54,7 @@ func (cmd tableFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
 	out, err := cmd.printCharts.getOutCharts(
 		session,
-		func(c charts.Charts) charts.Charts { return c.Sum() },
+		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
 		s)
 	if err != nil {
 		return err
