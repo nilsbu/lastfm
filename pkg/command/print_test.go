@@ -219,10 +219,10 @@ func TestPrintTotal(t *testing.T) {
 		},
 		{
 			"by year",
-			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
 			&charts.Charts{
-				"X": []float64{100, 1, 1},
-				"Y": []float64{99, 1, 0}},
+				"X": []float64{120, 1, 1, 1, 10},
+				"Y": []float64{1, 1, 100, 1, 1}},
 			printTotal{
 				printCharts: printCharts{
 					by:         "year",
@@ -234,9 +234,9 @@ func TestPrintTotal(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.Charts{
-					"2017": []float64{100, 101, 102},
-					"2018": []float64{99, 100, 100},
-					"":     []float64{0, 0, 0},
+					"2017": []float64{1, 2, 102, 103, 104},
+					"2018": []float64{120, 121, 122, 123, 133},
+					"":     []float64{0, 0, 0, 0, 0},
 				},
 				Column:     -1,
 				Count:      10,
@@ -251,7 +251,7 @@ func TestPrintTotal(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
 			&charts.Charts{
 				"X": []float64{100, 1, 1},
-				"Y": []float64{99, 1, 0}},
+				"Y": []float64{9, 1, 0}},
 			printTotal{
 				printCharts: printCharts{
 					by:         "year",

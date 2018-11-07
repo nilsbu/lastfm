@@ -40,6 +40,23 @@ func (cmd printCharts) getOutCharts(
 		cha = cha.Correct(replace)
 	}
 
+	var year charts.Partition
+	if cmd.by == "year" {
+		user, err := unpack.LoadUserInfo(session.User, r)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load user info")
+		}
+
+		entry := cmd.entry
+		if entry == 0 {
+			entry = 2
+		}
+		year = cha.GetYearPartition(user.Registered, entry)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if cmd.normalized {
 		nm := charts.GaussianNormalizer{
 			Sigma:       30,
@@ -62,24 +79,6 @@ func (cmd printCharts) getOutCharts(
 
 			return cha.Group(supertags), nil
 		case "year":
-			user, err := unpack.LoadUserInfo(session.User, r)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to load user info")
-			}
-
-			entry := cmd.entry
-			if entry == 0 {
-				if cmd.normalized {
-					entry = 2.0
-				} else {
-					entry = 100
-				}
-			}
-			year := cha.GetYearPartition(user.Registered, entry)
-			if err != nil {
-				return nil, err
-			}
-
 			return cha.Group(year), nil
 		default:
 			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
@@ -97,24 +96,6 @@ func (cmd printCharts) getOutCharts(
 
 			container = cha.Split(supertags)
 		case "year":
-			user, err := unpack.LoadUserInfo(session.User, r)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to load user info")
-			}
-
-			entry := cmd.entry
-			if entry == 0 {
-				if cmd.normalized {
-					entry = 2.0
-				} else {
-					entry = 100
-				}
-			}
-			year := cha.GetYearPartition(user.Registered, entry)
-			if err != nil {
-				return nil, err
-			}
-
 			container = cha.Split(year)
 		default:
 			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)

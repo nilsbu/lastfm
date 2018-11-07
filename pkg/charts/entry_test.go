@@ -73,8 +73,9 @@ func TestChartsGetYearPartition(t *testing.T) {
 	}{
 		{
 			Charts{
-				"A": []float64{2, 3, 10},
-				"B": []float64{10, 10, 11}},
+				"A": []float64{0, 0, 0, 0, 1, 1, 1},
+				"B": []float64{1, 1, 1, 1, 0, 0, 0},
+				"C": []float64{0, 0, 0, 0, 0, 0, 0}},
 			mapPart{
 				assoc:      map[string]string{"A": "2018", "B": "2017"},
 				partitions: []string{"2017", "2018", ""},
@@ -84,7 +85,7 @@ func TestChartsGetYearPartition(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			partition := c.sums.GetYearPartition(rsrc.ParseDay("2017-12-31"), 10)
+			partition := c.sums.GetYearPartition(rsrc.ParseDay("2017-12-29"), 2)
 
 			if !reflect.DeepEqual(c.partition, partition) { // TODO test partition API
 				t.Errorf("%v != %v", c.partition, partition)
