@@ -196,6 +196,37 @@ func (c Charts) Correct(replace map[string]string) Charts {
 	return corrected
 }
 
+// append a column at the end of the charts. The keys are not required to be in
+// the charts prior.
+func (c Charts) append(col Column) {
+	for _, score := range col {
+		c[score.Name] = append(c[score.Name], score.Score)
+	}
+}
+
+// Rank the charts in each column.
+func (c Charts) Rank() (ranks Charts) {
+	ranks = make(Charts)
+
+	for i := 0; i < c.Len(); i++ {
+		col, _ := c.Column(i)
+
+		var last float64
+		idx := 1
+		for j, score := range col {
+			if last != score.Score {
+				idx = j + 1
+				last = score.Score
+			}
+			col[j].Score = float64(idx)
+		}
+
+		ranks.append(col)
+	}
+
+	return
+}
+
 type totalPartition struct{}
 
 func (totalPartition) Partitions() []string {

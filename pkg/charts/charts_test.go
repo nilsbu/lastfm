@@ -322,6 +322,35 @@ func TestChartsCorrect(t *testing.T) {
 	}
 }
 
+func TestChartsRank(t *testing.T) {
+	cases := []struct {
+		charts Charts
+		ranks  Charts
+	}{
+		{
+			Charts{
+				"o0o": []float64{0, 0, 7},
+				"lol": []float64{1, 2, 3},
+				"X":   []float64{1, 3, 4}},
+			Charts{
+				"o0o": []float64{3, 3, 1},
+				"lol": []float64{1, 2, 3},
+				"X":   []float64{1, 1, 2}},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			ranks := c.charts.Rank()
+
+			if !reflect.DeepEqual(ranks, c.ranks) {
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+					ranks, c.ranks)
+			}
+		})
+	}
+}
+
 func TestChartsTotal(t *testing.T) {
 	cases := []struct {
 		charts Charts
