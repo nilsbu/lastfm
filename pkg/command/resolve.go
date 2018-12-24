@@ -50,11 +50,12 @@ var cmdRoot = node{
 var cmdLastfm = node{
 	cmd: exeHelp,
 	nodes: map[string]node{
-		"help":    cmdHelp,
-		"print":   cmdPrint,
-		"session": cmdSession,
-		"table":   cmdTable,
-		"update":  cmdUpdate,
+		"help":     cmdHelp,
+		"print":    cmdPrint,
+		"session":  cmdSession,
+		"table":    cmdTable,
+		"timeline": node{cmd: exeTimeline},
+		"update":   cmdUpdate,
 	},
 }
 
@@ -192,6 +193,21 @@ var exePrintTotal = &cmd{
 		"normalized": optChartsNormalized,
 		"entry":      optChartsEntry,
 		"date":       optDate,
+	},
+	session: true,
+}
+
+var exeTimeline = &cmd{
+	descr: "timeline of events",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printTimeline{
+			from:   opts["from"].(time.Time),
+			before: opts["before"].(time.Time),
+		}
+	},
+	options: options{
+		"from":   optDate,
+		"before": optDate,
 	},
 	session: true,
 }
