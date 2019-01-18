@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 )
 
 type Locator interface {
@@ -132,8 +133,12 @@ func (loc *lastFM) Path() (string, error) {
 	switch loc.method {
 	case "user.getRecentTracks":
 		midnight, _ := loc.day.Midnight()
-		path = fmt.Sprintf("%v/%v/%v-%v",
-			loc.name, 86400, midnight, loc.page)
+		t := time.Unix(midnight, 0).UTC()
+		path = fmt.Sprintf("%v/%v/%04v-%02v-%02vT%02v-%02v-%02v-%v",
+			loc.name, 86400,
+			t.Year(), int(t.Month()), t.Day(),
+			t.Hour(), t.Minute(), t.Second(),
+			loc.page)
 	default:
 		h8 := sha256.Sum256([]byte(loc.name))
 		hash := hex.EncodeToString(h8[:])

@@ -87,7 +87,7 @@ func TestLastFMPath(t *testing.T) {
 		},
 		{
 			History("abc", 1, ToDay(2*86400)),
-			".lastfm/raw/user.getRecentTracks/abc/86400/172800-1.json",
+			".lastfm/raw/user.getRecentTracks/abc/86400/1970-01-03T00-00-00-1.json",
 		},
 	}
 
