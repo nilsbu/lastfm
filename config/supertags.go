@@ -6,6 +6,7 @@ var Supertags = map[string]string{
 	"opera":     "classical",
 
 	"drum and bass": "electronic",
+	"dubstep":       "electronic",
 	"electro":       "electronic",
 	"electronic":    "electronic",
 	"electronica":   "electronic",
