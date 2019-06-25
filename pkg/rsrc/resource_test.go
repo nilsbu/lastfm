@@ -45,6 +45,11 @@ func TestLastFMURL(t *testing.T) {
 			base + "api_key=a3ee123098128acf29ca9f0cf29ca9f0&method=user.getRecentTracks&user=abc&page=1&from=86399&to=172800&limit=200",
 			true,
 		},
+		{ // ok
+			ArtistTags("M&M"), "a3ee123098128acf29ca9f0cf29ca9f0",
+			base + "api_key=a3ee123098128acf29ca9f0cf29ca9f0&method=artist.getTopTags&artist=M%26M",
+			true,
+		},
 	}
 
 	for _, c := range cases {

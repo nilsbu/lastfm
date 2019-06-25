@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -89,8 +90,9 @@ func (loc *lastFM) URL(apiKey string) (string, error) {
 	base := "http://ws.audioscrobbler.com/2.0/"
 	params := "?format=json&api_key=%v&method=%v&%v=%v"
 
+	s := string(loc.name)
 	url := base + fmt.Sprintf(params, apiKey,
-		loc.method, loc.nameType, url.PathEscape(string(loc.name)))
+		loc.method, loc.nameType, strings.Replace(url.PathEscape(s), "&", "%26", -1))
 
 	if loc.page > 0 {
 		url += fmt.Sprintf("&page=%d", int(loc.page))
