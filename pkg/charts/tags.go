@@ -27,7 +27,7 @@ func (p mapPart) Get(key string) string {
 		return partition
 	}
 
-	return ""
+	return "-"
 }
 
 func Supertags(
@@ -45,7 +45,7 @@ func Supertags(
 	for _, supertag := range supertags {
 		names[supertag] = true
 	}
-	names[""] = true
+	names["-"] = true
 
 	for name, _ := range names {
 		partition.partitions = append(partition.partitions, name)
@@ -53,7 +53,7 @@ func Supertags(
 
 	// compile association
 	for name, values := range tags {
-		var supertag string
+		supertag := "-"
 		for _, tag := range values {
 			if stag, ok := supertags[tag.Name]; ok {
 				supertag = stag

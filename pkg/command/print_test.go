@@ -129,7 +129,7 @@ func TestPrintTotal(t *testing.T) {
 					"pop":        []float64{1, 1, 2},
 					"reggae":     []float64{0, 0, 0},
 					"rock":       []float64{0, 1, 1},
-					"":           []float64{0, 0, 0},
+					"-":          []float64{0, 0, 0},
 				},
 				Column:     -1,
 				Count:      10,
@@ -236,7 +236,7 @@ func TestPrintTotal(t *testing.T) {
 				Charts: charts.Charts{
 					"2017": []float64{1, 2, 102, 103, 104},
 					"2018": []float64{120, 121, 122, 123, 133},
-					"":     []float64{0, 0, 0, 0, 0},
+					"-":    []float64{0, 0, 0, 0, 0},
 				},
 				Column:     -1,
 				Count:      10,

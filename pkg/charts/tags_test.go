@@ -21,7 +21,7 @@ func TestChartsSupertags(t *testing.T) {
 			Charts{
 				"c": []float64{},
 				"v": []float64{},
-				"":  []float64{},
+				"-": []float64{},
 			},
 		},
 		{
@@ -38,7 +38,7 @@ func TestChartsSupertags(t *testing.T) {
 			Charts{
 				"c": []float64{17, 3},
 				"v": []float64{0, 0},
-				"":  []float64{0, 0},
+				"-": []float64{0, 0},
 			},
 		},
 		{
@@ -65,7 +65,7 @@ func TestChartsSupertags(t *testing.T) {
 			Charts{
 				"c": []float64{14, 10},
 				"v": []float64{10, 2},
-				"":  []float64{0, 2},
+				"-": []float64{0, 2},
 			},
 		},
 		{ // correction
@@ -80,7 +80,7 @@ func TestChartsSupertags(t *testing.T) {
 			Charts{
 				"c": []float64{0, 0},
 				"v": []float64{7, 1},
-				"":  []float64{0, 0},
+				"-": []float64{0, 0},
 			},
 		},
 	}
@@ -113,7 +113,7 @@ func TestChartsSplitBySupertag(t *testing.T) {
 			map[string]Charts{
 				"c": Charts{},
 				"v": Charts{},
-				"":  Charts{},
+				"-": Charts{},
 			},
 		},
 		{
@@ -130,7 +130,7 @@ func TestChartsSplitBySupertag(t *testing.T) {
 			map[string]Charts{
 				"c": Charts{"asdf": []float64{7, 1}},
 				"v": Charts{"bbh": []float64{10, 2}},
-				"":  Charts{},
+				"-": Charts{},
 			},
 		},
 	}
@@ -150,7 +150,7 @@ func TestEmptySupertags(t *testing.T) {
 	cha := Charts{"a": []float64{2, 3}}
 	buckets := cha.Split(Supertags(nil, nil, nil))
 
-	expected := map[string]Charts{"": Charts{"a": []float64{2, 3}}}
+	expected := map[string]Charts{"-": Charts{"a": []float64{2, 3}}}
 	if !reflect.DeepEqual(buckets, expected) {
 		t.Errorf("wrong data:\nhas:  %v\nwant: %v", buckets, expected)
 	}

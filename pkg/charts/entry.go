@@ -107,6 +107,6 @@ func (c Charts) GetYearPartition(registered rsrc.Day, threshold float64,
 	for ii.HasNext() {
 		p.partitions = append(p.partitions, ii.Next().Begin.Format("2006"))
 	}
-	p.partitions = append(p.partitions, "")
+	p.partitions = append(p.partitions, "-")
 	return p
 }

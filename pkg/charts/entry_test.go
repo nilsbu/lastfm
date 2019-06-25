@@ -78,7 +78,7 @@ func TestChartsGetYearPartition(t *testing.T) {
 				"C": []float64{0, 0, 0, 0, 0, 0, 0}},
 			mapPart{
 				assoc:      map[string]string{"A": "2018", "B": "2017"},
-				partitions: []string{"2017", "2018", ""},
+				partitions: []string{"2017", "2018", "-"},
 			},
 		},
 	}
