@@ -10,15 +10,6 @@ import (
 // Charts is table of daily accumulation of plays.
 type Charts map[string][]float64
 
-// Column is a column of charts sorted descendingly.
-type Column []Score
-
-// Score is a score with a name attached,
-type Score struct {
-	Name  string
-	Score float64 // TODO rename Value
-}
-
 // Compile builds Charts from single day plays.
 func Compile(days []Charts) Charts {
 	size := len(days)
@@ -139,29 +130,6 @@ func (c Charts) Column(i int) (column Column, err error) {
 	return column, nil
 }
 
-func (c Column) Len() int           { return len(c) }
-func (c Column) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
-func (c Column) Less(i, j int) bool { return c[i].Score > c[j].Score }
-
-func (c Column) Sum() (sum float64) {
-	for _, line := range c {
-		sum += line.Score
-	}
-
-	return sum
-}
-
-// TODO sort file by receiver
-
-// Top returns the top n entries of col. If n is larger than len(col) the whole
-// column is returned.
-func (c Column) Top(n int) (top Column) {
-	if n > len(c) {
-		n = len(c)
-	}
-	return c[:n]
-}
-
 // Keys returns the keys of the charts.
 func (c Charts) Keys() []string {
 	keys := []string{}
@@ -226,6 +194,8 @@ func (c Charts) Rank() (ranks Charts) {
 
 	return
 }
+
+// TODO is this needed?
 
 type totalPartition struct{}
 
