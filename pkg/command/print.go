@@ -263,6 +263,56 @@ func (cmd printPeriod) Execute(
 	return nil
 }
 
+type printInterval struct {
+	printCharts
+	begin  time.Time
+	before time.Time
+}
+
+func (cmd printInterval) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	out, err := cmd.printCharts.getOutCharts(
+		session,
+		func(c charts.Charts) charts.Charts { return c.Sum() },
+		s)
+	if err != nil {
+		return err
+	}
+
+	user, err := unpack.LoadUserInfo(session.User, s)
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
+	}
+
+	interval := charts.Interval{
+		Begin:  cmd.begin,
+		Before: cmd.before,
+	}
+
+	col := out.Interval(interval, user.Registered)
+	sumTotal := col.Sum()
+	col = col.Top(cmd.n)
+
+	prec := 0
+	if cmd.percentage || cmd.normalized {
+		prec = 2
+	}
+	f := &format.Column{
+		Column:     col,
+		Numbered:   true,
+		Percentage: cmd.percentage,
+		Precision:  prec,
+		SumTotal:   sumTotal,
+	}
+
+	err = d.Display(f)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type printTags struct {
 	artist string
 }

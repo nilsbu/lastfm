@@ -65,10 +65,11 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
-		"fade":   node{cmd: exePrintFade},
-		"period": node{cmd: exePrintPeriod},
-		"tags":   node{cmd: exePrintTags},
-		"total":  node{cmd: exePrintTotal},
+		"fade":     node{cmd: exePrintFade},
+		"period":   node{cmd: exePrintPeriod},
+		"interval": node{cmd: exePrintInterval},
+		"tags":     node{cmd: exePrintTags},
+		"total":    node{cmd: exePrintTotal},
 	},
 }
 
@@ -151,6 +152,41 @@ var exePrintPeriod = &cmd{
 		"period",
 		"", // TODO
 		"string",
+	}},
+	options: options{
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
+	},
+	session: true,
+}
+
+var exePrintInterval = &cmd{
+	descr: "", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printInterval{printCharts: printCharts{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			begin:  params[0].(time.Time),
+			before: params[1].(time.Time),
+		}
+	},
+	params: params{&param{
+		"begin",
+		"", // TODO
+		"time",
+	}, &param{
+		"before",
+		"", // TODO
+		"time",
 	}},
 	options: options{
 		"by":         optChartType,
