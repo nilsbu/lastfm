@@ -24,10 +24,58 @@ type printCharts struct {
 	n          int
 }
 
-func (cmd printCharts) getOutCharts(
+// TODO document
+type printChartsDescriptor interface {
+	Accumulate(c charts.Charts) charts.Charts
+	PrintCharts() printCharts
+}
+
+func (cmd printCharts) PrintCharts() printCharts {
+	return cmd
+}
+
+func (cmd printCharts) getPartition(
 	session *unpack.SessionInfo,
-	f func(charts.Charts) charts.Charts,
-	r rsrc.Reader) (charts.Charts, error) {
+	r rsrc.Reader,
+	cha charts.Charts,
+) (year charts.Partition, err error) {
+	switch cmd.by {
+	case "all":
+		return
+	case "year":
+		var user *unpack.User
+		user, err = unpack.LoadUserInfo(session.User, r)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load user info")
+		}
+
+		entry := cmd.entry
+		if entry == 0 {
+			entry = 2
+		}
+		year = cha.GetYearPartition(user.Registered, entry)
+		return
+	case "super":
+		tags, err := organize.LoadArtistTags(cha.Keys(), r)
+		if err != nil {
+			return nil, err
+		}
+
+		corrections, _ := unpack.LoadSupertagCorrections(session.User, r)
+
+		return charts.Supertags(tags, config.Supertags, corrections), nil
+	default:
+		return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
+	}
+}
+
+func getOutCharts(
+	session *unpack.SessionInfo,
+	pcd printChartsDescriptor,
+	r rsrc.Reader,
+) (charts.Charts, error) {
+	cmd := pcd.PrintCharts()
+
 	plays, err := unpack.LoadAllDayPlays(session.User, r)
 	if err != nil {
 		return nil, err
@@ -40,21 +88,9 @@ func (cmd printCharts) getOutCharts(
 		cha = cha.Correct(replace)
 	}
 
-	var year charts.Partition
-	if cmd.by == "year" {
-		user, err := unpack.LoadUserInfo(session.User, r)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to load user info")
-		}
-
-		entry := cmd.entry
-		if entry == 0 {
-			entry = 2
-		}
-		year = cha.GetYearPartition(user.Registered, entry)
-		if err != nil {
-			return nil, err
-		}
+	partition, err := cmd.getPartition(session, r, cha)
+	if err != nil {
+		return nil, err
 	}
 
 	if cmd.normalized {
@@ -65,49 +101,26 @@ func (cmd printCharts) getOutCharts(
 		cha = nm.Normalize(cha)
 	}
 
-	cha = f(cha)
+	accCharts := pcd.Accumulate(cha)
 
 	if cmd.name == "" {
-		switch cmd.by {
-		case "all":
-			return cha, nil
-		case "super":
-			supertags, err := getSupertags(cha, session.User, r)
-			if err != nil {
-				return nil, err
-			}
-
-			return cha.Group(supertags), nil
-		case "year":
-			return cha.Group(year), nil
-		default:
-			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
-		}
-	} else {
-		var container map[string]charts.Charts
-		switch cmd.by {
-		case "all":
-			return nil, errors.New("name must be empty for chart type 'all'")
-		case "super":
-			supertags, err := getSupertags(cha, session.User, r)
-			if err != nil {
-				return nil, err
-			}
-
-			container = cha.Split(supertags)
-		case "year":
-			container = cha.Split(year)
-		default:
-			return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
+		if partition == nil {
+			return accCharts, nil
 		}
 
-		out, ok := container[cmd.name]
-		if !ok {
-			return nil, fmt.Errorf("name '%v' not found", cmd.name)
-		}
-
-		return out, nil
+		return accCharts.Group(partition), nil
 	}
+
+	if partition == nil {
+		return nil, errors.New("name must be empty for chart type 'all'")
+	}
+
+	out, ok := accCharts.Split(partition)[cmd.name]
+	if !ok {
+		return nil, fmt.Errorf("name '%v' not found", cmd.name)
+	}
+
+	return out, nil
 }
 
 type printTotal struct {
@@ -115,12 +128,13 @@ type printTotal struct {
 	date time.Time
 }
 
+func (cmd printTotal) Accumulate(c charts.Charts) charts.Charts {
+	return c.Sum()
+}
+
 func (cmd printTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := cmd.printCharts.getOutCharts(
-		session,
-		func(c charts.Charts) charts.Charts { return c.Sum() },
-		s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -159,12 +173,13 @@ type printFade struct {
 	date time.Time
 }
 
+func (cmd printFade) Accumulate(c charts.Charts) charts.Charts {
+	return c.Fade(cmd.hl)
+}
+
 func (cmd printFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := cmd.printCharts.getOutCharts(
-		session,
-		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
-		s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -198,33 +213,18 @@ func (cmd printFade) Execute(
 	return nil
 }
 
-func getSupertags(
-	c charts.Charts,
-	user string,
-	r rsrc.Reader,
-) (charts.Partition, error) {
-
-	tags, err := organize.LoadArtistTags(c.Keys(), r)
-	if err != nil {
-		return nil, err
-	}
-
-	corrections, _ := unpack.LoadSupertagCorrections(user, r)
-
-	return charts.Supertags(tags, config.Supertags, corrections), nil
-}
-
 type printPeriod struct {
 	printCharts
 	period string
 }
 
+func (cmd printPeriod) Accumulate(c charts.Charts) charts.Charts {
+	return c.Sum()
+}
+
 func (cmd printPeriod) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := cmd.printCharts.getOutCharts(
-		session,
-		func(c charts.Charts) charts.Charts { return c.Sum() },
-		s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -269,12 +269,13 @@ type printInterval struct {
 	before time.Time
 }
 
+func (cmd printInterval) Accumulate(c charts.Charts) charts.Charts {
+	return c.Sum()
+}
+
 func (cmd printInterval) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := cmd.printCharts.getOutCharts(
-		session,
-		func(c charts.Charts) charts.Charts { return c.Sum() },
-		s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -318,12 +319,13 @@ type printFadeMax struct {
 	hl float64
 }
 
+func (cmd printFadeMax) Accumulate(c charts.Charts) charts.Charts {
+	return c.Fade(cmd.hl)
+}
+
 func (cmd printFadeMax) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := cmd.printCharts.getOutCharts(
-		session,
-		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
-		s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}

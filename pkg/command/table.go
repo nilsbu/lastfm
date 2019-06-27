@@ -14,12 +14,13 @@ type tableTotal struct {
 	step int
 }
 
+func (cmd tableTotal) Accumulate(c charts.Charts) charts.Charts {
+	return c.Sum()
+}
+
 func (cmd tableTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := cmd.printCharts.getOutCharts(
-		session,
-		func(c charts.Charts) charts.Charts { return c.Sum() },
-		s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -50,12 +51,13 @@ type tableFade struct {
 	hl   float64
 }
 
+func (cmd tableFade) Accumulate(c charts.Charts) charts.Charts {
+	return c.Fade(cmd.hl)
+}
+
 func (cmd tableFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := cmd.printCharts.getOutCharts(
-		session,
-		func(c charts.Charts) charts.Charts { return c.Fade(cmd.hl) },
-		s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
