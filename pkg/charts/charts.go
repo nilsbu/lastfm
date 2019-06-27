@@ -195,8 +195,6 @@ func (c Charts) Rank() (ranks Charts) {
 	return
 }
 
-// TODO is this needed?
-
 type totalPartition struct{}
 
 func (totalPartition) Partitions() []string {
@@ -209,4 +207,22 @@ func (totalPartition) Get(key string) string {
 
 func (c Charts) Total() []float64 {
 	return c.Group(totalPartition{})[""]
+}
+
+// Max returns a Column where the score for each key is equal to the maximum of
+// all scores in that key's line.
+func (c Charts) Max() (max Column) {
+	max = Column{}
+
+	for key, values := range c {
+		m := 0.0
+		for _, v := range values {
+			m = math.Max(m, v)
+		}
+		max = append(max, Score{Name: key, Score: m})
+	}
+
+	sort.Sort(max)
+
+	return
 }

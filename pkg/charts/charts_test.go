@@ -322,3 +322,39 @@ func TestChartsTotal(t *testing.T) {
 		}
 	}
 }
+
+func TestChartsMax(t *testing.T) {
+	cases := []struct {
+		charts Charts
+		max    Column
+	}{
+		{
+			Charts{},
+			Column{},
+		},
+		{
+			Charts{"a": []float64{}},
+			Column{{Name: "a", Score: 0}},
+		},
+		{
+			Charts{"o0o": []float64{0, 0, 7}},
+			Column{{Name: "o0o", Score: 7}},
+		},
+		{
+			Charts{
+				"o0o": []float64{0, 0, 7},
+				"lol": []float64{1, 2, 0}},
+			Column{
+				{Name: "o0o", Score: 7},
+				{Name: "lol", Score: 2}},
+		},
+	}
+
+	for _, c := range cases {
+		max := c.charts.Max()
+		if !reflect.DeepEqual(max, c.max) {
+			t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+				max, c.max)
+		}
+	}
+}

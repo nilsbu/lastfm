@@ -68,6 +68,7 @@ var cmdPrint = node{
 		"fade":     node{cmd: exePrintFade},
 		"period":   node{cmd: exePrintPeriod},
 		"interval": node{cmd: exePrintInterval},
+		"fademax":  node{cmd: exePrintFadeMax},
 		"tags":     node{cmd: exePrintTags},
 		"total":    node{cmd: exePrintTotal},
 	},
@@ -193,6 +194,31 @@ var exePrintInterval = &cmd{
 		"name":       optGenericName,
 		"n":          optArtistCount,
 		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
+	},
+	session: true,
+}
+
+var exePrintFadeMax = &cmd{
+	descr: "", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printFadeMax{printCharts: printCharts{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: false, // Disabled since it makes no sense here
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			hl: params[0].(float64),
+		}
+	},
+	params: params{parHL},
+	options: options{
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
 		"normalized": optChartsNormalized,
 		"entry":      optChartsEntry,
 	},
