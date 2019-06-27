@@ -205,12 +205,7 @@ func (cmd printFade) Execute(
 		Percentage: cmd.percentage,
 	}
 
-	err = d.Display(f)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.Display(f)
 }
 
 type printPeriod struct {

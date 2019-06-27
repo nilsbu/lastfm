@@ -18,7 +18,7 @@ func date(str string) time.Time {
 	return date
 }
 
-func TestPrintTotal(t *testing.T) {
+func TestPrint(t *testing.T) {
 	user := "TestUser"
 
 	tagsX := []unpack.TagCount{{Name: "pop", Count: 100}}
@@ -59,8 +59,23 @@ func TestPrintTotal(t *testing.T) {
 			},
 			nil,
 			false,
-		},
-		{
+		}, {
+			"no user (year)",
+			nil,
+			&charts.Charts{"X": []float64{1, 0, 1}},
+			printTotal{
+				printCharts: printCharts{
+					by:         "year",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				date: date("2018-01-01"),
+			},
+			nil,
+			false,
+		}, {
 			"no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			nil,
@@ -76,8 +91,7 @@ func TestPrintTotal(t *testing.T) {
 			},
 			nil,
 			false,
-		},
-		{
+		}, {
 			"no corrections",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{"X": []float64{1, 0, 1}},
@@ -100,8 +114,7 @@ func TestPrintTotal(t *testing.T) {
 				Percentage: false,
 			},
 			true,
-		},
-		{
+		}, {
 			"by super",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{
@@ -138,8 +151,7 @@ func TestPrintTotal(t *testing.T) {
 				Percentage: false,
 			},
 			true,
-		},
-		{
+		}, {
 			"rock bucket",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{
@@ -164,8 +176,7 @@ func TestPrintTotal(t *testing.T) {
 				Percentage: true,
 			},
 			true,
-		},
-		{
+		}, {
 			"'all' with name invalid",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{"X": []float64{1, 0, 1}},
@@ -177,8 +188,7 @@ func TestPrintTotal(t *testing.T) {
 			},
 			nil,
 			false,
-		},
-		{
+		}, {
 			"by invalid with name empty",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{"X": []float64{1, 0, 1}},
@@ -190,8 +200,7 @@ func TestPrintTotal(t *testing.T) {
 			},
 			nil,
 			false,
-		},
-		{
+		}, {
 			"by invalid with name non-empty",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{"X": []float64{1, 0, 1}},
@@ -203,8 +212,7 @@ func TestPrintTotal(t *testing.T) {
 			},
 			nil,
 			false,
-		},
-		{
+		}, {
 			"by super with name invalid",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{"X": []float64{1, 0, 1}},
@@ -216,8 +224,7 @@ func TestPrintTotal(t *testing.T) {
 			},
 			nil,
 			false,
-		},
-		{
+		}, {
 			"by year",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
 			&charts.Charts{
@@ -245,8 +252,7 @@ func TestPrintTotal(t *testing.T) {
 				Percentage: false,
 			},
 			true,
-		},
-		{
+		}, {
 			"by year 2017",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
 			&charts.Charts{
@@ -272,6 +278,109 @@ func TestPrintTotal(t *testing.T) {
 				Percentage: false,
 			},
 			true,
+		}, {
+			"no tags",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"Z": []float64{1}},
+			printTotal{
+				printCharts: printCharts{
+					by:         "super",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+			},
+			nil,
+			false,
+		}, {
+			"all regular",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			&charts.Charts{
+				"X": []float64{1, 0, 1}},
+			printTotal{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: true,
+					normalized: false,
+					n:          10,
+				},
+				date: date("2018-01-01"),
+			},
+			&format.Charts{
+				Charts:     charts.Charts{"X": []float64{1, 1, 2}},
+				Column:     -1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  2,
+				Percentage: true,
+			},
+			true,
+		},
+		// Fade
+		{
+			"fade regular",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			&charts.Charts{
+				"X": []float64{1, 0, 1}},
+			printFade{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: true,
+					normalized: false,
+					n:          10,
+				},
+				hl:   1,
+				date: date("2018-01-01"),
+			},
+			&format.Charts{
+				Charts:     charts.Charts{"X": []float64{1, 0.5, 1.25}},
+				Column:     -1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  2,
+				Percentage: true,
+			},
+			true,
+		}, {
+			"fade fail",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			&charts.Charts{
+				"X": []float64{1, 0, 1}},
+			printFade{
+				printCharts: printCharts{
+					by:         "year",
+					name:       "9",
+					percentage: true,
+					normalized: false,
+					n:          10,
+				},
+				hl:   1,
+				date: date("2018-01-01"),
+			},
+			nil,
+			false,
+		}, {
+			"fade false user",
+			&unpack.User{Name: "no user", Registered: rsrc.ParseDay("2018-01-01")},
+			&charts.Charts{
+				"X": []float64{1, 0, 1}},
+			printFade{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: true,
+					normalized: false,
+					n:          10,
+				},
+				hl:   1,
+				date: date("2018-01-01"),
+			},
+			nil,
+			false,
 		},
 		// TODO test corrections (in other test)
 		// TODO test normalized (in other test)
