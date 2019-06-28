@@ -250,12 +250,7 @@ func (cmd printPeriod) Execute(
 		SumTotal:   sumTotal,
 	}
 
-	err = d.Display(f)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.Display(f)
 }
 
 type printInterval struct {

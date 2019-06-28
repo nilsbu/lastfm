@@ -40,7 +40,7 @@ func TestPrint(t *testing.T) {
 		user      *unpack.User
 		charts    *charts.Charts
 		cmd       command
-		formatter *format.Charts
+		formatter format.Formatter
 		ok        bool
 	}{
 		{
@@ -381,6 +381,82 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
+		}, {
+			"period functional",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8}},
+			printPeriod{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				period: "2018",
+			},
+			&format.Column{
+				Column:     charts.Column{charts.Score{Name: "X", Score: 9}},
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+				SumTotal:   9,
+			},
+			true,
+		}, {
+			"period; no charts",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8}},
+			printPeriod{
+				printCharts: printCharts{by: "xx", n: 10},
+				period:      "2018",
+			},
+			nil, false,
+		}, {
+			"period; user",
+			&unpack.User{Name: "nop", Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8}},
+			printPeriod{
+				printCharts: printCharts{by: "all", n: 10},
+				period:      "2018",
+			},
+			nil, false,
+		}, {
+			"period; broken period",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8}},
+			printPeriod{
+				printCharts: printCharts{by: "all", n: 10},
+				period:      "I don't work",
+			},
+			nil, false,
+		}, {
+			"period; percentage",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8}},
+			printPeriod{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: true,
+					normalized: false,
+					n:          10,
+				},
+				period: "2018",
+			},
+			&format.Column{
+				Column:     charts.Column{charts.Score{Name: "X", Score: 9}},
+				Numbered:   true,
+				Precision:  2,
+				Percentage: true,
+				SumTotal:   9,
+			},
+			true,
 		},
 		// TODO test corrections (in other test)
 		// TODO test normalized (in other test)
@@ -434,8 +510,8 @@ func TestPrint(t *testing.T) {
 				} else if len(d.Msgs) > 1 {
 					t.Fatalf("got %v messages but expected 1", len(d.Msgs))
 				} else {
-					if !reflect.DeepEqual(d.Msgs[0], c.formatter) {
-						t.Errorf("%v != %v", d.Msgs[0], c.formatter)
+					if !reflect.DeepEqual(c.formatter, d.Msgs[0]) {
+						t.Errorf("formatter does not match expected: %v != %v", c.formatter, d.Msgs[0])
 					}
 				}
 			}
