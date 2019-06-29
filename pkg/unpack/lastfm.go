@@ -48,11 +48,10 @@ func (o *obUserInfo) interpret(raw interface{}) (interface{}, error) {
 
 func (o *obUserInfo) raw(obj interface{}) interface{} {
 	user := obj.(*User)
-	utc, _ := user.Registered.Midnight()
 	js := jsonUserInfo{User: jsonUser{
 		Name:       user.Name,
 		PlayCount:  0,
-		Registered: jsonTime{UTC: utc},
+		Registered: jsonTime{UTC: user.Registered.Midnight()},
 	}}
 	return js
 }

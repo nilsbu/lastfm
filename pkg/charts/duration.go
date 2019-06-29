@@ -163,16 +163,15 @@ func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
 }
 
 func Index(t time.Time, registered rsrc.Day) int {
-	offset, _ := registered.Midnight()
-	return int((t.Unix()-offset)/86400 - 1)
+	return int((t.Unix()-registered.Midnight())/86400 - 1)
 }
 
 // TODO use in table formatting & change name
 func (c Charts) ToIntervals(step Step, registered rsrc.Day) []Interval {
-	reg, _ := registered.Midnight()
+	reg := registered.Midnight()
 	ii := newIntervalIterator(
 		step,
-		time.Unix(reg, 0).UTC(),
+		registered.Time(),
 		reg+int64(86400*c.Len()))
 
 	intervals := []Interval{}

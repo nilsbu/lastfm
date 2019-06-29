@@ -1,7 +1,6 @@
 package format
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -25,17 +24,12 @@ func (f *Table) CSV(w io.Writer, decimal string) error {
 
 	io.WriteString(w, "\"name\";")
 
-	date, ok := f.First.Midnight()
-	if !ok {
-		return errors.New("'First' date is invalid")
-	}
-
 	for i := 0; i < f.Charts.Len(); i += f.Step {
 		if i > 0 {
 			io.WriteString(w, ";")
 		}
 
-		t := time.Unix(date+int64(i*86400), 0).UTC()
+		t := time.Unix(f.First.Midnight()+int64(i*86400), 0).UTC()
 		fmt.Fprintf(w, "%04d-%02d-%02d", t.Year(), t.Month(), t.Day())
 	}
 	io.WriteString(w, "\n")

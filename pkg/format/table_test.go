@@ -25,12 +25,6 @@ func TestTableCSV(t *testing.T) {
 			"",
 		},
 		{
-			charts.Charts{"ABC": []float64{2}},
-			rsrc.NoDay(),
-			1, 2, ",", false,
-			"",
-		},
-		{
 			charts.Charts{"X": []float64{}},
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, ",", true,

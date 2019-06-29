@@ -1,8 +1,6 @@
 package charts
 
 import (
-	"time"
-
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -21,8 +19,7 @@ func (c Charts) FindEntryDates(registered rsrc.Day, threshold float64,
 
 		for i, value := range values {
 			if value >= threshold {
-				date, _ := registered.Midnight()
-				date += int64(86400 * i)
+				date := registered.Midnight() + int64(86400*i)
 				entryDates = append(entryDates, EntryDate{name, rsrc.ToDay(date)})
 				break
 			}
@@ -62,8 +59,7 @@ func (c Charts) FindEntryDatesDynamic(registered rsrc.Day, threshold float64,
 		}
 
 		if idx != -1 {
-			date, _ := registered.Midnight()
-			date += int64(86400 * idx)
+			date := registered.Midnight() + int64(86400*idx)
 			entryDates = append(entryDates, EntryDate{name, rsrc.ToDay(date)})
 		}
 	}
@@ -73,10 +69,8 @@ func (c Charts) FindEntryDatesDynamic(registered rsrc.Day, threshold float64,
 
 func FilterEntryDates(entryDates []EntryDate, cutoff rsrc.Day,
 ) (filtered []EntryDate) {
-	cutoffM, _ := cutoff.Midnight()
 	for _, entryDate := range entryDates {
-		date, _ := entryDate.Date.Midnight()
-		if date >= cutoffM {
+		if entryDate.Date.Midnight() >= cutoff.Midnight() {
 			filtered = append(filtered, entryDate)
 		}
 	}
@@ -94,15 +88,13 @@ func (c Charts) GetYearPartition(registered rsrc.Day, threshold float64,
 	}
 
 	for _, entryDate := range entryDates {
-		m, _ := entryDate.Date.Midnight()
-		p.assoc[entryDate.Name] = time.Unix(m, 0).UTC().Format("2006")
+		p.assoc[entryDate.Name] = entryDate.Date.Time().Format("2006")
 	}
 
-	reg, _ := registered.Midnight()
 	ii := newIntervalIterator(
 		Year,
-		time.Unix(reg, 0).UTC(),
-		reg+int64(86400*c.Len()))
+		registered.Time(),
+		registered.Midnight()+int64(86400*c.Len()))
 
 	for ii.HasNext() {
 		p.partitions = append(p.partitions, ii.Next().Begin.Format("2006"))

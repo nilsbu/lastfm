@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"time"
 )
 
 type Locator interface {
@@ -31,7 +30,7 @@ func UserInfo(user string) Locator {
 		nameType: "user",
 		name:     user,
 		page:     -1,
-		day:      NoDay(),
+		day:      nil,
 		limit:    -1,
 	}
 }
@@ -54,7 +53,7 @@ func ArtistInfo(artist string) Locator {
 		nameType: "artist",
 		name:     artist,
 		page:     -1,
-		day:      NoDay(),
+		day:      nil,
 		limit:    -1,
 	}
 }
@@ -66,7 +65,7 @@ func ArtistTags(artist string) Locator {
 		nameType: "artist",
 		name:     artist,
 		page:     -1,
-		day:      NoDay(),
+		day:      nil,
 		limit:    -1,
 	}
 }
@@ -78,7 +77,7 @@ func TagInfo(tag string) Locator {
 		nameType: "tag",
 		name:     tag,
 		page:     -1,
-		day:      NoDay(),
+		day:      nil,
 		limit:    -1,
 	}
 }
@@ -98,7 +97,8 @@ func (loc *lastFM) URL(apiKey string) (string, error) {
 		url += fmt.Sprintf("&page=%d", int(loc.page))
 	}
 
-	if timestamp, ok := loc.day.Midnight(); ok {
+	if loc.day != nil {
+		timestamp := loc.day.Midnight()
 		url += fmt.Sprintf("&from=%d&to=%d",
 			timestamp-1, timestamp+86400)
 	}
@@ -134,8 +134,7 @@ func (loc *lastFM) Path() (string, error) {
 	var path string
 	switch loc.method {
 	case "user.getRecentTracks":
-		midnight, _ := loc.day.Midnight()
-		t := time.Unix(midnight, 0).UTC()
+		t := loc.day.Time()
 		path = fmt.Sprintf("%v/%v/%04v-%02v-%02vT%02v-%02v-%02v-%v",
 			loc.name, 86400,
 			t.Year(), int(t.Month()), t.Day(),

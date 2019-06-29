@@ -44,8 +44,7 @@ func (cmd printTimeline) Execute(
 		user.Registered, rsrc.Date(cmd.from), rsrc.Date(cmd.before))
 
 	for _, event := range events {
-		utc, _ := event.Date.Midnight()
-		t := time.Unix(utc, 0).UTC()
+		t := event.Date.Time()
 		d.Display(&format.Message{
 			Msg: fmt.Sprintf(
 				"%v: %v",

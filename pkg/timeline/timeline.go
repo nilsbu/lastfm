@@ -20,20 +20,15 @@ func CompileEvents(
 	registered, from, before rsrc.Day,
 ) (events []Event) {
 
-	f, ok := from.Midnight()
-	if !ok {
-		return
-	}
-	b, ok := before.Midnight()
-	if !ok {
+	if from == nil || before == nil {
 		return
 	}
 
 	entries := c.FindEntryDatesDynamic(registered, 2)
 
 	for _, entry := range entries {
-		ed, _ := entry.Date.Midnight()
-		if ed >= f && ed < b {
+		ed := entry.Date.Midnight()
+		if ed >= from.Midnight() && ed < before.Midnight() {
 			events = append(events, Event{
 				entry.Date,
 				fmt.Sprintf("enter %v", entry.Name),
@@ -49,7 +44,5 @@ func CompileEvents(
 func (es eventsT) Len() int      { return len(es) }
 func (es eventsT) Swap(i, j int) { es[i], es[j] = es[j], es[i] }
 func (es eventsT) Less(i, j int) bool {
-	a, _ := es[i].Date.Midnight()
-	b, _ := es[j].Date.Midnight()
-	return a < b
+	return es[i].Date.Midnight() < es[j].Date.Midnight()
 }

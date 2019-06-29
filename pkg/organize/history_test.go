@@ -28,13 +28,13 @@ func TestLoadHistory(t *testing.T) {
 		},
 		{
 			unpack.User{Name: "", Registered: rsrc.ToDay(0)},
-			rsrc.NoDay(),
+			nil,
 			[][]string{[]string{}, []string{}},
 			nil,
 			false,
 		},
 		{
-			unpack.User{Name: "", Registered: rsrc.NoDay()},
+			unpack.User{Name: "", Registered: nil},
 			rsrc.ToDay(86400),
 			[][]string{[]string{}, []string{}},
 			nil,
@@ -82,8 +82,7 @@ func TestLoadHistory(t *testing.T) {
 			files := make(map[rsrc.Locator][]byte)
 			for j, day := range tc.data {
 				for k, d := range day {
-					reg, _ := tc.user.Registered.Midnight()
-					time := reg + int64(j*86400)
+					time := tc.user.Registered.Midnight() + int64(j*86400)
 					files[rsrc.History(tc.user.Name, k+1, rsrc.ToDay(time))] = []byte(d)
 				}
 			}
@@ -130,7 +129,7 @@ func TestUpdateHistory(t *testing.T) {
 			false,
 		},
 		{ // Registration day invalid
-			unpack.User{Name: "AA", Registered: rsrc.NoDay()},
+			unpack.User{Name: "AA", Registered: nil},
 			rsrc.ToDay(0),
 			nil,
 			map[rsrc.Locator][]byte{},
@@ -140,7 +139,7 @@ func TestUpdateHistory(t *testing.T) {
 		},
 		{ // Begin no valid day
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
-			rsrc.NoDay(),
+			nil,
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},

@@ -57,9 +57,7 @@ func TestLoadUserInfo(t *testing.T) {
 					t.Error("wrong name")
 				}
 
-				hasMidn, _ := user.Registered.Midnight()
-				wantMidn, _ := c.user.Registered.Midnight()
-				if hasMidn != wantMidn {
+				if user.Registered.Midnight() != c.user.Registered.Midnight() {
 					t.Error("wrong registered")
 				}
 			}

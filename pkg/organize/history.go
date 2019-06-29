@@ -16,14 +16,15 @@ func LoadHistory(
 	until rsrc.Day,
 	r rsrc.Reader) ([]charts.Charts, error) {
 
-	untilMdn, uOK := until.Midnight()
-	registered, rOK := user.Registered.Midnight()
-	if !uOK {
+	if until == nil {
 		return nil, errors.New("parameter 'until' is no valid Day")
-	} else if !rOK {
+	} else if user.Registered == nil {
 		return nil, errors.New("user has no valid registration date")
 	}
-	days := int((untilMdn - registered) / 86400)
+
+	registered := user.Registered.Midnight()
+
+	days := int((until.Midnight() - registered) / 86400)
 	result := make([]charts.Charts, days+1)
 	feedback := make(chan error)
 	for i := range result {
@@ -105,11 +106,11 @@ func UpdateHistory(
 	until rsrc.Day,
 	s store.Store,
 ) (plays []charts.Charts, err error) {
-	registeredDay, ok := user.Registered.Midnight()
-	if !ok {
+	if user.Registered == nil {
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
 			user.Name)
 	}
+	registeredDay := user.Registered.Midnight()
 	begin := registeredDay
 
 	oldPlays, err := unpack.LoadAllDayPlays(user.Name, s)
@@ -120,11 +121,11 @@ func UpdateHistory(
 		oldPlays = oldPlays[:len(oldPlays)-1]
 	}
 
-	midn, ok := until.Midnight()
-	if !ok {
+	if until == nil {
 		return nil, errors.New("'until' is not a valid day")
 	}
-	if begin > midn+86400 {
+
+	if begin > until.Midnight()+86400 {
 		days := int((begin-registeredDay)/86400) - 1
 		return oldPlays[:days], nil
 	}
