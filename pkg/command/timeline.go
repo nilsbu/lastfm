@@ -41,7 +41,9 @@ func (cmd printTimeline) Execute(
 
 	events := timeline.CompileEvents(
 		cha,
-		user.Registered, rsrc.Date(cmd.from), rsrc.Date(cmd.before))
+		user.Registered,
+		rsrc.ToDay(cmd.from.Unix()),
+		rsrc.ToDay(cmd.before.Unix()))
 
 	for _, event := range events {
 		t := event.Date.Time()

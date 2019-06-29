@@ -12,34 +12,34 @@ type Day interface {
 	Time() time.Time
 }
 
-// Date is a representation of time. It implements Day.
-type Date time.Time
+// date is a representation of time. It implements Day.
+type date time.Time
 
 // ToDay converts a Unix timestamp into a Day. The day is only valid if the
 // time stamp is non-negative.
 func ToDay(timestamp int64) Day {
 	midnight := timestamp - timestamp%86400
-	return Date(time.Unix(midnight, 0).UTC())
+	return date(time.Unix(midnight, 0).UTC())
 }
 
 // ParseDay parses a date from a string in the format YYYY-MM-DD. It returns nil
 // if the string is not valid.
-func ParseDay(date string) Day {
-	t, err := time.Parse("2006-01-02", date)
+func ParseDay(str string) Day {
+	t, err := time.Parse("2006-01-02", str)
 	if err != nil {
 		return nil
 	}
 
-	return Date(t)
+	return date(t)
 }
 
 // Midnight returns the Unix timestamp of a date's midnight.
-func (d Date) Midnight() (unix int64) {
+func (d date) Midnight() (unix int64) {
 	t := time.Time(d).Unix()
 	return t
 }
 
 // Time converts a Date to a time.Time object.
-func (d Date) Time() time.Time {
+func (d date) Time() time.Time {
 	return time.Time(d)
 }

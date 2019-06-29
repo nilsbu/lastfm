@@ -21,7 +21,7 @@ func (cmd updateHistory) Execute(
 		return errors.Wrap(err, "failed to load user info")
 	}
 
-	plays, err := organize.UpdateHistory(user, rsrc.Date(time.Now()), s)
+	plays, err := organize.UpdateHistory(user, rsrc.ToDay(time.Now().Unix()), s)
 	if err != nil {
 		return errors.Wrap(err, "failed to update user history")
 	}
