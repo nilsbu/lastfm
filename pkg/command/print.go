@@ -355,10 +355,5 @@ func (cmd printTags) Execute(
 		Column:   col,
 		Numbered: true}
 
-	err = d.Display(f)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.Display(f)
 }

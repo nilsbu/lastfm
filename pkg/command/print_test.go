@@ -557,7 +557,6 @@ func TestPrint(t *testing.T) {
 					rsrc.TagInfo("rock"):         nil},
 				mock.Path)
 			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
-
 			d := mock.NewDisplay()
 
 			unpack.WriteArtistTags("X", tagsX, s)
@@ -599,4 +598,67 @@ func TestPrint(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPrintTags(t *testing.T) {
+	artist := "X"
+
+	cases := []struct {
+		descr     string
+		tags      []unpack.TagCount
+		cmd       command
+		formatter format.Formatter
+		ok        bool
+	}{
+		{
+			"artist not available",
+			[]unpack.TagCount{{Name: "pop", Count: 100}},
+			printTags{artist: "nope"},
+			nil,
+			false,
+		},
+		{
+			"with tags",
+			[]unpack.TagCount{{Name: "pop", Count: 100}},
+			printTags{artist: artist},
+			&format.Column{
+				Column:   charts.Column{charts.Score{Name: "pop", Score: 100}},
+				Numbered: true,
+			},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.descr, func(t *testing.T) {
+			files, _ := mock.IO(
+				map[rsrc.Locator][]byte{
+					rsrc.ArtistTags(artist): nil},
+				mock.Path)
+			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
+			d := mock.NewDisplay()
+
+			unpack.WriteArtistTags(artist, c.tags, s)
+
+			err := c.cmd.Execute(nil, s, d)
+			if err != nil && c.ok {
+				t.Fatalf("unexpected error: %v", err)
+			} else if err == nil && !c.ok {
+				t.Fatalf("expected error but none occurred")
+			}
+
+			if err == nil {
+				if len(d.Msgs) == 0 {
+					t.Fatalf("no message was printed")
+				} else if len(d.Msgs) > 1 {
+					t.Fatalf("got %v messages but expected 1", len(d.Msgs))
+				} else {
+					if !reflect.DeepEqual(c.formatter, d.Msgs[0]) {
+						t.Errorf("formatter does not match expected: %v != %v", c.formatter, d.Msgs[0])
+					}
+				}
+			}
+		})
+	}
+
 }
