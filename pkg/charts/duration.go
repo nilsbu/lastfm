@@ -9,11 +9,10 @@ import (
 )
 
 // Interval is a time span. Begin is the first moment, Before is the moment
-// immediately after the interval ends. By convention both have to be at
-// midnight UTC so the interval represents full days only.
+// immediately after the interval ends.
 type Interval struct {
-	Begin  time.Time
-	Before time.Time
+	Begin  rsrc.Day
+	Before rsrc.Day
 }
 
 type Step int
@@ -24,14 +23,19 @@ const (
 	Year
 )
 
+type intervalIterator interface {
+	HasNext() bool
+	Next() Interval
+}
+
 // TODO mix between int64 and time.Time
-type intervalIterator struct {
+type iIterator struct {
 	step     Step
 	interval Interval
 	before   int64
 }
 
-func newIntervalIterator(step Step, from time.Time, before int64) *intervalIterator {
+func newIntervalIterator(step Step, from rsrc.Day, before int64) intervalIterator {
 	var interval Interval
 
 	switch step {
@@ -43,18 +47,18 @@ func newIntervalIterator(step Step, from time.Time, before int64) *intervalItera
 		interval = yearPeriod(from)
 	}
 
-	return &intervalIterator{
+	return &iIterator{
 		step:     step,
 		interval: interval,
 		before:   before,
 	}
 }
 
-func (ii *intervalIterator) HasNext() bool {
-	return ii.interval.Begin.Unix() < ii.before
+func (ii *iIterator) HasNext() bool {
+	return ii.interval.Begin.Midnight() < ii.before
 }
 
-func (ii *intervalIterator) Next() Interval {
+func (ii *iIterator) Next() Interval {
 	interval := ii.interval
 
 	before := ii.interval.Before
@@ -71,27 +75,30 @@ func (ii *intervalIterator) Next() Interval {
 	return interval
 }
 
-func dayPeriod(t time.Time) Interval {
+func dayPeriod(day rsrc.Day) Interval {
+	t := day.Time()
 	y, m, d := t.Year(), t.Month(), t.Day()
 	return Interval{
-		Begin:  time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC),
-		Before: time.Date(y, time.Month(m), d+1, 0, 0, 0, 0, time.UTC),
+		Begin:  rsrc.ToDay(time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC).Unix()),
+		Before: rsrc.ToDay(time.Date(y, time.Month(m), d+1, 0, 0, 0, 0, time.UTC).Unix()),
 	}
 }
 
-func monthPeriod(t time.Time) Interval {
+func monthPeriod(day rsrc.Day) Interval {
+	t := day.Time()
 	y, m := t.Year(), t.Month()
 	return Interval{
-		Begin:  time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC),
-		Before: time.Date(y, time.Month(m+1), 1, 0, 0, 0, 0, time.UTC),
+		Begin:  rsrc.ToDay(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Before: rsrc.ToDay(time.Date(y, time.Month(m+1), 1, 0, 0, 0, 0, time.UTC).Unix()),
 	}
 }
 
-func yearPeriod(t time.Time) Interval {
+func yearPeriod(day rsrc.Day) Interval {
+	t := day.Time()
 	y := t.Year()
 	return Interval{
-		Begin:  time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC),
-		Before: time.Date(y+1, time.January, 1, 0, 0, 0, 0, time.UTC),
+		Begin:  rsrc.ToDay(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Before: rsrc.ToDay(time.Date(y+1, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
 	}
 }
 
@@ -102,13 +109,13 @@ func Period(descr string) (Interval, error) {
 		if err != nil {
 			return Interval{}, err
 		}
-		return yearPeriod(begin), nil
+		return yearPeriod(rsrc.ToDay(begin.Unix())), nil
 	case 7:
 		begin, err := time.Parse("2006-01", descr)
 		if err != nil {
 			return Interval{}, err
 		}
-		return monthPeriod(begin), nil
+		return monthPeriod(rsrc.ToDay(begin.Unix())), nil
 	default:
 		return Interval{}, fmt.Errorf("interval format '%v' not supported", descr)
 	}
@@ -162,8 +169,8 @@ func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
 	return Compile(icharts)
 }
 
-func Index(t time.Time, registered rsrc.Day) int {
-	return int((t.Unix()-registered.Midnight())/86400 - 1)
+func Index(t rsrc.Day, registered rsrc.Day) int {
+	return int((t.Midnight()-registered.Midnight())/86400 - 1)
 }
 
 // TODO use in table formatting & change name
@@ -171,7 +178,7 @@ func (c Charts) ToIntervals(step Step, registered rsrc.Day) []Interval {
 	reg := registered.Midnight()
 	ii := newIntervalIterator(
 		step,
-		registered.Time(),
+		registered,
 		reg+int64(86400*c.Len()))
 
 	intervals := []Interval{}

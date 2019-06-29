@@ -115,7 +115,7 @@ func (cmd tablePeriods) Execute(
 
 	f := &format.Table{
 		Charts: out,
-		First:  rsrc.ToDay(intervals[0].Begin.Unix()),
+		First:  intervals[0].Begin,
 		Step:   1,
 		Count:  cmd.n,
 	}

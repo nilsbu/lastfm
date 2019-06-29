@@ -206,21 +206,21 @@ func TestParsePeriod(t *testing.T) {
 		{
 			"y", rsrc.ParseDay("2007-01-01"), 600,
 			[]charts.Interval{
-				{Begin: date("2007-01-01"), Before: date("2008-01-01")},
-				{Begin: date("2008-01-01"), Before: date("2009-01-01")},
+				{Begin: rsrc.ParseDay("2007-01-01"), Before: rsrc.ParseDay("2008-01-01")},
+				{Begin: rsrc.ParseDay("2008-01-01"), Before: rsrc.ParseDay("2009-01-01")},
 			}, true,
 		},
 		{
 			"y", rsrc.ParseDay("2007-02-01"), 3,
 			[]charts.Interval{
-				{Begin: date("2007-01-01"), Before: date("2008-01-01")},
+				{Begin: rsrc.ParseDay("2007-01-01"), Before: rsrc.ParseDay("2008-01-01")},
 			}, true,
 		},
 		{
 			"m", rsrc.ParseDay("2007-02-01"), 30,
 			[]charts.Interval{
-				{Begin: date("2007-02-01"), Before: date("2007-03-01")},
-				{Begin: date("2007-03-01"), Before: date("2007-04-01")},
+				{Begin: rsrc.ParseDay("2007-02-01"), Before: rsrc.ParseDay("2007-03-01")},
+				{Begin: rsrc.ParseDay("2007-03-01"), Before: rsrc.ParseDay("2007-04-01")},
 			}, true,
 		},
 		{

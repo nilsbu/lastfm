@@ -93,11 +93,11 @@ func (c Charts) GetYearPartition(registered rsrc.Day, threshold float64,
 
 	ii := newIntervalIterator(
 		Year,
-		registered.Time(),
+		registered,
 		registered.Midnight()+int64(86400*c.Len()))
 
 	for ii.HasNext() {
-		p.partitions = append(p.partitions, ii.Next().Begin.Format("2006"))
+		p.partitions = append(p.partitions, ii.Next().Begin.Time().Format("2006"))
 	}
 	p.partitions = append(p.partitions, "-")
 	return p
