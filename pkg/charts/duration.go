@@ -142,37 +142,45 @@ func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 	return column
 }
 
+func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
+	icharts := []Charts{}
+	for _, i := range intervals {
+		col := c.Interval(i, registered)
+
+		if len(col) == 0 {
+			continue
+		}
+
+		cha := Charts{}
+		for _, x := range col {
+			cha[x.Name] = []float64{x.Score}
+		}
+
+		icharts = append(icharts, cha)
+	}
+
+	return Compile(icharts)
+}
+
 func Index(t time.Time, registered rsrc.Day) int {
 	offset, _ := registered.Midnight()
 	return int((t.Unix()-offset)/86400 - 1)
 }
 
-// TODO use in table formatting
-func (c Charts) Intervals(step Step, registered rsrc.Day) Charts {
+// TODO use in table formatting & change name
+func (c Charts) ToIntervals(step Step, registered rsrc.Day) []Interval {
 	reg, _ := registered.Midnight()
 	ii := newIntervalIterator(
 		step,
 		time.Unix(reg, 0).UTC(),
 		reg+int64(86400*c.Len()))
 
-	columns := []Column{}
-
+	intervals := []Interval{}
 	for ii.HasNext() {
 		current := ii.Next()
 
-		columns = append(columns, c.Interval(current, registered))
+		intervals = append(intervals, current)
 	}
 
-	result := Charts{}
-	for _, val := range columns[0] {
-		result[val.Name] = make([]float64, len(columns))
-	}
-
-	for m, column := range columns {
-		for _, val := range column {
-			result[val.Name][m] = val.Score
-		}
-	}
-
-	return result
+	return intervals
 }

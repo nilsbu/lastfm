@@ -152,7 +152,7 @@ func TestChartsSumIntervals(t *testing.T) {
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
 			sum := c.charts.Sum()
-			intervals := sum.Intervals(c.step, c.registered)
+			intervals := sum.Intervals(sum.ToIntervals(c.step, c.registered), c.registered)
 
 			if !reflect.DeepEqual(intervals, c.intervals) {
 				t.Errorf("wrong data:\nhas:  %v\nwant: %v", intervals, c.intervals)
