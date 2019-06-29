@@ -76,8 +76,9 @@ var cmdPrint = node{
 
 var cmdTable = node{
 	nodes: nodes{
-		"fade":  node{cmd: exeTableFade},
-		"total": node{cmd: exeTableTotal},
+		"fade":   node{cmd: exeTableFade},
+		"period": node{cmd: exeTablePeriods},
+		"total":  node{cmd: exeTableTotal},
 	},
 }
 
@@ -298,6 +299,36 @@ var exeTableFade = &cmd{
 		"normalized": optChartsNormalized,
 		"entry":      optChartsEntry,
 		"step":       optStep,
+	},
+	session: true,
+}
+
+var exeTablePeriods = &cmd{
+	descr: "tables a user's top artists by total number of plays in the specified periods",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return tablePeriods{printCharts: printCharts{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			period: params[0].(string),
+		}
+	},
+	params: params{&param{
+		"period",
+		"period descriptor, format: '[0-9]*[yMd]'",
+		"string",
+	}},
+	options: options{
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
 	},
 	session: true,
 }

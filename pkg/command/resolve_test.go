@@ -247,6 +247,11 @@ func TestResolve(t *testing.T) {
 			tableTotal{printCharts: printCharts{by: "all", name: "", n: 10}, step: 200}, true,
 		},
 		{
+			[]string{"lastfm", "table", "period", "1y"},
+			&unpack.SessionInfo{User: "user"},
+			tablePeriods{printCharts: printCharts{by: "all", name: "", n: 10}, period: "1y"}, true,
+		},
+		{
 			[]string{"lastfm", "timeline", "-before=2008-01-23", "-from=2000-11-03"},
 			&unpack.SessionInfo{User: "user"},
 			printTimeline{

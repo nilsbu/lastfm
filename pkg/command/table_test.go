@@ -12,7 +12,7 @@ import (
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
-func TestTableTotal(t *testing.T) {
+func TestTable(t *testing.T) {
 	user := "TestUser"
 
 	cases := []struct {
@@ -20,8 +20,7 @@ func TestTableTotal(t *testing.T) {
 		user           *unpack.User
 		charts         *charts.Charts
 		correctionsRaw []byte
-		n              int
-		step           int
+		cmd            command
 		table          *format.Table
 		ok             bool
 	}{
@@ -30,7 +29,10 @@ func TestTableTotal(t *testing.T) {
 			nil,
 			&charts.Charts{"X": []float64{1, 0, 1}},
 			[]byte("{}"),
-			10, 1,
+			tableTotal{
+				printCharts: printCharts{by: "all", n: 10},
+				step:        1,
+			},
 			nil,
 			false,
 		},
@@ -39,7 +41,10 @@ func TestTableTotal(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			nil,
 			[]byte("{}"),
-			10, 1,
+			tableTotal{
+				printCharts: printCharts{by: "all", n: 10},
+				step:        1,
+			},
 			nil,
 			false,
 		},
@@ -48,7 +53,10 @@ func TestTableTotal(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{"X": []float64{1, 0, 1}},
 			nil,
-			10, 1,
+			tableTotal{
+				printCharts: printCharts{by: "all", n: 10},
+				step:        1,
+			},
 			&format.Table{
 				Charts: charts.Charts{"X": []float64{1, 1, 2}},
 				First:  rsrc.ParseDay("2018-01-01"),
@@ -62,7 +70,10 @@ func TestTableTotal(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			&charts.Charts{"X": []float64{1, 0, 1}},
 			[]byte("{}"),
-			10, 1,
+			tableTotal{
+				printCharts: printCharts{by: "all", n: 10},
+				step:        1,
+			},
 			&format.Table{
 				Charts: charts.Charts{"X": []float64{1, 1, 2}},
 				First:  rsrc.ParseDay("2018-01-01"),
@@ -70,6 +81,69 @@ func TestTableTotal(t *testing.T) {
 				Count:  10,
 			},
 			true,
+		},
+		{
+			"ok, different values", // TODO
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			&charts.Charts{"X": []float64{1, 0, 1}},
+			[]byte("{}"),
+			tableTotal{
+				printCharts: printCharts{by: "all", n: 3},
+				step:        2,
+			},
+			&format.Table{
+				Charts: charts.Charts{"X": []float64{1, 1, 2}},
+				First:  rsrc.ParseDay("2018-01-01"),
+				Step:   2,
+				Count:  3,
+			},
+			true,
+		}, {
+			"table period; years",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
+			&charts.Charts{"X": []float64{1, 0, 1, 5}},
+			[]byte("{}"),
+			tablePeriods{
+				printCharts: printCharts{by: "all", n: 10},
+				period:      "y",
+			},
+			&format.Table{
+				Charts: charts.Charts{"X": []float64{1, 6}},
+				First:  rsrc.ParseDay("2017-01-01"),
+				Step:   1,
+				Count:  10,
+			},
+			true,
+		}, {
+			"table period; charts broken",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
+			&charts.Charts{"X": []float64{1, 0, 1, 5}},
+			[]byte("{}"),
+			tablePeriods{
+				printCharts: printCharts{by: "allxxx", n: 10},
+				period:      "y",
+			},
+			nil, false,
+		}, {
+			"table period; no user",
+			&unpack.User{Name: "no one", Registered: rsrc.ParseDay("2017-12-30")},
+			&charts.Charts{"X": []float64{1, 0, 1, 5}},
+			[]byte("{}"),
+			tablePeriods{
+				printCharts: printCharts{by: "all", n: 10},
+				period:      "y",
+			},
+			nil, false,
+		}, {
+			"table period; false period",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
+			&charts.Charts{"X": []float64{1, 0, 1, 5}},
+			[]byte("{}"),
+			tablePeriods{
+				printCharts: printCharts{by: "all", n: 10},
+				period:      "invalid",
+			},
+			nil, false,
 		},
 	}
 
@@ -85,17 +159,6 @@ func TestTableTotal(t *testing.T) {
 			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
 
 			d := mock.NewDisplay()
-			cmd := tableTotal{
-				printCharts: printCharts{
-					by:         "all",
-					name:       "",
-					percentage: false,
-					normalized: false,
-					n:          c.n,
-				},
-				step: c.step,
-			}
-
 			if c.charts != nil {
 				err := unpack.WriteAllDayPlays(c.charts.UnravelDays(), user, s)
 				if err != nil {
@@ -110,7 +173,7 @@ func TestTableTotal(t *testing.T) {
 				}
 			}
 
-			err := cmd.Execute(&unpack.SessionInfo{User: user}, s, d)
+			err := c.cmd.Execute(&unpack.SessionInfo{User: user}, s, d)
 			if err != nil && c.ok {
 				t.Fatalf("unexpected error: %v", err)
 			} else if err == nil && !c.ok {
@@ -126,6 +189,65 @@ func TestTableTotal(t *testing.T) {
 					if !reflect.DeepEqual(d.Msgs[0], c.table) {
 						t.Errorf("%v != %v", d.Msgs[0], c.table)
 					}
+				}
+			}
+		})
+	}
+}
+
+func TestParsePeriod(t *testing.T) {
+	cases := []struct {
+		descr      string
+		registered rsrc.Day
+		n          int
+		intervals  []charts.Interval
+		ok         bool
+	}{
+		{
+			"y", rsrc.ParseDay("2007-01-01"), 600,
+			[]charts.Interval{
+				{Begin: date("2007-01-01"), Before: date("2008-01-01")},
+				{Begin: date("2008-01-01"), Before: date("2009-01-01")},
+			}, true,
+		},
+		{
+			"y", rsrc.ParseDay("2007-02-01"), 3,
+			[]charts.Interval{
+				{Begin: date("2007-01-01"), Before: date("2008-01-01")},
+			}, true,
+		},
+		{
+			"m", rsrc.ParseDay("2007-02-01"), 30,
+			[]charts.Interval{
+				{Begin: date("2007-02-01"), Before: date("2007-03-01")},
+				{Begin: date("2007-03-01"), Before: date("2007-04-01")},
+			}, true,
+		},
+		{
+			"asdasd", rsrc.ParseDay("2007-02-01"), 30,
+			[]charts.Interval{},
+			false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			days := []float64{}
+			for i := 0; i < c.n; i++ {
+				days = append(days, 0)
+			}
+			cha := charts.Charts{"x": days}
+
+			intervals, err := parsePeriod(cha, c.registered, c.descr)
+			if err != nil && c.ok {
+				t.Fatalf("unexpected error: %v", err)
+			} else if err == nil && !c.ok {
+				t.Fatalf("expected error but none occurred")
+			}
+
+			if c.ok {
+				if !reflect.DeepEqual(c.intervals, intervals) {
+					t.Errorf("%v != %v", c.intervals, intervals)
 				}
 			}
 		})
