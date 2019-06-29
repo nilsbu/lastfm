@@ -296,12 +296,7 @@ func (cmd printInterval) Execute(
 		SumTotal:   sumTotal,
 	}
 
-	err = d.Display(f)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.Display(f)
 }
 
 type printFadeMax struct {
@@ -336,12 +331,7 @@ func (cmd printFadeMax) Execute(
 		SumTotal:   sumTotal,
 	}
 
-	err = d.Display(f)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return d.Display(f)
 }
 
 type printTags struct {

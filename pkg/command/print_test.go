@@ -457,6 +457,88 @@ func TestPrint(t *testing.T) {
 				SumTotal:   9,
 			},
 			true,
+		}, {
+			"interval; basic",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8, 99}},
+			printInterval{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				begin:  date("2018-01-01"),
+				before: date("2018-01-03"),
+			},
+			&format.Column{
+				Column:     charts.Column{charts.Score{Name: "X", Score: 9}},
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+				SumTotal:   9,
+			},
+			true,
+		}, {
+			"interval; no charts",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8, 99}},
+			printInterval{
+				printCharts: printCharts{
+					by:         "sss",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				begin:  date("2018-01-01"),
+				before: date("2018-01-03"),
+			},
+			nil, false,
+		}, {
+			"interval; no user",
+			&unpack.User{Name: "", Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8, 99}},
+			printInterval{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				begin:  date("2018-01-01"),
+				before: date("2018-01-03"),
+			},
+			nil, false,
+		}, {
+			"interval; percentage",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&charts.Charts{
+				"X": []float64{7, 1, 8, 99}},
+			printInterval{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: true,
+					normalized: false,
+					n:          10,
+				},
+				begin:  date("2018-01-01"),
+				before: date("2018-01-03"),
+			},
+			&format.Column{
+				Column:     charts.Column{charts.Score{Name: "X", Score: 9}},
+				Numbered:   true,
+				Precision:  2,
+				Percentage: true,
+				SumTotal:   9,
+			},
+			true,
 		},
 		// TODO test corrections (in other test)
 		// TODO test normalized (in other test)
