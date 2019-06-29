@@ -28,51 +28,69 @@ type intervalIterator interface {
 	Next() Interval
 }
 
-// TODO mix between int64 and time.Time
 type iIterator struct {
-	step     Step
-	interval Interval
-	before   int64
+	next   Interval
+	before rsrc.Day
 }
 
-func newIntervalIterator(step Step, from rsrc.Day, before int64) intervalIterator {
-	var interval Interval
+type dayIterator struct {
+	iIterator
+}
 
+type monthIterator struct {
+	iIterator
+}
+
+type yearIterator struct {
+	iIterator
+}
+
+func newIntervalIterator(
+	step Step,
+	from rsrc.Day,
+	before rsrc.Day) intervalIterator {
 	switch step {
 	case Day:
-		interval = dayPeriod(from)
+		return &dayIterator{iIterator{
+			next:   dayPeriod(from),
+			before: before,
+		}}
 	case Month:
-		interval = monthPeriod(from)
+		return &monthIterator{iIterator{
+			next:   monthPeriod(from),
+			before: before,
+		}}
 	default:
-		interval = yearPeriod(from)
-	}
-
-	return &iIterator{
-		step:     step,
-		interval: interval,
-		before:   before,
+		return &yearIterator{iIterator{
+			next:   yearPeriod(from),
+			before: before,
+		}}
 	}
 }
 
 func (ii *iIterator) HasNext() bool {
-	return ii.interval.Begin.Midnight() < ii.before
+	return ii.next.Begin.Midnight() < ii.before.Midnight()
 }
 
-func (ii *iIterator) Next() Interval {
-	interval := ii.interval
+func (ii *dayIterator) Next() Interval {
+	next := ii.next
+	ii.next = dayPeriod(ii.next.Before)
 
-	before := ii.interval.Before
-	switch ii.step {
-	case Day:
-		ii.interval = dayPeriod(before)
-	case Month:
-		ii.interval = monthPeriod(before)
-	case Year:
-		ii.interval = yearPeriod(before)
-	default:
-	}
+	return next
+}
 
-	return interval
+func (ii *monthIterator) Next() Interval {
+	next := ii.next
+	ii.next = monthPeriod(ii.next.Before)
+
+	return next
+}
+
+func (ii *yearIterator) Next() Interval {
+	next := ii.next
+	ii.next = yearPeriod(ii.next.Before)
+
+	return next
 }
 
 func dayPeriod(day rsrc.Day) Interval {
@@ -179,7 +197,7 @@ func (c Charts) ToIntervals(step Step, registered rsrc.Day) []Interval {
 	ii := newIntervalIterator(
 		step,
 		registered,
-		reg+int64(86400*c.Len()))
+		rsrc.ToDay(reg+int64(86400*c.Len())))
 
 	intervals := []Interval{}
 	for ii.HasNext() {
