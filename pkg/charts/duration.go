@@ -117,16 +117,17 @@ func dayPeriod(day rsrc.Day, step int) Interval {
 
 func monthPeriod(day rsrc.Day, step int) Interval {
 	t := day.Time()
-	y, m := t.Year(), t.Month()
+	y := t.Year()
+	m := int(int(t.Month())-1)/step*step + 1
 	return Interval{
-		Begin:  rsrc.ToDay(time.Date(y, m, 1, 0, 0, 0, 0, time.UTC).Unix()),
-		Before: rsrc.ToDay(time.Date(y, time.Month(int(m)+step), 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Begin:  rsrc.ToDay(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Before: rsrc.ToDay(time.Date(y, time.Month(m+step), 1, 0, 0, 0, 0, time.UTC).Unix()),
 	}
 }
 
 func yearPeriod(day rsrc.Day, step int) Interval {
 	t := day.Time()
-	y := t.Year()
+	y := int(t.Year()/step) * step
 	return Interval{
 		Begin:  rsrc.ToDay(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
 		Before: rsrc.ToDay(time.Date(y+step, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
@@ -204,7 +205,7 @@ func Index(t rsrc.Day, registered rsrc.Day) int {
 	return int((t.Midnight()-registered.Midnight())/86400 - 1)
 }
 
-// TODO use in table formatting & change name
+// TODO change name
 func (c Charts) ToIntervals(
 	descr string, registered rsrc.Day,
 ) ([]Interval, error) {

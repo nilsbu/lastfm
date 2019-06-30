@@ -216,6 +216,27 @@ func TestChartsToIntervals(t *testing.T) {
 				{Begin: rsrc.ParseDay("2007-03-01"), Before: rsrc.ParseDay("2007-05-01")},
 			}, true,
 		},
+		{
+			"6M", rsrc.ParseDay("2007-03-01"), 365,
+			[]Interval{
+				{Begin: rsrc.ParseDay("2007-01-01"), Before: rsrc.ParseDay("2007-07-01")},
+				{Begin: rsrc.ParseDay("2007-07-01"), Before: rsrc.ParseDay("2008-01-01")},
+				{Begin: rsrc.ParseDay("2008-01-01"), Before: rsrc.ParseDay("2008-07-01")},
+			}, true,
+		},
+		{
+			"10y", rsrc.ParseDay("2007-03-01"), 3653,
+			[]Interval{
+				{Begin: rsrc.ParseDay("2000-01-01"), Before: rsrc.ParseDay("2010-01-01")},
+				{Begin: rsrc.ParseDay("2010-01-01"), Before: rsrc.ParseDay("2020-01-01")},
+			}, true,
+		},
+		{
+			"3y", rsrc.ParseDay("2008-03-01"), 2,
+			[]Interval{
+				{Begin: rsrc.ParseDay("2007-01-01"), Before: rsrc.ParseDay("2010-01-01")},
+			}, true,
+		},
 	}
 
 	for _, c := range cases {
