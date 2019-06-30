@@ -27,13 +27,7 @@ func (cmd printTimeline) Execute(
 		return err
 	}
 
-	// Temp
-	cplays := []charts.Charts{}
-	for _, day := range plays {
-		cplays = append(cplays, charts.Charts(day))
-	}
-
-	cha := charts.Compile(cplays)
+	cha := charts.Compile(plays)
 
 	replace, err := unpack.LoadArtistCorrections(session.User, s)
 	if err == nil {

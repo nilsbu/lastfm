@@ -179,7 +179,7 @@ func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 }
 
 func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
-	icharts := []Charts{}
+	icharts := []map[string][]float64{}
 	for _, i := range intervals {
 		col := c.Interval(i, registered)
 
@@ -187,7 +187,7 @@ func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
 			continue
 		}
 
-		cha := Charts{}
+		cha := map[string][]float64{}
 		for _, x := range col {
 			cha[x.Name] = []float64{x.Score}
 		}

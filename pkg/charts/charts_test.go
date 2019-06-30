@@ -9,22 +9,22 @@ import (
 
 func TestCompile(t *testing.T) {
 	cases := []struct {
-		days   []Charts
+		days   []map[string][]float64
 		charts Charts
 	}{
 		{
-			[]Charts{},
+			[]map[string][]float64{},
 			Charts{},
 		},
 		{
-			[]Charts{Charts{}},
+			[]map[string][]float64{{}},
 			Charts{},
 		},
 		{
-			[]Charts{
-				Charts{"ASD": []float64{2}},
-				Charts{"WASD": []float64{1}},
-				Charts{"ASD": []float64{13}, "WASD": []float64{4}},
+			[]map[string][]float64{
+				{"ASD": []float64{2}},
+				{"WASD": []float64{1}},
+				{"ASD": []float64{13}, "WASD": []float64{4}},
 			},
 			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
 		},
@@ -44,22 +44,22 @@ func TestCompile(t *testing.T) {
 func TestChartsUnravelDays(t *testing.T) {
 	cases := []struct {
 		charts Charts
-		days   []Charts
+		days   []map[string][]float64
 	}{
 		{
 			Charts{},
-			[]Charts{},
+			[]map[string][]float64{},
 		},
 		{
 			Charts{"A": []float64{}},
-			[]Charts{},
+			[]map[string][]float64{},
 		},
 		{
 			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
-			[]Charts{
-				Charts{"ASD": []float64{2}},
-				Charts{"WASD": []float64{1}},
-				Charts{"ASD": []float64{13}, "WASD": []float64{4}},
+			[]map[string][]float64{
+				{"ASD": []float64{2}},
+				{"WASD": []float64{1}},
+				{"ASD": []float64{13}, "WASD": []float64{4}},
 			},
 		},
 	}

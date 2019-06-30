@@ -11,7 +11,7 @@ import (
 type Charts map[string][]float64
 
 // Compile builds Charts from single day plays.
-func Compile(days []Charts) Charts {
+func Compile(days []map[string][]float64) Charts {
 	size := len(days)
 	charts := make(Charts)
 	for i, day := range days {
@@ -28,10 +28,10 @@ func Compile(days []Charts) Charts {
 
 // UnravelDays takes Charts and disassembles it into single day plays. It acts
 // as an inverse to Compile().
-func (c Charts) UnravelDays() []Charts {
-	days := []Charts{}
+func (c Charts) UnravelDays() []map[string][]float64 {
+	days := []map[string][]float64{}
 	for i := 0; i < c.Len(); i++ {
-		day := make(Charts)
+		day := map[string][]float64{}
 
 		for name, line := range c {
 			if line[i] != 0 {
