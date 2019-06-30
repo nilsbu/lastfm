@@ -2,7 +2,9 @@ package charts
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -31,6 +33,7 @@ type intervalIterator interface {
 type iIterator struct {
 	next   Interval
 	before rsrc.Day
+	step   int
 }
 
 type dayIterator struct {
@@ -47,23 +50,27 @@ type yearIterator struct {
 
 func newIntervalIterator(
 	step Step,
+	stepSize int,
 	from rsrc.Day,
 	before rsrc.Day) intervalIterator {
 	switch step {
 	case Day:
 		return &dayIterator{iIterator{
-			next:   dayPeriod(from),
+			next:   dayPeriod(from, stepSize),
 			before: before,
+			step:   stepSize,
 		}}
 	case Month:
 		return &monthIterator{iIterator{
-			next:   monthPeriod(from),
+			next:   monthPeriod(from, stepSize),
 			before: before,
+			step:   stepSize,
 		}}
 	default:
 		return &yearIterator{iIterator{
-			next:   yearPeriod(from),
+			next:   yearPeriod(from, stepSize),
 			before: before,
+			step:   stepSize,
 		}}
 	}
 }
@@ -74,49 +81,49 @@ func (ii *iIterator) HasNext() bool {
 
 func (ii *dayIterator) Next() Interval {
 	next := ii.next
-	ii.next = dayPeriod(ii.next.Before)
+	ii.next = dayPeriod(ii.next.Before, ii.step)
 
 	return next
 }
 
 func (ii *monthIterator) Next() Interval {
 	next := ii.next
-	ii.next = monthPeriod(ii.next.Before)
+	ii.next = monthPeriod(ii.next.Before, ii.step)
 
 	return next
 }
 
 func (ii *yearIterator) Next() Interval {
 	next := ii.next
-	ii.next = yearPeriod(ii.next.Before)
+	ii.next = yearPeriod(ii.next.Before, ii.step)
 
 	return next
 }
 
-func dayPeriod(day rsrc.Day) Interval {
+func dayPeriod(day rsrc.Day, step int) Interval {
 	t := day.Time()
 	y, m, d := t.Year(), t.Month(), t.Day()
 	return Interval{
 		Begin:  rsrc.ToDay(time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC).Unix()),
-		Before: rsrc.ToDay(time.Date(y, time.Month(m), d+1, 0, 0, 0, 0, time.UTC).Unix()),
+		Before: rsrc.ToDay(time.Date(y, time.Month(m), d+step, 0, 0, 0, 0, time.UTC).Unix()),
 	}
 }
 
-func monthPeriod(day rsrc.Day) Interval {
+func monthPeriod(day rsrc.Day, step int) Interval {
 	t := day.Time()
 	y, m := t.Year(), t.Month()
 	return Interval{
-		Begin:  rsrc.ToDay(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC).Unix()),
-		Before: rsrc.ToDay(time.Date(y, time.Month(m+1), 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Begin:  rsrc.ToDay(time.Date(y, m, 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Before: rsrc.ToDay(time.Date(y, time.Month(int(m)+step), 1, 0, 0, 0, 0, time.UTC).Unix()),
 	}
 }
 
-func yearPeriod(day rsrc.Day) Interval {
+func yearPeriod(day rsrc.Day, step int) Interval {
 	t := day.Time()
 	y := t.Year()
 	return Interval{
 		Begin:  rsrc.ToDay(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
-		Before: rsrc.ToDay(time.Date(y+1, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Before: rsrc.ToDay(time.Date(y+step, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
 	}
 }
 
@@ -127,13 +134,13 @@ func Period(descr string) (Interval, error) {
 		if err != nil {
 			return Interval{}, err
 		}
-		return yearPeriod(rsrc.ToDay(begin.Unix())), nil
+		return yearPeriod(rsrc.ToDay(begin.Unix()), 1), nil
 	case 7:
 		begin, err := time.Parse("2006-01", descr)
 		if err != nil {
 			return Interval{}, err
 		}
-		return monthPeriod(rsrc.ToDay(begin.Unix())), nil
+		return monthPeriod(rsrc.ToDay(begin.Unix()), 1), nil
 	default:
 		return Interval{}, fmt.Errorf("interval format '%v' not supported", descr)
 	}
@@ -192,10 +199,33 @@ func Index(t rsrc.Day, registered rsrc.Day) int {
 }
 
 // TODO use in table formatting & change name
-func (c Charts) ToIntervals(step Step, registered rsrc.Day) []Interval {
+func (c Charts) ToIntervals(
+	descr string, registered rsrc.Day,
+) ([]Interval, error) {
+
+	re := regexp.MustCompile("^\\d*[yMd]$")
+	if !re.MatchString(descr) {
+		return nil, fmt.Errorf("interval descriptor '%v' invalid", descr)
+	}
+
+	var step Step
+	switch descr[len(descr)-1] {
+	case 'y':
+		step = Year
+	case 'M':
+		step = Month
+	case 'd':
+		step = Day
+	}
+
+	n, err := strconv.Atoi(descr[:len(descr)-1])
+	if err != nil {
+		n = 1
+	}
+
 	reg := registered.Midnight()
 	ii := newIntervalIterator(
-		step,
+		step, n,
 		registered,
 		rsrc.ToDay(reg+int64(86400*c.Len())))
 
@@ -206,5 +236,5 @@ func (c Charts) ToIntervals(step Step, registered rsrc.Day) []Interval {
 		intervals = append(intervals, current)
 	}
 
-	return intervals
+	return intervals, nil
 }

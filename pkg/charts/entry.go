@@ -92,7 +92,7 @@ func (c Charts) GetYearPartition(registered rsrc.Day, threshold float64,
 	}
 
 	ii := newIntervalIterator(
-		Year,
+		Year, 1,
 		registered,
 		rsrc.ToDay(registered.Midnight()+int64(86400*c.Len())))
 

@@ -1,12 +1,9 @@
 package command
 
 import (
-	"fmt"
-
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/pkg/errors"
@@ -106,7 +103,7 @@ func (cmd tablePeriods) Execute(
 		return errors.Wrap(err, "failed to load user info")
 	}
 
-	intervals, err := parsePeriod(out, user.Registered, cmd.period)
+	intervals, err := out.ToIntervals(cmd.period, user.Registered)
 	if len(intervals) == 0 || err != nil {
 		return err
 	}
@@ -121,18 +118,4 @@ func (cmd tablePeriods) Execute(
 	}
 
 	return d.Display(f)
-}
-
-func parsePeriod(
-	cha charts.Charts,
-	registered rsrc.Day,
-	descr string) ([]charts.Interval, error) {
-
-	if descr == "m" {
-		return cha.ToIntervals(charts.Month, registered), nil
-	} else if descr == "y" {
-		return cha.ToIntervals(charts.Year, registered), nil
-	} else {
-		return nil, fmt.Errorf("period '%v' is invalid", descr)
-	}
 }

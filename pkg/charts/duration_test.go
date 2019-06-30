@@ -123,39 +123,120 @@ func repeat(x, n int) []float64 {
 func TestChartsSumIntervals(t *testing.T) {
 	cases := []struct {
 		charts     Charts
-		step       Step
+		descr      string
+		ok         bool
 		registered rsrc.Day
 		intervals  Charts
 	}{
 		{
 			Charts{},
-			Month, rsrc.ParseDay("2011-10-11"),
+			"M", true, rsrc.ParseDay("2011-10-11"),
 			Charts{},
 		},
 		{
 			Charts{"a": []float64{12, 33, 10}},
-			Day, rsrc.ParseDay("2011-10-11"),
+			"d", true, rsrc.ParseDay("2011-10-11"),
 			Charts{"a": []float64{12, 33, 10}},
 		},
 		{
 			Charts{"a": iotaF(30), "b": repeat(1, 30)},
-			Month, rsrc.ParseDay("2011-10-11"),
+			"M", true, rsrc.ParseDay("2011-10-11"),
 			Charts{"a": []float64{210, 225}, "b": []float64{21, 9}},
 		},
 		{
 			Charts{"a": repeat(2, 400)},
-			Year, rsrc.ParseDay("2011-12-25"),
+			"y", true, rsrc.ParseDay("2011-12-25"),
 			Charts{"a": []float64{14, 732, 54}},
+		},
+		{
+			Charts{"a": repeat(2, 400)},
+			"xx", false, rsrc.ParseDay("2011-12-25"),
+			nil,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
 			sum := c.charts.Sum()
-			intervals := sum.Intervals(sum.ToIntervals(c.step, c.registered), c.registered)
+			intervals, err := sum.ToIntervals(c.descr, c.registered)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error but none occurred")
+			}
 
-			if !reflect.DeepEqual(intervals, c.intervals) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v", intervals, c.intervals)
+			if c.ok {
+				charts := sum.Intervals(intervals, c.registered)
+
+				if !reflect.DeepEqual(charts, c.intervals) {
+					t.Errorf("wrong data:\nhas:  %v\nwant: %v", charts, c.intervals)
+				}
+			}
+		})
+	}
+}
+
+func TestChartsToIntervals(t *testing.T) {
+	cases := []struct {
+		descr      string
+		registered rsrc.Day
+		n          int
+		intervals  []Interval
+		ok         bool
+	}{
+		{
+			"y", rsrc.ParseDay("2007-01-01"), 600,
+			[]Interval{
+				{Begin: rsrc.ParseDay("2007-01-01"), Before: rsrc.ParseDay("2008-01-01")},
+				{Begin: rsrc.ParseDay("2008-01-01"), Before: rsrc.ParseDay("2009-01-01")},
+			}, true,
+		},
+		{
+			"y", rsrc.ParseDay("2007-02-01"), 3,
+			[]Interval{
+				{Begin: rsrc.ParseDay("2007-01-01"), Before: rsrc.ParseDay("2008-01-01")},
+			}, true,
+		},
+		{
+			"M", rsrc.ParseDay("2007-02-01"), 30,
+			[]Interval{
+				{Begin: rsrc.ParseDay("2007-02-01"), Before: rsrc.ParseDay("2007-03-01")},
+				{Begin: rsrc.ParseDay("2007-03-01"), Before: rsrc.ParseDay("2007-04-01")},
+			}, true,
+		},
+		{
+			"asdasd", rsrc.ParseDay("2007-02-01"), 30,
+			[]Interval{},
+			false,
+		},
+		{
+			"2M", rsrc.ParseDay("2007-01-01"), 110,
+			[]Interval{
+				{Begin: rsrc.ParseDay("2007-01-01"), Before: rsrc.ParseDay("2007-03-01")},
+				{Begin: rsrc.ParseDay("2007-03-01"), Before: rsrc.ParseDay("2007-05-01")},
+			}, true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			days := []float64{}
+			for i := 0; i < c.n; i++ {
+				days = append(days, 0)
+			}
+			cha := Charts{"x": days}
+
+			intervals, err := cha.ToIntervals(c.descr, c.registered)
+			if err != nil && c.ok {
+				t.Fatalf("unexpected error: %v", err)
+			} else if err == nil && !c.ok {
+				t.Fatalf("expected error but none occurred")
+			}
+
+			if c.ok {
+				if !reflect.DeepEqual(c.intervals, intervals) {
+					t.Errorf("%v != %v", c.intervals, intervals)
+				}
 			}
 		})
 	}
