@@ -91,8 +91,8 @@ func (c Charts) GetYearPartition(registered rsrc.Day, threshold float64,
 		p.assoc[entryDate.Name] = entryDate.Date.Time().Format("2006")
 	}
 
-	ii := newIntervalIterator(
-		Year, 1,
+	ii := newYearIterator(
+		1,
 		registered,
 		rsrc.ToDay(registered.Midnight()+int64(86400*c.Len())))
 

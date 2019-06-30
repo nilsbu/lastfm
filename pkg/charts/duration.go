@@ -48,31 +48,37 @@ type yearIterator struct {
 	iIterator
 }
 
-func newIntervalIterator(
-	step Step,
-	stepSize int,
+func newYearIterator(
+	step int,
 	from rsrc.Day,
 	before rsrc.Day) intervalIterator {
-	switch step {
-	case Day:
-		return &dayIterator{iIterator{
-			next:   dayPeriod(from, stepSize),
-			before: before,
-			step:   stepSize,
-		}}
-	case Month:
-		return &monthIterator{iIterator{
-			next:   monthPeriod(from, stepSize),
-			before: before,
-			step:   stepSize,
-		}}
-	default:
-		return &yearIterator{iIterator{
-			next:   yearPeriod(from, stepSize),
-			before: before,
-			step:   stepSize,
-		}}
-	}
+	return &yearIterator{iIterator{
+		next:   yearPeriod(from, step),
+		before: before,
+		step:   step,
+	}}
+}
+
+func newMonthIterator(
+	step int,
+	from rsrc.Day,
+	before rsrc.Day) intervalIterator {
+	return &monthIterator{iIterator{
+		next:   monthPeriod(from, step),
+		before: before,
+		step:   step,
+	}}
+}
+
+func newDayIterator(
+	step int,
+	from rsrc.Day,
+	before rsrc.Day) intervalIterator {
+	return &dayIterator{iIterator{
+		next:   dayPeriod(from, step),
+		before: before,
+		step:   step,
+	}}
 }
 
 func (ii *iIterator) HasNext() bool {
@@ -208,26 +214,23 @@ func (c Charts) ToIntervals(
 		return nil, fmt.Errorf("interval descriptor '%v' invalid", descr)
 	}
 
-	var step Step
-	switch descr[len(descr)-1] {
-	case 'y':
-		step = Year
-	case 'M':
-		step = Month
-	case 'd':
-		step = Day
-	}
-
 	n, err := strconv.Atoi(descr[:len(descr)-1])
 	if err != nil {
 		n = 1
 	}
 
 	reg := registered.Midnight()
-	ii := newIntervalIterator(
-		step, n,
-		registered,
-		rsrc.ToDay(reg+int64(86400*c.Len())))
+	before := rsrc.ToDay(reg + int64(86400*c.Len()))
+
+	var ii intervalIterator
+	switch descr[len(descr)-1] {
+	case 'y':
+		ii = newYearIterator(n, registered, before)
+	case 'M':
+		ii = newMonthIterator(n, registered, before)
+	case 'd':
+		ii = newDayIterator(n, registered, before)
+	}
 
 	intervals := []Interval{}
 	for ii.HasNext() {
