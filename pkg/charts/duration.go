@@ -17,14 +17,6 @@ type Interval struct {
 	Before rsrc.Day
 }
 
-type Step int
-
-const (
-	Day Step = iota
-	Month
-	Year
-)
-
 type intervalIterator interface {
 	HasNext() bool
 	Next() Interval
@@ -134,6 +126,9 @@ func yearPeriod(day rsrc.Day, step int) Interval {
 	}
 }
 
+// Period parses a string describing a period and returns the corresponding
+// interval. The descriptor is either a year in the format 'yyyy' or a month
+// in the format 'yyyy-MM'.
 func Period(descr string) (Interval, error) {
 	switch len(descr) {
 	case 4:
@@ -153,6 +148,8 @@ func Period(descr string) (Interval, error) {
 	}
 }
 
+// Interval returns a Column that sums an interval of the charts. The charts
+// have to be a sum.
 func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 	size := c.Len()
 
@@ -201,6 +198,8 @@ func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
 	return Compile(icharts)
 }
 
+// Index calculates an column index based on registration date and searcherd
+// date.
 func Index(t rsrc.Day, registered rsrc.Day) int {
 	return int((t.Midnight()-registered.Midnight())/86400 - 1)
 }
