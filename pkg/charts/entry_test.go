@@ -40,32 +40,6 @@ func TestChartsFindEntryDates(t *testing.T) {
 	}
 }
 
-func TestFilterEntryDates(t *testing.T) {
-	cases := []struct {
-		pre    []EntryDate
-		post   []EntryDate
-		cutoff rsrc.Day
-	}{
-		{
-			[]EntryDate{
-				{"A", rsrc.ParseDay("2018-01-02")},
-				{"B", rsrc.ParseDay("2017-01-02")}},
-			[]EntryDate{{"A", rsrc.ParseDay("2018-01-02")}},
-			rsrc.ParseDay("2018-01-02"),
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			post := FilterEntryDates(c.pre, c.cutoff)
-
-			if !reflect.DeepEqual(c.post, post) {
-				t.Errorf("%v != %v", c.post, post)
-			}
-		})
-	}
-}
-
 func TestChartsGetYearPartition(t *testing.T) {
 	cases := []struct {
 		sums      Charts

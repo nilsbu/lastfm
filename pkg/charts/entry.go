@@ -67,17 +67,6 @@ func (c Charts) FindEntryDatesDynamic(registered rsrc.Day, threshold float64,
 	return
 }
 
-func FilterEntryDates(entryDates []EntryDate, cutoff rsrc.Day,
-) (filtered []EntryDate) {
-	for _, entryDate := range entryDates {
-		if entryDate.Date.Midnight() >= cutoff.Midnight() {
-			filtered = append(filtered, entryDate)
-		}
-	}
-
-	return
-}
-
 func (c Charts) GetYearPartition(registered rsrc.Day, threshold float64,
 ) Partition {
 	entryDates := c.FindEntryDatesDynamic(registered, threshold)
