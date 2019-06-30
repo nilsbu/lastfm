@@ -565,7 +565,11 @@ func TestPrint(t *testing.T) {
 			unpack.WriteTagInfo(tagRock, s)
 
 			if c.charts != nil {
-				err := unpack.WriteAllDayPlays(c.charts.UnravelDays(), user, s)
+				days := []map[string][]float64{}
+				for _, day := range c.charts.UnravelDays() {
+					days = append(days, map[string][]float64(day))
+				}
+				err := unpack.WriteAllDayPlays(days, user, s)
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}

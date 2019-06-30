@@ -14,7 +14,7 @@ import (
 func LoadHistory(
 	user unpack.User,
 	until rsrc.Day,
-	r rsrc.Reader) ([]charts.Charts, error) {
+	r rsrc.Reader) ([]map[string][]float64, error) {
 
 	if until == nil {
 		return nil, errors.New("parameter 'until' is no valid Day")
@@ -25,7 +25,7 @@ func LoadHistory(
 	registered := user.Registered.Midnight()
 
 	days := int((until.Midnight() - registered) / 86400)
-	result := make([]charts.Charts, days+1)
+	result := make([]map[string][]float64, days+1)
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
@@ -105,7 +105,7 @@ func UpdateHistory(
 	user *unpack.User,
 	until rsrc.Day,
 	s store.Store,
-) (plays []charts.Charts, err error) {
+) (plays []map[string][]float64, err error) {
 	if user.Registered == nil {
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
 			user.Name)
@@ -115,7 +115,7 @@ func UpdateHistory(
 
 	oldPlays, err := unpack.LoadAllDayPlays(user.Name, s)
 	if err != nil {
-		oldPlays = []charts.Charts{}
+		oldPlays = []map[string][]float64{}
 	} else if len(oldPlays) > 0 {
 		begin = registeredDay + int64(86400*(len(oldPlays)-1))
 		oldPlays = oldPlays[:len(oldPlays)-1]

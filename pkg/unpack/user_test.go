@@ -4,29 +4,30 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
 func TestLoadAllDayPlays(t *testing.T) {
 	cases := []struct {
-		plays  []charts.Charts
+		plays  []map[string][]float64
 		write  bool
 		readOK bool
 	}{
 		{
-			[]charts.Charts{charts.Charts{"ABC": []float64{34}}},
+			[]map[string][]float64{{"ABC": []float64{34}}},
 			false, false,
 		},
 		{
-			[]charts.Charts{
-				charts.Charts{
+			[]map[string][]float64{
+				{
 					"ABC":    []float64{34},
-					"|xöü#ß": []float64{1}},
-				charts.Charts{
+					"|xöü#ß": []float64{1},
+				},
+				{
 					"<<><": []float64{9999},
-					"ABC":  []float64{8}},
+					"ABC":  []float64{8},
+				},
 			},
 			true, true,
 		},

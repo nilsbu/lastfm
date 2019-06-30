@@ -81,7 +81,13 @@ func getOutCharts(
 		return nil, err
 	}
 
-	cha := charts.Compile(plays)
+	// Temp
+	cplays := []charts.Charts{}
+	for _, day := range plays {
+		cplays = append(cplays, charts.Charts(day))
+	}
+
+	cha := charts.Compile(cplays)
 
 	replace, err := unpack.LoadArtistCorrections(session.User, r)
 	if err == nil {
