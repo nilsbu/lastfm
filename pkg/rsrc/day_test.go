@@ -78,3 +78,23 @@ func TestDayTime(t *testing.T) {
 		})
 	}
 }
+
+func TestDayString(t *testing.T) {
+	cases := []struct {
+		day Day
+		str string
+	}{
+		{ToDay(1491264000), "2017-04-04"},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			str := c.day.String()
+
+			if str != c.str {
+				t.Errorf("got '%v', expected '%v'",
+					str, c.str)
+			}
+		})
+	}
+}

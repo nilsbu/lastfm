@@ -1,6 +1,9 @@
 package rsrc
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Day represents a day from midnight to midnight at Greenwich.
 // Days before 1970-01-01 are considered undefined.
@@ -8,6 +11,7 @@ import "time"
 // Midnight returns the beginning of the day as a Unix time stamp.
 // Time converts the Day to a time.Time object.
 type Day interface {
+	fmt.Stringer
 	Midnight() (unix int64)
 	Time() time.Time
 }
@@ -42,4 +46,8 @@ func (d date) Midnight() (unix int64) {
 // Time converts a Date to a time.Time object.
 func (d date) Time() time.Time {
 	return time.Time(d)
+}
+
+func (d date) String() string {
+	return time.Time(d).Format("2006-01-02")
 }
