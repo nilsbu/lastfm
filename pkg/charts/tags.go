@@ -74,30 +74,47 @@ func Supertags(
 func (c Charts) Group(partitions Partition) (tagcharts Charts) {
 	size := c.Len()
 
-	tagcharts = make(Charts)
-	for _, supertag := range partitions.Partitions() {
-		tagcharts[supertag] = make([]float64, size)
+	indices := map[string]int{}
+	values := [][]float64{}
+	for i, name := range partitions.Partitions() {
+		indices[name] = i
+		values = append(values, make([]float64, size))
 	}
 
-	for name, values := range c {
-		line := tagcharts[partitions.Get(name)]
-		for i := range line {
-			line[i] += values[i]
+	for i, name := range c.Keys {
+		lineID := indices[partitions.Get(name.String())]
+		line := values[lineID]
+		for j := range line {
+			line[j] += c.Values[i][j]
 		}
 	}
 
-	return tagcharts
+	keys := []Key{}
+	for _, key := range partitions.Partitions() {
+		keys = append(keys, simpleKey(key))
+	}
+
+	return Charts{
+		Headers: c.Headers,
+		Keys:    keys,
+		Values:  values,
+	}
 }
 
 func (c Charts) Split(partitions Partition) map[string]Charts {
 	buckets := map[string]Charts{}
 
 	for _, supertag := range partitions.Partitions() {
-		buckets[supertag] = Charts{}
+		buckets[supertag] = Charts{
+			Headers: c.Headers,
+		}
 	}
 
-	for name, values := range c {
-		buckets[partitions.Get(name)][name] = values
+	for i, key := range c.Keys {
+		p := partitions.Get(key.String())
+		keys := append(buckets[p].Keys, key)
+		values := append(buckets[p].Values, c.Values[i])
+		buckets[p] = Charts{buckets[p].Headers, keys, values}
 	}
 
 	return buckets

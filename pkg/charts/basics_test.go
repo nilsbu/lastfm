@@ -4,6 +4,8 @@ import (
 	"math"
 	"reflect"
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func TestChartsSum(t *testing.T) {
@@ -12,16 +14,34 @@ func TestChartsSum(t *testing.T) {
 		sums   Charts
 	}{
 		{
-			Charts{},
-			Charts{},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Keys:    []Key{},
+				Values:  [][]float64{}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Keys:    []Key{},
+				Values:  [][]float64{}},
 		},
 		{
-			Charts{"X": []float64{}},
-			Charts{"X": []float64{}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 1},
+				Keys:    []Key{simpleKey("X")},
+				Values:  [][]float64{{}}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 1},
+				Keys:    []Key{simpleKey("X")},
+				Values:  [][]float64{{}}},
 		},
 		{
-			Charts{"X": []float64{1, 3, 4}, "o0o": []float64{0, 0, 7}},
-			Charts{"X": []float64{1, 4, 8}, "o0o": []float64{0, 0, 7}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("X"), simpleKey("o0o")},
+				Values:  [][]float64{{1, 3, 4}, {0, 0, 7}}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("X"), simpleKey("o0o")},
+				Values:  [][]float64{{1, 4, 8}, {0, 0, 7}}},
 		},
 	}
 
@@ -29,9 +49,8 @@ func TestChartsSum(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			sums := c.charts.Sum()
 
-			if !reflect.DeepEqual(sums, c.sums) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-					sums, c.sums)
+			if !c.sums.Equal(sums) {
+				t.Error("charts are wrong")
 			}
 		})
 	}
@@ -57,8 +76,15 @@ func TestChartsFade(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			faded := Charts{"XX": c.charts}.Fade(c.halflife)
-			f := faded["XX"]
+			faded := Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("XX")},
+				Values:  [][]float64{c.charts},
+			}.Fade(c.halflife)
+			if 1 != len(faded.Values) {
+				t.Fatalf("expected 1 line but got %v", len(faded.Values))
+			}
+			f := faded.Values[0]
 			if len(f) != len(c.faded) {
 				t.Fatalf("line length false: %v != %v", len(f), len(c.faded))
 			}
@@ -79,34 +105,46 @@ func TestChartsColumn(t *testing.T) {
 		ok     bool
 	}{
 		{
-			Charts{},
-			0,
-			Column{},
-			false,
-		},
-		{
-			Charts{"X": []float64{}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Keys:    []Key{},
+				Values:  [][]float64{}},
 			0,
 			Column{},
 			false,
 		},
 		{
 			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 3, 4}},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Keys:    []Key{simpleKey("X")},
+				Values:  [][]float64{{}}},
+			0,
+			Column{},
+			false,
+		},
+		{
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o"), simpleKey("lol"), simpleKey("X")},
+				Values:  [][]float64{{0, 0, 7}, {1, 2, 3}, {1, 3, 4}}},
 			1,
 			Column{Score{"X", 3}, Score{"lol", 2}, Score{"o0o", 0}},
 			true,
 		},
 		{
-			Charts{"X": []float64{1, 3, 4}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("X")},
+				Values:  [][]float64{{1, 3, 4}}},
 			-1,
 			Column{Score{"X", 4}},
 			true,
 		},
 		{
-			Charts{"X": []float64{1, 3, 4}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("X")},
+				Values:  [][]float64{{1, 3, 4}}},
 			-4,
 			Column{},
 			false,
@@ -140,14 +178,14 @@ func TestChartsCorrect(t *testing.T) {
 	}{
 		{
 			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 3, 4}},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o"), simpleKey("lol"), simpleKey("X")},
+				Values:  [][]float64{{0, 0, 7}, {1, 2, 3}, {1, 3, 4}}},
 			map[string]string{"X": "o0o"},
 			Charts{
-				"o0o": []float64{1, 3, 11},
-				"lol": []float64{1, 2, 3},
-			},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o"), simpleKey("lol")},
+				Values:  [][]float64{{1, 3, 11}, {1, 2, 3}}},
 		},
 	}
 
@@ -155,9 +193,8 @@ func TestChartsCorrect(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			corrected := c.charts.Correct(c.correction)
 
-			if !reflect.DeepEqual(corrected, c.corrected) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-					corrected, c.corrected)
+			if !c.corrected.Equal(corrected) {
+				t.Error("charts are wrong")
 			}
 		})
 	}
@@ -170,13 +207,13 @@ func TestChartsRank(t *testing.T) {
 	}{
 		{
 			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 3, 4}},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o"), simpleKey("lol"), simpleKey("X")},
+				Values:  [][]float64{{0, 0, 7}, {1, 2, 3}, {1, 3, 4}}},
 			Charts{
-				"o0o": []float64{3, 3, 1},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 1, 2}},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o"), simpleKey("lol"), simpleKey("X")},
+				Values:  [][]float64{{3, 3, 1}, {1, 2, 3}, {1, 1, 2}}},
 		},
 	}
 
@@ -198,17 +235,24 @@ func TestChartsTotal(t *testing.T) {
 		total  []float64
 	}{
 		{
-			Charts{},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Keys:    []Key{},
+				Values:  [][]float64{}},
 			[]float64{},
 		},
 		{
-			Charts{"o0o": []float64{0, 0, 7}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o")},
+				Values:  [][]float64{{0, 0, 7}}},
 			[]float64{0, 0, 7},
 		},
 		{
 			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3}},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o"), simpleKey("lol")},
+				Values:  [][]float64{{0, 0, 7}, {1, 2, 3}}},
 			[]float64{1, 2, 10},
 		},
 	}
@@ -228,21 +272,31 @@ func TestChartsMax(t *testing.T) {
 		max    Column
 	}{
 		{
-			Charts{},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Keys:    []Key{},
+				Values:  [][]float64{}},
 			Column{},
 		},
 		{
-			Charts{"a": []float64{}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Keys:    []Key{simpleKey("a")},
+				Values:  [][]float64{{}}},
 			Column{{Name: "a", Score: 0}},
 		},
 		{
-			Charts{"o0o": []float64{0, 0, 7}},
+			Charts{
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o")},
+				Values:  [][]float64{{0, 0, 7}}},
 			Column{{Name: "o0o", Score: 7}},
 		},
 		{
 			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 0}},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Keys:    []Key{simpleKey("o0o"), simpleKey("lol")},
+				Values:  [][]float64{{0, 0, 7}, {1, 2, 0}}},
 			Column{
 				{Name: "o0o", Score: 7},
 				{Name: "lol", Score: 2}},

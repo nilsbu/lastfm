@@ -27,16 +27,16 @@ func (cmd printTimeline) Execute(
 		return err
 	}
 
-	cha := charts.Compile(plays)
+	user, err := unpack.LoadUserInfo(session.User, s)
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
+	}
+
+	cha := charts.CompileArtists(plays, user.Registered)
 
 	replace, err := unpack.LoadArtistCorrections(session.User, s)
 	if err == nil {
 		cha = cha.Correct(replace)
-	}
-
-	user, err := unpack.LoadUserInfo(session.User, s)
-	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
 	}
 
 	events := timeline.CompileEvents(

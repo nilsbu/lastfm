@@ -43,20 +43,18 @@ func (cmd printCharts) getPartition(
 	case "all":
 		return
 	case "year":
-		var user *unpack.User
-		user, err = unpack.LoadUserInfo(session.User, r)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to load user info")
-		}
-
 		entry := cmd.entry
 		if entry == 0 {
 			entry = 2
 		}
-		year = cha.GetYearPartition(user.Registered, entry)
+		year = cha.GetYearPartition(entry)
 		return
 	case "super":
-		tags, err := organize.LoadArtistTags(cha.Keys(), r)
+		keys := []string{}
+		for _, key := range cha.Keys {
+			keys = append(keys, key.String())
+		}
+		tags, err := organize.LoadArtistTags(keys, r)
 		if err != nil {
 			return nil, err
 		}
@@ -78,10 +76,16 @@ func getOutCharts(
 
 	plays, err := unpack.LoadAllDayPlays(session.User, r)
 	if err != nil {
-		return nil, err
+		return charts.Charts{}, err
 	}
 
-	cha := charts.Compile(plays)
+	var user *unpack.User
+	user, err = unpack.LoadUserInfo(session.User, r)
+	if err != nil {
+		return charts.Charts{}, errors.Wrap(err, "failed to load user info")
+	}
+
+	cha := charts.CompileArtists(plays, user.Registered)
 
 	replace, err := unpack.LoadArtistCorrections(session.User, r)
 	if err == nil {
@@ -90,7 +94,7 @@ func getOutCharts(
 
 	partition, err := cmd.getPartition(session, r, cha)
 	if err != nil {
-		return nil, err
+		return charts.Charts{}, err
 	}
 
 	if cmd.normalized {
@@ -112,12 +116,12 @@ func getOutCharts(
 	}
 
 	if partition == nil {
-		return nil, errors.New("name must be empty for chart type 'all'")
+		return charts.Charts{}, errors.New("name must be empty for chart type 'all'")
 	}
 
 	out, ok := accCharts.Split(partition)[cmd.name]
 	if !ok {
-		return nil, fmt.Errorf("name '%v' not found", cmd.name)
+		return charts.Charts{}, fmt.Errorf("name '%v' not found", cmd.name)
 	}
 
 	return out, nil

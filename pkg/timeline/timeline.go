@@ -24,7 +24,7 @@ func CompileEvents(
 		return
 	}
 
-	entries := c.FindEntryDatesDynamic(registered, 2)
+	entries := c.FindEntryDatesDynamic(2)
 
 	for _, entry := range entries {
 		ed := entry.Date.Midnight()

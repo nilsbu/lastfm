@@ -15,7 +15,7 @@ func TestLoadHistory(t *testing.T) {
 		user  unpack.User
 		until rsrc.Day
 		data  [][]string
-		dps   []map[string][]float64
+		dps   []map[string]float64
 		ok    bool
 	}{
 		{
@@ -46,7 +46,7 @@ func TestLoadHistory(t *testing.T) {
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`},
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"XXX"}}], "@attr":{"totalPages":"1"}}}`},
 			},
-			[]map[string][]float64{{"ASDF": []float64{1}}, {"XXX": []float64{1}}},
+			[]map[string]float64{{"ASDF": 1}, {"XXX": 1}},
 			true,
 		},
 		{
@@ -59,7 +59,7 @@ func TestLoadHistory(t *testing.T) {
 					`{"recenttracks":{"track":[{"artist":{"#text":"Z"}}, {"artist":{"#text":"X"}}], "@attr":{"page":"3","totalPages":"3"}}}`,
 				},
 			},
-			[]map[string][]float64{{"X": []float64{2}, "Y": []float64{1}, "Z": []float64{1}}},
+			[]map[string]float64{{"X": 2, "Y": 1, "Z": 1}},
 			true,
 		},
 		{
@@ -112,10 +112,10 @@ func TestUpdateHistory(t *testing.T) {
 	testCases := []struct {
 		user           unpack.User
 		until          rsrc.Day
-		saved          []map[string][]float64
+		saved          []map[string]float64
 		tracksFile     map[rsrc.Locator][]byte
 		tracksDownload map[rsrc.Locator][]byte
-		plays          []map[string][]float64
+		plays          []map[string]float64
 		ok             bool
 	}{
 		{ // No data
@@ -124,7 +124,7 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]map[string][]float64{},
+			[]map[string]float64{},
 			false,
 		},
 		{ // Registration day invalid
@@ -133,7 +133,7 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]map[string][]float64{},
+			[]map[string]float64{},
 			false,
 		},
 		{ // Begin no valid day
@@ -142,27 +142,27 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]map[string][]float64{},
+			[]map[string]float64{},
 			false,
 		},
 		{ // download one day
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(300)}, // registered at 0:05
 			rsrc.ToDay(0),
-			[]map[string][]float64{},
+			[]map[string]float64{},
 			map[rsrc.Locator][]byte{h0: nil},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]map[string][]float64{
-				{"ASDF": []float64{1}},
+			[]map[string]float64{
+				{"ASDF": 1},
 			},
 			true,
 		},
 		{ // download some, have some
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(86400)},
 			rsrc.ToDay(3 * 86400),
-			[]map[string][]float64{
-				{"XX": []float64{4}},
+			[]map[string]float64{
+				{"XX": 4},
 				{}, // will be overwritten
 			},
 			map[rsrc.Locator][]byte{
@@ -175,40 +175,40 @@ func TestUpdateHistory(t *testing.T) {
 				h2: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				h3: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[]map[string][]float64{
-				{"XX": []float64{4}},
-				{"ASDF": []float64{1}},
-				{"B": []float64{1}},
+			[]map[string]float64{
+				{"XX": 4},
+				{"ASDF": 1},
+				{"B": 1},
 			},
 			true,
 		},
 		{ // have more than want
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(86400),
-			[]map[string][]float64{
-				{"XX": []float64{2}},
-				{"A": []float64{1}},
-				{"DropMe": []float64{1}},
-				{"DropMeToo": []float64{100}},
+			[]map[string]float64{
+				{"XX": 2},
+				{"A": 1},
+				{"DropMe": 1},
+				{"DropMeToo": 100},
 			},
 			map[rsrc.Locator][]byte{
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
 			},
 			map[rsrc.Locator][]byte{},
-			[]map[string][]float64{
-				{"XX": []float64{2}},
-				{"A": []float64{1}},
+			[]map[string]float64{
+				{"XX": 2},
+				{"A": 1},
 			},
 			true,
 		},
 		{ // download error
 			unpack.User{Name: "AA", Registered: rsrc.ToDay(0)},
 			rsrc.ToDay(0),
-			[]map[string][]float64{},
+			[]map[string]float64{},
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[]map[string][]float64{},
+			[]map[string]float64{},
 			false,
 		},
 	}

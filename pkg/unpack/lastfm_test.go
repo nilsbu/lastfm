@@ -126,7 +126,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 		{
 			[]byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}},{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 			"user", rsrc.ToDay(86400), 1,
-			&HistoryDayPage{charts.Charts{"ASDF": []float64{2}}, 1},
+			&HistoryDayPage{map[string]float64{"ASDF": 2}, 1},
 			true,
 		},
 	}

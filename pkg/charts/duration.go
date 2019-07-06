@@ -166,20 +166,37 @@ func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 	if from >= size {
 		return Column{}
 	} else if from < 0 {
-		for name, line := range c {
-			column = append(column, Score{name, line[to]})
+		for i, name := range c.Keys {
+			column = append(column, Score{name.String(), c.Values[i][to]})
 		}
 	} else {
-		for name, line := range c {
-			column = append(column, Score{name, line[to] - line[from]})
+		for i, name := range c.Keys {
+			column = append(column, Score{name.String(), c.Values[i][to] - c.Values[i][from]})
 		}
 	}
 	sort.Sort(column)
 	return column
 }
 
+type intervalHeaders []Interval
+
+func (h intervalHeaders) Index(day rsrc.Day) (idx int) {
+	var interval Interval
+	for idx, interval = range h {
+		if interval.Begin.Midnight() <= day.Midnight() &&
+			day.Midnight() < interval.Before.Midnight() {
+			break
+		}
+	}
+
+	return
+}
+func (h intervalHeaders) At(index int) rsrc.Day {
+	return h[index].Begin
+}
+
 func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
-	icharts := []map[string][]float64{}
+	icharts := []map[string]float64{}
 	for _, i := range intervals {
 		col := c.Interval(i, registered)
 
@@ -187,15 +204,17 @@ func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
 			continue
 		}
 
-		cha := map[string][]float64{}
+		cha := map[string]float64{}
 		for _, x := range col {
-			cha[x.Name] = []float64{x.Score}
+			cha[x.Name] = x.Score
 		}
 
 		icharts = append(icharts, cha)
 	}
 
-	return Compile(icharts)
+	ncha := CompileArtists(icharts, registered)
+	ncha.Headers = intervalHeaders(intervals)
+	return ncha
 }
 
 // Index calculates an column index based on registration date and searcherd
@@ -205,8 +224,8 @@ func Index(t rsrc.Day, registered rsrc.Day) int {
 }
 
 // TODO change name
-func (c Charts) ToIntervals(
-	descr string, registered rsrc.Day,
+func ToIntervals(
+	descr string, begin rsrc.Day, end rsrc.Day,
 ) ([]Interval, error) {
 
 	re := regexp.MustCompile("^\\d*[yMd]$")
@@ -219,17 +238,14 @@ func (c Charts) ToIntervals(
 		n = 1
 	}
 
-	reg := registered.Midnight()
-	before := rsrc.ToDay(reg + int64(86400*c.Len()))
-
 	var ii intervalIterator
 	switch descr[len(descr)-1] {
 	case 'y':
-		ii = newYearIterator(n, registered, before)
+		ii = newYearIterator(n, begin, end)
 	case 'M':
-		ii = newMonthIterator(n, registered, before)
+		ii = newMonthIterator(n, begin, end)
 	case 'd':
-		ii = newDayIterator(n, registered, before)
+		ii = newDayIterator(n, begin, end)
 	}
 
 	intervals := []Interval{}

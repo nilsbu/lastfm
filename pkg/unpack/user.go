@@ -7,19 +7,19 @@ type obAllDayPlays struct {
 }
 
 // LoadAllDayPlays loads the pre-processed history of a user, called alldayplays.
-func LoadAllDayPlays(user string, r rsrc.Reader) ([]map[string][]float64, error) {
+func LoadAllDayPlays(user string, r rsrc.Reader) ([]map[string]float64, error) {
 	data, err := obtain(obAllDayPlays{user}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	plays := data.([]map[string]float64)
-	days := make([]map[string][]float64, len(plays))
+	days := make([]map[string]float64, len(plays))
 
 	for i := range plays {
-		day := map[string][]float64{}
+		day := map[string]float64{}
 		for name, value := range plays[i] {
-			day[name] = []float64{value}
+			day[name] = value
 		}
 		days[i] = day
 	}
@@ -28,12 +28,12 @@ func LoadAllDayPlays(user string, r rsrc.Reader) ([]map[string][]float64, error)
 }
 
 // WriteAllDayPlays writed the pre-processed history of a user.
-func WriteAllDayPlays(days []map[string][]float64, user string, w rsrc.Writer) error {
+func WriteAllDayPlays(days []map[string]float64, user string, w rsrc.Writer) error {
 	plays := make([]map[string]float64, len(days))
 	for i := range days {
 		day := map[string]float64{}
 		for name, values := range days[i] {
-			day[name] = values[0]
+			day[name] = values
 		}
 		plays[i] = day
 	}

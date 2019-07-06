@@ -60,7 +60,13 @@ func (f *Table) formatBody(
 	col, _ := f.Charts.Column(-1)
 
 	for _, x := range col.Top(f.Count) {
-		line := f.Charts[x.Name]
+		var line []float64
+		for i, key := range f.Charts.Keys {
+			if key.String() == x.Name {
+				line = f.Charts.Values[i]
+				break
+			}
+		}
 
 		fmt.Fprintf(w, pattern, x.Name, delim0)
 

@@ -10,23 +10,23 @@ import (
 
 func TestLoadAllDayPlays(t *testing.T) {
 	cases := []struct {
-		plays  []map[string][]float64
+		plays  []map[string]float64
 		write  bool
 		readOK bool
 	}{
 		{
-			[]map[string][]float64{{"ABC": []float64{34}}},
+			[]map[string]float64{{"ABC": 34}},
 			false, false,
 		},
 		{
-			[]map[string][]float64{
+			[]map[string]float64{
 				{
-					"ABC":    []float64{34},
-					"|xöü#ß": []float64{1},
+					"ABC":    34,
+					"|xöü#ß": 1,
 				},
 				{
-					"<<><": []float64{9999},
-					"ABC":  []float64{8},
+					"<<><": 9999,
+					"ABC":  8,
 				},
 			},
 			true, true,
