@@ -22,7 +22,7 @@ func TestChartsPeriod(t *testing.T) {
 	}{
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values:  [][]float64{{3, 4, 5}, {2, 3, 6}}},
 			"2009", rsrc.ParseDay("2009-12-30"),
@@ -30,7 +30,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values:  [][]float64{{3, 4, 5}, {2, 3, 6}}},
 			"2010", rsrc.ParseDay("2009-12-30"),
@@ -38,7 +38,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"42", rsrc.ParseDay("2009-12-30"),
@@ -46,7 +46,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"-300", rsrc.ParseDay("2009-12-30"),
@@ -54,7 +54,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"xxxx", rsrc.ParseDay("2009-12-30"),
@@ -62,7 +62,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2008", rsrc.ParseDay("2009-12-30"),
@@ -70,7 +70,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2011", rsrc.ParseDay("2009-12-30"),
@@ -78,7 +78,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2009-03", rsrc.ParseDay("2009-03-31"),
@@ -86,7 +86,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2009-12", rsrc.ParseDay("2009-12-31"),
@@ -94,7 +94,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"1e+5-12", rsrc.ParseDay("2009-12-31"),
@@ -102,7 +102,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2009-xx", rsrc.ParseDay("2009-12-31"),
@@ -110,7 +110,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01")},
+				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"1999012", rsrc.ParseDay("2009-12-31"),
@@ -165,29 +165,29 @@ func TestChartsSumIntervals(t *testing.T) {
 	}{
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2011-10-11")},
+				Headers: dayHeaders{rsrc.ParseDay("2011-10-11"), 3},
 				Keys:    []Key{},
 				Values:  [][]float64{}},
 			"M", true, rsrc.ParseDay("2011-10-11"),
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2011-10-11")},
+				Headers: dayHeaders{rsrc.ParseDay("2011-10-11"), 3},
 				Keys:    []Key{},
 				Values:  [][]float64{}},
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2011-10-11")},
+				Headers: dayHeaders{rsrc.ParseDay("2011-10-11"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{12, 33, 10}}},
 			"d", true, rsrc.ParseDay("2011-10-11"),
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2011-10-11")},
+				Headers: dayHeaders{rsrc.ParseDay("2011-10-11"), 3},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{12, 33, 10}}},
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2011-10-11")},
+				Headers: dayHeaders{rsrc.ParseDay("2011-10-11"), 30},
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values:  [][]float64{iotaF(30), repeat(1, 30)}},
 			"M", true, rsrc.ParseDay("2011-10-11"),
@@ -198,7 +198,7 @@ func TestChartsSumIntervals(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2011-12-25")},
+				Headers: dayHeaders{rsrc.ParseDay("2011-12-25"), 400},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{repeat(2, 400)}},
 			"y", true, rsrc.ParseDay("2011-12-25"),
@@ -209,7 +209,7 @@ func TestChartsSumIntervals(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2011-12-25")},
+				Headers: dayHeaders{rsrc.ParseDay("2011-12-25"), 400},
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{repeat(2, 400)}},
 			"xx", false, rsrc.ParseDay("2011-12-25"),
@@ -310,7 +310,7 @@ func TestChartsToIntervals(t *testing.T) {
 				days = append(days, 0)
 			}
 			cha := Charts{
-				Headers: dayHeaders{c.registered},
+				Headers: dayHeaders{c.registered, c.n},
 				Keys:    []Key{simpleKey("x")},
 				Values:  [][]float64{days}}
 

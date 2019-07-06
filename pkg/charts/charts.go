@@ -29,6 +29,7 @@ type Charts struct {
 
 type dayHeaders struct {
 	Begin rsrc.Day
+	Count int
 }
 
 func (h dayHeaders) Index(day rsrc.Day) int {
@@ -61,7 +62,7 @@ func CompileArtists(
 	}
 
 	return Charts{
-		Headers: dayHeaders{Begin: registered},
+		Headers: dayHeaders{Begin: registered, Count: size},
 		Keys:    keys,
 		Values:  values,
 	}
