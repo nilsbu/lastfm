@@ -9,9 +9,18 @@ type Score struct {
 // Column is a column of charts sorted descendingly.
 type Column []Score
 
-func (c Column) Len() int           { return len(c) }
-func (c Column) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
-func (c Column) Less(i, j int) bool { return c[i].Score > c[j].Score }
+func (c Column) Len() int      { return len(c) }
+func (c Column) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
+func (c Column) Less(i, j int) bool {
+	switch {
+	case c[i].Score > c[j].Score:
+		return true
+	case c[i].Score == c[j].Score:
+		return c[i].Name < c[j].Name
+	default:
+		return false
+	}
+}
 
 // Sum sums over all values in a column.
 func (c Column) Sum() (sum float64) {
@@ -21,8 +30,6 @@ func (c Column) Sum() (sum float64) {
 
 	return sum
 }
-
-// TODO sort file by receiver
 
 // Top returns the top n entries of col. If n is larger than len(col) the whole
 // column is returned.
