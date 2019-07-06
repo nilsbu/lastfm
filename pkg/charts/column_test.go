@@ -2,8 +2,42 @@ package charts
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 )
+
+func TestColumnSort(t *testing.T) {
+	cases := []struct {
+		col    Column
+		sorted Column
+	}{
+		{
+			Column{},
+			Column{},
+		},
+		{
+			Column{{"a", 1}},
+			Column{{"a", 1}},
+		},
+		{
+			Column{{"a", 1}, {"b", 2}},
+			Column{{"b", 2}, {"a", 1}},
+		},
+		{
+			Column{{"c", 1}, {"b", 2}, {"a", 1}},
+			Column{{"b", 2}, {"a", 1}, {"c", 1}},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			sort.Sort(c.col)
+			if !reflect.DeepEqual(c.col, c.sorted) {
+				t.Errorf("not sorted correctly:\nwant: %v\nhas:  %v", c.sorted, c.col)
+			}
+		})
+	}
+}
 
 func TestColumnTop(t *testing.T) {
 	testCases := []struct {
