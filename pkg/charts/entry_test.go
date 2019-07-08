@@ -15,7 +15,7 @@ func TestChartsFindEntryDates(t *testing.T) {
 	}{
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2018-01-01"), 3},
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
 				Keys:    []Key{simpleKey("A")},
 				Values:  [][]float64{{2, 3, 4}}},
 			3,
@@ -23,7 +23,7 @@ func TestChartsFindEntryDates(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2018-01-01"), 3},
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
 				Keys:    []Key{simpleKey("A"), simpleKey("B")},
 				Values:  [][]float64{{2, 3, 4}, {10, 10, 11}}},
 			10,
@@ -49,7 +49,7 @@ func TestChartsGetYearPartition(t *testing.T) {
 	}{
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2017-12-29"), 7},
+				Headers: Days(rsrc.ParseDay("2017-12-29"), rsrc.ParseDay("2018-01-05")),
 				Keys:    []Key{simpleKey("A"), simpleKey("B"), simpleKey("C")},
 				Values: [][]float64{
 					{0, 0, 0, 0, 1, 1, 1},

@@ -106,7 +106,7 @@ func (cmd tablePeriods) Execute(
 
 	end := rsrc.ToDay(user.Registered.Midnight() + int64(86400*out.Len()))
 	intervals, err := charts.ToIntervals(cmd.period, user.Registered, end)
-	if len(intervals) == 0 || err != nil {
+	if err != nil || intervals.Len() == 0 {
 		return err
 	}
 
@@ -114,7 +114,7 @@ func (cmd tablePeriods) Execute(
 
 	f := &format.Table{
 		Charts: out,
-		First:  intervals[0].Begin,
+		First:  intervals.At(0).Begin,
 		Step:   1,
 		Count:  cmd.n,
 	}

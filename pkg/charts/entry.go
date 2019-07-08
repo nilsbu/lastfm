@@ -18,7 +18,7 @@ func (c Charts) FindEntryDates(threshold float64) (entryDates []EntryDate) {
 
 		for j, value := range c.Values[i] {
 			if value >= threshold {
-				date := c.Headers.At(j)
+				date := c.Headers.At(j).Begin
 				entryDates = append(entryDates, EntryDate{name.String(), date})
 				break
 			}
@@ -59,7 +59,8 @@ func (c Charts) FindEntryDatesDynamic(threshold float64,
 		}
 
 		if idx != -1 {
-			entryDates = append(entryDates, EntryDate{name.String(), c.Headers.At(idx)})
+			date := c.Headers.At(idx).Begin
+			entryDates = append(entryDates, EntryDate{name.String(), date})
 		}
 	}
 
@@ -80,8 +81,8 @@ func (c Charts) GetYearPartition(threshold float64) Partition {
 
 	ii := newYearIterator(
 		1,
-		c.Headers.At(0),
-		rsrc.ToDay(c.Headers.At(0).Midnight()+int64(86400*c.Len()))) // TODO
+		c.Headers.At(0).Begin,
+		c.Headers.At(c.Len()-1).Before)
 
 	for ii.HasNext() {
 		p.partitions = append(p.partitions, ii.Next().Begin.Time().Format("2006"))

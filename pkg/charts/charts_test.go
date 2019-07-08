@@ -18,7 +18,7 @@ func TestCompileArtist(t *testing.T) {
 			[]map[string]float64{},
 			rsrc.ParseDay("2008-01-01"),
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2008-01-01"), 0},
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-01")),
 				Keys:    []Key{},
 				Values:  [][]float64{}},
 		},
@@ -26,7 +26,7 @@ func TestCompileArtist(t *testing.T) {
 			[]map[string]float64{{}},
 			rsrc.ParseDay("2008-01-01"),
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2008-01-01"), 0},
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-02")),
 				Keys:    []Key{},
 				Values:  [][]float64{}},
 		},
@@ -38,7 +38,7 @@ func TestCompileArtist(t *testing.T) {
 			},
 			rsrc.ParseDay("2008-01-01"),
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2008-01-01"), 0},
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-04")),
 				Keys:    []Key{simpleKey("ASD"), simpleKey("WASD")},
 				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}}},
 		},
@@ -66,7 +66,7 @@ func TestChartsUnravelDays(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
 				Keys:    []Key{simpleKey("A")},
 				Values:  [][]float64{{}},
 			},
@@ -74,7 +74,7 @@ func TestChartsUnravelDays(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
 				Keys:    []Key{simpleKey("ASD"), simpleKey("WASD")},
 				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}},
 			},
@@ -104,7 +104,7 @@ func TestChartsGetKeys(t *testing.T) {
 	}{
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
 				Keys:    []Key{},
 				Values:  [][]float64{{}},
 			},
@@ -112,7 +112,7 @@ func TestChartsGetKeys(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 2},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
 				Keys:    []Key{simpleKey("xx"), simpleKey("yy")},
 				Values:  [][]float64{{32, 45}, {32, 45}}},
 			[]string{"xx", "yy"},
@@ -133,15 +133,15 @@ func TestChartsGetKeys(t *testing.T) {
 	}
 }
 
-type brokenHeaders dayHeaders
-
-func (h brokenHeaders) Index(day rsrc.Day) int {
-	return 0
-}
-
-func (h brokenHeaders) At(index int) rsrc.Day {
-	return dayHeaders(h).At(index)
-}
+// type brokenHeaders dayHeaders
+//
+// func (h brokenHeaders) Index(day rsrc.Day) int {
+// 	return 0
+// }
+//
+// func (h brokenHeaders) At(index int) rsrc.Day {
+// 	return dayHeaders(h).At(index)
+// }
 
 func TestChartsEqual(t *testing.T) {
 	cases := []struct {
@@ -153,12 +153,12 @@ func TestChartsEqual(t *testing.T) {
 		{
 			"empty",
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
 				Keys:    []Key{},
 				Values:  [][]float64{},
 			},
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 0},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
 				Keys:    []Key{},
 				Values:  [][]float64{},
 			},
@@ -167,12 +167,12 @@ func TestChartsEqual(t *testing.T) {
 		{
 			"equal",
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 4},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-05")),
 				Keys:    []Key{simpleKey("xx"), simpleKey("yy")},
 				Values:  [][]float64{{1, 0, 1, 2}, {5, 5, 6, 7}},
 			},
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 4},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-05")),
 				Keys:    []Key{simpleKey("yy"), simpleKey("xx")},
 				Values:  [][]float64{{5, 5, 6, 7}, {1, 0, 1, 2}},
 			},
@@ -181,12 +181,12 @@ func TestChartsEqual(t *testing.T) {
 		{
 			"different date",
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 1},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-02")),
 				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{1}},
 			},
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-02"), 1},
+				Headers: Days(rsrc.ParseDay("2000-01-02"), rsrc.ParseDay("2000-01-02")),
 				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{1}},
 			},
@@ -195,12 +195,12 @@ func TestChartsEqual(t *testing.T) {
 		{
 			"different length",
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 1},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-02")),
 				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{1}},
 			},
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 2},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
 				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{1, 2}},
 			},
@@ -209,12 +209,12 @@ func TestChartsEqual(t *testing.T) {
 		{
 			"different values",
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
 				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{3, 3, 1}},
 			},
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
 				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{3, 3, 2}},
 			},
@@ -223,41 +223,13 @@ func TestChartsEqual(t *testing.T) {
 		{
 			"different key",
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
 				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{3, 3, 1}},
 			},
 			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
 				Keys:    []Key{simpleKey("xy")},
-				Values:  [][]float64{{3, 3, 1}},
-			},
-			false,
-		},
-		{
-			"different header function, same effective headers",
-			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
-				Keys:    []Key{simpleKey("xx")},
-				Values:  [][]float64{{3, 3, 1}},
-			},
-			Charts{
-				Headers: header("d", rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
-				Keys:    []Key{simpleKey("xx")},
-				Values:  [][]float64{{3, 3, 1}},
-			},
-			true,
-		},
-		{
-			"broken headers",
-			Charts{
-				Headers: dayHeaders{rsrc.ParseDay("2000-01-01"), 3},
-				Keys:    []Key{simpleKey("xx")},
-				Values:  [][]float64{{3, 3, 1}},
-			},
-			Charts{
-				Headers: brokenHeaders(dayHeaders{rsrc.ParseDay("2000-01-01"), 3}),
-				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{3, 3, 1}},
 			},
 			false,

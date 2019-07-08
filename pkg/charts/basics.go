@@ -191,17 +191,26 @@ func (c Charts) Max() (max Column) {
 // Equal compares two charts in their headers, keys and values. Key order does
 // not matter.
 func (c Charts) Equal(other Charts) bool {
+	return c.AssertEqual(other) == nil
+}
+func (c Charts) AssertEqual(other Charts) error {
 	if c.Len() != other.Len() {
-		return false
+		return fmt.Errorf("this len is '%v' but other is '%v'", c.Len(), other.Len())
+	}
+
+	if c.Headers.Len() != other.Headers.Len() {
+		return fmt.Errorf("this header's len is '%v' but other is '%v'",
+			c.Headers.Len(), other.Headers.Len())
 	}
 
 	for i := 0; i < c.Len(); i++ {
-		if c.Headers.At(i).Midnight() != other.Headers.At(i).Midnight() {
-			return false
+		if c.Headers.At(i).Begin.Midnight() != other.Headers.At(i).Begin.Midnight() ||
+			c.Headers.At(i).Before.Midnight() != other.Headers.At(i).Before.Midnight() {
+			return fmt.Errorf("")
 		}
 
-		if i != other.Headers.Index(c.Headers.At(i)) {
-			return false
+		if i != other.Headers.Index(c.Headers.At(i).Begin) {
+			return fmt.Errorf("")
 		}
 	}
 
@@ -216,8 +225,8 @@ func (c Charts) Equal(other Charts) bool {
 	}
 
 	if !reflect.DeepEqual(expectedMap, actualMap) {
-		return false
+		return fmt.Errorf("")
 	}
 
-	return true
+	return nil
 }

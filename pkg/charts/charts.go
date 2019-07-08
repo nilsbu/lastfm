@@ -16,29 +16,10 @@ func (s simpleKey) String() string {
 	return string(s)
 }
 
-type Headers interface {
-	Index(day rsrc.Day) int
-	At(index int) rsrc.Day
-}
-
 type Charts struct {
-	Headers Headers
+	Headers Intervals
 	Keys    []Key
 	Values  [][]float64
-}
-
-type dayHeaders struct {
-	Begin rsrc.Day
-	Count int
-}
-
-func (h dayHeaders) Index(day rsrc.Day) int {
-	duration := day.Time().Sub(h.Begin.Time())
-	return int(duration.Hours() / 24)
-}
-
-func (h dayHeaders) At(index int) rsrc.Day {
-	return rsrc.ToDay(h.Begin.Time().AddDate(0, 0, index).Unix())
 }
 
 func CompileArtists(
@@ -61,8 +42,9 @@ func CompileArtists(
 		}
 	}
 
+	end := rsrc.ToDay(registered.Midnight() + int64(86400*size))
 	return Charts{
-		Headers: dayHeaders{Begin: registered, Count: size},
+		Headers: Days(registered, end),
 		Keys:    keys,
 		Values:  values,
 	}

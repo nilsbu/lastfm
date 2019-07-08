@@ -178,27 +178,10 @@ func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 	return column
 }
 
-type intervalHeaders []Interval
-
-func (h intervalHeaders) Index(day rsrc.Day) (idx int) {
-	var interval Interval
-	for idx, interval = range h {
-		if interval.Begin.Midnight() <= day.Midnight() &&
-			day.Midnight() < interval.Before.Midnight() {
-			break
-		}
-	}
-
-	return
-}
-func (h intervalHeaders) At(index int) rsrc.Day {
-	return h[index].Begin
-}
-
-func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
+func (c Charts) Intervals(intervals Intervals, registered rsrc.Day) Charts {
 	icharts := []map[string]float64{}
-	for _, i := range intervals {
-		col := c.Interval(i, registered)
+	for i := 0; i < intervals.Len(); i++ {
+		col := c.Interval(intervals.At(i), registered)
 
 		if len(col) == 0 {
 			continue
@@ -213,20 +196,20 @@ func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
 	}
 
 	ncha := CompileArtists(icharts, registered)
-	ncha.Headers = intervalHeaders(intervals)
+	ncha.Headers = intervals
 	return ncha
 }
 
 // Index calculates an column index based on registration date and searcherd
 // date.
-func Index(t rsrc.Day, registered rsrc.Day) int {
+func Index(t rsrc.Day, registered rsrc.Day) int { // TODO is obsolete
 	return int((t.Midnight()-registered.Midnight())/86400 - 1)
 }
 
 // TODO change name
 func ToIntervals(
-	descr string, begin rsrc.Day, end rsrc.Day,
-) ([]Interval, error) {
+	descr string, begin, end rsrc.Day,
+) (Intervals, error) {
 
 	re := regexp.MustCompile("^\\d*[yMd]$")
 	if !re.MatchString(descr) {
@@ -238,22 +221,13 @@ func ToIntervals(
 		n = 1
 	}
 
-	var ii intervalIterator
+	// var ii intervalIterator
 	switch descr[len(descr)-1] {
 	case 'y':
-		ii = newYearIterator(n, begin, end)
+		return Years(begin, end, n), nil
 	case 'M':
-		ii = newMonthIterator(n, begin, end)
-	case 'd':
-		ii = newDayIterator(n, begin, end)
+		return Months(begin, end, n), nil
+	default:
+		return MultiDays(begin, end, n), nil
 	}
-
-	intervals := []Interval{}
-	for ii.HasNext() {
-		current := ii.Next()
-
-		intervals = append(intervals, current)
-	}
-
-	return intervals, nil
 }
