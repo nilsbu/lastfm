@@ -58,6 +58,33 @@ func TestParseDay(t *testing.T) {
 	}
 }
 
+func TestDayFromTime(t *testing.T) {
+	cases := []struct {
+		time     time.Time
+		midnight int64
+	}{
+		{time.Date(2017, 4, 4, 0, 0, 0, 0, time.UTC), 1491264000},
+		{time.Date(2017, 4, 4, 12, 6, 2, 0, time.UTC), 1491264000},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			day := DayFromTime(c.time)
+
+			if day == nil {
+				t.Errorf("valid result was expected but 'nil' was returned")
+			}
+
+			midnight := day.Midnight()
+
+			if midnight != c.midnight {
+				t.Errorf("got midnight '%v', expected '%v'",
+					midnight, c.midnight)
+			}
+		})
+	}
+}
+
 func TestDayTime(t *testing.T) {
 	cases := []struct {
 		day  Day

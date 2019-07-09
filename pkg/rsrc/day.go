@@ -37,10 +37,18 @@ func ParseDay(str string) Day {
 	return date(t)
 }
 
+// DayFromTime converts a Time into a Day.
+func DayFromTime(t time.Time) Day {
+	return date(time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0, time.UTC))
+}
+
 // Midnight returns the Unix timestamp of a date's midnight.
 func (d date) Midnight() (unix int64) {
-	t := time.Time(d).Unix()
-	return t
+	return time.Time(d).Unix()
 }
 
 // Time converts a Date to a time.Time object.
