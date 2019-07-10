@@ -216,8 +216,10 @@ func TestChartsSumIntervals(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			sum := c.charts.Sum()
 
-			end := sum.Headers.At(sum.Headers.Len()).Begin
-			intervals, err := ToIntervals(c.descr, c.registered, end)
+			intervals, err := ToIntervals(
+				c.descr,
+				sum.Headers.At(0).Begin,
+				sum.Headers.At(sum.Headers.Len()).Begin)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -225,7 +227,7 @@ func TestChartsSumIntervals(t *testing.T) {
 			}
 
 			if c.ok {
-				charts := sum.Intervals(intervals, c.registered)
+				charts := sum.Intervals(intervals)
 
 				if err = c.intervals.AssertEqual(charts); err != nil {
 					fmt.Println(c.charts.Headers.At(0), c.charts.Headers.Len())

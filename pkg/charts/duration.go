@@ -181,7 +181,7 @@ func (c Charts) Interval(i Interval) Column {
 	return column
 }
 
-func (c Charts) Intervals(intervals Intervals, registered rsrc.Day) Charts {
+func (c Charts) Intervals(intervals Intervals) Charts {
 	icharts := []map[string]float64{}
 	for i := 0; i < intervals.Len(); i++ {
 		col := c.Interval(intervals.At(i))

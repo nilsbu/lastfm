@@ -110,7 +110,7 @@ func (cmd tablePeriods) Execute(
 		return err
 	}
 
-	out = out.Intervals(intervals, user.Registered)
+	out = out.Intervals(intervals)
 
 	f := &format.Table{
 		Charts: out,
