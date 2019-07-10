@@ -19,8 +19,8 @@ func (c Charts) FindEntryDates(registered rsrc.Day, threshold float64,
 
 		for i, value := range values {
 			if value >= threshold {
-				date := registered.Midnight() + int64(86400*i)
-				entryDates = append(entryDates, EntryDate{name, rsrc.ToDay(date)})
+				date := registered.AddDate(0, 0, i)
+				entryDates = append(entryDates, EntryDate{name, date})
 				break
 			}
 		}
@@ -59,8 +59,8 @@ func (c Charts) FindEntryDatesDynamic(registered rsrc.Day, threshold float64,
 		}
 
 		if idx != -1 {
-			date := registered.Midnight() + int64(86400*idx)
-			entryDates = append(entryDates, EntryDate{name, rsrc.ToDay(date)})
+			date := registered.AddDate(0, 0, idx)
+			entryDates = append(entryDates, EntryDate{name, date})
 		}
 	}
 
@@ -83,7 +83,7 @@ func (c Charts) GetYearPartition(registered rsrc.Day, threshold float64,
 	ii := newYearIterator(
 		1,
 		registered,
-		rsrc.ToDay(registered.Midnight()+int64(86400*c.Len())))
+		registered.AddDate(0, 0, c.Len()))
 
 	for ii.HasNext() {
 		p.partitions = append(p.partitions, ii.Next().Begin.Time().Format("2006"))

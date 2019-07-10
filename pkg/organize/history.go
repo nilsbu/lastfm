@@ -29,7 +29,7 @@ func LoadHistory(
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
-			date := rsrc.ToDay(int64(i*86400) + registered)
+			date := user.Registered.AddDate(0, 0, i)
 			dp, err := loadDayPlays(user.Name, date, r)
 			if err == nil {
 				result[i] = dp
@@ -117,7 +117,8 @@ func UpdateHistory(
 	if err != nil {
 		oldPlays = []charts.Charts{}
 	} else if len(oldPlays) > 0 {
-		begin = registeredDay + int64(86400*(len(oldPlays)-1))
+		// TODO cleanup the use of time in this function
+		begin = user.Registered.AddDate(0, 0, len(oldPlays)-1).Midnight()
 		oldPlays = oldPlays[:len(oldPlays)-1]
 	}
 

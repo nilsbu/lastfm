@@ -82,8 +82,8 @@ func TestLoadHistory(t *testing.T) {
 			files := make(map[rsrc.Locator][]byte)
 			for j, day := range tc.data {
 				for k, d := range day {
-					time := tc.user.Registered.Midnight() + int64(j*86400)
-					files[rsrc.History(tc.user.Name, k+1, rsrc.ToDay(time))] = []byte(d)
+					time := tc.user.Registered.AddDate(0, 0, j)
+					files[rsrc.History(tc.user.Name, k+1, time)] = []byte(d)
 				}
 			}
 			io, _ := mock.IO(files, mock.Path)

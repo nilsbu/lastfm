@@ -219,8 +219,7 @@ func (c Charts) ToIntervals(
 		n = 1
 	}
 
-	reg := registered.Midnight()
-	before := rsrc.ToDay(reg + int64(86400*c.Len()))
+	before := registered.AddDate(0, 0, c.Len())
 
 	var ii intervalIterator
 	switch descr[len(descr)-1] {
