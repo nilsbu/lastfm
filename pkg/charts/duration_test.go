@@ -308,14 +308,15 @@ func TestChartsToIntervals(t *testing.T) {
 			for i := 0; i < c.n; i++ {
 				days = append(days, 0)
 			}
-			end := rsrc.ToDay(c.registered.Midnight() + int64(86400*c.n))
 			cha := Charts{
-				Headers: Days(c.registered, end),
+				Headers: Days(c.registered, c.registered.AddDate(0, 0, c.n)),
 				Keys:    []Key{simpleKey("x")},
 				Values:  [][]float64{days}}
 
-			end = rsrc.ToDay(c.registered.Midnight() + int64(86400*cha.Len()))
-			intervals, err := ToIntervals(c.descr, c.registered, end)
+			intervals, err := ToIntervals(
+				c.descr,
+				c.registered,
+				c.registered.AddDate(0, 0, cha.Len()))
 			if err != nil && c.ok {
 				t.Fatalf("unexpected error: %v", err)
 			} else if err == nil && !c.ok {

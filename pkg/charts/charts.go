@@ -42,9 +42,8 @@ func CompileArtists(
 		}
 	}
 
-	end := rsrc.ToDay(registered.Midnight() + int64(86400*size))
 	return Charts{
-		Headers: Days(registered, end),
+		Headers: Days(registered, registered.AddDate(0, 0, size)),
 		Keys:    keys,
 		Values:  values,
 	}

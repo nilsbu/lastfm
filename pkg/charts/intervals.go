@@ -28,8 +28,8 @@ type dayIntervals struct {
 
 func (i dayIntervals) At(index int) (interval Interval) {
 	return Interval{
-		Begin:  rsrc.ToDay(i.begin.Time().AddDate(0, 0, index*i.step).Unix()),
-		Before: rsrc.ToDay(i.begin.Time().AddDate(0, 0, (index+1)*i.step).Unix()),
+		Begin:  rsrc.DayFromTime(i.begin.Time().AddDate(0, 0, index*i.step)),
+		Before: rsrc.DayFromTime(i.begin.Time().AddDate(0, 0, (index+1)*i.step)),
 	}
 }
 
@@ -59,8 +59,8 @@ type monthIntervals struct {
 
 func (i monthIntervals) At(index int) (interval Interval) {
 	return Interval{
-		Begin:  rsrc.ToDay(i.begin.Time().AddDate(0, index*i.step, 0).Unix()),
-		Before: rsrc.ToDay(i.begin.Time().AddDate(0, (index+1)*i.step, 0).Unix()),
+		Begin:  rsrc.DayFromTime(i.begin.Time().AddDate(0, index*i.step, 0)),
+		Before: rsrc.DayFromTime(i.begin.Time().AddDate(0, (index+1)*i.step, 0)),
 	}
 }
 
@@ -80,7 +80,7 @@ func Months(begin, end rsrc.Day, step int) Intervals {
 	t := begin.Time()
 	y := t.Year()
 	m := int(int(t.Month())-1)/step*step + 1
-	begin = rsrc.ToDay(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC).Unix())
+	begin = rsrc.DayFromTime(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC))
 
 	bt := begin.Time()
 	by := bt.Year()
@@ -105,8 +105,8 @@ type yearIntervals struct {
 
 func (i yearIntervals) At(index int) (interval Interval) {
 	return Interval{
-		Begin:  rsrc.ToDay(i.begin.Time().AddDate(index*i.step, 0, 0).Unix()),
-		Before: rsrc.ToDay(i.begin.Time().AddDate((index+1)*i.step, 0, 0).Unix()),
+		Begin:  rsrc.DayFromTime(i.begin.Time().AddDate(index*i.step, 0, 0)),
+		Before: rsrc.DayFromTime(i.begin.Time().AddDate((index+1)*i.step, 0, 0)),
 	}
 }
 
@@ -119,9 +119,9 @@ func (i yearIntervals) Index(day rsrc.Day) (index int) {
 
 func Years(begin, end rsrc.Day, step int) Intervals {
 	y := begin.Time().Year() / step * step
-	begin = rsrc.ToDay(time.Date(y, 1, 1, 0, 0, 0, 0, time.UTC).Unix())
+	begin = rsrc.DayFromTime(time.Date(y, 1, 1, 0, 0, 0, 0, time.UTC))
 
-	n := (end.Time().AddDate(0, 0, -1).Year() - begin.Time().Year()) / step
+	n := (end.Time().AddDate(0, 0, -1).Year() - y) / step
 
 	return yearIntervals{intervalsBase{
 		begin: begin,
