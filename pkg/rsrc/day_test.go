@@ -58,6 +58,33 @@ func TestParseDay(t *testing.T) {
 	}
 }
 
+func TestDayFromTime(t *testing.T) {
+	cases := []struct {
+		time     time.Time
+		midnight int64
+	}{
+		{time.Date(2017, 4, 4, 0, 0, 0, 0, time.UTC), 1491264000},
+		{time.Date(2017, 4, 4, 12, 6, 2, 0, time.UTC), 1491264000},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			day := DayFromTime(c.time)
+
+			if day == nil {
+				t.Errorf("valid result was expected but 'nil' was returned")
+			}
+
+			midnight := day.Midnight()
+
+			if midnight != c.midnight {
+				t.Errorf("got midnight '%v', expected '%v'",
+					midnight, c.midnight)
+			}
+		})
+	}
+}
+
 func TestDayTime(t *testing.T) {
 	cases := []struct {
 		day  Day
@@ -74,6 +101,44 @@ func TestDayTime(t *testing.T) {
 			if time != c.time {
 				t.Errorf("got '%v', expected '%v'",
 					time, c.time)
+			}
+		})
+	}
+}
+
+func TestDayAddDate(t *testing.T) {
+	cases := []struct {
+		base      Day
+		addYears  int
+		addMonths int
+		addDays   int
+		sum       Day
+	}{
+		{
+			ParseDay("1992-11-12"),
+			0, 0, 0,
+			ParseDay("1992-11-12"),
+		},
+		{
+			ParseDay("1992-11-12"),
+			1, 2, 1,
+			ParseDay("1994-01-13"),
+		},
+		{
+			ParseDay("1992-11-12"),
+			1, -3, 0,
+			ParseDay("1993-08-12"),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			sum := c.base.AddDate(
+				c.addYears, c.addMonths, c.addDays)
+
+			if sum.Midnight() != c.sum.Midnight() {
+				t.Errorf("got '%v', expected '%v'",
+					sum, c.sum)
 			}
 		})
 	}

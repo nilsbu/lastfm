@@ -10,10 +10,13 @@ import (
 //
 // Midnight returns the beginning of the day as a Unix time stamp.
 // Time converts the Day to a time.Time object.
+// AddDate returns a Day that has the given years, months and days added.
+// Nevative parameter values are permitted.
 type Day interface {
 	fmt.Stringer
 	Midnight() (unix int64)
 	Time() time.Time
+	AddDate(years, months, days int) Day
 }
 
 // date is a representation of time. It implements Day.
@@ -37,15 +40,29 @@ func ParseDay(str string) Day {
 	return date(t)
 }
 
+// DayFromTime converts a Time into a Day.
+func DayFromTime(t time.Time) Day {
+	return date(time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0, time.UTC))
+}
+
 // Midnight returns the Unix timestamp of a date's midnight.
 func (d date) Midnight() (unix int64) {
-	t := time.Time(d).Unix()
-	return t
+	return time.Time(d).Unix()
 }
 
 // Time converts a Date to a time.Time object.
 func (d date) Time() time.Time {
 	return time.Time(d)
+}
+
+// AddDate eturns a Day that has the given years, months and days added.
+// Nevative parameter values are permitted.
+func (d date) AddDate(years, months, days int) Day {
+	return date(d.Time().AddDate(years, months, days))
 }
 
 func (d date) String() string {
