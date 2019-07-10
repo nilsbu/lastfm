@@ -49,6 +49,16 @@ func TestChartsGetYearPartition(t *testing.T) {
 	}{
 		{
 			Charts{
+				Headers: Days(rsrc.ParseDay("2017-12-29"), rsrc.ParseDay("2017-12-29")),
+				Keys:    []Key{},
+				Values:  [][]float64{}},
+			mapPart{
+				assoc:      map[string]string{},
+				partitions: []string{"2017", "-"},
+			},
+		},
+		{
+			Charts{
 				Headers: Days(rsrc.ParseDay("2017-12-29"), rsrc.ParseDay("2018-01-05")),
 				Keys:    []Key{simpleKey("A"), simpleKey("B"), simpleKey("C")},
 				Values: [][]float64{
