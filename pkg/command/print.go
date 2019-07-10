@@ -152,7 +152,7 @@ func (cmd printTotal) Execute(
 		if err != nil {
 			return errors.Wrap(err, "failed to load user info")
 		}
-		col = charts.Index(rsrc.ToDay(cmd.date.Unix()), user.Registered)
+		col = charts.Index(rsrc.DayFromTime(cmd.date), user.Registered)
 	}
 
 	prec := 0
@@ -197,7 +197,7 @@ func (cmd printFade) Execute(
 		if err != nil {
 			return errors.Wrap(err, "failed to load user info")
 		}
-		col = charts.Index(rsrc.ToDay(cmd.date.Unix()), user.Registered)
+		col = charts.Index(rsrc.DayFromTime(cmd.date), user.Registered)
 	}
 
 	f := &format.Charts{
@@ -280,8 +280,8 @@ func (cmd printInterval) Execute(
 	}
 
 	interval := charts.Interval{
-		Begin:  rsrc.ToDay(cmd.begin.Unix()),
-		Before: rsrc.ToDay(cmd.before.Unix()),
+		Begin:  rsrc.DayFromTime(cmd.begin),
+		Before: rsrc.DayFromTime(cmd.before),
 	}
 
 	col := out.Interval(interval, user.Registered)

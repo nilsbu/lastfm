@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -29,7 +28,7 @@ func (f *Table) CSV(w io.Writer, decimal string) error {
 			io.WriteString(w, ";")
 		}
 
-		t := time.Unix(f.First.Midnight()+int64(i*86400), 0).UTC()
+		t := f.First.AddDate(0, 0, i).Time()
 		fmt.Fprintf(w, "%04d-%02d-%02d", t.Year(), t.Month(), t.Day())
 	}
 	io.WriteString(w, "\n")
