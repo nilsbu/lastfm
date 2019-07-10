@@ -139,7 +139,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: time.Time{},
 			},
 			&format.Charts{
 				Charts: charts.CompileArtists(
@@ -171,7 +171,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: time.Time{},
 			},
 			&format.Charts{
 				Charts: charts.CompileArtists(

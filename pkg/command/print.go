@@ -147,12 +147,7 @@ func (cmd printTotal) Execute(
 	var null time.Time
 	null = time.Time{}
 	if cmd.date != null {
-		var user *unpack.User
-		user, err = unpack.LoadUserInfo(session.User, s)
-		if err != nil {
-			return errors.Wrap(err, "failed to load user info")
-		}
-		col = charts.Index(rsrc.DayFromTime(cmd.date), user.Registered)
+		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
 	}
 
 	prec := 0
@@ -192,12 +187,7 @@ func (cmd printFade) Execute(
 	var null time.Time
 	null = time.Time{}
 	if cmd.date != null {
-		var user *unpack.User
-		user, err = unpack.LoadUserInfo(session.User, s)
-		if err != nil {
-			return errors.Wrap(err, "failed to load user info")
-		}
-		col = charts.Index(rsrc.DayFromTime(cmd.date), user.Registered)
+		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
 	}
 
 	f := &format.Charts{
@@ -228,17 +218,12 @@ func (cmd printPeriod) Execute(
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, s)
-	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
-	}
-
 	period, err := charts.Period(cmd.period)
 	if err != nil {
 		return err
 	}
 
-	col := out.Interval(period, user.Registered)
+	col := out.Interval(period)
 	sumTotal := col.Sum()
 	col = col.Top(cmd.n)
 
@@ -274,17 +259,12 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, s)
-	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
-	}
-
 	interval := charts.Interval{
 		Begin:  rsrc.DayFromTime(cmd.begin),
 		Before: rsrc.DayFromTime(cmd.before),
 	}
 
-	col := out.Interval(interval, user.Registered)
+	col := out.Interval(interval)
 	sumTotal := col.Sum()
 	col = col.Top(cmd.n)
 

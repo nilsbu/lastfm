@@ -8,25 +8,19 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-// func header(descr string, begin rsrc.Day, end rsrc.Day) Headers {
-// 	intervals, _ := ToIntervals(descr, begin, end)
-// 	return intervalHeaders(intervals)
-// }
-
 func TestChartsPeriod(t *testing.T) {
 	cases := []struct {
-		cha        Charts
-		period     string
-		registered rsrc.Day
-		col        Column
-		ok         bool
+		cha    Charts
+		period string
+		col    Column
+		ok     bool
 	}{
 		{
 			Charts{
 				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values:  [][]float64{{3, 4, 5}, {2, 3, 6}}},
-			"2009", rsrc.ParseDay("2009-12-30"),
+			"2009",
 			Column{{"a", 7}, {"b", 5}}, true,
 		},
 		{
@@ -34,7 +28,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values:  [][]float64{{3, 4, 5}, {2, 3, 6}}},
-			"2010", rsrc.ParseDay("2009-12-30"),
+			"2010",
 			Column{{"b", 6}, {"a", 5}}, true,
 		},
 		{
@@ -42,7 +36,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"42", rsrc.ParseDay("2009-12-30"),
+			"42",
 			nil, false,
 		},
 		{
@@ -50,7 +44,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"-300", rsrc.ParseDay("2009-12-30"),
+			"-300",
 			nil, false,
 		},
 		{
@@ -58,7 +52,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"xxxx", rsrc.ParseDay("2009-12-30"),
+			"xxxx",
 			nil, false,
 		},
 		{
@@ -66,7 +60,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"2008", rsrc.ParseDay("2009-12-30"),
+			"2008",
 			Column{}, true,
 		},
 		{
@@ -74,7 +68,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2000-01-04")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"2011", rsrc.ParseDay("2009-12-30"),
+			"2011",
 			Column{}, true,
 		},
 		{
@@ -82,7 +76,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-03-31"), rsrc.ParseDay("2010-04-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"2009-03", rsrc.ParseDay("2009-03-31"),
+			"2009-03",
 			Column{{"a", 3}}, true,
 		},
 		{
@@ -90,7 +84,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"2009-12", rsrc.ParseDay("2009-12-31"),
+			"2009-12",
 			Column{{"a", 3}}, true,
 		},
 		{
@@ -98,7 +92,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"1e+5-12", rsrc.ParseDay("2009-12-31"),
+			"1e+5-12",
 			nil, false,
 		},
 		{
@@ -106,7 +100,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"2009-xx", rsrc.ParseDay("2009-12-31"),
+			"2009-xx",
 			nil, false,
 		},
 		{
@@ -114,7 +108,7 @@ func TestChartsPeriod(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
-			"1999012", rsrc.ParseDay("2009-12-31"),
+			"1999012",
 			nil, false,
 		},
 	}
@@ -128,7 +122,7 @@ func TestChartsPeriod(t *testing.T) {
 				t.Error("expected error but none occurred")
 			}
 			if err == nil {
-				col := c.cha.Sum().Interval(period, c.registered)
+				col := c.cha.Sum().Interval(period)
 
 				if !reflect.DeepEqual(col, c.col) {
 					t.Errorf("wrong data:\nhas:  %v\nwant: %v", col, c.col)

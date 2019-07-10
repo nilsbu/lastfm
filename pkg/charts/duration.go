@@ -150,11 +150,14 @@ func Period(descr string) (Interval, error) {
 
 // Interval returns a Column that sums an interval of the charts. The charts
 // have to be a sum.
-func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
+func (c Charts) Interval(i Interval) Column {
 	size := c.Len()
 
-	from := Index(i.Begin, registered)
-	to := Index(i.Before, registered)
+	// A day is subtacted here because the entry at begin & and already the plays
+	// from that day.
+	from := c.Headers.Index(i.Begin) - 1
+	to := c.Headers.Index(i.Before) - 1
+
 	if to < 0 {
 		return Column{}
 	} else if to >= size {
@@ -181,7 +184,7 @@ func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 func (c Charts) Intervals(intervals Intervals, registered rsrc.Day) Charts {
 	icharts := []map[string]float64{}
 	for i := 0; i < intervals.Len(); i++ {
-		col := c.Interval(intervals.At(i), registered)
+		col := c.Interval(intervals.At(i))
 
 		if len(col) == 0 {
 			continue
@@ -195,15 +198,9 @@ func (c Charts) Intervals(intervals Intervals, registered rsrc.Day) Charts {
 		icharts = append(icharts, cha)
 	}
 
-	ncha := CompileArtists(icharts, registered)
+	ncha := CompileArtists(icharts, c.Headers.At(0).Begin)
 	ncha.Headers = intervals
 	return ncha
-}
-
-// Index calculates an column index based on registration date and searcherd
-// date.
-func Index(t rsrc.Day, registered rsrc.Day) int { // TODO is obsolete
-	return int((t.Midnight()-registered.Midnight())/86400 - 1)
 }
 
 // TODO change name
