@@ -23,7 +23,7 @@ func TestChartsPeriod(t *testing.T) {
 	}{
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values:  [][]float64{{3, 4, 5}, {2, 3, 6}}},
 			"2009", rsrc.ParseDay("2009-12-30"),
@@ -31,7 +31,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values:  [][]float64{{3, 4, 5}, {2, 3, 6}}},
 			"2010", rsrc.ParseDay("2009-12-30"),
@@ -39,7 +39,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"42", rsrc.ParseDay("2009-12-30"),
@@ -47,7 +47,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"-300", rsrc.ParseDay("2009-12-30"),
@@ -55,7 +55,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"xxxx", rsrc.ParseDay("2009-12-30"),
@@ -63,7 +63,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2010-01-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2008", rsrc.ParseDay("2009-12-30"),
@@ -71,7 +71,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-30"), rsrc.ParseDay("2000-01-04")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2011", rsrc.ParseDay("2009-12-30"),
@@ -79,7 +79,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-03-31"), rsrc.ParseDay("2010-04-02")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2009-03", rsrc.ParseDay("2009-03-31"),
@@ -87,7 +87,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2009-12", rsrc.ParseDay("2009-12-31"),
@@ -95,7 +95,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"1e+5-12", rsrc.ParseDay("2009-12-31"),
@@ -103,7 +103,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"2009-xx", rsrc.ParseDay("2009-12-31"),
@@ -111,7 +111,7 @@ func TestChartsPeriod(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Headers: Days(rsrc.ParseDay("2009-12-31"), rsrc.ParseDay("2010-01-03")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{3, 4, 5}}},
 			"1999012", rsrc.ParseDay("2009-12-31"),
