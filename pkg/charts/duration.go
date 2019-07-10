@@ -102,8 +102,8 @@ func dayPeriod(day rsrc.Day, step int) Interval {
 	t := day.Time()
 	y, m, d := t.Year(), t.Month(), t.Day()
 	return Interval{
-		Begin:  rsrc.ToDay(time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC).Unix()),
-		Before: rsrc.ToDay(time.Date(y, time.Month(m), d+step, 0, 0, 0, 0, time.UTC).Unix()),
+		Begin:  rsrc.DayFromTime(time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)),
+		Before: rsrc.DayFromTime(time.Date(y, time.Month(m), d+step, 0, 0, 0, 0, time.UTC)),
 	}
 }
 
@@ -112,8 +112,8 @@ func monthPeriod(day rsrc.Day, step int) Interval {
 	y := t.Year()
 	m := int(int(t.Month())-1)/step*step + 1
 	return Interval{
-		Begin:  rsrc.ToDay(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC).Unix()),
-		Before: rsrc.ToDay(time.Date(y, time.Month(m+step), 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Begin:  rsrc.DayFromTime(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC)),
+		Before: rsrc.DayFromTime(time.Date(y, time.Month(m+step), 1, 0, 0, 0, 0, time.UTC)),
 	}
 }
 
@@ -121,8 +121,8 @@ func yearPeriod(day rsrc.Day, step int) Interval {
 	t := day.Time()
 	y := int(t.Year()/step) * step
 	return Interval{
-		Begin:  rsrc.ToDay(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
-		Before: rsrc.ToDay(time.Date(y+step, time.January, 1, 0, 0, 0, 0, time.UTC).Unix()),
+		Begin:  rsrc.DayFromTime(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC)),
+		Before: rsrc.DayFromTime(time.Date(y+step, time.January, 1, 0, 0, 0, 0, time.UTC)),
 	}
 }
 
@@ -136,13 +136,13 @@ func Period(descr string) (Interval, error) {
 		if err != nil {
 			return Interval{}, err
 		}
-		return yearPeriod(rsrc.ToDay(begin.Unix()), 1), nil
+		return yearPeriod(rsrc.DayFromTime(begin), 1), nil
 	case 7:
 		begin, err := time.Parse("2006-01", descr)
 		if err != nil {
 			return Interval{}, err
 		}
-		return monthPeriod(rsrc.ToDay(begin.Unix()), 1), nil
+		return monthPeriod(rsrc.DayFromTime(begin), 1), nil
 	default:
 		return Interval{}, fmt.Errorf("interval format '%v' not supported", descr)
 	}
