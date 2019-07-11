@@ -193,11 +193,15 @@ func (c Charts) Max() (max Column) {
 func (c Charts) Equal(other Charts) bool {
 	return c.AssertEqual(other) == nil
 }
+
+// AssertEqual compares two charts in their headers, keys and values. Key order
+// does not matter. If they differ an error is returned.
 func (c Charts) AssertEqual(other Charts) error {
 	if c.Len() != other.Len() {
 		return fmt.Errorf("this len is '%v' but other is '%v'", c.Len(), other.Len())
 	}
 
+	// Compare headers
 	if c.Headers.Len() != other.Headers.Len() {
 		return fmt.Errorf("this header's len is '%v' but other is '%v'",
 			c.Headers.Len(), other.Headers.Len())
@@ -209,23 +213,43 @@ func (c Charts) AssertEqual(other Charts) error {
 			return fmt.Errorf("")
 		}
 
-		if i != other.Headers.Index(c.Headers.At(i).Begin) {
-			return fmt.Errorf("")
+		thisI := c.Headers.Index(c.Headers.At(i).Begin)
+		otherI := other.Headers.Index(c.Headers.At(i).Begin)
+		if thisI != otherI {
+			return fmt.Errorf("index of '%v' is '%v' but other is '%v'",
+				c.Headers.At(i).Begin, i, otherI)
 		}
 	}
 
-	actualMap := map[string][]float64{}
+	// Compare charts
+	otherMap := map[string][]float64{}
 	for i, key := range other.Keys {
-		actualMap[key.String()] = other.Values[i]
+		otherMap[key.String()] = other.Values[i]
 	}
 
-	expectedMap := map[string][]float64{}
+	thisMap := map[string][]float64{}
 	for i, key := range c.Keys {
-		expectedMap[key.String()] = c.Values[i]
+		thisMap[key.String()] = c.Values[i]
 	}
 
-	if !reflect.DeepEqual(expectedMap, actualMap) {
-		return fmt.Errorf("")
+	if !reflect.DeepEqual(thisMap, otherMap) {
+		return fmt.Errorf("lines differ: '%v' != '%v'", thisMap, otherMap)
+	}
+
+	// Test Keys in detail
+	for _, key := range c.Keys {
+		for _, otherKey := range other.Keys {
+			if key.String() == otherKey.String() {
+				if key.Artist() != otherKey.Artist() {
+					return fmt.Errorf("artist of key '%v' differs: '%v' vs. '%v'",
+						key.String(), key.Artist(), otherKey.Artist())
+				}
+				if key.FullTitle() != otherKey.FullTitle() {
+					return fmt.Errorf("full title of key '%v' differs: '%v' vs. '%v'",
+						key.String(), key.FullTitle(), otherKey.FullTitle())
+				}
+			}
+		}
 	}
 
 	return nil

@@ -25,7 +25,7 @@ func TestChartsSupertags(t *testing.T) {
 			nil,
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
-				Keys:    []Key{simpleKey("-"), simpleKey("c"), simpleKey("v")},
+				Keys:    []Key{tagKey("-"), tagKey("c"), tagKey("v")},
 				Values:  [][]float64{{}, {}, {}}},
 		},
 		{
@@ -41,7 +41,7 @@ func TestChartsSupertags(t *testing.T) {
 			nil,
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
-				Keys:    []Key{simpleKey("-"), simpleKey("c"), simpleKey("v")},
+				Keys:    []Key{tagKey("-"), tagKey("c"), tagKey("v")},
 				Values:  [][]float64{{0, 0}, {17, 3}, {0, 0}}},
 		},
 		{
@@ -69,7 +69,7 @@ func TestChartsSupertags(t *testing.T) {
 			nil,
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
-				Keys:    []Key{simpleKey("-"), simpleKey("c"), simpleKey("v")},
+				Keys:    []Key{tagKey("-"), tagKey("c"), tagKey("v")},
 				Values:  [][]float64{{0, 2}, {14, 10}, {10, 2}}},
 		},
 		{ // correction
@@ -85,7 +85,7 @@ func TestChartsSupertags(t *testing.T) {
 			map[string]string{"asdf": "v"},
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
-				Keys:    []Key{simpleKey("-"), simpleKey("c"), simpleKey("v")},
+				Keys:    []Key{tagKey("-"), tagKey("c"), tagKey("v")},
 				Values:  [][]float64{{0, 0}, {0, 0}, {7, 1}}},
 		},
 	}
@@ -94,8 +94,8 @@ func TestChartsSupertags(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			tagcharts := c.charts.Group(Supertags(c.tags, c.supertags, c.corrections))
 
-			if !c.tagcharts.Equal(tagcharts) {
-				t.Error("charts are wrong")
+			if err := c.tagcharts.AssertEqual(tagcharts); err != nil {
+				t.Error(err)
 			}
 		})
 	}

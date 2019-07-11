@@ -133,15 +133,13 @@ func TestChartsGetKeys(t *testing.T) {
 	}
 }
 
-// type brokenHeaders dayHeaders
-//
-// func (h brokenHeaders) Index(day rsrc.Day) int {
-// 	return 0
-// }
-//
-// func (h brokenHeaders) At(index int) rsrc.Day {
-// 	return dayHeaders(h).At(index)
-// }
+type brokenIntervals struct {
+	dayIntervals
+}
+
+func (h brokenIntervals) Index(day rsrc.Day) int {
+	return 0
+}
 
 func TestChartsEqual(t *testing.T) {
 	cases := []struct {
@@ -234,16 +232,101 @@ func TestChartsEqual(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"different artist",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{tagKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		// TODO test FullTitle
+		{
+			"different begin",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2001-01-01"), rsrc.ParseDay("2001-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		{
+			"different end",
+			Charts{
+				Headers: Months(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-04-01"), 1),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xy")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		{
+			"broken index in headers",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: brokenIntervals{dayIntervals{intervalsBase{
+					begin: rsrc.ParseDay("2000-01-01"),
+					n:     3,
+					step:  1,
+				}}},
+				Keys:   []Key{simpleKey("xx")},
+				Values: [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
 	}
 
 	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
+		t.Run(c.name, func(t *testing.T) {
 			eq := c.a.Equal(c.b)
 
 			if c.eq && !eq {
-				t.Error("charts not recognized as equal")
+				t.Error("charts not recognized as equal (a first)")
 			} else if !c.eq && eq {
-				t.Error("charts not recognized as unequal")
+				t.Error("charts not recognized as unequal (a first)")
+			}
+
+			eq = c.b.Equal(c.a)
+
+			if c.eq && !eq {
+				t.Error("charts not recognized as equal (b first)")
+			} else if !c.eq && eq {
+				t.Error("charts not recognized as unequal (b first)")
+			}
+
+			err := c.a.AssertEqual(c.b)
+
+			if err == nil && !c.eq {
+				t.Error("expected error but non occurred (a first)")
+			} else if err != nil && c.eq {
+				t.Errorf("unexpected error (a first): %v", err)
+			}
+
+			err = c.b.AssertEqual(c.a)
+
+			if err == nil && !c.eq {
+				t.Error("expected error but non occurred (b first)")
+			} else if err != nil && c.eq {
+				t.Errorf("unexpected error (b first): %v", err)
 			}
 		})
 	}
