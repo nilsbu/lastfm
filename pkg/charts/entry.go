@@ -71,12 +71,12 @@ func (c Charts) GetYearPartition(threshold float64) Partition {
 	entryDates := c.FindEntryDatesDynamic(threshold)
 
 	p := mapPart{
-		assoc:      make(map[string]string),
-		partitions: []string{},
+		assoc:      make(map[string]Key),
+		partitions: []Key{},
 	}
 
 	for _, entryDate := range entryDates {
-		p.assoc[entryDate.Name] = entryDate.Date.Time().Format("2006")
+		p.assoc[entryDate.Name] = simpleKey(entryDate.Date.Time().Format("2006"))
 	}
 
 	ii := newYearIterator(
@@ -85,8 +85,10 @@ func (c Charts) GetYearPartition(threshold float64) Partition {
 		c.Headers.At(c.Len()-1).Before)
 
 	for ii.HasNext() {
-		p.partitions = append(p.partitions, ii.Next().Begin.Time().Format("2006"))
+		p.partitions = append(
+			p.partitions,
+			simpleKey(ii.Next().Begin.Time().Format("2006")))
 	}
-	p.partitions = append(p.partitions, "-")
+	p.partitions = append(p.partitions, simpleKey("-"))
 	return p
 }

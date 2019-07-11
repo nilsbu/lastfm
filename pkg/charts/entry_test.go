@@ -53,8 +53,8 @@ func TestChartsGetYearPartition(t *testing.T) {
 				Keys:    []Key{},
 				Values:  [][]float64{}},
 			mapPart{
-				assoc:      map[string]string{},
-				partitions: []string{"2017", "-"},
+				assoc:      map[string]Key{},
+				partitions: []Key{simpleKey("2017"), simpleKey("-")},
 			},
 		},
 		{
@@ -66,8 +66,8 @@ func TestChartsGetYearPartition(t *testing.T) {
 					{1, 1, 1, 1, 0, 0, 0},
 					{0, 0, 0, 0, 0, 0, 0}}},
 			mapPart{
-				assoc:      map[string]string{"A": "2018", "B": "2017"},
-				partitions: []string{"2017", "2018", "-"},
+				assoc:      map[string]Key{"A": simpleKey("2018"), "B": simpleKey("2017")},
+				partitions: []Key{simpleKey("2017"), simpleKey("2018"), simpleKey("-")},
 			},
 		},
 	}
@@ -76,8 +76,16 @@ func TestChartsGetYearPartition(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			partition := c.sums.GetYearPartition(2)
 
-			if !reflect.DeepEqual(c.partition, partition) { // TODO test partition API
-				t.Errorf("%v != %v", c.partition, partition)
+			if !reflect.DeepEqual(c.partition.Partitions(), partition.Partitions()) {
+				t.Errorf("expected partitions %v but got %v",
+					c.partition.Partitions(), partition.Partitions())
+			}
+
+			for _, key := range c.sums.Keys {
+				if c.partition.Get(key) != partition.Get(key) {
+					t.Errorf("partition for key '%v': expected '%v' but got '%v'",
+						key, c.partition.Get(key), partition.Get(key))
+				}
 			}
 		})
 	}

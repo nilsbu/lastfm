@@ -1,7 +1,6 @@
 package charts
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -230,10 +229,6 @@ func TestChartsSumIntervals(t *testing.T) {
 				charts := sum.Intervals(intervals)
 
 				if err = c.intervals.AssertEqual(charts); err != nil {
-					fmt.Println(c.charts.Headers.At(0), c.charts.Headers.Len())
-					fmt.Println(c.intervals.Headers.At(0), c.intervals.Headers.Len())
-					fmt.Println(intervals.At(0), intervals.Len())
-					fmt.Println(charts.Headers.At(0), charts.Headers.Len())
 					t.Errorf("charts are wrong: %v", err)
 				}
 			}

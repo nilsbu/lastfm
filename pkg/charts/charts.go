@@ -8,11 +8,35 @@ import (
 
 type Key interface {
 	fmt.Stringer
+	Artist() string
+	FullTitle() string
 }
 
 type simpleKey string
 
 func (s simpleKey) String() string {
+	return string(s)
+}
+
+func (s simpleKey) Artist() string {
+	return string(s)
+}
+
+func (s simpleKey) FullTitle() string {
+	return string(s)
+}
+
+type tagKey string
+
+func (s tagKey) String() string {
+	return string(s)
+}
+
+func (s tagKey) Artist() string {
+	return ""
+}
+
+func (s tagKey) FullTitle() string {
 	return string(s)
 }
 

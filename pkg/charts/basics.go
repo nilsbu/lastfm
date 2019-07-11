@@ -158,12 +158,12 @@ func (c Charts) Rank() (ranks Charts) {
 
 type totalPartition struct{}
 
-func (totalPartition) Partitions() []string {
-	return []string{""}
+func (totalPartition) Partitions() []Key {
+	return []Key{simpleKey("")}
 }
 
-func (totalPartition) Get(key string) string {
-	return ""
+func (totalPartition) Get(key Key) Key {
+	return simpleKey("")
 }
 
 func (c Charts) Total() []float64 {
