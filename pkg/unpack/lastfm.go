@@ -58,7 +58,7 @@ func (o *obUserInfo) raw(obj interface{}) interface{} {
 
 // HistoryDayPage is a single page of a day of a user's played tracks.
 type HistoryDayPage struct {
-	Plays map[string]float64
+	Plays []charts.Song
 	Pages int
 }
 
@@ -95,15 +95,16 @@ func (o *obHistory) interpret(raw interface{}) (interface{}, error) {
 		data.RecentTracks.Attr.TotalPages}, nil
 }
 
-func countPlays(urt *jsonUserRecentTracks) map[string]float64 {
-	plays := map[string]float64{}
+func countPlays(urt *jsonUserRecentTracks) []charts.Song {
+	plays := []charts.Song{}
 	for _, track := range urt.RecentTracks.Track {
 		if !track.Attr.NowPlaying {
-			if _, ok := plays[track.Artist.Str]; ok {
-				plays[track.Artist.Str]++
-			} else {
-				plays[track.Artist.Str] = 1
-			}
+
+			plays = append(plays, charts.Song{
+				Artist: track.Artist.Str,
+				Title:  track.Name,
+				Album:  track.Album.Str,
+			})
 		}
 	}
 	return plays

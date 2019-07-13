@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -15,7 +16,7 @@ func TestLoadHistory(t *testing.T) {
 		user  unpack.User
 		until rsrc.Day
 		data  [][]string
-		dps   []map[string]float64
+		dps   [][]charts.Song
 		ok    bool
 	}{
 		{
@@ -46,7 +47,10 @@ func TestLoadHistory(t *testing.T) {
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`},
 				[]string{`{"recenttracks":{"track":[{"artist":{"#text":"XXX"}}], "@attr":{"totalPages":"1"}}}`},
 			},
-			[]map[string]float64{{"ASDF": 1}, {"XXX": 1}},
+			[][]charts.Song{
+				{{Artist: "ASDF"}},
+				{{Artist: "XXX"}},
+			},
 			true,
 		},
 		{
@@ -59,7 +63,9 @@ func TestLoadHistory(t *testing.T) {
 					`{"recenttracks":{"track":[{"artist":{"#text":"Z"}}, {"artist":{"#text":"X"}}], "@attr":{"page":"3","totalPages":"3"}}}`,
 				},
 			},
-			[]map[string]float64{{"X": 2, "Y": 1, "Z": 1}},
+			[][]charts.Song{
+				{{Artist: "X"}, {Artist: "Y"}, {Artist: "Z"}, {Artist: "X"}},
+			},
 			true,
 		},
 		{

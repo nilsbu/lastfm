@@ -6,6 +6,12 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
+type Song struct {
+	Artist string
+	Title  string
+	Album  string
+}
+
 type Key interface {
 	fmt.Stringer
 	Artist() string

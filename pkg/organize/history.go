@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -13,7 +14,7 @@ import (
 func LoadHistory(
 	user unpack.User,
 	until rsrc.Day,
-	r rsrc.Reader) ([]map[string]float64, error) {
+	r rsrc.Reader) ([][]charts.Song, error) {
 
 	if until == nil {
 		return nil, errors.New("parameter 'until' is no valid Day")
@@ -24,7 +25,7 @@ func LoadHistory(
 	registered := user.Registered.Midnight()
 
 	days := int((until.Midnight() - registered) / 86400)
-	result := make([]map[string]float64, days+1)
+	result := make([][]charts.Song, days+1)
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
@@ -49,9 +50,10 @@ func LoadHistory(
 	return result, nil
 }
 
-// LoadDayPlaysResult is the result of loadDayPlays.
-type LoadDayPlaysResult struct {
-	DayPlays map[string]float64
+// loadDayPlaysResult is the result of loadDayPlays.
+type loadDayPlaysResult struct {
+	DayPlays []charts.Song
+	Page     int
 	Err      error
 }
 
@@ -59,43 +61,44 @@ func loadDayPlays(
 	user string,
 	time rsrc.Day,
 	r rsrc.Reader,
-) (map[string]float64, error) {
-	histPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
+) ([]charts.Song, error) {
+	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
 	if err != nil {
 		return nil, err
-	} else if histPage.Pages == 1 {
-		return histPage.Plays, nil
+	} else if firstPage.Pages == 1 {
+		return firstPage.Plays, nil
 	}
 
-	back := make(chan LoadDayPlaysResult)
-	for page := 1; page < histPage.Pages; page++ {
+	pages := make([][]charts.Song, firstPage.Pages)
+	pages[0] = firstPage.Plays
+
+	back := make(chan loadDayPlaysResult)
+	for page := 2; page <= len(pages); page++ {
 		go func(page int) {
-			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page+1, time, r)
+			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page, time, r)
 			if tmpErr != nil {
-				back <- LoadDayPlaysResult{nil, tmpErr}
+				back <- loadDayPlaysResult{nil, page, tmpErr}
 			} else {
-				back <- LoadDayPlaysResult{histPage.Plays, nil}
+				back <- loadDayPlaysResult{histPage.Plays, page, nil}
 			}
 		}(page)
 	}
 
-	for p := 1; p < histPage.Pages; p++ {
+	for p := 1; p < len(pages); p++ {
 		dpr := <-back
 		if dpr.Err != nil {
 			return nil, dpr.Err
 		}
 
-		for k, v := range dpr.DayPlays {
-			if _, ok := histPage.Plays[k]; ok {
-				histPage.Plays[k] += v
-			} else {
-				histPage.Plays[k] = v
-			}
-		}
+		pages[dpr.Page-1] = dpr.DayPlays
 	}
 	close(back)
 
-	return histPage.Plays, err
+	plays := []charts.Song{}
+	for _, page := range pages {
+		plays = append(plays, page...)
+	}
+	return plays, err
 }
 
 // UpdateHistory loads saved daily plays from preprocessed all day plays and
@@ -143,5 +146,18 @@ func UpdateHistory(
 		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
 		until, store.Fresh(s))
 
-	return append(oldPlays, newPlays...), err
+	summed := []map[string]float64{}
+	for _, day := range newPlays {
+		page := map[string]float64{}
+		for _, song := range day {
+			if _, ok := page[song.Artist]; ok {
+				page[song.Artist]++
+			} else {
+				page[song.Artist] = 1
+			}
+		}
+		summed = append(summed, page)
+	}
+
+	return append(oldPlays, summed...), err
 }
