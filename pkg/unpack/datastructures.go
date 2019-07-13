@@ -111,3 +111,7 @@ type jsonSessionInfo struct {
 type jsonCorrections struct {
 	Corrections map[string]string `json:"corrections"`
 }
+
+type jsonBookmark struct {
+	NextDay string `json:"nextday"`
+}

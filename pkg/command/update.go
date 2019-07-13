@@ -21,7 +21,8 @@ func (cmd updateHistory) Execute(
 		return errors.Wrap(err, "failed to load user info")
 	}
 
-	plays, err := organize.UpdateHistory(user, rsrc.DayFromTime(time.Now()), s)
+	today := rsrc.DayFromTime(time.Now())
+	plays, err := organize.UpdateHistory(user, today, s)
 	if err != nil {
 		return errors.Wrap(err, "failed to update user history")
 	}
@@ -29,6 +30,11 @@ func (cmd updateHistory) Execute(
 	err = unpack.WriteAllDayPlays(plays, user.Name, s)
 	if err != nil {
 		return errors.Wrap(err, "failed to write alldayplays")
+	}
+
+	err = unpack.WriteBookmark(today, user.Name, s)
+	if err != nil {
+		return errors.Wrap(err, "failed to write bookmark")
 	}
 
 	return nil

@@ -182,6 +182,13 @@ type userData struct {
 	name   string
 }
 
+func Bookmark(user string) Locator {
+	return &userData{
+		method: "bookmark",
+		name:   user,
+	}
+}
+
 func AllDayPlays(user string) Locator {
 	return &userData{
 		method: "alldayplays",
