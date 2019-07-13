@@ -30,14 +30,14 @@ func (p mapPart) Get(key Key) Key {
 	return simpleKey("-")
 }
 
-// artistPartition is a Partition that takes uses the Key.Artist() to
+// artistPartition is a Partition that takes uses the Key.ArtistName() to
 // categorize.
 type artistPartition struct {
 	mapPart
 }
 
 func (p artistPartition) Get(key Key) Key {
-	if partition, ok := p.assoc[key.Artist()]; ok {
+	if partition, ok := p.assoc[key.ArtistName()]; ok {
 		return partition
 	}
 

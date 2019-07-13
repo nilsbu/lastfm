@@ -240,9 +240,9 @@ func (c Charts) AssertEqual(other Charts) error {
 	for _, key := range c.Keys {
 		for _, otherKey := range other.Keys {
 			if key.String() == otherKey.String() {
-				if key.Artist() != otherKey.Artist() {
+				if key.ArtistName() != otherKey.ArtistName() {
 					return fmt.Errorf("artist of key '%v' differs: '%v' vs. '%v'",
-						key.String(), key.Artist(), otherKey.Artist())
+						key.String(), key.ArtistName(), otherKey.ArtistName())
 				}
 				if key.FullTitle() != otherKey.FullTitle() {
 					return fmt.Errorf("full title of key '%v' differs: '%v' vs. '%v'",
