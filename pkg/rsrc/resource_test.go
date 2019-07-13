@@ -181,6 +181,7 @@ func TestUserDataPath(t *testing.T) {
 	}{
 		{Bookmark("user1"), ".lastfm/user/user1/bookmark.json"},
 		{AllDayPlays("user1"), ".lastfm/user/user1/alldayplays.json"},
+		{SongHistory("user1"), ".lastfm/user/user1/history.json"},
 		{ArtistCorrections("user1"), ".lastfm/user/user1/artistcorrections.json"},
 		{SupertagCorrections("user1"), ".lastfm/user/user1/supertagcorrections.json"},
 	}

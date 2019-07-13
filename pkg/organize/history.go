@@ -107,7 +107,7 @@ func UpdateHistory(
 	user *unpack.User,
 	until rsrc.Day, // TODO change to end/before
 	s store.Store,
-) (plays []map[string]float64, err error) {
+) (plays [][]charts.Song, err error) {
 	if user.Registered == nil {
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
 			user.Name)
@@ -115,9 +115,9 @@ func UpdateHistory(
 	registeredDay := user.Registered.Midnight()
 	begin := registeredDay
 
-	oldPlays, err := unpack.LoadAllDayPlays(user.Name, s)
+	oldPlays, err := unpack.LoadSongHistory(user.Name, s)
 	if err != nil {
-		oldPlays = []map[string]float64{}
+		oldPlays = [][]charts.Song{}
 	} else if len(oldPlays) > 0 {
 		// TODO cleanup the use of time in this function
 		begin = user.Registered.AddDate(0, 0, len(oldPlays)-1).Midnight()
@@ -146,18 +146,5 @@ func UpdateHistory(
 		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
 		until, store.Fresh(s))
 
-	summed := []map[string]float64{}
-	for _, day := range newPlays {
-		page := map[string]float64{}
-		for _, song := range day {
-			if _, ok := page[song.Artist]; ok {
-				page[song.Artist]++
-			} else {
-				page[song.Artist] = 1
-			}
-		}
-		summed = append(summed, page)
-	}
-
-	return append(oldPlays, summed...), err
+	return append(oldPlays, newPlays...), err
 }

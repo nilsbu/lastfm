@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -56,7 +57,7 @@ func TestBookmarks(t *testing.T) {
 	}
 }
 
-func TestLoadAllDayPlays(t *testing.T) {
+func TestAllDayPlays(t *testing.T) {
 	cases := []struct {
 		plays  []map[string]float64
 		write  bool
@@ -97,6 +98,66 @@ func TestLoadAllDayPlays(t *testing.T) {
 			}
 
 			plays, err := LoadAllDayPlays("user", io)
+			if err != nil && c.readOK {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.readOK {
+				t.Error("expected error but none occurred")
+			}
+
+			if err == nil {
+				if !reflect.DeepEqual(plays, c.plays) {
+					t.Errorf("wrong data\nhas:  '%v'\nwant: '%v'", plays, c.plays)
+				}
+			}
+		})
+	}
+}
+
+func TestSongHistory(t *testing.T) {
+	cases := []struct {
+		plays  [][]charts.Song
+		write  bool
+		readOK bool
+	}{
+		{
+			[][]charts.Song{},
+			true, true,
+		},
+		{
+			[][]charts.Song{
+				{{Artist: "ABC", Title: "a", Album: "y"}}},
+			false, false,
+		},
+		{
+			[][]charts.Song{
+				{
+					{Artist: "ABC", Title: "a", Album: "y"},
+					{Artist: "ABC", Title: "|xöü#ß", Album: ""},
+				},
+				{
+					{Artist: "<<><", Title: "22", Album: "y"},
+				},
+			},
+			true, true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{rsrc.SongHistory("user"): nil}, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			if c.write {
+				err = WriteSongHistory(c.plays, "user", io)
+				if err != nil {
+					t.Error("unexpected error during write:", err)
+				}
+			}
+
+			plays, err := LoadSongHistory("user", io)
 			if err != nil && c.readOK {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.readOK {
