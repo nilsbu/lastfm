@@ -1,6 +1,50 @@
 package unpack
 
-import "github.com/nilsbu/lastfm/pkg/rsrc"
+import (
+	"fmt"
+
+	"github.com/nilsbu/lastfm/pkg/rsrc"
+)
+
+type obBookmark struct {
+	user string
+}
+
+// WriteBookmark writes a bookmark.
+func WriteBookmark(bookmark rsrc.Day, user string, w rsrc.Writer) error {
+	return deposit(bookmark, obBookmark{user}, w)
+}
+
+// LoadBookmark loads a bookmark.
+func LoadBookmark(user string, r rsrc.Reader) (rsrc.Day, error) {
+	data, err := obtain(&obBookmark{user}, r)
+	if err != nil {
+		return nil, err
+	}
+	return data.(rsrc.Day), nil
+}
+
+func (o obBookmark) locator() rsrc.Locator {
+	return rsrc.Bookmark(o.user)
+}
+
+func (o obBookmark) deserializer() interface{} {
+	return &jsonBookmark{}
+}
+
+func (o obBookmark) interpret(raw interface{}) (interface{}, error) {
+	bookmark := raw.(*jsonBookmark)
+	return rsrc.ParseDay(bookmark.NextDay), nil
+}
+
+func (o obBookmark) raw(obj interface{}) interface{} {
+	t := obj.(rsrc.Day).Time()
+
+	js := jsonBookmark{
+		NextDay: fmt.Sprintf("%04d-%02d-%02d", t.Year(), t.Month(), t.Day()),
+	}
+	return js
+}
 
 type obAllDayPlays struct {
 	user string

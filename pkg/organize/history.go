@@ -102,7 +102,7 @@ func loadDayPlays(
 // reads the remaining days from raw data. The last saved day gets reloaded.
 func UpdateHistory(
 	user *unpack.User,
-	until rsrc.Day,
+	until rsrc.Day, // TODO change to end/before
 	s store.Store,
 ) (plays []map[string]float64, err error) {
 	if user.Registered == nil {
@@ -118,7 +118,16 @@ func UpdateHistory(
 	} else if len(oldPlays) > 0 {
 		// TODO cleanup the use of time in this function
 		begin = user.Registered.AddDate(0, 0, len(oldPlays)-1).Midnight()
-		oldPlays = oldPlays[:len(oldPlays)-1]
+	}
+
+	bookmark, err := unpack.LoadBookmark(user.Name, s)
+	if err == nil && bookmark.Midnight() < begin {
+		begin = bookmark.Midnight()
+	}
+
+	if len(oldPlays) > 0 {
+		days := int((begin - registeredDay) / 86400)
+		oldPlays = oldPlays[:days]
 	}
 
 	if until == nil {

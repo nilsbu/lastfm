@@ -86,7 +86,7 @@ func TestLastFMPath(t *testing.T) {
 			UserInfo("user1"),
 			".lastfm/raw/user.getInfo/0a/04/1b9462caa4a31bac3567e0b6e6fd9100787db2ab433d96f6d178cabfce90.json",
 		},
-		{ // name must be escaped for Windows
+		{
 			UserInfo("aux"),
 			".lastfm/raw/user.getInfo/32/1f/68140efca2b301c8c9e9cd67f0e0e3f89a6b24ca923c13bade1ee6552073.json",
 		},
@@ -179,6 +179,7 @@ func TestUserDataPath(t *testing.T) {
 		path string
 		// path is always ok, since input is considered valid
 	}{
+		{Bookmark("user1"), ".lastfm/user/user1/bookmark.json"},
 		{AllDayPlays("user1"), ".lastfm/user/user1/alldayplays.json"},
 		{ArtistCorrections("user1"), ".lastfm/user/user1/artistcorrections.json"},
 		{SupertagCorrections("user1"), ".lastfm/user/user1/supertagcorrections.json"},
