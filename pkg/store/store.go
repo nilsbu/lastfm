@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -92,7 +93,8 @@ func (s *cache) read(loc rsrc.Locator, start int, di int,
 	})
 
 	if !found {
-		return nil, errors.New("resource not found")
+		s, _ := loc.Path()
+		return nil, fmt.Errorf("resource '%v' not found", s)
 	}
 
 	s.write(data, loc, idx+1, 1)

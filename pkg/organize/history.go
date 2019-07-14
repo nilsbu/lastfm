@@ -65,7 +65,7 @@ func loadDayPlays(
 	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
 	if err != nil {
 		return nil, err
-	} else if firstPage.Pages == 1 {
+	} else if firstPage.Pages < 2 {
 		return firstPage.Plays, nil
 	}
 

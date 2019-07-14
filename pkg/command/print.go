@@ -16,6 +16,7 @@ import (
 )
 
 type printCharts struct {
+	keys       string //defaults to "artist"
 	by         string
 	name       string
 	percentage bool
@@ -52,7 +53,7 @@ func (cmd printCharts) getPartition(
 	case "super":
 		keys := []string{}
 		for _, key := range cha.Keys {
-			keys = append(keys, key.String())
+			keys = append(keys, key.ArtistName())
 		}
 		tags, err := organize.LoadArtistTags(keys, r)
 		if err != nil {
@@ -74,22 +75,33 @@ func getOutCharts(
 ) (charts.Charts, error) {
 	cmd := pcd.PrintCharts()
 
-	plays, err := unpack.LoadAllDayPlays(session.User, r)
-	if err != nil {
-		return charts.Charts{}, err
-	}
-
-	var user *unpack.User
-	user, err = unpack.LoadUserInfo(session.User, r)
+	user, err := unpack.LoadUserInfo(session.User, r)
 	if err != nil {
 		return charts.Charts{}, errors.Wrap(err, "failed to load user info")
 	}
 
-	cha := charts.CompileArtists(plays, user.Registered)
+	var cha charts.Charts
+	if cmd.keys == "" || cmd.keys == "artist" {
+		plays, err := unpack.LoadAllDayPlays(session.User, r)
+		if err != nil {
+			return charts.Charts{}, err
+		}
 
-	replace, err := unpack.LoadArtistCorrections(session.User, r)
-	if err == nil {
-		cha = cha.Correct(replace)
+		cha = charts.CompileArtists(plays, user.Registered)
+
+		replace, err := unpack.LoadArtistCorrections(session.User, r)
+		if err == nil {
+			cha = cha.Correct(replace)
+		}
+	} else if cmd.keys == "song" {
+		plays, err := unpack.LoadSongHistory(session.User, r)
+		if err != nil {
+			return charts.Charts{}, err
+		}
+
+		cha = charts.CompileSongs(plays, user.Registered)
+
+		// TODO correct artists
 	}
 
 	partition, err := cmd.getPartition(session, r, cha)

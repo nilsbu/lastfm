@@ -99,24 +99,17 @@ func CompileSongs(
 	keys := []Key{}
 	values := [][]float64{}
 
-	// charts := make(map[string]int)
+	charts := make(map[string]int)
 	for i, day := range days {
 		for _, song := range day {
 			key := song.String()
-			pos := -1
-			for j, k := range keys {
-				if k.String() == key {
-					pos = j
-					break
-				}
-			}
-
-			if pos == -1 {
+			if _, ok := charts[key]; !ok {
+				charts[key] = len(values)
 				keys = append(keys, song)
 				values = append(values, make([]float64, size))
 				values[len(values)-1][i] = 1
 			} else {
-				values[pos][i]++
+				values[charts[key]][i]++
 			}
 		}
 	}
