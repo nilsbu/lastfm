@@ -196,6 +196,13 @@ func AllDayPlays(user string) Locator {
 	}
 }
 
+func SongHistory(user string) Locator {
+	return &userData{
+		method: "history",
+		name:   user,
+	}
+}
+
 func ArtistCorrections(user string) Locator {
 	return &userData{
 		method: "artistcorrections",

@@ -52,19 +52,19 @@ type obAllDayPlays struct {
 }
 
 // LoadAllDayPlays loads the pre-processed history of a user, called alldayplays.
-func LoadAllDayPlays(user string, r rsrc.Reader) ([]charts.Charts, error) {
+func LoadAllDayPlays(user string, r rsrc.Reader) ([]map[string]float64, error) {
 	data, err := obtain(obAllDayPlays{user}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	plays := data.([]map[string]float64)
-	days := make([]charts.Charts, len(plays))
+	days := make([]map[string]float64, len(plays))
 
 	for i := range plays {
-		day := charts.Charts{}
+		day := map[string]float64{}
 		for name, value := range plays[i] {
-			day[name] = []float64{value}
+			day[name] = value
 		}
 		days[i] = day
 	}
@@ -73,12 +73,12 @@ func LoadAllDayPlays(user string, r rsrc.Reader) ([]charts.Charts, error) {
 }
 
 // WriteAllDayPlays writed the pre-processed history of a user.
-func WriteAllDayPlays(days []charts.Charts, user string, w rsrc.Writer) error {
+func WriteAllDayPlays(days []map[string]float64, user string, w rsrc.Writer) error {
 	plays := make([]map[string]float64, len(days))
 	for i := range days {
 		day := map[string]float64{}
 		for name, values := range days[i] {
-			day[name] = values[0]
+			day[name] = values
 		}
 		plays[i] = day
 	}
@@ -99,6 +99,65 @@ func (o obAllDayPlays) interpret(raw interface{}) (interface{}, error) {
 }
 
 func (o obAllDayPlays) raw(obj interface{}) interface{} {
+	return obj
+}
+
+type obSongHistory struct {
+	user string
+}
+
+// LoadSongHistory loads the pre-processed history of a user, called history.
+func LoadSongHistory(user string, r rsrc.Reader) ([][]charts.Song, error) {
+	data, err := obtain(obSongHistory{user}, r)
+	if err != nil {
+		return nil, err
+	}
+
+	inDays := data.([][][]string)
+	outDays := make([][]charts.Song, len(inDays))
+
+	for i, inDay := range inDays {
+		outDay := []charts.Song{}
+		for _, song := range inDay {
+			outDay = append(outDay, charts.Song{
+				Artist: song[0],
+				Title:  song[1],
+				Album:  song[2],
+			})
+		}
+		outDays[i] = outDay
+	}
+
+	return outDays, nil
+}
+
+// WriteAllDayPlays writed the pre-processed history of a user.
+func WriteSongHistory(days [][]charts.Song, user string, w rsrc.Writer) error {
+	outDays := make([][][]string, len(days))
+	for i, inDay := range days {
+		outDay := [][]string{}
+		for _, song := range inDay {
+			outDay = append(outDay, []string{song.Artist, song.Title, song.Album})
+		}
+		outDays[i] = outDay
+	}
+
+	return deposit(outDays, obSongHistory{user}, w)
+}
+
+func (o obSongHistory) locator() rsrc.Locator {
+	return rsrc.SongHistory(o.user)
+}
+
+func (o obSongHistory) deserializer() interface{} {
+	return &[][][]string{}
+}
+
+func (o obSongHistory) interpret(raw interface{}) (interface{}, error) {
+	return *raw.(*[][][]string), nil
+}
+
+func (o obSongHistory) raw(obj interface{}) interface{} {
 	return obj
 }
 

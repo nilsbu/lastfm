@@ -9,25 +9,39 @@ type Tag struct {
 }
 
 type Partition interface {
-	Partitions() []string
-	Get(key string) (partition string)
+	Partitions() []Key
+	Get(key Key) (partition Key)
 }
 
 type mapPart struct {
-	assoc      map[string]string
-	partitions []string
+	assoc      map[string]Key
+	partitions []Key
 }
 
-func (p mapPart) Partitions() []string {
+func (p mapPart) Partitions() []Key {
 	return p.partitions
 }
 
-func (p mapPart) Get(key string) string {
-	if partition, ok := p.assoc[key]; ok {
+func (p mapPart) Get(key Key) Key {
+	if partition, ok := p.assoc[key.String()]; ok {
 		return partition
 	}
 
-	return "-"
+	return simpleKey("-")
+}
+
+// artistPartition is a Partition that takes uses the Key.ArtistName() to
+// categorize.
+type artistPartition struct {
+	mapPart
+}
+
+func (p artistPartition) Get(key Key) Key {
+	if partition, ok := p.assoc[key.ArtistName()]; ok {
+		return partition
+	}
+
+	return simpleKey("-")
 }
 
 func Supertags(
@@ -35,10 +49,10 @@ func Supertags(
 	supertags map[string]string,
 	corrections map[string]string,
 ) Partition {
-	partition := mapPart{
-		assoc:      make(map[string]string),
-		partitions: []string{},
-	}
+	partition := artistPartition{mapPart{
+		assoc:      make(map[string]Key),
+		partitions: []Key{},
+	}}
 
 	// compile partitions
 	names := map[string]bool{}
@@ -48,15 +62,15 @@ func Supertags(
 	names["-"] = true
 
 	for name, _ := range names {
-		partition.partitions = append(partition.partitions, name)
+		partition.partitions = append(partition.partitions, tagKey(name))
 	}
 
 	// compile association
 	for name, values := range tags {
-		supertag := "-"
+		supertag := tagKey("-")
 		for _, tag := range values {
 			if stag, ok := supertags[tag.Name]; ok {
-				supertag = stag
+				supertag = tagKey(stag)
 				break
 			}
 		}
@@ -65,7 +79,7 @@ func Supertags(
 	}
 
 	for name, correction := range corrections {
-		partition.assoc[name] = correction
+		partition.assoc[name] = tagKey(correction)
 	}
 
 	return partition
@@ -74,30 +88,47 @@ func Supertags(
 func (c Charts) Group(partitions Partition) (tagcharts Charts) {
 	size := c.Len()
 
-	tagcharts = make(Charts)
-	for _, supertag := range partitions.Partitions() {
-		tagcharts[supertag] = make([]float64, size)
+	indices := map[string]int{}
+	values := [][]float64{}
+	for i, name := range partitions.Partitions() {
+		indices[name.String()] = i
+		values = append(values, make([]float64, size))
 	}
 
-	for name, values := range c {
-		line := tagcharts[partitions.Get(name)]
-		for i := range line {
-			line[i] += values[i]
+	for i, name := range c.Keys {
+		lineID := indices[partitions.Get(name).String()]
+		line := values[lineID]
+		for j := range line {
+			line[j] += c.Values[i][j]
 		}
 	}
 
-	return tagcharts
+	keys := []Key{}
+	for _, key := range partitions.Partitions() {
+		keys = append(keys, key)
+	}
+
+	return Charts{
+		Headers: c.Headers,
+		Keys:    keys,
+		Values:  values,
+	}
 }
 
 func (c Charts) Split(partitions Partition) map[string]Charts {
 	buckets := map[string]Charts{}
 
 	for _, supertag := range partitions.Partitions() {
-		buckets[supertag] = Charts{}
+		buckets[supertag.String()] = Charts{
+			Headers: c.Headers,
+		}
 	}
 
-	for name, values := range c {
-		buckets[partitions.Get(name)][name] = values
+	for i, key := range c.Keys {
+		p := partitions.Get(key)
+		keys := append(buckets[p.String()].Keys, key)
+		values := append(buckets[p.String()].Values, c.Values[i])
+		buckets[p.String()] = Charts{buckets[p.String()].Headers, keys, values}
 	}
 
 	return buckets

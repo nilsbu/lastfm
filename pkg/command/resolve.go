@@ -112,6 +112,7 @@ var exePrintFade = &cmd{
 	descr: "prints a user's top artists in fading charts", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printFade{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -125,6 +126,7 @@ var exePrintFade = &cmd{
 	},
 	params: params{parHL},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -140,6 +142,7 @@ var exePrintPeriod = &cmd{
 	descr: "", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printPeriod{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -156,6 +159,7 @@ var exePrintPeriod = &cmd{
 		"string",
 	}},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -170,6 +174,7 @@ var exePrintInterval = &cmd{
 	descr: "", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printInterval{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -191,6 +196,7 @@ var exePrintInterval = &cmd{
 		"time",
 	}},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -205,6 +211,7 @@ var exePrintFadeMax = &cmd{
 	descr: "", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printFadeMax{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -217,6 +224,7 @@ var exePrintFadeMax = &cmd{
 	},
 	params: params{parHL},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -238,6 +246,7 @@ var exePrintTotal = &cmd{
 	descr: "tables a user's top artists by total number of plays",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printTotal{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -249,6 +258,7 @@ var exePrintTotal = &cmd{
 		}
 	},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -425,6 +435,13 @@ var optChartsPercentage = &option{
 		"if charts are in percentage",
 		"bool"},
 	"false",
+}
+
+var optChartsKeys = &option{
+	param{"keys",
+		"keys of the charts ('artist' or 'song')",
+		"string"},
+	"",
 }
 
 var optChartsNormalized = &option{

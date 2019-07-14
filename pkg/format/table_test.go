@@ -19,30 +19,33 @@ func TestTableCSV(t *testing.T) {
 		str     string
 	}{
 		{
-			charts.Charts{},
+			charts.CompileArtists(
+				[]map[string]float64{}, rsrc.ParseDay("2012-01-01")),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, ",", true,
 			"",
 		},
 		{
-			charts.Charts{"X": []float64{}},
-			rsrc.ParseDay("2012-01-01"),
-			1, 2, ",", true,
-			"",
-		},
-		{
-			charts.Charts{
-				"ABC": []float64{1.25, 2},
-				"X":   []float64{2, 3},
-			},
+			charts.CompileArtists(
+				[]map[string]float64{
+					map[string]float64{"ABC": 1.25, "X": 2},
+					map[string]float64{"ABC": 2, "X": 3},
+				}, rsrc.ParseDay("2012-01-01")),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, ",", true,
 			"\"name\";2012-01-01;2012-01-02\n\"X\";2;3\n\"ABC\";1,25;2\n",
 		},
 		{
-			charts.Charts{
-				"A": []float64{1, 2, 3, 4, 5, 6, 7},
-			},
+			charts.CompileArtists(
+				[]map[string]float64{
+					map[string]float64{"A": 1},
+					map[string]float64{"A": 2},
+					map[string]float64{"A": 3},
+					map[string]float64{"A": 4},
+					map[string]float64{"A": 5},
+					map[string]float64{"A": 6},
+					map[string]float64{"A": 7},
+				}, rsrc.ParseDay("2012-01-01")),
 			rsrc.ParseDay("2012-01-01"),
 			3, 1, ".", true,
 			"\"name\";2012-01-01;2012-01-04;2012-01-07\n\"A\";1;4;7\n",
@@ -91,9 +94,16 @@ func TestTablePlain(t *testing.T) {
 			"",
 		},
 		{
-			charts.Charts{
-				"A": []float64{1.33, 2, 3, 4, 5, 6, 7},
-			},
+			charts.CompileArtists(
+				[]map[string]float64{
+					map[string]float64{"A": 1.33},
+					map[string]float64{"A": 2},
+					map[string]float64{"A": 3},
+					map[string]float64{"A": 4},
+					map[string]float64{"A": 5},
+					map[string]float64{"A": 6},
+					map[string]float64{"A": 7},
+				}, rsrc.ParseDay("2012-01-01")),
 			rsrc.ParseDay("2012-01-01"),
 			3, 1, true,
 			"A: 1.33, 4, 7\n",

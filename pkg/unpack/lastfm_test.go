@@ -109,6 +109,9 @@ func TestWriteUserInfo(t *testing.T) {
 }
 
 func TestLoadHistoryDayPage(t *testing.T) {
+	song1 := `{"artist":{"#text":"ASDF"},"name":"x","album":{"#text":"q"}}`
+	song2 := `{"artist":{"#text":"ASDF"},"name":"y","album":{"#text":"q"}}`
+
 	cases := []struct {
 		json []byte
 		user string
@@ -124,9 +127,21 @@ func TestLoadHistoryDayPage(t *testing.T) {
 			false,
 		},
 		{
-			[]byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}},{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
+			[]byte(`{"recenttracks":{"track":[` + song1 + `,` + song2 + `], "@attr":{"totalPages":"1"}}}`),
 			"user", rsrc.ToDay(86400), 1,
-			&HistoryDayPage{charts.Charts{"ASDF": []float64{2}}, 1},
+			&HistoryDayPage{
+				[]charts.Song{
+					{
+						Artist: "ASDF",
+						Title:  "x",
+						Album:  "q",
+					},
+					{
+						Artist: "ASDF",
+						Title:  "y",
+						Album:  "q",
+					},
+				}, 1},
 			true,
 		},
 	}

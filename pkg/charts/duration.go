@@ -150,11 +150,14 @@ func Period(descr string) (Interval, error) {
 
 // Interval returns a Column that sums an interval of the charts. The charts
 // have to be a sum.
-func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
+func (c Charts) Interval(i Interval) Column {
 	size := c.Len()
 
-	from := Index(i.Begin, registered)
-	to := Index(i.Before, registered)
+	// A day is subtacted here because the entry at begin & and already the plays
+	// from that day.
+	from := c.Headers.Index(i.Begin) - 1
+	to := c.Headers.Index(i.Before) - 1
+
 	if to < 0 {
 		return Column{}
 	} else if to >= size {
@@ -166,48 +169,44 @@ func (c Charts) Interval(i Interval, registered rsrc.Day) Column {
 	if from >= size {
 		return Column{}
 	} else if from < 0 {
-		for name, line := range c {
-			column = append(column, Score{name, line[to]})
+		for i, name := range c.Keys {
+			column = append(column, Score{name.String(), c.Values[i][to]})
 		}
 	} else {
-		for name, line := range c {
-			column = append(column, Score{name, line[to] - line[from]})
+		for i, name := range c.Keys {
+			column = append(column, Score{name.String(), c.Values[i][to] - c.Values[i][from]})
 		}
 	}
 	sort.Sort(column)
 	return column
 }
 
-func (c Charts) Intervals(intervals []Interval, registered rsrc.Day) Charts {
-	icharts := []Charts{}
-	for _, i := range intervals {
-		col := c.Interval(i, registered)
+func (c Charts) Intervals(intervals Intervals) Charts {
+	icharts := []map[string]float64{}
+	for i := 0; i < intervals.Len(); i++ {
+		col := c.Interval(intervals.At(i))
 
 		if len(col) == 0 {
 			continue
 		}
 
-		cha := Charts{}
+		cha := map[string]float64{}
 		for _, x := range col {
-			cha[x.Name] = []float64{x.Score}
+			cha[x.Name] = x.Score
 		}
 
 		icharts = append(icharts, cha)
 	}
 
-	return Compile(icharts)
-}
-
-// Index calculates an column index based on registration date and searcherd
-// date.
-func Index(t rsrc.Day, registered rsrc.Day) int {
-	return int((t.Midnight()-registered.Midnight())/86400 - 1)
+	ncha := CompileArtists(icharts, c.Headers.At(0).Begin)
+	ncha.Headers = intervals
+	return ncha
 }
 
 // TODO change name
-func (c Charts) ToIntervals(
-	descr string, registered rsrc.Day,
-) ([]Interval, error) {
+func ToIntervals(
+	descr string, begin, end rsrc.Day,
+) (Intervals, error) {
 
 	re := regexp.MustCompile("^\\d*[yMd]$")
 	if !re.MatchString(descr) {
@@ -219,24 +218,13 @@ func (c Charts) ToIntervals(
 		n = 1
 	}
 
-	before := registered.AddDate(0, 0, c.Len())
-
-	var ii intervalIterator
+	// var ii intervalIterator
 	switch descr[len(descr)-1] {
 	case 'y':
-		ii = newYearIterator(n, registered, before)
+		return Years(begin, end, n), nil
 	case 'M':
-		ii = newMonthIterator(n, registered, before)
-	case 'd':
-		ii = newDayIterator(n, registered, before)
+		return Months(begin, end, n), nil
+	default:
+		return MultiDays(begin, end, n), nil
 	}
-
-	intervals := []Interval{}
-	for ii.HasNext() {
-		current := ii.Next()
-
-		intervals = append(intervals, current)
-	}
-
-	return intervals, nil
 }

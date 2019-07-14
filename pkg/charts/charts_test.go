@@ -1,41 +1,115 @@
 package charts
 
 import (
-	"math"
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-func TestCompile(t *testing.T) {
+func TestCompileArtist(t *testing.T) {
 	cases := []struct {
-		days   []Charts
-		charts Charts
+		days       []map[string]float64
+		registered rsrc.Day
+		charts     Charts
 	}{
 		{
-			[]Charts{},
-			Charts{},
+			[]map[string]float64{},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-01")),
+				Keys:    []Key{},
+				Values:  [][]float64{}},
 		},
 		{
-			[]Charts{Charts{}},
-			Charts{},
+			[]map[string]float64{{}},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-02")),
+				Keys:    []Key{},
+				Values:  [][]float64{}},
 		},
 		{
-			[]Charts{
-				Charts{"ASD": []float64{2}},
-				Charts{"WASD": []float64{1}},
-				Charts{"ASD": []float64{13}, "WASD": []float64{4}},
+			[]map[string]float64{
+				{"ASD": 2},
+				{"WASD": 1},
+				{"ASD": 13, "WASD": 4},
 			},
-			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-04")),
+				Keys:    []Key{simpleKey("ASD"), simpleKey("WASD")},
+				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}}},
 		},
 	}
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			charts := Compile(c.days)
+			charts := CompileArtists(c.days, c.registered)
 
-			if !reflect.DeepEqual(charts, c.charts) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v", charts, c.charts)
+			if !c.charts.Equal(charts) {
+				t.Error("charts are wrong")
+			}
+		})
+	}
+}
+
+func TestCompileSongs(t *testing.T) {
+	cases := []struct {
+		days       [][]Song
+		registered rsrc.Day
+		charts     Charts
+	}{
+		{
+			[][]Song{},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-01")),
+				Keys:    []Key{},
+				Values:  [][]float64{}},
+		},
+		{
+			[][]Song{{}},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-02")),
+				Keys:    []Key{},
+				Values:  [][]float64{}},
+		},
+		{
+			[][]Song{
+				{
+					{Artist: "A", Title: "s", Album: "x"},
+					{Artist: "A", Title: "s", Album: "x"},
+					{Artist: "A", Title: "t", Album: "x"},
+					{Artist: "B", Title: "s", Album: "x"},
+				},
+				{
+					{Artist: "A", Title: "t", Album: "x"},
+					{Artist: "C", Title: "w", Album: "x"},
+				},
+			},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-03")),
+				Keys: []Key{
+					Song{Artist: "A", Title: "s", Album: "x"},
+					Song{Artist: "A", Title: "t", Album: "x"},
+					Song{Artist: "B", Title: "s", Album: "x"},
+					Song{Artist: "C", Title: "w", Album: "x"},
+				},
+				Values: [][]float64{
+					{2, 0}, {1, 1}, {1, 0}, {0, 1}}},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			charts := CompileSongs(c.days, c.registered)
+
+			if err := c.charts.AssertEqual(charts); err != nil {
+				t.Error(err)
 			}
 		})
 	}
@@ -44,22 +118,30 @@ func TestCompile(t *testing.T) {
 func TestChartsUnravelDays(t *testing.T) {
 	cases := []struct {
 		charts Charts
-		days   []Charts
+		days   []map[string]float64
 	}{
 		{
 			Charts{},
-			[]Charts{},
+			[]map[string]float64{},
 		},
 		{
-			Charts{"A": []float64{}},
-			[]Charts{},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
+				Keys:    []Key{simpleKey("A")},
+				Values:  [][]float64{{}},
+			},
+			[]map[string]float64{},
 		},
 		{
-			Charts{"ASD": []float64{2, 0, 13}, "WASD": []float64{0, 1, 4}},
-			[]Charts{
-				Charts{"ASD": []float64{2}},
-				Charts{"WASD": []float64{1}},
-				Charts{"ASD": []float64{13}, "WASD": []float64{4}},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("ASD"), simpleKey("WASD")},
+				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}},
+			},
+			[]map[string]float64{
+				{"ASD": 2},
+				{"WASD": 1},
+				{"ASD": 13, "WASD": 4},
 			},
 		},
 	}
@@ -75,153 +157,31 @@ func TestChartsUnravelDays(t *testing.T) {
 	}
 }
 
-func TestChartsSum(t *testing.T) {
-	cases := []struct {
-		charts Charts
-		sums   Charts
-	}{
-		{
-			Charts{},
-			Charts{},
-		},
-		{
-			Charts{"X": []float64{}},
-			Charts{"X": []float64{}},
-		},
-		{
-			Charts{"X": []float64{1, 3, 4}, "o0o": []float64{0, 0, 7}},
-			Charts{"X": []float64{1, 4, 8}, "o0o": []float64{0, 0, 7}},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			sums := c.charts.Sum()
-
-			if !reflect.DeepEqual(sums, c.sums) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-					sums, c.sums)
-			}
-		})
-	}
-}
-
-func TestChartsFade(t *testing.T) {
-	cases := []struct {
-		halflife float64
-		charts   []float64
-		faded    []float64
-	}{
-		{
-			1.0,
-			[]float64{1, 0, 0},
-			[]float64{1, 0.5, 0.25},
-		},
-		{
-			2.0,
-			[]float64{1, 0, 1},
-			[]float64{1, math.Sqrt(0.5), 1.5},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			faded := Charts{"XX": c.charts}.Fade(c.halflife)
-			f := faded["XX"]
-			if len(f) != len(c.faded) {
-				t.Fatalf("line length false: %v != %v", len(f), len(c.faded))
-			}
-			for i := 0; i < len(f); i++ {
-				if math.Abs(f[i]-c.faded[i]) > 1e-6 {
-					t.Errorf("at position %v: %v != %v", i, f[i], c.faded[i])
-				}
-			}
-		})
-	}
-}
-
-func TestChartsColumn(t *testing.T) {
-	testCases := []struct {
-		charts Charts
-		i      int
-		column Column
-		ok     bool
-	}{
-		{
-			Charts{},
-			0,
-			Column{},
-			false,
-		},
-		{
-			Charts{"X": []float64{}},
-			0,
-			Column{},
-			false,
-		},
-		{
-			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 3, 4}},
-			1,
-			Column{Score{"X", 3}, Score{"lol", 2}, Score{"o0o", 0}},
-			true,
-		},
-		{
-			Charts{"X": []float64{1, 3, 4}},
-			-1,
-			Column{Score{"X", 4}},
-			true,
-		},
-		{
-			Charts{"X": []float64{1, 3, 4}},
-			-4,
-			Column{},
-			false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run("", func(t *testing.T) {
-			column, err := tc.charts.Column(tc.i)
-			if err != nil && tc.ok {
-				t.Error("unexpected error:", err)
-			} else if err == nil && !tc.ok {
-				t.Error("expected error but none occurred")
-			}
-
-			if err == nil {
-				if !reflect.DeepEqual(column, tc.column) {
-					t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-						column, tc.column)
-				}
-			}
-		})
-	}
-}
-
-func TestChartsKeys(t *testing.T) {
+func TestChartsGetKeys(t *testing.T) {
 	cases := []struct {
 		charts Charts
 		keys   []string
 	}{
 		{
-			Charts{},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
+				Keys:    []Key{},
+				Values:  [][]float64{{}},
+			},
 			[]string{},
 		},
 		{
 			Charts{
-				"xx": []float64{32, 45},
-				"yy": []float64{32, 45},
-			},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
+				Keys:    []Key{simpleKey("xx"), simpleKey("yy")},
+				Values:  [][]float64{{32, 45}, {32, 45}}},
 			[]string{"xx", "yy"},
 		},
 	}
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			keys := c.charts.Keys()
+			keys := c.charts.GetKeys()
 
 			sort.Strings(keys)
 			sort.Strings(c.keys)
@@ -233,128 +193,201 @@ func TestChartsKeys(t *testing.T) {
 	}
 }
 
-func TestChartsCorrect(t *testing.T) {
+type brokenIntervals struct {
+	dayIntervals
+}
+
+func (h brokenIntervals) Index(day rsrc.Day) int {
+	return 0
+}
+
+func TestChartsEqual(t *testing.T) {
 	cases := []struct {
-		charts     Charts
-		correction map[string]string
-		corrected  Charts
+		name string
+		a    Charts
+		b    Charts
+		eq   bool
 	}{
 		{
+			"empty",
 			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 3, 4}},
-			map[string]string{"X": "o0o"},
-			Charts{
-				"o0o": []float64{1, 3, 11},
-				"lol": []float64{1, 2, 3},
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
+				Keys:    []Key{},
+				Values:  [][]float64{},
 			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
+				Keys:    []Key{},
+				Values:  [][]float64{},
+			},
+			true,
+		},
+		{
+			"equal",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-05")),
+				Keys:    []Key{simpleKey("xx"), simpleKey("yy")},
+				Values:  [][]float64{{1, 0, 1, 2}, {5, 5, 6, 7}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-05")),
+				Keys:    []Key{simpleKey("yy"), simpleKey("xx")},
+				Values:  [][]float64{{5, 5, 6, 7}, {1, 0, 1, 2}},
+			},
+			true,
+		},
+		{
+			"different date",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-02")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-02"), rsrc.ParseDay("2000-01-02")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{1}},
+			},
+			false,
+		},
+		{
+			"different length",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-02")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{1, 2}},
+			},
+			false,
+		},
+		{
+			"different values",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 2}},
+			},
+			false,
+		},
+		{
+			"different key",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xy")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		{
+			"different artist",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{tagKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		// TODO test FullTitle
+		{
+			"different begin",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2001-01-01"), rsrc.ParseDay("2001-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		{
+			"different end",
+			Charts{
+				Headers: Months(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-04-01"), 1),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xy")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		{
+			"broken index in headers",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: brokenIntervals{dayIntervals{intervalsBase{
+					begin: rsrc.ParseDay("2000-01-01"),
+					n:     3,
+					step:  1,
+				}}},
+				Keys:   []Key{simpleKey("xx")},
+				Values: [][]float64{{3, 3, 1}},
+			},
+			false,
 		},
 	}
 
 	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			corrected := c.charts.Correct(c.correction)
+		t.Run(c.name, func(t *testing.T) {
+			eq := c.a.Equal(c.b)
 
-			if !reflect.DeepEqual(corrected, c.corrected) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-					corrected, c.corrected)
+			if c.eq && !eq {
+				t.Error("charts not recognized as equal (a first)")
+			} else if !c.eq && eq {
+				t.Error("charts not recognized as unequal (a first)")
+			}
+
+			eq = c.b.Equal(c.a)
+
+			if c.eq && !eq {
+				t.Error("charts not recognized as equal (b first)")
+			} else if !c.eq && eq {
+				t.Error("charts not recognized as unequal (b first)")
+			}
+
+			err := c.a.AssertEqual(c.b)
+
+			if err == nil && !c.eq {
+				t.Error("expected error but non occurred (a first)")
+			} else if err != nil && c.eq {
+				t.Errorf("unexpected error (a first): %v", err)
+			}
+
+			err = c.b.AssertEqual(c.a)
+
+			if err == nil && !c.eq {
+				t.Error("expected error but non occurred (b first)")
+			} else if err != nil && c.eq {
+				t.Errorf("unexpected error (b first): %v", err)
 			}
 		})
-	}
-}
-
-func TestChartsRank(t *testing.T) {
-	cases := []struct {
-		charts Charts
-		ranks  Charts
-	}{
-		{
-			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 3, 4}},
-			Charts{
-				"o0o": []float64{3, 3, 1},
-				"lol": []float64{1, 2, 3},
-				"X":   []float64{1, 1, 2}},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			ranks := c.charts.Rank()
-
-			if !reflect.DeepEqual(ranks, c.ranks) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-					ranks, c.ranks)
-			}
-		})
-	}
-}
-
-func TestChartsTotal(t *testing.T) {
-	cases := []struct {
-		charts Charts
-		total  []float64
-	}{
-		{
-			Charts{},
-			[]float64{},
-		},
-		{
-			Charts{"o0o": []float64{0, 0, 7}},
-			[]float64{0, 0, 7},
-		},
-		{
-			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 3}},
-			[]float64{1, 2, 10},
-		},
-	}
-
-	for _, c := range cases {
-		total := c.charts.Total()
-		if !reflect.DeepEqual(total, c.total) {
-			t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-				total, c.total)
-		}
-	}
-}
-
-func TestChartsMax(t *testing.T) {
-	cases := []struct {
-		charts Charts
-		max    Column
-	}{
-		{
-			Charts{},
-			Column{},
-		},
-		{
-			Charts{"a": []float64{}},
-			Column{{Name: "a", Score: 0}},
-		},
-		{
-			Charts{"o0o": []float64{0, 0, 7}},
-			Column{{Name: "o0o", Score: 7}},
-		},
-		{
-			Charts{
-				"o0o": []float64{0, 0, 7},
-				"lol": []float64{1, 2, 0}},
-			Column{
-				{Name: "o0o", Score: 7},
-				{Name: "lol", Score: 2}},
-		},
-	}
-
-	for _, c := range cases {
-		max := c.charts.Max()
-		if !reflect.DeepEqual(max, c.max) {
-			t.Errorf("wrong data:\nhas:  %v\nwant: %v",
-				max, c.max)
-		}
 	}
 }

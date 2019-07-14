@@ -16,6 +16,7 @@ import (
 )
 
 type printCharts struct {
+	keys       string //defaults to "artist"
 	by         string
 	name       string
 	percentage bool
@@ -43,20 +44,18 @@ func (cmd printCharts) getPartition(
 	case "all":
 		return
 	case "year":
-		var user *unpack.User
-		user, err = unpack.LoadUserInfo(session.User, r)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to load user info")
-		}
-
 		entry := cmd.entry
 		if entry == 0 {
 			entry = 2
 		}
-		year = cha.GetYearPartition(user.Registered, entry)
+		year = cha.GetYearPartition(entry)
 		return
 	case "super":
-		tags, err := organize.LoadArtistTags(cha.Keys(), r)
+		keys := []string{}
+		for _, key := range cha.Keys {
+			keys = append(keys, key.ArtistName())
+		}
+		tags, err := organize.LoadArtistTags(keys, r)
 		if err != nil {
 			return nil, err
 		}
@@ -76,21 +75,38 @@ func getOutCharts(
 ) (charts.Charts, error) {
 	cmd := pcd.PrintCharts()
 
-	plays, err := unpack.LoadAllDayPlays(session.User, r)
+	user, err := unpack.LoadUserInfo(session.User, r)
 	if err != nil {
-		return nil, err
+		return charts.Charts{}, errors.Wrap(err, "failed to load user info")
 	}
 
-	cha := charts.Compile(plays)
+	var cha charts.Charts
+	if cmd.keys == "" || cmd.keys == "artist" {
+		plays, err := unpack.LoadAllDayPlays(session.User, r)
+		if err != nil {
+			return charts.Charts{}, err
+		}
 
-	replace, err := unpack.LoadArtistCorrections(session.User, r)
-	if err == nil {
-		cha = cha.Correct(replace)
+		cha = charts.CompileArtists(plays, user.Registered)
+
+		replace, err := unpack.LoadArtistCorrections(session.User, r)
+		if err == nil {
+			cha = cha.Correct(replace)
+		}
+	} else if cmd.keys == "song" {
+		plays, err := unpack.LoadSongHistory(session.User, r)
+		if err != nil {
+			return charts.Charts{}, err
+		}
+
+		cha = charts.CompileSongs(plays, user.Registered)
+
+		// TODO correct artists
 	}
 
 	partition, err := cmd.getPartition(session, r, cha)
 	if err != nil {
-		return nil, err
+		return charts.Charts{}, err
 	}
 
 	if cmd.normalized {
@@ -112,12 +128,12 @@ func getOutCharts(
 	}
 
 	if partition == nil {
-		return nil, errors.New("name must be empty for chart type 'all'")
+		return charts.Charts{}, errors.New("name must be empty for chart type 'all'")
 	}
 
 	out, ok := accCharts.Split(partition)[cmd.name]
 	if !ok {
-		return nil, fmt.Errorf("name '%v' not found", cmd.name)
+		return charts.Charts{}, fmt.Errorf("name '%v' not found", cmd.name)
 	}
 
 	return out, nil
@@ -143,12 +159,7 @@ func (cmd printTotal) Execute(
 	var null time.Time
 	null = time.Time{}
 	if cmd.date != null {
-		var user *unpack.User
-		user, err = unpack.LoadUserInfo(session.User, s)
-		if err != nil {
-			return errors.Wrap(err, "failed to load user info")
-		}
-		col = charts.Index(rsrc.DayFromTime(cmd.date), user.Registered)
+		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
 	}
 
 	prec := 0
@@ -188,12 +199,7 @@ func (cmd printFade) Execute(
 	var null time.Time
 	null = time.Time{}
 	if cmd.date != null {
-		var user *unpack.User
-		user, err = unpack.LoadUserInfo(session.User, s)
-		if err != nil {
-			return errors.Wrap(err, "failed to load user info")
-		}
-		col = charts.Index(rsrc.DayFromTime(cmd.date), user.Registered)
+		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
 	}
 
 	f := &format.Charts{
@@ -224,17 +230,12 @@ func (cmd printPeriod) Execute(
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, s)
-	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
-	}
-
 	period, err := charts.Period(cmd.period)
 	if err != nil {
 		return err
 	}
 
-	col := out.Interval(period, user.Registered)
+	col := out.Interval(period)
 	sumTotal := col.Sum()
 	col = col.Top(cmd.n)
 
@@ -270,17 +271,12 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, s)
-	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
-	}
-
 	interval := charts.Interval{
 		Begin:  rsrc.DayFromTime(cmd.begin),
 		Before: rsrc.DayFromTime(cmd.before),
 	}
 
-	col := out.Interval(interval, user.Registered)
+	col := out.Interval(interval)
 	sumTotal := col.Sum()
 	col = col.Top(cmd.n)
 

@@ -4,6 +4,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/pkg/errors"
@@ -103,16 +104,17 @@ func (cmd tablePeriods) Execute(
 		return errors.Wrap(err, "failed to load user info")
 	}
 
-	intervals, err := out.ToIntervals(cmd.period, user.Registered)
-	if len(intervals) == 0 || err != nil {
+	end := rsrc.ToDay(user.Registered.Midnight() + int64(86400*out.Len()))
+	intervals, err := charts.ToIntervals(cmd.period, user.Registered, end)
+	if err != nil || intervals.Len() == 0 {
 		return err
 	}
 
-	out = out.Intervals(intervals, user.Registered)
+	out = out.Intervals(intervals)
 
 	f := &format.Table{
 		Charts: out,
-		First:  intervals[0].Begin,
+		First:  intervals.At(0).Begin,
 		Step:   1,
 		Count:  cmd.n,
 	}

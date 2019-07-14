@@ -1,6 +1,7 @@
 package command
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
 	"time"
@@ -16,6 +17,29 @@ import (
 func date(str string) time.Time {
 	date, _ := time.Parse("2006-01-02", str)
 	return date
+}
+
+func breakUp(plays map[string][]float64) (days []map[string]float64) {
+	days = []map[string]float64{}
+
+	size := 0
+	for _, values := range plays {
+		size = len(values)
+	}
+
+	if size == 0 {
+		return
+	}
+
+	for i := 0; i < size; i++ {
+		day := map[string]float64{}
+		for key, values := range plays {
+			day[key] = values[i]
+		}
+		days = append(days, day)
+	}
+
+	return
 }
 
 func TestPrint(t *testing.T) {
@@ -38,7 +62,8 @@ func TestPrint(t *testing.T) {
 	cases := []struct {
 		descr     string
 		user      *unpack.User
-		charts    *charts.Charts
+		prePlays  []map[string]float64 // TODO replace completely by history
+		history   [][]charts.Song
 		cmd       command
 		formatter format.Formatter
 		ok        bool
@@ -46,7 +71,11 @@ func TestPrint(t *testing.T) {
 		{
 			"no user",
 			nil,
-			&charts.Charts{"X": []float64{1, 0, 1}},
+			[]map[string]float64{
+				map[string]float64{"X": 1},
+				map[string]float64{"X": 0},
+				map[string]float64{"X": 1},
+			}, nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "all",
@@ -59,10 +88,15 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"no user (year)",
 			nil,
-			&charts.Charts{"X": []float64{1, 0, 1}},
+			[]map[string]float64{
+				map[string]float64{"X": 1},
+				map[string]float64{"X": 0},
+				map[string]float64{"X": 1},
+			}, nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "year",
@@ -75,10 +109,11 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			nil,
+			nil, nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "all",
@@ -91,10 +126,15 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"no corrections",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{"X": []float64{1, 0, 1}},
+			[]map[string]float64{
+				map[string]float64{"X": 1},
+				map[string]float64{"X": 0},
+				map[string]float64{"X": 1},
+			}, nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "all",
@@ -103,10 +143,15 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: time.Time{},
 			},
 			&format.Charts{
-				Charts:     charts.Charts{"X": []float64{1, 1, 2}},
+				Charts: charts.CompileArtists(
+					[]map[string]float64{
+						map[string]float64{"X": 1},
+						map[string]float64{"X": 1},
+						map[string]float64{"X": 2},
+					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
 				Numbered:   true,
@@ -114,12 +159,15 @@ func TestPrint(t *testing.T) {
 				Percentage: false,
 			},
 			true,
-		}, {
+		},
+		{
 			"by super",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{
-				"X": []float64{1, 0, 1},
-				"Y": []float64{0, 1, 0}},
+			[]map[string]float64{
+				map[string]float64{"X": 1, "Y": 0},
+				map[string]float64{"X": 0, "Y": 1},
+				map[string]float64{"X": 1, "Y": 0},
+			}, nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "super",
@@ -128,22 +176,15 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: time.Time{},
 			},
 			&format.Charts{
-				Charts: charts.Charts{
-					"classical":  []float64{0, 0, 0},
-					"electronic": []float64{0, 0, 0},
-					"folk":       []float64{0, 0, 0},
-					"gothic":     []float64{0, 0, 0},
-					"hip-hop":    []float64{0, 0, 0},
-					"jazz":       []float64{0, 0, 0},
-					"metal":      []float64{0, 0, 0},
-					"pop":        []float64{1, 1, 2},
-					"reggae":     []float64{0, 0, 0},
-					"rock":       []float64{0, 1, 1},
-					"-":          []float64{0, 0, 0},
-				},
+				Charts: charts.CompileArtists(
+					[]map[string]float64{
+						map[string]float64{"classical": 0, "electronic": 0, "folk": 0, "gothic": 0, "hip-hop": 0, "jazz": 0, "metal": 0, "pop": 1, "reggae": 0, "rock": 0, "-": 0},
+						map[string]float64{"classical": 0, "electronic": 0, "folk": 0, "gothic": 0, "hip-hop": 0, "jazz": 0, "metal": 0, "pop": 1, "reggae": 0, "rock": 1, "-": 0},
+						map[string]float64{"classical": 0, "electronic": 0, "folk": 0, "gothic": 0, "hip-hop": 0, "jazz": 0, "metal": 0, "pop": 2, "reggae": 0, "rock": 1, "-": 0},
+					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
 				Numbered:   true,
@@ -151,12 +192,15 @@ func TestPrint(t *testing.T) {
 				Percentage: false,
 			},
 			true,
-		}, {
+		},
+		{
 			"rock bucket",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{
-				"X": []float64{1, 0, 1},
-				"Y": []float64{1, 1, 0}},
+			[]map[string]float64{
+				map[string]float64{"X": 1, "Y": 1},
+				map[string]float64{"X": 0, "Y": 1},
+				map[string]float64{"X": 1, "Y": 0},
+			}, nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "super",
@@ -168,7 +212,12 @@ func TestPrint(t *testing.T) {
 				date: date("2018-01-01"),
 			},
 			&format.Charts{
-				Charts:     charts.Charts{"Y": []float64{1, 2, 2}},
+				Charts: charts.CompileArtists(
+					[]map[string]float64{
+						map[string]float64{"Y": 1},
+						map[string]float64{"Y": 2},
+						map[string]float64{"Y": 2},
+					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
 				Numbered:   true,
@@ -176,10 +225,11 @@ func TestPrint(t *testing.T) {
 				Percentage: true,
 			},
 			true,
-		}, {
+		},
+		{
 			"'all' with name invalid",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printTotal{
 				printCharts: printCharts{
 					by:   "all",
@@ -188,10 +238,11 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"by invalid with name empty",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printTotal{
 				printCharts: printCharts{
 					by:   "invalid",
@@ -200,10 +251,11 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"by invalid with name non-empty",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printTotal{
 				printCharts: printCharts{
 					by:   "invalid",
@@ -212,10 +264,11 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"by super with name invalid",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printTotal{
 				printCharts: printCharts{
 					by:   "super",
@@ -224,12 +277,14 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"by year",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-			&charts.Charts{
+			breakUp(map[string][]float64{
 				"X": []float64{120, 1, 1, 1, 10},
-				"Y": []float64{1, 1, 100, 1, 1}},
+				"Y": []float64{1, 1, 100, 1, 1}}),
+			nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "year",
@@ -240,11 +295,11 @@ func TestPrint(t *testing.T) {
 				},
 			},
 			&format.Charts{
-				Charts: charts.Charts{
+				Charts: charts.CompileArtists(breakUp(map[string][]float64{
 					"2017": []float64{1, 2, 102, 103, 104},
 					"2018": []float64{120, 121, 122, 123, 133},
-					"-":    []float64{0, 0, 0, 0, 0},
-				},
+					"-":    []float64{0, 0, 0, 0, 0}}),
+					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
 				Numbered:   true,
@@ -252,12 +307,14 @@ func TestPrint(t *testing.T) {
 				Percentage: false,
 			},
 			true,
-		}, {
+		},
+		{
 			"by year 2017",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
+			breakUp(map[string][]float64{
 				"X": []float64{100, 1, 1},
-				"Y": []float64{9, 1, 0}},
+				"Y": []float64{9, 1, 0}}),
+			nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "year",
@@ -268,9 +325,9 @@ func TestPrint(t *testing.T) {
 				},
 			},
 			&format.Charts{
-				Charts: charts.Charts{
-					"X": []float64{100, 101, 102},
-				},
+				Charts: charts.CompileArtists(breakUp(map[string][]float64{
+					"X": []float64{100, 101, 102}}),
+					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
 				Numbered:   true,
@@ -278,11 +335,13 @@ func TestPrint(t *testing.T) {
 				Percentage: false,
 			},
 			true,
-		}, {
+		},
+		{
 			"no tags",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"Z": []float64{1}},
+			breakUp(map[string][]float64{
+				"Z": []float64{1}}),
+			nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "super",
@@ -294,11 +353,11 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"all regular",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{
-				"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printTotal{
 				printCharts: printCharts{
 					by:         "all",
@@ -310,7 +369,9 @@ func TestPrint(t *testing.T) {
 				date: date("2018-01-01"),
 			},
 			&format.Charts{
-				Charts:     charts.Charts{"X": []float64{1, 1, 2}},
+				Charts: charts.CompileArtists(breakUp(map[string][]float64{
+					"X": []float64{1, 1, 2}}),
+					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
 				Numbered:   true,
@@ -323,8 +384,7 @@ func TestPrint(t *testing.T) {
 		{
 			"fade regular",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{
-				"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printFade{
 				printCharts: printCharts{
 					by:         "all",
@@ -337,7 +397,9 @@ func TestPrint(t *testing.T) {
 				date: date("2018-01-01"),
 			},
 			&format.Charts{
-				Charts:     charts.Charts{"X": []float64{1, 0.5, 1.25}},
+				Charts: charts.CompileArtists(breakUp(map[string][]float64{
+					"X": []float64{1, 0.5, 0.25}}),
+					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
 				Numbered:   true,
@@ -345,11 +407,11 @@ func TestPrint(t *testing.T) {
 				Percentage: true,
 			},
 			true,
-		}, {
+		},
+		{
 			"fade fail",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{
-				"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printFade{
 				printCharts: printCharts{
 					by:         "year",
@@ -363,11 +425,11 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"fade false user",
 			&unpack.User{Name: "no user", Registered: rsrc.ParseDay("2018-01-01")},
-			&charts.Charts{
-				"X": []float64{1, 0, 1}},
+			breakUp(map[string][]float64{"X": []float64{1, 0, 1}}), nil,
 			printFade{
 				printCharts: printCharts{
 					by:         "all",
@@ -381,11 +443,11 @@ func TestPrint(t *testing.T) {
 			},
 			nil,
 			false,
-		}, {
+		},
+		{
 			"period functional",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8}}), nil,
 			printPeriod{
 				printCharts: printCharts{
 					by:         "all",
@@ -404,41 +466,41 @@ func TestPrint(t *testing.T) {
 				SumTotal:   9,
 			},
 			true,
-		}, {
+		},
+		{
 			"period; no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8}}), nil,
 			printPeriod{
 				printCharts: printCharts{by: "xx", n: 10},
 				period:      "2018",
 			},
 			nil, false,
-		}, {
+		},
+		{
 			"period; user",
 			&unpack.User{Name: "nop", Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8}}), nil,
 			printPeriod{
 				printCharts: printCharts{by: "all", n: 10},
 				period:      "2018",
 			},
 			nil, false,
-		}, {
+		},
+		{
 			"period; broken period",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8}}), nil,
 			printPeriod{
 				printCharts: printCharts{by: "all", n: 10},
 				period:      "I don't work",
 			},
 			nil, false,
-		}, {
+		},
+		{
 			"period; percentage",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8}}), nil,
 			printPeriod{
 				printCharts: printCharts{
 					by:         "all",
@@ -457,11 +519,11 @@ func TestPrint(t *testing.T) {
 				SumTotal:   9,
 			},
 			true,
-		}, {
+		},
+		{
 			"interval; basic",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8, 99}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8, 99}}), nil,
 			printInterval{
 				printCharts: printCharts{
 					by:         "all",
@@ -481,11 +543,11 @@ func TestPrint(t *testing.T) {
 				SumTotal:   9,
 			},
 			true,
-		}, {
+		},
+		{
 			"interval; no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8, 99}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8, 99}}), nil,
 			printInterval{
 				printCharts: printCharts{
 					by:         "sss",
@@ -498,11 +560,11 @@ func TestPrint(t *testing.T) {
 				before: date("2018-01-03"),
 			},
 			nil, false,
-		}, {
+		},
+		{
 			"interval; no user",
 			&unpack.User{Name: "", Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8, 99}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8, 99}}), nil,
 			printInterval{
 				printCharts: printCharts{
 					by:         "all",
@@ -515,11 +577,11 @@ func TestPrint(t *testing.T) {
 				before: date("2018-01-03"),
 			},
 			nil, false,
-		}, {
+		},
+		{
 			"interval; percentage",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			&charts.Charts{
-				"X": []float64{7, 1, 8, 99}},
+			breakUp(map[string][]float64{"X": []float64{7, 1, 8, 99}}), nil,
 			printInterval{
 				printCharts: printCharts{
 					by:         "all",
@@ -540,6 +602,63 @@ func TestPrint(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"songs",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			nil, [][]charts.Song{
+				{{Artist: "A", Title: "d"}, {Artist: "A", Title: "d"}, {Artist: "B", Title: "c"}},
+				{{Artist: "A", Title: "d"}, {Artist: "B", Title: "c"}},
+			},
+			printTotal{
+				printCharts: printCharts{
+					keys:       "song",
+					by:         "all",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+			},
+			&format.Column{
+				Column: charts.Column{
+					charts.Score{Name: "A - d", Score: 3},
+					charts.Score{Name: "B - c", Score: 2},
+				},
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+				SumTotal:   5,
+			},
+			true,
+		},
+		{
+			"songs by super",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			nil, [][]charts.Song{
+				{{Artist: "X", Title: "d"}, {Artist: "X", Title: "d"}, {Artist: "Y", Title: "c"}},
+				{{Artist: "X", Title: "d"}, {Artist: "Y", Title: "c"}},
+			},
+			printTotal{
+				printCharts: printCharts{
+					keys:       "song",
+					by:         "super",
+					name:       "pop",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+			},
+			&format.Column{
+				Column: charts.Column{
+					charts.Score{Name: "X - d", Score: 3},
+				},
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+				SumTotal:   3,
+			},
+			true,
+		},
 		// TODO test corrections (in other test)
 		// TODO test normalized (in other test)
 	}
@@ -549,6 +668,7 @@ func TestPrint(t *testing.T) {
 			files, _ := mock.IO(
 				map[rsrc.Locator][]byte{
 					rsrc.AllDayPlays(user):       nil,
+					rsrc.SongHistory(user):       nil,
 					rsrc.ArtistCorrections(user): nil,
 					rsrc.UserInfo(user):          nil,
 					rsrc.ArtistTags("X"):         nil,
@@ -564,8 +684,14 @@ func TestPrint(t *testing.T) {
 			unpack.WriteTagInfo(tagPop, s)
 			unpack.WriteTagInfo(tagRock, s)
 
-			if c.charts != nil {
-				err := unpack.WriteAllDayPlays(c.charts.UnravelDays(), user, s)
+			if c.prePlays != nil {
+				err := unpack.WriteAllDayPlays(c.prePlays, user, s)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+			if c.history != nil {
+				err := unpack.WriteSongHistory(c.history, user, s)
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
@@ -591,7 +717,13 @@ func TestPrint(t *testing.T) {
 				} else if len(d.Msgs) > 1 {
 					t.Fatalf("got %v messages but expected 1", len(d.Msgs))
 				} else {
-					if !reflect.DeepEqual(c.formatter, d.Msgs[0]) {
+
+					buf0, buf1 := new(bytes.Buffer), new(bytes.Buffer)
+					c.formatter.Plain(buf0)
+					d.Msgs[0].Plain(buf1)
+
+					// TODO checking Plain() is no a sufficient test
+					if buf0.String() != buf1.String() {
 						t.Errorf("formatter does not match expected: %v != %v", c.formatter, d.Msgs[0])
 					}
 				}
@@ -660,5 +792,4 @@ func TestPrintTags(t *testing.T) {
 			}
 		})
 	}
-
 }
