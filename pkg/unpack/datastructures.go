@@ -1,5 +1,10 @@
 package unpack
 
+type jsonError struct {
+	Error   int    `json:"error"`
+	Message string `json:"message"`
+}
+
 type jsonUserInfo struct {
 	User jsonUser `json:"user"`
 }

@@ -299,6 +299,15 @@ func TestLoadTagInfo(t *testing.T) {
 			},
 			true,
 		},
+		{
+			map[rsrc.Locator][]byte{
+				rsrc.TagInfo("error"):   []byte(`{"error":29,"message":"Rate Limit Exceeded"}`),
+				rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
+			},
+			[][]string{{"error"}, {"african"}},
+			[]*charts.Tag{},
+			false,
+		},
 	}
 
 	for _, c := range cases {
@@ -354,6 +363,28 @@ func TestLoadTagInfo(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestTagInfoShutdownOnError(t *testing.T) {
+	io, err := mock.IO(map[rsrc.Locator][]byte{
+		rsrc.TagInfo("error"):   []byte(`{"error":29,"message":"Rate Limit Exceeded"}`),
+		rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
+	}, mock.Path)
+	if err != nil {
+		t.Fatal("setup error")
+	}
+
+	buf := NewCachedTagLoader(io)
+
+	_, err = buf.LoadTagInfo("error")
+	if err == nil {
+		t.Fatal("expected error but none occurred for tag 'error'")
+	}
+
+	_, err = buf.LoadTagInfo("african")
+	if err == nil {
+		t.Fatal("expected error but none occurre for tag 'african'")
 	}
 }
 

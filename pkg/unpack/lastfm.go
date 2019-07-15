@@ -3,7 +3,27 @@ package unpack
 import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/pkg/errors"
 )
+
+type LastfmError struct {
+	Code    int
+	Message string
+}
+
+// obError is a deserializer. It parses a resource as a jsonError.
+type obError struct {
+}
+
+func (o *obError) deserializer() interface{} {
+	return &jsonError{}
+}
+
+func (o *obError) interpret(raw interface{}) (interface{}, error) {
+	e := raw.(*jsonError)
+
+	return &LastfmError{e.Error, e.Message}, nil
+}
 
 // User contains relevant core information about a user.
 type User struct {
@@ -207,11 +227,20 @@ func (buf *CachedTagLoader) worker() {
 	requests := make(map[string][]tagRequest)
 	tagCounts := make(map[string]tagResult)
 
+	hasError := false
+
 	for {
 		select {
 		case request := <-buf.requestChan:
 			if tc, ok := tagCounts[request.name]; ok {
 				request.back <- tc
+				close(request.back)
+			} else if hasError {
+				request.back <- tagResult{
+					name: request.name,
+					tag:  nil,
+					err:  errors.New("abort due to previous error"),
+				}
 				close(request.back)
 			} else {
 
@@ -219,6 +248,7 @@ func (buf *CachedTagLoader) worker() {
 				go func(request tagRequest) {
 					data, err := obtain(&obTagInfo{request.name}, buf.reader)
 					if err != nil {
+						hasError = true
 						resultChan <- tagResult{request.name, nil, err}
 					} else {
 						tag := data.(*charts.Tag)

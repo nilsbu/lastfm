@@ -2,16 +2,38 @@ package unpack
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-type obtainer interface {
+type resource interface {
 	locator() rsrc.Locator
+}
+
+type deserializer interface {
 	deserializer() interface{}
 	interpret(raw interface{}) (interface{}, error)
+}
+
+type serializer interface {
+	raw(obj interface{}) interface{}
+}
+
+type obtainer interface {
+	resource
+	deserializer
+}
+
+func deserialize(o deserializer, data []byte) (interface{}, error) {
+	raw := o.deserializer()
+	if err := json.Unmarshal(data, raw); err != nil {
+		return nil, errors.Wrap(err, "could not deserialize")
+	}
+
+	return o.interpret(raw)
 }
 
 func obtain(o obtainer, r rsrc.Reader) (interface{}, error) {
@@ -20,18 +42,20 @@ func obtain(o obtainer, r rsrc.Reader) (interface{}, error) {
 		return nil, err
 	}
 
-	raw := o.deserializer()
-	err = json.Unmarshal(data, raw)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not deserialize")
+	if errMsg, err := deserialize(&obError{}, data); err == nil {
+		d := errMsg.(*LastfmError)
+		if d.Code > 0 {
+			return nil, fmt.Errorf("error code: '%v': %v",
+				d.Code, d.Message)
+		}
 	}
 
-	return o.interpret(raw)
+	return deserialize(o, data)
 }
 
 type depositer interface {
-	locator() rsrc.Locator
-	raw(obj interface{}) interface{}
+	resource
+	serializer
 }
 
 func deposit(obj interface{}, d depositer, w rsrc.Writer) error {
