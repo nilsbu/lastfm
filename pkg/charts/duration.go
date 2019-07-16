@@ -17,115 +17,6 @@ type Interval struct {
 	Before rsrc.Day
 }
 
-type intervalIterator interface {
-	HasNext() bool
-	Next() Interval
-}
-
-type iIterator struct {
-	next   Interval
-	before rsrc.Day
-	step   int
-}
-
-type dayIterator struct {
-	iIterator
-}
-
-type monthIterator struct {
-	iIterator
-}
-
-type yearIterator struct {
-	iIterator
-}
-
-func newYearIterator(
-	step int,
-	from rsrc.Day,
-	before rsrc.Day) intervalIterator {
-	return &yearIterator{iIterator{
-		next:   yearPeriod(from, step),
-		before: before,
-		step:   step,
-	}}
-}
-
-func newMonthIterator(
-	step int,
-	from rsrc.Day,
-	before rsrc.Day) intervalIterator {
-	return &monthIterator{iIterator{
-		next:   monthPeriod(from, step),
-		before: before,
-		step:   step,
-	}}
-}
-
-func newDayIterator(
-	step int,
-	from rsrc.Day,
-	before rsrc.Day) intervalIterator {
-	return &dayIterator{iIterator{
-		next:   dayPeriod(from, step),
-		before: before,
-		step:   step,
-	}}
-}
-
-func (ii *iIterator) HasNext() bool {
-	return ii.next.Begin.Midnight() < ii.before.Midnight()
-}
-
-func (ii *dayIterator) Next() Interval {
-	next := ii.next
-	ii.next = dayPeriod(ii.next.Before, ii.step)
-
-	return next
-}
-
-func (ii *monthIterator) Next() Interval {
-	next := ii.next
-	ii.next = monthPeriod(ii.next.Before, ii.step)
-
-	return next
-}
-
-func (ii *yearIterator) Next() Interval {
-	next := ii.next
-	ii.next = yearPeriod(ii.next.Before, ii.step)
-
-	return next
-}
-
-func dayPeriod(day rsrc.Day, step int) Interval {
-	t := day.Time()
-	y, m, d := t.Year(), t.Month(), t.Day()
-	return Interval{
-		Begin:  rsrc.DayFromTime(time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)),
-		Before: rsrc.DayFromTime(time.Date(y, time.Month(m), d+step, 0, 0, 0, 0, time.UTC)),
-	}
-}
-
-func monthPeriod(day rsrc.Day, step int) Interval {
-	t := day.Time()
-	y := t.Year()
-	m := int(int(t.Month())-1)/step*step + 1
-	return Interval{
-		Begin:  rsrc.DayFromTime(time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC)),
-		Before: rsrc.DayFromTime(time.Date(y, time.Month(m+step), 1, 0, 0, 0, 0, time.UTC)),
-	}
-}
-
-func yearPeriod(day rsrc.Day, step int) Interval {
-	t := day.Time()
-	y := int(t.Year()/step) * step
-	return Interval{
-		Begin:  rsrc.DayFromTime(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC)),
-		Before: rsrc.DayFromTime(time.Date(y+step, time.January, 1, 0, 0, 0, 0, time.UTC)),
-	}
-}
-
 // Period parses a string describing a period and returns the corresponding
 // interval. The descriptor is either a year in the format 'yyyy' or a month
 // in the format 'yyyy-MM'.
@@ -136,13 +27,15 @@ func Period(descr string) (Interval, error) {
 		if err != nil {
 			return Interval{}, err
 		}
-		return yearPeriod(rsrc.DayFromTime(begin), 1), nil
+		day := rsrc.DayFromTime(begin)
+		return Years(day, day.AddDate(0, 0, 1), 1).At(0), nil
 	case 7:
 		begin, err := time.Parse("2006-01", descr)
 		if err != nil {
 			return Interval{}, err
 		}
-		return monthPeriod(rsrc.DayFromTime(begin), 1), nil
+		day := rsrc.DayFromTime(begin)
+		return Months(day, day.AddDate(0, 0, 1), 1).At(0), nil
 	default:
 		return Interval{}, fmt.Errorf("interval format '%v' not supported", descr)
 	}

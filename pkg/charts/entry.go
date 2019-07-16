@@ -76,15 +76,15 @@ func (c Charts) GetYearPartition(threshold float64) Partition {
 		p.assoc[entryDate.Name] = simpleKey(entryDate.Date.Time().Format("2006"))
 	}
 
-	ii := newYearIterator(
-		1,
+	ii := Years(
 		c.Headers.At(0).Begin,
-		c.Headers.At(c.Len()-1).Before)
+		c.Headers.At(c.Len()-1).Before,
+		1)
 
-	for ii.HasNext() {
+	for i := 0; i < ii.Len(); i++ {
 		p.partitions = append(
 			p.partitions,
-			simpleKey(ii.Next().Begin.Time().Format("2006")))
+			simpleKey(ii.At(i).Begin.Time().Format("2006")))
 	}
 	p.partitions = append(p.partitions, simpleKey("-"))
 	return p
