@@ -11,8 +11,10 @@ type Normalizer interface {
 type SimpleNormalizer struct{}
 
 func (SimpleNormalizer) Normalize(charts Charts) Charts {
-	total := charts.Total()
+	return charts.devideBy(charts.Total())
+}
 
+func (charts Charts) devideBy(total []float64) Charts {
 	return charts.mapLine(func(in []float64, out []float64) {
 		for i, x := range in {
 			if total[i] > 0 {
@@ -25,43 +27,59 @@ func (SimpleNormalizer) Normalize(charts Charts) Charts {
 }
 
 type GaussianNormalizer struct {
-	Sigma       float64
-	MirrorFront bool
-	MirrorBack  bool
+	Sigma      float64
+	MirrorBack bool
 }
 
 func (n GaussianNormalizer) Normalize(charts Charts) Charts {
 	wing := int(2 * n.Sigma)
 	kernel := getGaussianKernel(n.Sigma, 2*wing+1)
 
-	blurred := charts.mapLine(func(in []float64, out []float64) {
-		for i := range out {
-			for j := range kernel {
-				jj := i + j - wing
-				if jj < 0 && !n.MirrorFront {
-					continue
-				}
-				if jj >= len(in) && !n.MirrorBack {
-					continue
-				}
+	total := Charts{
+		Headers: charts.Headers,
+		Keys:    []Key{simpleKey("total")},
+		Values:  [][]float64{charts.Total()},
+	}
 
-				for {
-					if jj < 0 {
-						jj = -jj
-					} else if jj >= len(in) {
-						jj = 2*len(in) - jj - 2
-					} else {
-						break
-					}
+	// TODO figure out a way to only normalize once
 
-				}
-
-				out[i] += in[jj] * kernel[j]
-			}
-		}
+	blurredTotal := total.mapLine(func(in, out []float64) {
+		n2 := n
+		n2.MirrorBack = true
+		n2.normalize(in, out, wing, kernel)
 	})
 
-	return SimpleNormalizer{}.Normalize(blurred)
+	blurred := charts.mapLine(func(in, out []float64) {
+		n.normalize(in, out, wing, kernel)
+	})
+
+	return blurred.devideBy(blurredTotal.Values[0])
+}
+
+func (n GaussianNormalizer) normalize(
+	in, out []float64,
+	wing int,
+	kernel []float64) {
+	for i := range out {
+		for j := range kernel {
+			jj := i + j - wing
+			if jj >= len(in) && !n.MirrorBack {
+				continue
+			}
+
+			for {
+				if jj < 0 {
+					jj = -jj
+				} else if jj >= len(in) {
+					jj = 2*len(in) - jj - 2
+				} else {
+					break
+				}
+			}
+
+			out[i] += in[jj] * kernel[j]
+		}
+	}
 }
 
 func getGaussianKernel(sigma float64, width int) []float64 {

@@ -21,7 +21,11 @@ func SSD(a, b Charts) float64 {
 }
 
 func TestNormalizer(t *testing.T) {
-	v := []float64{1, math.Exp(-.5), math.Exp(-2)}
+	weight := 1 / math.Sqrt(2*math.Pi)
+	v := []float64{
+		weight * 1,
+		weight * math.Exp(-.5),
+		weight * math.Exp(-2)}
 
 	cases := []struct {
 		charts     Charts
@@ -82,13 +86,13 @@ func TestNormalizer(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
 				Keys:    []Key{simpleKey("a"), simpleKey("b")},
 				Values: [][]float64{{
-					(1*v[0] + 0*v[1] + 0*v[2]) / (2*v[0] + 1*v[1] + 1*v[2]),
-					(0*v[0] + 1*v[1] + 0*v[2]) / (1*v[0] + 3*v[1] + 0*v[2]),
-					(0*v[0] + 0*v[1] + 1*v[2]) / (1*v[0] + 1*v[1] + 2*v[2]),
+					(1*v[0] + 0*v[1] + 0*v[2]) / (2*v[0] + 2*v[1] + 2*v[2]),
+					(0*v[0] + 1*v[1] + 0*v[2]) / (1*v[0] + 3*v[1] + 2*v[2]),
+					(0*v[0] + 0*v[1] + 1*v[2]) / (1*v[0] + 2*v[1] + 4*v[2]),
 				}, {
-					(1*v[0] + 1*v[1] + 1*v[2]) / (2*v[0] + 1*v[1] + 1*v[2]),
-					(1*v[0] + 2*v[1] + 0*v[2]) / (1*v[0] + 3*v[1] + 0*v[2]),
-					(1*v[0] + 1*v[1] + 1*v[2]) / (1*v[0] + 1*v[1] + 2*v[2]),
+					(1*v[0] + 2*v[1] + 2*v[2]) / (2*v[0] + 2*v[1] + 2*v[2]),
+					(1*v[0] + 2*v[1] + 1*v[2]) / (1*v[0] + 3*v[1] + 2*v[2]),
+					(1*v[0] + 1*v[1] + 1*v[2]) / (1*v[0] + 2*v[1] + 4*v[2]),
 				}}},
 		},
 		{
@@ -96,7 +100,7 @@ func TestNormalizer(t *testing.T) {
 				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{1, 1, 1}}},
-			GaussianNormalizer{Sigma: 12, MirrorFront: true, MirrorBack: true},
+			GaussianNormalizer{Sigma: 12, MirrorBack: true},
 			Charts{
 				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
 				Keys:    []Key{simpleKey("a")},
@@ -107,8 +111,10 @@ func TestNormalizer(t *testing.T) {
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
 			normalized := c.normalizer.Normalize(c.charts)
-			if SSD(normalized, c.normalized) > 1e-8 {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v", normalized, c.normalized)
+			ssd := SSD(normalized, c.normalized)
+			if ssd > 1e-8 {
+				t.Errorf("wrong data (SSD = %v):\nhas:  %v\nwant: %v",
+					ssd, normalized, c.normalized)
 			}
 		})
 	}

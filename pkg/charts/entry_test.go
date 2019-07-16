@@ -59,12 +59,13 @@ func TestChartsGetYearPartition(t *testing.T) {
 		},
 		{
 			Charts{
-				Headers: Days(rsrc.ParseDay("2017-12-29"), rsrc.ParseDay("2018-01-05")),
+				Headers: Days(rsrc.ParseDay("2017-11-01"), rsrc.ParseDay("2018-05-01")),
 				Keys:    []Key{simpleKey("A"), simpleKey("B"), simpleKey("C")},
 				Values: [][]float64{
-					{0, 0, 0, 0, 1, 1, 1},
-					{1, 1, 1, 1, 0, 0, 0},
-					{0, 0, 0, 0, 0, 0, 0}}},
+					append(repeat(0, 30+31+31), repeat(1, 28+31+30)...),
+					append(repeat(1, 30+31+31), repeat(0, 28+31+30)...),
+					append(repeat(0, 30+31+31), repeat(0, 28+31+30)...),
+				}},
 			mapPart{
 				assoc:      map[string]Key{"A": simpleKey("2018"), "B": simpleKey("2017")},
 				partitions: []Key{simpleKey("2017"), simpleKey("2018"), simpleKey("-")},

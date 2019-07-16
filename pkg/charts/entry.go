@@ -31,10 +31,7 @@ func (c Charts) FindEntryDates(threshold float64) (entryDates []EntryDate) {
 func (c Charts) FindEntryDatesDynamic(threshold float64,
 ) (entryDates []EntryDate) {
 
-	nm := GaussianNormalizer{
-		Sigma:       30,
-		MirrorFront: true,
-		MirrorBack:  false}
+	nm := GaussianNormalizer{Sigma: 30}
 	nc := nm.Normalize(c)
 
 	nsum := nc.Sum()

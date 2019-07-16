@@ -42,6 +42,24 @@ func breakUp(plays map[string][]float64) (days []map[string]float64) {
 	return
 }
 
+func iotaF(base float64, n int) []float64 {
+	nums := make([]float64, n)
+	for i := range nums {
+		nums[i] = base + float64(i)
+	}
+
+	return nums
+}
+
+func repeat(x float64, n int) []float64 {
+	nums := make([]float64, n)
+	for i := range nums {
+		nums[i] = float64(x)
+	}
+
+	return nums
+}
+
 func TestPrint(t *testing.T) {
 	user := "TestUser"
 
@@ -280,10 +298,10 @@ func TestPrint(t *testing.T) {
 		},
 		{
 			"by year",
-			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-11-01")},
 			breakUp(map[string][]float64{
-				"X": []float64{120, 1, 1, 1, 10},
-				"Y": []float64{1, 1, 100, 1, 1}}),
+				"X": append(repeat(1, 30+31+31), repeat(0, 30+28)...),
+				"Y": append(repeat(0, 30+31+31), repeat(1, 30+28)...)}),
 			nil,
 			printTotal{
 				printCharts: printCharts{
@@ -296,9 +314,9 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.CompileArtists(breakUp(map[string][]float64{
-					"2017": []float64{1, 2, 102, 103, 104},
-					"2018": []float64{120, 121, 122, 123, 133},
-					"-":    []float64{0, 0, 0, 0, 0}}),
+					"2017": append(iotaF(1, 30+31+31), repeat(92, 30+28)...),
+					"2018": append(repeat(0, 30+31+31), iotaF(1, 30+28)...),
+					"-":    append(repeat(0, 30+31+31), repeat(0, 30+28)...)}),
 					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
@@ -310,10 +328,10 @@ func TestPrint(t *testing.T) {
 		},
 		{
 			"by year 2017",
-			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-01")},
 			breakUp(map[string][]float64{
-				"X": []float64{100, 1, 1},
-				"Y": []float64{9, 1, 0}}),
+				"X": append(repeat(1, 31), repeat(0, 30)...),
+				"Y": append(repeat(1, 1), repeat(0, 30+30)...)}),
 			nil,
 			printTotal{
 				printCharts: printCharts{
@@ -326,7 +344,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.CompileArtists(breakUp(map[string][]float64{
-					"X": []float64{100, 101, 102}}),
+					"X": append(iotaF(1, 31), repeat(31, 30)...)}),
 					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
