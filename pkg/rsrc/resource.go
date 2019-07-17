@@ -70,6 +70,18 @@ func ArtistTags(artist string) Locator {
 	}
 }
 
+// ArtistSimilar returns a locator for the Last.fm API call "artist.getSimilar".
+func ArtistSimilar(artist string) Locator {
+	return &lastFM{
+		method:   "artist.getSimilar",
+		nameType: "artist",
+		name:     artist,
+		page:     -1,
+		day:      nil,
+		limit:    -1,
+	}
+}
+
 // TagInfo returns a locator for the Last.fm API call "tag.getInfo".
 func TagInfo(tag string) Locator {
 	return &lastFM{
