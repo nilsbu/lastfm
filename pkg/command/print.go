@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/nilsbu/lastfm/config"
@@ -367,10 +368,12 @@ func (cmd printSimilar) Execute(
 		return err
 	}
 
-	col := make(charts.Column, len(similar))
-	for i, artist := range similar {
-		col[i] = charts.Score{Name: artist.Name, Score: float64(artist.Match)}
+	col := charts.Column{}
+	for artist, match := range similar {
+		col = append(col, charts.Score{Name: artist, Score: float64(match)})
 	}
+
+	sort.Sort(col)
 
 	f := &format.Column{
 		Column:    col,

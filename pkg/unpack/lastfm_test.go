@@ -270,7 +270,7 @@ func TestLoadArtistSimilar(t *testing.T) {
 		descr   string
 		files   map[rsrc.Locator][]byte
 		artist  string
-		similar []SimilarArtist
+		similar map[string]float32
 		ok      bool
 	}{
 		{
@@ -287,7 +287,10 @@ func TestLoadArtistSimilar(t *testing.T) {
 				rsrc.ArtistSimilar("X"): []byte(`{"similarartists":{"artist":[{"name":"Kylie Minogue","match":"1"},{"name":"Sido","match":"0.45"}]}}`),
 			},
 			"X",
-			[]SimilarArtist{{"Kylie Minogue", 1}, {"Sido", .45}},
+			map[string]float32{
+				"Kylie Minogue": 1,
+				"Sido":          .45,
+			},
 			true,
 		},
 	}
@@ -326,7 +329,10 @@ func TestWriteLoadArtistSimilar(t *testing.T) {
 		t.Fatal("setup error")
 	}
 
-	similar := []SimilarArtist{{"Kylie Minogue", 1}, {"Sido", .45}}
+	similar := map[string]float32{
+		"Kylie Minogue": 1,
+		"Sido":          .45,
+	}
 	err = WriteArtistSimilar("X", similar, io)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

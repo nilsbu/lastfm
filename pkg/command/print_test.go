@@ -815,27 +815,21 @@ func TestPrintTags(t *testing.T) {
 func TestPrintSimilar(t *testing.T) { // TODO
 	cases := []struct {
 		descr     string
-		tags      []unpack.SimilarArtist
+		tags      map[string]float32
 		cmd       command
 		formatter format.Formatter
 		ok        bool
 	}{
 		{
 			"artist not available",
-			[]unpack.SimilarArtist{
-				{Name: "A", Match: 1.0},
-				{Name: "B", Match: 0.87},
-			},
+			map[string]float32{"A": 1.0, "B": 0.87},
 			printSimilar{artist: "nope"},
 			nil,
 			false,
 		},
 		{
 			"with tags",
-			[]unpack.SimilarArtist{
-				{Name: "A", Match: 1.0},
-				{Name: "B", Match: 0.87},
-			},
+			map[string]float32{"A": 1.0, "B": 0.87},
 			printSimilar{artist: "X"},
 			&format.Column{
 				Column: charts.Column{

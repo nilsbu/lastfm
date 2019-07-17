@@ -353,24 +353,23 @@ func (o *obArtistSimilar) deserializer() interface{} {
 func (o *obArtistSimilar) interpret(raw interface{}) (interface{}, error) {
 	inArtists := raw.(*jsonArtistSimilar).SimilarArtists
 
-	outArtists := []SimilarArtist{}
+	outArtists := map[string]float32{}
 
 	for _, inArtist := range inArtists.Matches {
-		outArtists = append(outArtists,
-			SimilarArtist{Name: inArtist.Name, Match: inArtist.Match})
+		outArtists[inArtist.Name] = inArtist.Match
 	}
 
 	return outArtists, nil
 }
 
 func (o *obArtistSimilar) raw(obj interface{}) interface{} {
-	inSimilar := obj.([]SimilarArtist)
+	inSimilar := obj.(map[string]float32)
 
 	jsSimilar := []jsonArtistSimilarMatch{}
-	for _, sim := range inSimilar {
+	for artist, match := range inSimilar {
 		jsSimilar = append(jsSimilar, jsonArtistSimilarMatch{
-			Name:  sim.Name,
-			Match: sim.Match,
+			Name:  artist,
+			Match: match,
 		})
 	}
 
@@ -378,17 +377,10 @@ func (o *obArtistSimilar) raw(obj interface{}) interface{} {
 	return js
 }
 
-// SimilarArtist contains the matching score of a similar artist with respect
-// to a requested artist.
-type SimilarArtist struct {
-	Name  string
-	Match float32
-}
-
 // CachedSimilarLoader is a buffer that loads artists' similar artists with
 // minimal amount of external calls.
 type CachedSimilarLoader interface {
-	LoadArtistSimilar(artist string) ([]SimilarArtist, error)
+	LoadArtistSimilar(artist string) (map[string]float32, error)
 }
 
 type cachedSimilarLoader struct {
@@ -403,7 +395,7 @@ func NewCachedSimilarLoader(r rsrc.Reader) CachedSimilarLoader {
 
 // LoadArtistSimilar loads an artist's similar artists.
 func (buf cachedSimilarLoader) LoadArtistSimilar(
-	artist string) ([]SimilarArtist, error) {
+	artist string) (map[string]float32, error) {
 	back := make(chan cacheResult)
 
 	buf.Loader.requestChan <- cacheRequest{
@@ -417,13 +409,13 @@ func (buf cachedSimilarLoader) LoadArtistSimilar(
 		return nil, result.err
 	}
 
-	return result.data.([]SimilarArtist), nil
+	return result.data.(map[string]float32), nil
 }
 
 // WriteArtistSimilar writes the similar artists of an artist.
 func WriteArtistSimilar(
 	artist string,
-	similar []SimilarArtist,
+	similar map[string]float32,
 	w rsrc.Writer,
 ) error {
 	return deposit(similar, &obArtistSimilar{name: artist}, w)
