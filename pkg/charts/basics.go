@@ -132,25 +132,36 @@ func (c Charts) Rank() (ranks Charts) {
 	ranks.Headers = c.Headers
 	ranks.Keys = c.Keys
 	ranks.Values = make([][]float64, len(c.Keys))
+	for i := 0; i < len(ranks.Values); i++ {
+		ranks.Values[i] = make([]float64, c.Len())
+	}
 
+	back := make(chan bool)
 	for i := 0; i < c.Len(); i++ {
-		col, _ := c.Column(i)
+		go func(i int) {
+			col, _ := c.Column(i)
+			var last float64
+			idx := 1
+			for j, score := range col {
+				if last != score.Score {
+					idx = j + 1
+					last = score.Score
+				}
 
-		var last float64
-		idx := 1
-		for j, score := range col {
-			if last != score.Score {
-				idx = j + 1
-				last = score.Score
-			}
-
-			for k, key := range ranks.Keys {
-				if key.String() == score.Name {
-					ranks.Values[k] = append(ranks.Values[k], float64(idx))
-					break
+				for k, key := range ranks.Keys {
+					if key.String() == score.Name {
+						ranks.Values[k][i] = float64(idx)
+						break
+					}
 				}
 			}
-		}
+
+			back <- true
+		}(i)
+	}
+
+	for i := 0; i < c.Len(); i++ {
+		<-back
 	}
 
 	return
