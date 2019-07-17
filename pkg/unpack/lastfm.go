@@ -363,6 +363,21 @@ func (o *obArtistSimilar) interpret(raw interface{}) (interface{}, error) {
 	return outArtists, nil
 }
 
+func (o *obArtistSimilar) raw(obj interface{}) interface{} {
+	inSimilar := obj.([]SimilarArtist)
+
+	jsSimilar := []jsonArtistSimilarMatch{}
+	for _, sim := range inSimilar {
+		jsSimilar = append(jsSimilar, jsonArtistSimilarMatch{
+			Name:  sim.Name,
+			Match: sim.Match,
+		})
+	}
+
+	js := jsonArtistSimilar{SimilarArtists: jsonArtistMatches{Matches: jsSimilar}}
+	return js
+}
+
 // SimilarArtist contains the matching score of a similar artist with respect
 // to a requested artist.
 type SimilarArtist struct {
@@ -403,4 +418,13 @@ func (buf cachedSimilarLoader) LoadArtistSimilar(
 	}
 
 	return result.data.([]SimilarArtist), nil
+}
+
+// WriteArtistSimilar writes the similar artists of an artist.
+func WriteArtistSimilar(
+	artist string,
+	similar []SimilarArtist,
+	w rsrc.Writer,
+) error {
+	return deposit(similar, &obArtistSimilar{name: artist}, w)
 }

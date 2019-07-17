@@ -318,6 +318,32 @@ func TestLoadArtistSimilar(t *testing.T) {
 	}
 }
 
+func TestWriteLoadArtistSimilar(t *testing.T) {
+	io, err := mock.IO(
+		map[rsrc.Locator][]byte{rsrc.ArtistSimilar("X"): nil},
+		mock.Path)
+	if err != nil {
+		t.Fatal("setup error")
+	}
+
+	similar := []SimilarArtist{{"Kylie Minogue", 1}, {"Sido", .45}}
+	err = WriteArtistSimilar("X", similar, io)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	buf := NewCachedSimilarLoader(io)
+	actual, err := buf.LoadArtistSimilar("X")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !reflect.DeepEqual(similar, actual) {
+		t.Errorf("wrong data:\nwant: %v\n has:  %v",
+			similar, actual)
+	}
+}
+
 func TestLoadTagInfo(t *testing.T) {
 	cases := []struct {
 		files map[rsrc.Locator][]byte
