@@ -262,6 +262,62 @@ func TestWriteLoadArtistTags(t *testing.T) {
 	}
 }
 
+func TestLoadArtistSimilar(t *testing.T) {
+	// Cached loading is used but not tested here explicitely, since that is done
+	// in TestLoadTagInfo in great detail.
+
+	cases := []struct {
+		descr   string
+		files   map[rsrc.Locator][]byte
+		artist  string
+		similar []SimilarArtist
+		ok      bool
+	}{
+		{
+			"data missing",
+			map[rsrc.Locator][]byte{
+				rsrc.ArtistSimilar("X"): nil,
+			},
+			"X",
+			nil, false,
+		},
+		{
+			"data ok",
+			map[rsrc.Locator][]byte{
+				rsrc.ArtistSimilar("X"): []byte(`{"similarartists":{"artist":[{"name":"Kylie Minogue","match":"1"},{"name":"Sido","match":"0.45"}]}}`),
+			},
+			"X",
+			[]SimilarArtist{{"Kylie Minogue", 1}, {"Sido", .45}},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.descr, func(t *testing.T) {
+			io, err := mock.IO(c.files, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			buf := NewCachedSimilarLoader(io)
+
+			similar, err := buf.LoadArtistSimilar(c.artist)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error")
+			}
+
+			if err == nil {
+				if !reflect.DeepEqual(c.similar, similar) {
+					t.Errorf("wrong data:\nwant: %v\n has:  %v",
+						c.similar, similar)
+				}
+			}
+		})
+	}
+}
+
 func TestLoadTagInfo(t *testing.T) {
 	cases := []struct {
 		files map[rsrc.Locator][]byte

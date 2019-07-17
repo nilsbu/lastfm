@@ -94,6 +94,21 @@ type jsonTopTagAttr struct {
 	Artist string `json:"artist"`
 }
 
+type jsonArtistSimilar struct {
+	SimilarArtists jsonArtistMatches `json:"similarartists"`
+}
+
+type jsonArtistMatches struct {
+	Matches []jsonArtistSimilarMatch `json:"artist"`
+	// Not included: @attr
+}
+
+type jsonArtistSimilarMatch struct {
+	Name  string  `json:"name"`
+	Match float32 `json:"match,string"`
+	// Not included: mbid, image, streamable
+}
+
 type jsonTagInfo struct {
 	Tag jsonTagTag `json:"tag"`
 }

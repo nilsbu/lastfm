@@ -337,3 +337,70 @@ func (o *obTagInfo) raw(obj interface{}) interface{} {
 	}}
 	return js
 }
+
+type obArtistSimilar struct {
+	name string
+}
+
+func (o *obArtistSimilar) locator() rsrc.Locator {
+	return rsrc.ArtistSimilar(o.name)
+}
+
+func (o *obArtistSimilar) deserializer() interface{} {
+	return &jsonArtistSimilar{}
+}
+
+func (o *obArtistSimilar) interpret(raw interface{}) (interface{}, error) {
+	inArtists := raw.(*jsonArtistSimilar).SimilarArtists
+
+	outArtists := []SimilarArtist{}
+
+	for _, inArtist := range inArtists.Matches {
+		outArtists = append(outArtists,
+			SimilarArtist{Name: inArtist.Name, Match: inArtist.Match})
+	}
+
+	return outArtists, nil
+}
+
+// SimilarArtist contains the matching score of a similar artist with respect
+// to a requested artist.
+type SimilarArtist struct {
+	Name  string
+	Match float32
+}
+
+// CachedSimilarLoader is a buffer that loads artists' similar artists with
+// minimal amount of external calls.
+type CachedSimilarLoader interface {
+	LoadArtistSimilar(artist string) ([]SimilarArtist, error)
+}
+
+type cachedSimilarLoader struct {
+	Loader *cachedLoader
+}
+
+// NewCachedSimilarLoader creates a buffer which can read and store similar
+// artists.
+func NewCachedSimilarLoader(r rsrc.Reader) CachedSimilarLoader {
+	return cachedSimilarLoader{newCachedLoader(r)}
+}
+
+// LoadArtistSimilar loads an artist's similar artists.
+func (buf cachedSimilarLoader) LoadArtistSimilar(
+	artist string) ([]SimilarArtist, error) {
+	back := make(chan cacheResult)
+
+	buf.Loader.requestChan <- cacheRequest{
+		name:     artist,
+		obtainer: &obArtistSimilar{artist},
+		back:     back,
+	}
+
+	result := <-back
+	if result.err != nil {
+		return nil, result.err
+	}
+
+	return result.data.([]SimilarArtist), nil
+}
