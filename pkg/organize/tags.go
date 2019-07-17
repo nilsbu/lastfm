@@ -69,7 +69,7 @@ func LoadArtistTags(artists []string, r rsrc.Reader,
 func loadArtistTags(
 	artist string,
 	r rsrc.Reader,
-	tl *unpack.CachedTagLoader,
+	tl unpack.CachedTagLoader,
 ) ([]charts.Tag, error) {
 
 	tags, err := unpack.LoadArtistTags(artist, r)

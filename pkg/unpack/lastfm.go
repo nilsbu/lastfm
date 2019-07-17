@@ -189,20 +189,23 @@ func (o *obArtistTags) raw(obj interface{}) interface{} {
 	return js
 }
 
-// CachedTagLoader if a buffer that stores tag information.
-type CachedTagLoader struct {
+// cachedLoader if a buffer that stores data that can be obtained. It minimizes
+// the number of external calls.
+// TODO extract as file / module.
+type cachedLoader struct {
 	reader      rsrc.Reader
-	requestChan chan tagRequest
+	requestChan chan cacheRequest
 }
 
-type tagRequest struct {
-	name string
-	back chan tagResult
+type cacheRequest struct {
+	name     string
+	obtainer obtainer
+	back     chan cacheResult
 }
 
-type tagResult struct {
+type cacheResult struct {
 	name string
-	tag  *charts.Tag
+	data interface{}
 	err  error
 }
 
@@ -210,73 +213,89 @@ type obTagInfo struct {
 	name string
 }
 
-// NewCachedTagLoader creates a buffer which can read and store tag information.
-func NewCachedTagLoader(r rsrc.Reader) *CachedTagLoader {
-	buf := &CachedTagLoader{
+// newCachedLoader creates a buffer which can read and store data.
+func newCachedLoader(r rsrc.Reader) *cachedLoader {
+	buf := &cachedLoader{
 		reader:      r,
-		requestChan: make(chan tagRequest),
+		requestChan: make(chan cacheRequest),
 	}
 
 	go buf.worker()
 	return buf
 }
 
-func (buf *CachedTagLoader) worker() {
-	resultChan := make(chan tagResult)
+func (buf *cachedLoader) worker() {
+	resultChan := make(chan cacheResult)
 
-	requests := make(map[string][]tagRequest)
-	tagCounts := make(map[string]tagResult)
+	requests := make(map[string][]cacheRequest)
+	cacheMap := make(map[string]cacheResult)
 
 	hasError := false
 
 	for {
 		select {
 		case request := <-buf.requestChan:
-			if tc, ok := tagCounts[request.name]; ok {
-				request.back <- tc
-				close(request.back)
-			} else if hasError {
-				request.back <- tagResult{
+			if hasError {
+				request.back <- cacheResult{
 					name: request.name,
-					tag:  nil,
+					data: nil,
 					err:  errors.New("abort due to previous error"),
 				}
 				close(request.back)
-			} else {
-
+			} else if tc, ok := cacheMap[request.name]; ok {
+				request.back <- tc
+				close(request.back)
+			} else if tc, ok := requests[request.name]; ok && tc != nil {
 				requests[request.name] = append(requests[request.name], request)
-				go func(request tagRequest) {
-					data, err := obtain(&obTagInfo{request.name}, buf.reader)
+			} else {
+				requests[request.name] = append(requests[request.name], request)
+				go func(request cacheRequest) {
+					data, err := obtain(request.obtainer, buf.reader)
 					if err != nil {
 						hasError = true
-						resultChan <- tagResult{request.name, nil, err}
+						resultChan <- cacheResult{request.name, nil, err}
 					} else {
-						tag := data.(*charts.Tag)
-						resultChan <- tagResult{request.name, tag, nil}
+						resultChan <- cacheResult{request.name, data, nil}
 					}
 				}(request)
 			}
 
-		case tag := <-resultChan:
-			tagCounts[tag.name] = tag
+		case result := <-resultChan:
+			cacheMap[result.name] = result
 
-			for _, request := range requests[tag.name] {
-				request.back <- tag
+			for _, request := range requests[result.name] {
+				request.back <- result
 				close(request.back)
 			}
 
-			requests[tag.name] = nil
+			requests[result.name] = nil
 		}
 	}
 }
 
-// LoadTagInfo loads tag information.
-func (buf *CachedTagLoader) LoadTagInfo(tag string) (*charts.Tag, error) {
-	back := make(chan tagResult)
+// CachedTagLoader is a buffer that loads tag information with minimal amount of
+// external calls.
+type CachedTagLoader interface {
+	LoadTagInfo(tag string) (*charts.Tag, error)
+}
 
-	buf.requestChan <- tagRequest{
-		name: tag,
-		back: back,
+type cachedTagLoader struct {
+	Loader *cachedLoader
+}
+
+// NewCachedTagLoader creates a buffer which can read and store tag information.
+func NewCachedTagLoader(r rsrc.Reader) CachedTagLoader {
+	return cachedTagLoader{newCachedLoader(r)}
+}
+
+// LoadTagInfo loads tag information.
+func (buf cachedTagLoader) LoadTagInfo(tag string) (*charts.Tag, error) {
+	back := make(chan cacheResult)
+
+	buf.Loader.requestChan <- cacheRequest{
+		name:     tag,
+		obtainer: &obTagInfo{tag},
+		back:     back,
 	}
 
 	result := <-back
@@ -284,7 +303,7 @@ func (buf *CachedTagLoader) LoadTagInfo(tag string) (*charts.Tag, error) {
 		return nil, result.err
 	}
 
-	return result.tag, nil
+	return result.data.(*charts.Tag), nil
 }
 
 // WriteTagInfo writes tag infos.
