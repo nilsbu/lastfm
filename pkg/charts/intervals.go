@@ -6,6 +6,13 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
+// Interval is a time span. Begin is the first moment, Before is the moment
+// immediately after the interval ends.
+type Interval struct {
+	Begin  rsrc.Day
+	Before rsrc.Day
+}
+
 type Intervals interface {
 	At(index int) (interval Interval)
 	Index(day rsrc.Day) (index int)

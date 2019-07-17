@@ -122,7 +122,7 @@ func CompileSongs(
 }
 
 // UnravelDays takes Charts and disassembles it into single day plays. It acts
-// as an inverse to Compile().
+// as an inverse to CompileArtists().
 func (c Charts) UnravelDays() []map[string]float64 {
 	days := []map[string]float64{}
 	for i := 0; i < c.Len(); i++ {
