@@ -811,3 +811,75 @@ func TestPrintTags(t *testing.T) {
 		})
 	}
 }
+
+func TestPrintSimilar(t *testing.T) { // TODO
+	cases := []struct {
+		descr     string
+		tags      []unpack.SimilarArtist
+		cmd       command
+		formatter format.Formatter
+		ok        bool
+	}{
+		{
+			"artist not available",
+			[]unpack.SimilarArtist{
+				{Name: "A", Match: 1.0},
+				{Name: "B", Match: 0.87},
+			},
+			printSimilar{artist: "nope"},
+			nil,
+			false,
+		},
+		{
+			"with tags",
+			[]unpack.SimilarArtist{
+				{Name: "A", Match: 1.0},
+				{Name: "B", Match: 0.87},
+			},
+			printSimilar{artist: "X"},
+			&format.Column{
+				Column: charts.Column{
+					{Name: "A", Score: 1},
+					{Name: "B", Score: float64(float32(0.87))}},
+				Numbered:  true,
+				Precision: 2,
+			},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.descr, func(t *testing.T) {
+			f := map[rsrc.Locator][]byte{
+				rsrc.ArtistSimilar("X"): nil}
+			files, _ := mock.IO(
+				f,
+				mock.Path)
+			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
+			d := mock.NewDisplay()
+
+			if err := unpack.WriteArtistSimilar("X", c.tags, s); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			err := c.cmd.Execute(nil, s, d)
+			if err != nil && c.ok {
+				t.Fatalf("unexpected error: %v", err)
+			} else if err == nil && !c.ok {
+				t.Fatalf("expected error but none occurred")
+			}
+
+			if err == nil {
+				if len(d.Msgs) == 0 {
+					t.Fatalf("no message was printed")
+				} else if len(d.Msgs) > 1 {
+					t.Fatalf("got %v messages but expected 1", len(d.Msgs))
+				} else {
+					if !reflect.DeepEqual(c.formatter, d.Msgs[0]) {
+						t.Errorf("formatter does not match expected: %v != %v", c.formatter, d.Msgs[0])
+					}
+				}
+			}
+		})
+	}
+}

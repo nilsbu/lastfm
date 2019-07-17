@@ -69,6 +69,7 @@ var cmdPrint = node{
 		"period":   node{cmd: exePrintPeriod},
 		"interval": node{cmd: exePrintInterval},
 		"fademax":  node{cmd: exePrintFadeMax},
+		"similar":  node{cmd: exePrintSimilar},
 		"tags":     node{cmd: exePrintTags},
 		"total":    node{cmd: exePrintTotal},
 	},
@@ -232,6 +233,14 @@ var exePrintFadeMax = &cmd{
 		"entry":      optChartsEntry,
 	},
 	session: true,
+}
+
+var exePrintSimilar = &cmd{
+	descr: "prints an artist's similar artists",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printSimilar{params[0].(string)}
+	},
+	params: params{parArtistName},
 }
 
 var exePrintTags = &cmd{

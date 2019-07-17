@@ -352,3 +352,30 @@ func (cmd printTags) Execute(
 
 	return d.Display(f)
 }
+
+type printSimilar struct {
+	artist string
+}
+
+func (cmd printSimilar) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+
+	similarLoader := unpack.NewCachedSimilarLoader(s)
+
+	similar, err := similarLoader.LoadArtistSimilar(cmd.artist)
+	if err != nil {
+		return err
+	}
+
+	col := make(charts.Column, len(similar))
+	for i, artist := range similar {
+		col[i] = charts.Score{Name: artist.Name, Score: float64(artist.Match)}
+	}
+
+	f := &format.Column{
+		Column:    col,
+		Numbered:  true,
+		Precision: 2}
+
+	return d.Display(f)
+}

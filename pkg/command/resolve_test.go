@@ -237,6 +237,14 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},
 		{
+			[]string{"lastfm", "print", "similar"},
+			&unpack.SessionInfo{User: "user"}, nil, false,
+		},
+		{
+			[]string{"lastfm", "print", "similar", "what"},
+			nil, printSimilar{"what"}, true,
+		},
+		{
 			[]string{"lastfm-csv", "print", "total"},
 			&unpack.SessionInfo{User: "user"},
 			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
