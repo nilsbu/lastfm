@@ -320,6 +320,14 @@ func (h brokenIntervals) Index(day rsrc.Day) int {
 	return 0
 }
 
+type brokenKey struct {
+	simpleKey
+}
+
+func (h brokenKey) FullTitle() string {
+	return ""
+}
+
 func TestChartsEqual(t *testing.T) {
 	cases := []struct {
 		name string
@@ -449,7 +457,7 @@ func TestChartsEqual(t *testing.T) {
 			},
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
-				Keys:    []Key{simpleKey("xy")},
+				Keys:    []Key{simpleKey("xx")},
 				Values:  [][]float64{{3, 3, 1}},
 			},
 			false,
@@ -469,6 +477,20 @@ func TestChartsEqual(t *testing.T) {
 				}}},
 				Keys:   []Key{simpleKey("xx")},
 				Values: [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		{
+			"different FullTitle",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{brokenKey{simpleKey("xx")}},
+				Values:  [][]float64{{3, 3, 1}},
 			},
 			false,
 		},
