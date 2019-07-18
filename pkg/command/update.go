@@ -29,7 +29,7 @@ func (cmd updateHistory) Execute(
 
 	err = unpack.WriteSongHistory(plays, user.Name, s)
 	if err != nil {
-		return errors.Wrap(err, "failed to write alldayplays")
+		return errors.Wrap(err, "failed to write song history")
 	}
 
 	err = unpack.WriteBookmark(today, user.Name, s)

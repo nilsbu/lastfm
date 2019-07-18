@@ -494,6 +494,34 @@ func TestChartsEqual(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"first has no header",
+			Charts{
+				Headers: nil,
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{brokenKey{simpleKey("xx")}},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
+		{
+			"second has no header",
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			Charts{
+				Headers: nil,
+				Keys:    []Key{brokenKey{simpleKey("xx")}},
+				Values:  [][]float64{{3, 3, 1}},
+			},
+			false,
+		},
 	}
 
 	for _, c := range cases {

@@ -1,14 +1,25 @@
 package unpack
 
 import (
+	"fmt"
+
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/pkg/errors"
 )
 
+// LastfmError wraps an error returned  by Last.fm.
 type LastfmError struct {
 	Code    int
 	Message string
+}
+
+func (err *LastfmError) Error() string {
+	return fmt.Sprintf("LastFM error (code = %v): %v", err.Code, err.Message)
+}
+
+func (err *LastfmError) IsFatal() bool {
+	return err.Code >= 8
 }
 
 // obError is a deserializer. It parses a resource as a jsonError.
@@ -230,12 +241,12 @@ func (buf *cachedLoader) worker() {
 	requests := make(map[string][]cacheRequest)
 	cacheMap := make(map[string]cacheResult)
 
-	hasError := false
+	hasFatal := false
 
 	for {
 		select {
 		case request := <-buf.requestChan:
-			if hasError {
+			if hasFatal {
 				request.back <- cacheResult{
 					name: request.name,
 					data: nil,
@@ -252,7 +263,7 @@ func (buf *cachedLoader) worker() {
 				go func(request cacheRequest) {
 					data, err := obtain(request.obtainer, buf.reader)
 					if err != nil {
-						hasError = true
+						hasFatal = hasFatal || isFatal(err)
 						resultChan <- cacheResult{request.name, nil, err}
 					} else {
 						resultChan <- cacheResult{request.name, data, nil}
@@ -270,6 +281,15 @@ func (buf *cachedLoader) worker() {
 
 			requests[result.name] = nil
 		}
+	}
+}
+
+func isFatal(err error) bool {
+	switch err.(type) {
+	case *LastfmError:
+		return err.(*LastfmError).IsFatal()
+	default:
+		return true
 	}
 }
 

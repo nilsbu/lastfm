@@ -9,6 +9,19 @@ import (
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
+func TestLastfmError(t *testing.T) {
+	var err error
+	err = &LastfmError{
+		Code:    3,
+		Message: "some error",
+	}
+
+	if err.Error() != "LastFM error (code = 3): some error" {
+		t.Errorf("wrong error message: '%v'",
+			err.Error())
+	}
+}
+
 func TestLoadUserInfo(t *testing.T) {
 	cases := []struct {
 		json []byte
@@ -396,6 +409,17 @@ func TestLoadTagInfo(t *testing.T) {
 			[]*charts.Tag{},
 			false,
 		},
+		{
+			map[rsrc.Locator][]byte{
+				rsrc.TagInfo("error"):   []byte(`{"error":6,"message":"Invalid parameters"}`),
+				rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
+			},
+			[][]string{{"error"}, {"african"}},
+			[]*charts.Tag{
+				nil,
+				&charts.Tag{Name: "african", Total: 55266, Reach: 10493}},
+			false,
+		},
 	}
 
 	for _, c := range cases {
@@ -430,7 +454,7 @@ func TestLoadTagInfo(t *testing.T) {
 					if err := <-feedback; err != nil {
 						errs = append(errs, err)
 						if c.ok {
-							t.Error("unexpected error :", err)
+							t.Error("unexpected error:", err)
 						}
 					}
 				}
@@ -438,8 +462,8 @@ func TestLoadTagInfo(t *testing.T) {
 				n += len(names)
 			}
 
-			if len(errs) == 0 {
-				if !c.ok {
+			if !c.ok {
+				if len(errs) == 0 {
 					t.Error("expected error but none occurred")
 				}
 
@@ -472,7 +496,7 @@ func TestTagInfoShutdownOnError(t *testing.T) {
 
 	_, err = buf.LoadTagInfo("african")
 	if err == nil {
-		t.Fatal("expected error but none occurre for tag 'african'")
+		t.Fatal("expected error but none occurred for tag 'african'")
 	}
 }
 

@@ -124,11 +124,8 @@ func TestTable(t *testing.T) {
 			},
 			&format.Table{
 				Charts: charts.CompileArtists(
-					[]map[string]float64{
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 2},
-					}, rsrc.ParseDay("2018-01-01")),
+					[]map[string]float64{{"X": 1}, {"X": 1}, {"X": 2}},
+					rsrc.ParseDay("2018-01-01")),
 				First: rsrc.ParseDay("2018-01-01"),
 				Step:  2,
 				Count: 3,
@@ -138,20 +135,27 @@ func TestTable(t *testing.T) {
 		// {
 		// 	"table period; years",
 		// 	&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-		// 	&charts.Charts{"X": []float64{1, 0, 1, 5}},
+		// 	charts.CompileArtists(
+		// 		[]map[string]float64{
+		// 			{"X": 1}, {"X": 0}, {"X": 1}, {"X": 5},
+		// 		}, rsrc.ParseDay("2017-12-30")), true,
+		// 	// &charts.Charts{"X": []float64{1, 0, 1, 5}},
 		// 	[]byte("{}"),
 		// 	tablePeriods{
 		// 		printCharts: printCharts{by: "all", n: 10},
 		// 		period:      "y",
 		// 	},
 		// 	&format.Table{
-		// 		Charts: charts.Charts{"X": []float64{1, 6}},
-		// 		First:  rsrc.ParseDay("2017-01-01"),
-		// 		Step:   1,
-		// 		Count:  10,
+		// 		Charts: charts.CompileArtists(
+		// 			[]map[string]float64{{"X": 1}, {"X": 6}},
+		// 			rsrc.ParseDay("2018-01-01")),
+		// 		First: rsrc.ParseDay("2017-01-01"),
+		// 		Step:  1,
+		// 		Count: 10,
 		// 	},
 		// 	true,
-		// }, {
+		// },
+		// {
 		// 	"table period; charts broken",
 		// 	&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
 		// 	&charts.Charts{"X": []float64{1, 0, 1, 5}},
@@ -161,7 +165,8 @@ func TestTable(t *testing.T) {
 		// 		period:      "y",
 		// 	},
 		// 	nil, false,
-		// }, {
+		// },
+		// {
 		// 	"table period; no user",
 		// 	&unpack.User{Name: "no one", Registered: rsrc.ParseDay("2017-12-30")},
 		// 	&charts.Charts{"X": []float64{1, 0, 1, 5}},
@@ -192,10 +197,10 @@ func TestTable(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
+		t.Run(c.descr, func(t *testing.T) {
 			files, _ := mock.IO(
 				map[rsrc.Locator][]byte{
-					rsrc.AllDayPlays(user):       nil,
+					rsrc.SongHistory(user):       nil,
 					rsrc.ArtistCorrections(user): c.correctionsRaw,
 					rsrc.UserInfo(user):          nil},
 
@@ -204,7 +209,7 @@ func TestTable(t *testing.T) {
 
 			d := mock.NewDisplay()
 			if c.hasCharts {
-				err := unpack.WriteAllDayPlays(c.charts.UnravelDays(), user, s)
+				err := unpack.WriteSongHistory(c.charts.UnravelSongs(), user, s)
 				if err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
