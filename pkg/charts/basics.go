@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -213,19 +214,32 @@ func (c Charts) AssertEqual(other Charts) error {
 	}
 
 	// Compare headers
+	if c.Headers == nil {
+		return errors.New("this header is nil")
+	}
+	if other.Headers == nil {
+		return errors.New("this header is nil")
+	}
+
 	if c.Headers.Len() != other.Headers.Len() {
 		return fmt.Errorf("this header's len is '%v' but other is '%v'",
 			c.Headers.Len(), other.Headers.Len())
 	}
 
 	for i := 0; i < c.Len(); i++ {
-		if c.Headers.At(i).Begin.Midnight() != other.Headers.At(i).Begin.Midnight() ||
-			c.Headers.At(i).Before.Midnight() != other.Headers.At(i).Before.Midnight() {
-			return fmt.Errorf("")
+		thisInterval := c.Headers.At(i)
+		otherInterval := other.Headers.At(i)
+		if thisInterval.Begin.Midnight() != otherInterval.Begin.Midnight() {
+			return fmt.Errorf("begin at position %v is %v but other is %v",
+				i, thisInterval.Begin, otherInterval.Begin)
+		}
+		if thisInterval.Before.Midnight() != otherInterval.Before.Midnight() {
+			return fmt.Errorf("before at position %v is %v but other is %v",
+				i, thisInterval.Before, otherInterval.Before)
 		}
 
-		thisI := c.Headers.Index(c.Headers.At(i).Begin)
-		otherI := other.Headers.Index(c.Headers.At(i).Begin)
+		thisI := c.Headers.Index(thisInterval.Begin)
+		otherI := other.Headers.Index(thisInterval.Begin)
 		if thisI != otherI {
 			return fmt.Errorf("index of '%v' is '%v' but other is '%v'",
 				c.Headers.At(i).Begin, i, otherI)
