@@ -212,6 +212,92 @@ func TestChartsUnravelDays(t *testing.T) {
 	}
 }
 
+func TestChartsUnravelSongs(t *testing.T) {
+	cases := []struct {
+		charts Charts
+		songs  [][]Song
+	}{
+		{
+			Charts{},
+			[][]Song{},
+		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
+				Keys:    []Key{simpleKey("A")},
+				Values:  [][]float64{{}},
+			},
+			[][]Song{},
+		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-02")),
+				Keys:    []Key{simpleKey("A")},
+				Values:  [][]float64{{2}},
+			},
+			[][]Song{
+				{{Artist: "A"}, {Artist: "A"}}},
+		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-03")),
+				Keys: []Key{
+					Song{Artist: "A", Title: "s", Album: "x"},
+					Song{Artist: "A", Title: "t", Album: "x"},
+					Song{Artist: "B", Title: "s", Album: "x"},
+					Song{Artist: "C", Title: "w", Album: "x"},
+				},
+				Values: [][]float64{
+					{2, 0}, {1, 1}, {1, 0}, {0, 1}}},
+			[][]Song{
+				{
+					{Artist: "A", Title: "s", Album: "x"},
+					{Artist: "A", Title: "s", Album: "x"},
+					{Artist: "A", Title: "t", Album: "x"},
+					{Artist: "B", Title: "s", Album: "x"},
+				},
+				{
+					{Artist: "A", Title: "t", Album: "x"},
+					{Artist: "C", Title: "w", Album: "x"},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			songs := c.charts.UnravelSongs()
+
+			if !reflect.DeepEqual(songs, c.songs) {
+				t.Errorf("wrong data:\nhas:  %v\nwant: %v", songs, c.songs)
+			}
+		})
+	}
+}
+
+func TestCompileSongsAndBack(t *testing.T) {
+	songs := [][]Song{
+		{
+			{Artist: "A", Title: "s", Album: "x"},
+			{Artist: "A", Title: "s", Album: "x"},
+			{Artist: "A", Title: "t", Album: "x"},
+			{Artist: "B", Title: "s", Album: "x"},
+		},
+		{
+			{Artist: "A", Title: "t", Album: "x"},
+			{Artist: "C", Title: "w", Album: "x"},
+		},
+	}
+
+	charts := CompileSongs(songs, rsrc.ParseDay("2000-01-01"))
+
+	outSongs := charts.UnravelSongs()
+
+	if !reflect.DeepEqual(outSongs, songs) {
+		t.Errorf("wrong data:\nhas:  %v\nwant: %v", outSongs, songs)
+	}
+}
+
 func TestChartsGetKeys(t *testing.T) {
 	cases := []struct {
 		charts Charts

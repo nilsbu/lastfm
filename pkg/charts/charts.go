@@ -164,6 +164,29 @@ func (c Charts) UnravelDays() []map[string]float64 {
 	return days
 }
 
+// UnravelSongs takes Charts and disassembles it into songs. It acts as an
+// inverse to CompileSongs().
+func (c Charts) UnravelSongs() [][]Song {
+	songs := make([][]Song, c.Len())
+	for d := range songs {
+		day := []Song{}
+		for k, key := range c.Keys {
+			for n := 0; n < int(c.Values[k][d]); n++ {
+				if song, ok := key.(Song); ok {
+					day = append(day, song)
+				} else {
+					day = append(day, Song{
+						Artist: key.ArtistName(),
+						Title:  "",
+						Album:  ""})
+				}
+			}
+		}
+		songs[d] = day
+	}
+	return songs
+}
+
 func (c Charts) Len() int {
 	if len(c.Values) == 0 {
 		return 0
