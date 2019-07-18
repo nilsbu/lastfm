@@ -115,6 +115,61 @@ func TestCompileSongs(t *testing.T) {
 	}
 }
 
+func TestArtistsFromSongs(t *testing.T) {
+	for _, c := range []struct {
+		descr      string
+		days       [][]Song
+		registered rsrc.Day
+		charts     Charts
+	}{
+		{
+			"no songs",
+			[][]Song{},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-01")),
+				Keys:    []Key{},
+				Values:  [][]float64{}},
+		},
+		{
+			"one empty day",
+			[][]Song{{}},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-02")),
+				Keys:    []Key{},
+				Values:  [][]float64{}},
+		},
+		{
+			"multiple days",
+			[][]Song{
+				{
+					{Artist: "A", Title: "s", Album: "x"},
+					{Artist: "A", Title: "s", Album: "x"},
+					{Artist: "A", Title: "t", Album: "x"},
+					{Artist: "B", Title: "s", Album: "x"},
+				},
+				{
+					{Artist: "A", Title: "t", Album: "x"},
+					{Artist: "C", Title: "w", Album: "x"},
+				},
+			},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-03")),
+				Keys:    []Key{simpleKey("A"), simpleKey("B"), simpleKey("C")},
+				Values:  [][]float64{{3, 1}, {1, 0}, {0, 1}}}},
+	} {
+		t.Run(c.descr, func(t *testing.T) {
+			charts := ArtistsFromSongs(c.days, c.registered)
+
+			if err := c.charts.AssertEqual(charts); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}
+
 func TestChartsUnravelDays(t *testing.T) {
 	cases := []struct {
 		charts Charts

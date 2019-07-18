@@ -91,9 +91,32 @@ func CompileArtists(
 	}
 }
 
+// CompileSongs creates charts of individual songs from songs split by days.
 func CompileSongs(
 	days [][]Song,
 	registered rsrc.Day) Charts {
+	return chartsFromSongs(
+		days,
+		registered,
+		func(s Song) Key { return s })
+}
+
+// ArtistsFromSongs creates artist charts from songs split by days.
+func ArtistsFromSongs(
+	days [][]Song,
+	registered rsrc.Day,
+) Charts {
+	return chartsFromSongs(
+		days,
+		registered,
+		func(s Song) Key { return simpleKey(s.Artist) })
+}
+
+func chartsFromSongs(
+	days [][]Song,
+	registered rsrc.Day,
+	getKey func(s Song) Key,
+) Charts {
 	size := len(days)
 
 	keys := []Key{}
@@ -102,10 +125,11 @@ func CompileSongs(
 	charts := make(map[string]int)
 	for i, day := range days {
 		for _, song := range day {
-			key := song.String()
+			k := getKey(song)
+			key := k.String()
 			if _, ok := charts[key]; !ok {
 				charts[key] = len(values)
-				keys = append(keys, song)
+				keys = append(keys, k)
 				values = append(values, make([]float64, size))
 				values[len(values)-1][i] = 1
 			} else {
