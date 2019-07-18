@@ -22,7 +22,7 @@ type printTimeline struct {
 func (cmd printTimeline) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
 
-	plays, err := unpack.LoadAllDayPlays(session.User, s)
+	plays, err := unpack.LoadSongHistory(session.User, s)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (cmd printTimeline) Execute(
 		return errors.Wrap(err, "failed to load user info")
 	}
 
-	cha := charts.CompileArtists(plays, user.Registered)
+	cha := charts.ArtistsFromSongs(plays, user.Registered)
 
 	replace, err := unpack.LoadArtistCorrections(session.User, s)
 	if err == nil {

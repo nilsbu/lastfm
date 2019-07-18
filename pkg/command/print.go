@@ -80,28 +80,22 @@ func getOutCharts(
 		return charts.Charts{}, errors.Wrap(err, "failed to load user info")
 	}
 
+	plays, err := unpack.LoadSongHistory(session.User, r)
+	if err != nil {
+		return charts.Charts{}, err
+	}
+
 	var cha charts.Charts
 	if cmd.keys == "" || cmd.keys == "artist" {
-		plays, err := unpack.LoadAllDayPlays(session.User, r)
-		if err != nil {
-			return charts.Charts{}, err
-		}
-
-		cha = charts.CompileArtists(plays, user.Registered)
-
-		replace, err := unpack.LoadArtistCorrections(session.User, r)
-		if err == nil {
-			cha = cha.Correct(replace)
-		}
+		cha = charts.ArtistsFromSongs(plays, user.Registered)
 	} else if cmd.keys == "song" {
-		plays, err := unpack.LoadSongHistory(session.User, r)
-		if err != nil {
-			return charts.Charts{}, err
-		}
-
 		cha = charts.CompileSongs(plays, user.Registered)
+	}
 
-		// TODO correct artists
+	replace, err := unpack.LoadArtistCorrections(session.User, r)
+	if err == nil {
+		// TODO correct does not work for songs
+		cha = cha.Correct(replace)
 	}
 
 	partition, err := cmd.getPartition(session, r, cha)
