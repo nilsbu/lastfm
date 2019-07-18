@@ -57,7 +57,17 @@ func (cmd printCharts) getPartition(
 		}
 		tags, err := organize.LoadArtistTags(keys, r)
 		if err != nil {
-			return nil, err
+			for _, e := range err.(*organize.MultiError).Errs {
+				switch e.(type) {
+				case *unpack.LastfmError:
+					// TODO can this be tested?
+					if e.(*unpack.LastfmError).IsFatal() {
+						return nil, err
+					}
+				default:
+					return nil, err
+				}
+			}
 		}
 
 		corrections, _ := unpack.LoadSupertagCorrections(session.User, r)

@@ -2,7 +2,6 @@ package unpack
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/pkg/errors"
 
@@ -45,8 +44,7 @@ func obtain(o obtainer, r rsrc.Reader) (interface{}, error) {
 	if errMsg, err := deserialize(&obError{}, data); err == nil {
 		d := errMsg.(*LastfmError)
 		if d.Code > 0 {
-			return nil, fmt.Errorf("error code: '%v': %v",
-				d.Code, d.Message)
+			return nil, d
 		}
 	}
 

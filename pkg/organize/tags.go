@@ -1,6 +1,7 @@
 package organize
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -10,15 +11,16 @@ import (
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-type multiError struct {
-	msg  string
-	errs []error
+// MultiError captures multiple errors.
+type MultiError struct {
+	Msg  string
+	Errs []error
 }
 
-func (err *multiError) Error() string {
-	msg := err.msg + ":"
+func (err *MultiError) Error() string {
+	msg := err.Msg + ":"
 
-	for _, e := range err.errs {
+	for _, e := range err.Errs {
 		msg += "\n  " + e.Error()
 	}
 
@@ -46,21 +48,21 @@ func LoadArtistTags(artists []string, r rsrc.Reader,
 	}
 
 	quit := make(chan bool)
-	err := &multiError{"could not load tags", []error{}}
+	err := &MultiError{"could not load tags", []error{}}
 	go func() {
 		for range artists {
-			if res := <-feedback; res.err != nil {
-				err.errs = append(err.errs, res.err)
-			} else {
-				artistTags[res.artist] = res.tags
+			res := <-feedback
+			if res.err != nil {
+				err.Errs = append(err.Errs, res.err)
 			}
+			artistTags[res.artist] = res.tags
 		}
 		quit <- true
 	}()
 
 	<-quit
-	if len(err.errs) > 0 {
-		return nil, err
+	if len(err.Errs) > 0 {
+		return artistTags, err
 	}
 
 	return artistTags, nil
@@ -74,7 +76,17 @@ func loadArtistTags(
 
 	tags, err := unpack.LoadArtistTags(artist, r)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not load tags of '%v'", artist)
+		switch err.(type) {
+		case *unpack.LastfmError:
+			lfmErr := err.(*unpack.LastfmError)
+			lfmErr.Message = fmt.Sprintf(
+				"could not load tags of '%v': %v",
+				artist,
+				lfmErr.Message)
+			return nil, err
+		default:
+			return nil, errors.Wrapf(err, "could not load tags of '%v'", artist)
+		}
 	}
 
 	wtags := make([]charts.Tag, len(tags))

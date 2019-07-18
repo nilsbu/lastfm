@@ -1,14 +1,25 @@
 package unpack
 
 import (
+	"fmt"
+
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/pkg/errors"
 )
 
+// LastfmError wraps an error returned  by Last.fm.
 type LastfmError struct {
 	Code    int
 	Message string
+}
+
+func (err *LastfmError) Error() string {
+	return fmt.Sprintf("LastFM error (code = %v): %v", err.Code, err.Message)
+}
+
+func (err *LastfmError) IsFatal() bool {
+	return err.Code >= 8
 }
 
 // obError is a deserializer. It parses a resource as a jsonError.
@@ -227,7 +238,7 @@ func (buf *CachedTagLoader) worker() {
 	requests := make(map[string][]tagRequest)
 	tagCounts := make(map[string]tagResult)
 
-	hasError := false
+	hasFatal := false
 
 	for {
 		select {
@@ -235,7 +246,7 @@ func (buf *CachedTagLoader) worker() {
 			if tc, ok := tagCounts[request.name]; ok {
 				request.back <- tc
 				close(request.back)
-			} else if hasError {
+			} else if hasFatal {
 				request.back <- tagResult{
 					name: request.name,
 					tag:  nil,
@@ -248,7 +259,7 @@ func (buf *CachedTagLoader) worker() {
 				go func(request tagRequest) {
 					data, err := obtain(&obTagInfo{request.name}, buf.reader)
 					if err != nil {
-						hasError = true
+						hasFatal = hasFatal || isFatal(err)
 						resultChan <- tagResult{request.name, nil, err}
 					} else {
 						tag := data.(*charts.Tag)
@@ -267,6 +278,15 @@ func (buf *CachedTagLoader) worker() {
 
 			requests[tag.name] = nil
 		}
+	}
+}
+
+func isFatal(err error) bool {
+	switch err.(type) {
+	case *LastfmError:
+		return err.(*LastfmError).IsFatal()
+	default:
+		return true
 	}
 }
 
