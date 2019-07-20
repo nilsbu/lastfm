@@ -8,6 +8,19 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
+func TestCustomKey(t *testing.T) {
+	k := NewCustomKey("a", "b", "c")
+	if k.String() != "a" {
+		t.Errorf("expect key 'a' but got '%v'", k.String())
+	}
+	if k.ArtistName() != "b" {
+		t.Errorf("expect key 'b' but got '%v'", k.ArtistName())
+	}
+	if k.FullTitle() != "c" {
+		t.Errorf("expect key 'c' but got '%v'", k.FullTitle())
+	}
+}
+
 func TestCompileArtist(t *testing.T) {
 	cases := []struct {
 		days       []map[string]float64

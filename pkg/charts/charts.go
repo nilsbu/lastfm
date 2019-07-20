@@ -6,10 +6,37 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
+// Key uniquely identifies an artist, song, tag etc. It provides an artist name,
+// if an artist is available and a full title.
 type Key interface {
 	fmt.Stringer
 	ArtistName() string
 	FullTitle() string
+}
+
+type customKey struct {
+	str    string
+	artist string
+	full   string
+}
+
+func (k customKey) String() string {
+	return k.str
+}
+func (k customKey) ArtistName() string {
+	return k.artist
+}
+func (k customKey) FullTitle() string {
+	return k.full
+}
+
+// NewCustomKey returns a key with custom strings.
+func NewCustomKey(key, artist, full string) Key {
+	return customKey{
+		str:    key,
+		artist: artist,
+		full:   full,
+	}
 }
 
 type simpleKey string
@@ -17,11 +44,9 @@ type simpleKey string
 func (s simpleKey) String() string {
 	return string(s)
 }
-
 func (s simpleKey) ArtistName() string {
 	return string(s)
 }
-
 func (s simpleKey) FullTitle() string {
 	return string(s)
 }
@@ -31,15 +56,14 @@ type tagKey string
 func (s tagKey) String() string {
 	return string(s)
 }
-
 func (s tagKey) ArtistName() string {
 	return ""
 }
-
 func (s tagKey) FullTitle() string {
 	return string(s)
 }
 
+// Song is a Key that contains the artist, title and album of a song.
 type Song struct {
 	Artist string
 	Title  string
