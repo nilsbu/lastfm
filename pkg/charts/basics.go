@@ -179,7 +179,12 @@ func (totalPartition) Get(key Key) Key {
 }
 
 func (c Charts) Total() []float64 {
-	return c.Group(totalPartition{}).Values[0]
+	total := c.Group(totalPartition{})
+	if len(total.Values) > 0 {
+		return total.Values[0]
+	} else {
+		return []float64{}
+	}
 }
 
 // Max returns a Column where the score for each key is equal to the maximum of
