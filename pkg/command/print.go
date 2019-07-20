@@ -51,54 +51,52 @@ func (cmd printCharts) getPartition(
 		year = cha.GetYearPartition(entry)
 		return
 	case "super":
-		keys := []string{}
-		for _, key := range cha.Keys {
-			keys = append(keys, key.ArtistName())
-		}
-		tags, err := organize.LoadArtistTags(keys, r)
+		tags, err := loadArtistTags(cha, r)
 		if err != nil {
-			for _, e := range err.(*organize.MultiError).Errs {
-				switch e.(type) {
-				case *unpack.LastfmError:
-					// TODO can this be tested?
-					if e.(*unpack.LastfmError).IsFatal() {
-						return nil, err
-					}
-				default:
-					return nil, err
-				}
-			}
+			return nil, err
 		}
 
 		corrections, _ := unpack.LoadSupertagCorrections(session.User, r)
 
 		return charts.FirstTagPartition(tags, config.Supertags, corrections), nil
 	case "country":
-		keys := []string{}
-		for _, key := range cha.Keys {
-			keys = append(keys, key.ArtistName())
-		}
-		tags, err := organize.LoadArtistTags(keys, r)
+		tags, err := loadArtistTags(cha, r)
 		if err != nil {
-			for _, e := range err.(*organize.MultiError).Errs {
-				switch e.(type) {
-				case *unpack.LastfmError:
-					// TODO can this be tested?
-					if e.(*unpack.LastfmError).IsFatal() {
-						return nil, err
-					}
-				default:
-					return nil, err
-				}
-			}
+			return nil, err
 		}
 
-		corrections := map[string]string{}
-
-		return charts.FirstTagPartition(tags, config.Countries, corrections), nil
+		return charts.FirstTagPartition(tags, config.Countries, nil), nil
 	default:
 		return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
 	}
+}
+
+func loadArtistTags(
+	cha charts.Charts,
+	r rsrc.Reader,
+) (map[string][]charts.Tag, error) {
+	keys := []string{}
+
+	for _, key := range cha.Keys {
+		keys = append(keys, key.ArtistName())
+	}
+
+	tags, err := organize.LoadArtistTags(keys, r)
+	if err != nil {
+		for _, e := range err.(*organize.MultiError).Errs {
+			switch e.(type) {
+			case *unpack.LastfmError:
+				// TODO can this be tested?
+				if e.(*unpack.LastfmError).IsFatal() {
+					return nil, err
+				}
+			default:
+				return nil, err
+			}
+		}
+	}
+
+	return tags, nil
 }
 
 func getOutCharts(

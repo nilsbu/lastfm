@@ -424,7 +424,7 @@ func TestPrint(t *testing.T) {
 			true,
 		},
 		{
-			"no tags",
+			"super withno tags",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
 			[][]charts.Song{
 				{{Artist: "Z", Title: "z"}},
@@ -432,6 +432,24 @@ func TestPrint(t *testing.T) {
 			printTotal{
 				printCharts: printCharts{
 					by:         "super",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+			},
+			nil,
+			false,
+		},
+		{
+			"country with no tags",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
+			[][]charts.Song{
+				{{Artist: "Z", Title: "z"}},
+			},
+			printTotal{
+				printCharts: printCharts{
+					by:         "country",
 					name:       "",
 					percentage: false,
 					normalized: false,
