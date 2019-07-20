@@ -79,7 +79,9 @@ func times(song charts.Song, n int) []charts.Song {
 func TestPrint(t *testing.T) {
 	user := "TestUser"
 
-	tagsX := []unpack.TagCount{{Name: "pop", Count: 100}}
+	tagsX := []unpack.TagCount{
+		{Name: "pop", Count: 100},
+		{Name: "french", Count: 88}}
 	tagsY := []unpack.TagCount{{Name: "rock", Count: 100}}
 
 	tagPop := &charts.Tag{
@@ -89,6 +91,11 @@ func TestPrint(t *testing.T) {
 	}
 	tagRock := &charts.Tag{
 		Name:  "rock",
+		Total: 100,
+		Reach: 25,
+	}
+	tagFrench := &charts.Tag{
+		Name:  "french",
 		Total: 100,
 		Reach: 25,
 	}
@@ -214,9 +221,9 @@ func TestPrint(t *testing.T) {
 			&format.Charts{
 				Charts: charts.CompileArtists(
 					[]map[string]float64{
-						map[string]float64{"classical": 0, "electronic": 0, "folk": 0, "gothic": 0, "hip-hop": 0, "jazz": 0, "metal": 0, "pop": 1, "reggae": 0, "rock": 0, "-": 0},
-						map[string]float64{"classical": 0, "electronic": 0, "folk": 0, "gothic": 0, "hip-hop": 0, "jazz": 0, "metal": 0, "pop": 1, "reggae": 0, "rock": 1, "-": 0},
-						map[string]float64{"classical": 0, "electronic": 0, "folk": 0, "gothic": 0, "hip-hop": 0, "jazz": 0, "metal": 0, "pop": 2, "reggae": 0, "rock": 1, "-": 0},
+						map[string]float64{"pop": 1, "rock": 0},
+						map[string]float64{"pop": 1, "rock": 1},
+						map[string]float64{"pop": 2, "rock": 1},
 					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
@@ -256,6 +263,39 @@ func TestPrint(t *testing.T) {
 				Numbered:   true,
 				Precision:  2,
 				Percentage: true,
+			},
+			true,
+		},
+		{
+			"by country",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			[][]charts.Song{
+				{{Artist: "X", Title: "x"}},
+				{{Artist: "Y", Title: "y"}},
+				{{Artist: "X", Title: "x"}},
+			},
+			printTotal{
+				printCharts: printCharts{
+					by:         "country",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				date: time.Time{},
+			},
+			&format.Charts{
+				Charts: charts.CompileArtists(
+					[]map[string]float64{
+						map[string]float64{"France": 1, "-": 0},
+						map[string]float64{"France": 1, "-": 1},
+						map[string]float64{"France": 2, "-": 1},
+					}, rsrc.ParseDay("2018-01-01")),
+				Column:     -1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
 			},
 			true,
 		},
@@ -345,8 +385,7 @@ func TestPrint(t *testing.T) {
 			&format.Charts{
 				Charts: charts.CompileArtists(breakUp(map[string][]float64{
 					"2017": append(iotaF(1, 30+31+31), repeat(92, 30+28)...),
-					"2018": append(repeat(0, 30+31+31), iotaF(1, 30+28)...),
-					"-":    append(repeat(0, 30+31+31), repeat(0, 30+28)...)}),
+					"2018": append(repeat(0, 30+31+31), iotaF(1, 30+28)...)}),
 					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
@@ -777,7 +816,8 @@ func TestPrint(t *testing.T) {
 					rsrc.ArtistTags("X"):         nil,
 					rsrc.ArtistTags("Y"):         nil,
 					rsrc.TagInfo("pop"):          nil,
-					rsrc.TagInfo("rock"):         nil},
+					rsrc.TagInfo("rock"):         nil,
+					rsrc.TagInfo("french"):       nil},
 				mock.Path)
 			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
 			d := mock.NewDisplay()
@@ -786,6 +826,7 @@ func TestPrint(t *testing.T) {
 			unpack.WriteArtistTags("Y", tagsY, s)
 			unpack.WriteTagInfo(tagPop, s)
 			unpack.WriteTagInfo(tagRock, s)
+			unpack.WriteTagInfo(tagFrench, s)
 
 			if c.history != nil {
 				err := unpack.WriteSongHistory(c.history, user, s)

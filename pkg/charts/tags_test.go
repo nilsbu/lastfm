@@ -7,7 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-func TestChartsSupertags(t *testing.T) {
+func TestChartsFirstTagPartition(t *testing.T) {
 	cases := []struct {
 		charts      Charts
 		tags        map[string][]Tag
@@ -25,8 +25,8 @@ func TestChartsSupertags(t *testing.T) {
 			nil,
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
-				Keys:    []Key{tagKey("-"), tagKey("c"), tagKey("v")},
-				Values:  [][]float64{{}, {}, {}}},
+				Keys:    []Key{},
+				Values:  [][]float64{}},
 		},
 		{
 			Charts{
@@ -41,8 +41,8 @@ func TestChartsSupertags(t *testing.T) {
 			nil,
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
-				Keys:    []Key{tagKey("-"), tagKey("c"), tagKey("v")},
-				Values:  [][]float64{{0, 0}, {17, 3}, {0, 0}}},
+				Keys:    []Key{tagKey("c")},
+				Values:  [][]float64{{17, 3}}},
 		},
 		{
 			Charts{
@@ -85,14 +85,14 @@ func TestChartsSupertags(t *testing.T) {
 			map[string]string{"asdf": "v"},
 			Charts{
 				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
-				Keys:    []Key{tagKey("-"), tagKey("c"), tagKey("v")},
-				Values:  [][]float64{{0, 0}, {0, 0}, {7, 1}}},
+				Keys:    []Key{tagKey("v")},
+				Values:  [][]float64{{7, 1}}},
 		},
 	}
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			tagcharts := c.charts.Group(Supertags(c.tags, c.supertags, c.corrections))
+			tagcharts := c.charts.Group(FirstTagPartition(c.tags, c.supertags, c.corrections))
 
 			if err := c.tagcharts.AssertEqual(tagcharts); err != nil {
 				t.Error(err)
@@ -162,7 +162,7 @@ func TestChartsSplitBySupertag(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			tagcharts := c.charts.Split(Supertags(c.tags, c.supertags, c.corrections))
+			tagcharts := c.charts.Split(FirstTagPartition(c.tags, c.supertags, c.corrections))
 
 			if len(c.tagcharts) != len(tagcharts) {
 				t.Errorf("unexpected length:\nhas:  %v\nwant: %v",
@@ -182,12 +182,12 @@ func TestChartsSplitBySupertag(t *testing.T) {
 	}
 }
 
-func TestEmptySupertags(t *testing.T) {
+func TestEmptyFirstTagPartition(t *testing.T) {
 	cha := Charts{
 		Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
 		Keys:    []Key{simpleKey("a")},
 		Values:  [][]float64{{2, 3}}}
-	buckets := cha.Split(Supertags(nil, nil, nil))
+	buckets := cha.Split(FirstTagPartition(nil, nil, nil))
 
 	expected := map[string]Charts{"-": Charts{
 		Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),

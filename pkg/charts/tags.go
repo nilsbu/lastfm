@@ -44,9 +44,12 @@ func (p artistPartition) Get(key Key) Key {
 	return simpleKey("-")
 }
 
-func Supertags(
+// FirstTagPartition creates a partition where a select group of tags point to
+// the partitions. Each key is assigned to its partition by the heighest weight
+// tag included in tagToPartition. Corrections can override this.
+func FirstTagPartition(
 	tags map[string][]Tag,
-	supertags map[string]string,
+	tagToPartition map[string]string,
 	corrections map[string]string,
 ) Partition {
 	partition := artistPartition{mapPart{
@@ -56,12 +59,12 @@ func Supertags(
 
 	// compile partitions
 	names := map[string]bool{}
-	for _, supertag := range supertags {
+	for _, supertag := range tagToPartition {
 		names[supertag] = true
 	}
 	names["-"] = true
 
-	for name, _ := range names {
+	for name := range names {
 		partition.partitions = append(partition.partitions, tagKey(name))
 	}
 
@@ -69,7 +72,7 @@ func Supertags(
 	for name, values := range tags {
 		supertag := tagKey("-")
 		for _, tag := range values {
-			if stag, ok := supertags[tag.Name]; ok {
+			if stag, ok := tagToPartition[tag.Name]; ok {
 				supertag = tagKey(stag)
 				break
 			}
@@ -90,9 +93,11 @@ func (c Charts) Group(partitions Partition) (tagcharts Charts) {
 
 	indices := map[string]int{}
 	values := [][]float64{}
+	used := make([]bool, len(partitions.Partitions()))
 	for i, name := range partitions.Partitions() {
 		indices[name.String()] = i
 		values = append(values, make([]float64, size))
+		used[i] = false
 	}
 
 	for i, name := range c.Keys {
@@ -101,6 +106,7 @@ func (c Charts) Group(partitions Partition) (tagcharts Charts) {
 		for j := range line {
 			line[j] += c.Values[i][j]
 		}
+		used[lineID] = true
 	}
 
 	keys := []Key{}
@@ -108,10 +114,19 @@ func (c Charts) Group(partitions Partition) (tagcharts Charts) {
 		keys = append(keys, key)
 	}
 
+	filteredKeys := []Key{}
+	filteredValues := [][]float64{}
+	for i, keep := range used {
+		if keep {
+			filteredKeys = append(filteredKeys, keys[i])
+			filteredValues = append(filteredValues, values[i])
+		}
+	}
+
 	return Charts{
 		Headers: c.Headers,
-		Keys:    keys,
-		Values:  values,
+		Keys:    filteredKeys,
+		Values:  filteredValues,
 	}
 }
 
