@@ -37,7 +37,7 @@ func (f *Charts) Plain(w io.Writer) error {
 }
 
 func (f *Charts) column() *Column {
-	col, err := f.Charts.Column(f.Column)
+	col, err := f.Charts.FullTitleColumn(f.Column)
 	if err != nil {
 		return nil
 	}

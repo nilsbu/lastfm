@@ -139,6 +139,14 @@ func TestChartsPlain(t *testing.T) {
 			0, 2, true, 0, true,
 			"1: AB - 0%\n",
 		},
+		{
+			"key's full title differs from artist",
+			charts.CompileSongs([][]charts.Song{
+				{{Artist: "X", Title: "a"}},
+			}, rsrc.ParseDay("2000-01-01")),
+			-1, 3, false, 0, false,
+			"X - a - 1\n",
+		},
 	}
 
 	for _, c := range cases {

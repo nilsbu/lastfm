@@ -60,14 +60,16 @@ func (f *Table) formatBody(
 
 	for _, x := range col.Top(f.Count) {
 		var line []float64
+		var title string
 		for i, key := range f.Charts.Keys {
 			if key.String() == x.Name {
 				line = f.Charts.Values[i]
+				title = key.FullTitle()
 				break
 			}
 		}
 
-		fmt.Fprintf(w, pattern, x.Name, delim0)
+		fmt.Fprintf(w, pattern, title, delim0)
 
 		for i := 0; i < len(line); i += f.Step {
 			if i > 0 {
