@@ -7,6 +7,7 @@ import (
 
 	"github.com/nilsbu/lastfm/config"
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/cluster"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/organize"
@@ -67,6 +68,23 @@ func (cmd printCharts) getPartition(
 		}
 
 		return charts.FirstTagPartition(tags, config.Countries, nil), nil
+	case "greedy":
+		keys := []charts.Key{}
+		for _, key := range cha.Keys {
+			keys = append(keys, key)
+		}
+		similar, err := organize.LoadArtistSimilar(keys, r)
+		if isFatal(err) {
+			return nil, err
+		}
+
+		tags, err := loadArtistTags(cha, r)
+		if err != nil {
+			return nil, err
+		}
+
+		col, _ := cha.Sum().Column(-1)
+		return cluster.Greedy(similar, tags, col, 0.65), nil
 	default:
 		return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
 	}
@@ -83,21 +101,29 @@ func loadArtistTags(
 	}
 
 	tags, err := organize.LoadArtistTags(keys, r)
+	if isFatal(err) {
+		return nil, err
+	}
+
+	return tags, nil
+}
+
+func isFatal(err error) bool {
 	if err != nil {
 		for _, e := range err.(*organize.MultiError).Errs {
 			switch e.(type) {
 			case *unpack.LastfmError:
 				// TODO can this be tested?
 				if e.(*unpack.LastfmError).IsFatal() {
-					return nil, err
+					return true
 				}
 			default:
-				return nil, err
+				return true
 			}
 		}
 	}
 
-	return tags, nil
+	return false
 }
 
 func getOutCharts(

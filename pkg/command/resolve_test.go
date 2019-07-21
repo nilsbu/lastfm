@@ -216,6 +216,11 @@ func TestResolve(t *testing.T) {
 			printPeriod{printCharts: printCharts{by: "all", name: "", n: 10, percentage: true}, period: "2015"}, true,
 		},
 		{
+			[]string{"lastfm", "print", "total", "-by=greedy"},
+			&unpack.SessionInfo{User: "user"},
+			printTotal{printCharts: printCharts{by: "greedy", name: "", n: 10}}, true,
+		},
+		{
 			[]string{"lastfm", "print", "period", "2015", "-normalized=t"},
 			&unpack.SessionInfo{User: "user"},
 			printPeriod{printCharts: printCharts{by: "all", name: "", n: 10, normalized: true}, period: "2015"}, true,

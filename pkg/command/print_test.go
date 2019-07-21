@@ -100,6 +100,9 @@ func TestPrint(t *testing.T) {
 		Reach: 25,
 	}
 
+	similarX := map[string]float32{"Y": 1}
+	similarY := map[string]float32{"X": 1}
+
 	cases := []struct {
 		descr     string
 		user      *unpack.User
@@ -424,7 +427,7 @@ func TestPrint(t *testing.T) {
 			true,
 		},
 		{
-			"super withno tags",
+			"super with no tags",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
 			[][]charts.Song{
 				{{Artist: "Z", Title: "z"}},
@@ -486,6 +489,34 @@ func TestPrint(t *testing.T) {
 				Numbered:   true,
 				Precision:  2,
 				Percentage: true,
+			},
+			true,
+		},
+		{
+			"greedy clustering",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			[][]charts.Song{
+				{{Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "Y"}},
+			},
+			printTotal{
+				printCharts: printCharts{
+					by:         "greedy",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				date: date("2018-01-01"),
+			},
+			&format.Charts{
+				Charts: charts.CompileArtists(breakUp(map[string][]float64{
+					"X": []float64{4}, "Y": []float64{1}}),
+					rsrc.ParseDay("2018-01-01")),
+				Column:     -1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
 			},
 			true,
 		},
@@ -833,6 +864,8 @@ func TestPrint(t *testing.T) {
 					rsrc.UserInfo(user):          nil,
 					rsrc.ArtistTags("X"):         nil,
 					rsrc.ArtistTags("Y"):         nil,
+					rsrc.ArtistSimilar("X"):      nil,
+					rsrc.ArtistSimilar("Y"):      nil,
 					rsrc.TagInfo("pop"):          nil,
 					rsrc.TagInfo("rock"):         nil,
 					rsrc.TagInfo("french"):       nil},
@@ -845,6 +878,8 @@ func TestPrint(t *testing.T) {
 			unpack.WriteTagInfo(tagPop, s)
 			unpack.WriteTagInfo(tagRock, s)
 			unpack.WriteTagInfo(tagFrench, s)
+			unpack.WriteArtistSimilar("X", similarX, s)
+			unpack.WriteArtistSimilar("Y", similarY, s)
 
 			if c.history != nil {
 				err := unpack.WriteSongHistory(c.history, user, s)
@@ -880,7 +915,8 @@ func TestPrint(t *testing.T) {
 
 					// TODO checking Plain() is no a sufficient test
 					if buf0.String() != buf1.String() {
-						t.Errorf("formatter does not match expected: %v != %v", c.formatter, d.Msgs[0])
+						t.Errorf("formatter does not match expected: %v != %v\n%v\n-\n%v",
+							c.formatter, d.Msgs[0], buf0.String(), buf1.String())
 					}
 				}
 			}
