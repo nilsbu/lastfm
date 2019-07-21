@@ -170,6 +170,46 @@ func TestChartsColumn(t *testing.T) {
 	}
 }
 
+func TestChartsFullTitleColumn(t *testing.T) {
+	testCases := []struct {
+		charts Charts
+		i      int
+		column Column
+		ok     bool
+	}{
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys: []Key{
+					NewCustomKey("k0", "a0", "f0"),
+					NewCustomKey("k1", "a1", "f1"),
+					NewCustomKey("k2", "a2", "f2")},
+				Values: [][]float64{{0, 0, 7}, {1, 2, 3}, {1, 3, 4}}},
+			1,
+			Column{Score{"f2", 3}, Score{"f1", 2}, Score{"f0", 0}},
+			true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			column, err := tc.charts.FullTitleColumn(tc.i)
+			if err != nil && tc.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !tc.ok {
+				t.Error("expected error but none occurred")
+			}
+
+			if err == nil {
+				if !reflect.DeepEqual(column, tc.column) {
+					t.Errorf("wrong data:\nhas:  %v\nwant: %v",
+						column, tc.column)
+				}
+			}
+		})
+	}
+}
+
 func TestChartsCorrect(t *testing.T) {
 	cases := []struct {
 		charts     Charts

@@ -72,6 +72,19 @@ func (c Charts) mapLine(f func(in []float64, out []float64)) Charts {
 // Column returns a column of charts sorted descendingly. Negative indices are
 // used to index the chartes from behind.
 func (c Charts) Column(i int) (column Column, err error) {
+	return c.column(i, func(k Key) string { return k.String() })
+}
+
+// FullTitleColumn returns a column of charts sorted descendingly with
+// FullTitle() as names. Negative indices are used to index the chartes from
+// behind.
+func (c Charts) FullTitleColumn(i int) (column Column, err error) {
+	return c.column(i, func(k Key) string { return k.FullTitle() })
+}
+
+func (c Charts) column(
+	i int, key func(k Key) string,
+) (column Column, err error) {
 	size := c.Len()
 	if i >= size {
 		return Column{}, fmt.Errorf("Index %d >= %d (size)", i, size)
@@ -84,7 +97,7 @@ func (c Charts) Column(i int) (column Column, err error) {
 	}
 
 	for li, line := range c.Values {
-		column = append(column, Score{c.Keys[li].String(), line[i]})
+		column = append(column, Score{key(c.Keys[li]), line[i]})
 	}
 	sort.Sort(column)
 	return column, nil
