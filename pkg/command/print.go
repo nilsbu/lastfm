@@ -433,3 +433,43 @@ func (cmd printSimilar) Execute(
 
 	return d.Display(f)
 }
+
+type printClusters struct {
+	normalized bool
+	hl         float64
+}
+
+func (cmd printClusters) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+
+	// chaCmd := printTotal{printCharts: printCharts{
+	// 	by:         "all",
+	// 	normalized: true,
+	// }}
+	//
+	// cha, err := getOutCharts(session, chaCmd, s)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// keys := []charts.Key{}
+	// for _, key := range cha.Keys {
+	// 	keys = append(keys, key)
+	// }
+	// similar, err := organize.LoadArtistSimilar(keys, s)
+	// if err != nil {
+	// 	for _, e := range err.(*organize.MultiError).Errs {
+	// 		switch e.(type) {
+	// 		case *unpack.LastfmError:
+	// 			// TODO can this be tested?
+	// 			if e.(*unpack.LastfmError).IsFatal() {
+	// 				return err
+	// 			}
+	// 		default:
+	// 			return err
+	// 		}
+	// 	}
+	// }
+
+	return nil
+}

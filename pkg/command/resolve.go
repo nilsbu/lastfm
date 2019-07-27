@@ -65,6 +65,7 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
+		"clusters": node{cmd: exePrintClusters},
 		"fade":     node{cmd: exePrintFade},
 		"period":   node{cmd: exePrintPeriod},
 		"interval": node{cmd: exePrintInterval},
@@ -107,6 +108,21 @@ var exeHelp = &cmd{
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return help{}
 	},
+}
+
+var exePrintClusters = &cmd{
+	descr: "prints a user's top artists in fading charts", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printClusters{
+			normalized: opts["normalized"].(bool),
+			hl:         params[0].(float64),
+		}
+	},
+	params: params{parHL},
+	options: options{
+		"normalized": optChartsNormalized,
+	},
+	session: true,
 }
 
 var exePrintFade = &cmd{
