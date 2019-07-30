@@ -158,6 +158,11 @@ func TestResolve(t *testing.T) {
 			printTotal{printCharts: printCharts{by: "country", n: 10}}, true,
 		},
 		{
+			[]string{"lastfm", "print", "total", "-by=total"},
+			&unpack.SessionInfo{User: "user"},
+			printTotal{printCharts: printCharts{by: "total", name: "", n: 10}}, true,
+		},
+		{
 			[]string{"lastfm", "print", "asdf"},
 			&unpack.SessionInfo{User: "user"}, nil, false,
 		},

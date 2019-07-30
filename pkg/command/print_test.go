@@ -489,6 +489,36 @@ func TestPrint(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"total total",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			[][]charts.Song{
+				{{Artist: "X", Title: "x"}},
+				{{Artist: "X", Title: "x"}},
+				{{Artist: "X", Title: "x"}},
+			},
+			printTotal{
+				printCharts: printCharts{
+					by:         "total",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				date: date("2018-01-01"),
+			},
+			&format.Charts{
+				Charts: charts.CompileArtists(breakUp(map[string][]float64{
+					"total": []float64{1, 2, 3}}),
+					rsrc.ParseDay("2018-01-01")),
+				Column:     0,
+				Count:      10,
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+			},
+			true,
+		},
 		// Fade
 		{
 			"fade regular",

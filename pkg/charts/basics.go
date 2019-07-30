@@ -168,18 +168,20 @@ func (c Charts) Rank() (ranks Charts) {
 	return
 }
 
-type totalPartition struct{}
+// TotalPartition is a partition in which all artists belong to the same
+// partition.
+type TotalPartition struct{}
 
-func (totalPartition) Partitions() []Key {
-	return []Key{simpleKey("")}
+func (TotalPartition) Partitions() []Key {
+	return []Key{simpleKey("total")}
 }
 
-func (totalPartition) Get(key Key) Key {
+func (TotalPartition) Get(key Key) Key {
 	return simpleKey("")
 }
 
 func (c Charts) Total() []float64 {
-	total := c.Group(totalPartition{})
+	total := c.Group(TotalPartition{})
 	if len(total.Values) > 0 {
 		return total.Values[0]
 	} else {

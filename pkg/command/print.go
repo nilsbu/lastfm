@@ -39,17 +39,18 @@ func (cmd printCharts) getPartition(
 	session *unpack.SessionInfo,
 	r rsrc.Reader,
 	cha charts.Charts,
-) (year charts.Partition, err error) {
+) (charts.Partition, error) {
 	switch cmd.by {
 	case "all":
-		return
+		return nil, nil
 	case "year":
 		entry := cmd.entry
 		if entry == 0 {
 			entry = 2
 		}
-		year = cha.GetYearPartition(entry)
-		return
+		return cha.GetYearPartition(entry), nil
+	case "total":
+		return charts.TotalPartition{}, nil
 	case "super":
 		tags, err := loadArtistTags(cha, r)
 		if err != nil {
