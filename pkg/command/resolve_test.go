@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -237,6 +238,11 @@ func TestResolve(t *testing.T) {
 			[]string{"lastfm", "print", "fademax", "66"},
 			&unpack.SessionInfo{User: "user"},
 			printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
+		},
+		{
+			[]string{"lastfm", "print", "day", "2016-01-05"},
+			&unpack.SessionInfo{User: "user"},
+			printDay{printTotal{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, date: rsrc.ParseDay("2016-01-05").Time()}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "tags", "Add"},

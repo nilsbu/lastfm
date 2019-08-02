@@ -850,6 +850,39 @@ func TestPrint(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"day",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			[][]charts.Song{
+				{{Artist: "X", Title: "x"}},
+				{{Artist: "Y", Title: "y"}},
+				{{Artist: "X", Title: "x"}},
+			},
+			printDay{printTotal{
+				printCharts: printCharts{
+					by:         "all",
+					name:       "",
+					percentage: false,
+					normalized: false,
+					n:          10,
+				},
+				date: date("2018-01-02"),
+			}},
+			&format.Charts{
+				Charts: charts.CompileArtists(
+					[]map[string]float64{
+						map[string]float64{"X": 1},
+						map[string]float64{"Y": 1},
+						map[string]float64{"X": 1},
+					}, rsrc.ParseDay("2018-01-01")),
+				Column:     1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+			},
+			true,
+		},
 		// TODO test corrections (in other test)
 		// TODO test normalized (in other test)
 	}

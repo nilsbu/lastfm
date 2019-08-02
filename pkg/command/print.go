@@ -355,6 +355,45 @@ func (cmd printFadeMax) Execute(
 	return d.Display(f)
 }
 
+type printDay struct {
+	printTotal
+	// date time.Time
+}
+
+func (cmd printDay) Accumulate(c charts.Charts) charts.Charts {
+	return c
+}
+
+func (cmd printDay) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	out, err := getOutCharts(session, cmd, s)
+	if err != nil {
+		return err
+	}
+
+	col := -1
+	var null time.Time
+	null = time.Time{}
+	if cmd.date != null {
+		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
+	}
+
+	prec := 0
+	if cmd.percentage || cmd.normalized {
+		prec = 2
+	}
+	f := &format.Charts{
+		Charts:     out,
+		Column:     col,
+		Count:      cmd.n,
+		Numbered:   true,
+		Precision:  prec,
+		Percentage: cmd.percentage,
+	}
+
+	return d.Display(f)
+}
+
 type printTags struct {
 	artist string
 }

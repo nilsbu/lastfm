@@ -65,6 +65,7 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
+		"day":      node{cmd: exePrintDay},
 		"fade":     node{cmd: exePrintFade},
 		"period":   node{cmd: exePrintPeriod},
 		"interval": node{cmd: exePrintInterval},
@@ -192,6 +193,38 @@ var exePrintInterval = &cmd{
 		"time",
 	}, &param{
 		"before",
+		"", // TODO
+		"time",
+	}},
+	options: options{
+		"keys":       optChartsKeys,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
+	},
+	session: true,
+}
+
+var exePrintDay = &cmd{
+	descr: "prints a user's top artists on a given day",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printDay{printTotal{printCharts: printCharts{
+			keys:       opts["keys"].(string),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			date: params[0].(time.Time),
+		}}
+	},
+	params: params{&param{
+		"date",
 		"", // TODO
 		"time",
 	}},
