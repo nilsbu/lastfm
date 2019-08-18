@@ -137,7 +137,7 @@ func getOutCharts(
 
 	if cmd.normalized {
 		nm := charts.GaussianNormalizer{
-			Sigma:      30,
+			Sigma:      7,
 			MirrorBack: false}
 		cha = nm.Normalize(cha)
 	}
