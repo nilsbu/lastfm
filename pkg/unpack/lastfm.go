@@ -99,12 +99,19 @@ type obHistory struct {
 	day  rsrc.Day
 }
 
+type obHistorySingle struct {
+	obHistory
+}
+
 // LoadHistoryDayPage loads a page of a user's played tracks.
 func LoadHistoryDayPage(
 	user string, page int, day rsrc.Day, r rsrc.Reader) (*HistoryDayPage, error) {
 	data, err := obtain(&obHistory{user, page, day}, r)
 	if err != nil {
-		return nil, err
+		data, err = obtain(&obHistorySingle{obHistory{user, page, day}}, r)
+		if err != nil {
+			return nil, err
+		}
 	}
 	hist := data.(*HistoryDayPage)
 	return hist, nil
@@ -139,6 +146,24 @@ func countPlays(urt *jsonUserRecentTracks) []charts.Song {
 		}
 	}
 	return plays
+}
+
+func (o *obHistorySingle) deserializer() interface{} {
+	return &jsonUserRecentTrackSingle{}
+}
+
+func (o *obHistorySingle) interpret(raw interface{}) (interface{}, error) {
+	data := raw.(*jsonUserRecentTrackSingle)
+
+	urt := &jsonUserRecentTracks{
+		RecentTracks: jsonRecentTracks{
+			Track: []jsonTrack{data.RecentTracks.Track},
+			Attr:  data.RecentTracks.Attr,
+		}}
+
+	return &HistoryDayPage{
+		countPlays(urt),
+		data.RecentTracks.Attr.TotalPages}, nil
 }
 
 // TagCount assigns a tag a value.

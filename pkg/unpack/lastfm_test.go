@@ -157,6 +157,13 @@ func TestLoadHistoryDayPage(t *testing.T) {
 				}, 1},
 			true,
 		},
+		{
+			[]byte(`{"recenttracks":{"@attr":{"page":"1","total":"0","user":"NBooN","perPage":"200","totalPages":"0"},"track":{"artist":{"mbid":"846e89f6-6257-4371-a26d-de960a60bec5","#text":"The Coup"},"@attr":{"nowplaying":"true"},"mbid":"293b4bc9-95c3-3032-a59f-53d6dfba5263","album":{"mbid":"e2f0f87f-763a-498e-9823-decef2cf62b3","#text":"Pick A Bigger Weapon"},"streamable":"0","url":"https:\/\/www.last.fm\/music\/The+Coup\/_\/My+Favorite+Mutiny","name":"My Favorite Mutiny"}}}`),
+			"user", rsrc.ToDay(86400), 1,
+			&HistoryDayPage{
+				[]charts.Song{}, 0},
+			true,
+		},
 	}
 
 	for _, c := range cases {
@@ -175,7 +182,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 				t.Error("expected error")
 			}
 
-			if err != nil {
+			if err == nil {
 				if !reflect.DeepEqual(hist, c.hist) {
 					t.Errorf("wrong data:\n has:  %v\nwant: %v",
 						hist, c.hist)

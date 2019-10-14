@@ -26,6 +26,15 @@ type jsonRecentTracks struct {
 	Attr  jsonRecentTracksAttr `json:"@attr"`
 }
 
+type jsonUserRecentTrackSingle struct {
+	RecentTracks jsonRecentTrackSingle `json:"recenttracks"`
+}
+
+type jsonRecentTrackSingle struct {
+	Track jsonTrack            `json:"track"`
+	Attr  jsonRecentTracksAttr `json:"@attr"`
+}
+
 type jsonRecentTracksAttr struct {
 	User       string `json:"user"`
 	Page       int    `json:"page,string"`
