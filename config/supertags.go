@@ -8,6 +8,7 @@ var Supertags = map[string]string{
 	"drum and bass": "electronic",
 	"dubstep":       "electronic",
 	"electro":       "electronic",
+	"ebm":           "electronic",
 	"electronic":    "electronic",
 	"electronica":   "electronic",
 	"house":         "electronic",
@@ -19,9 +20,6 @@ var Supertags = map[string]string{
 	"folk":        "folk",
 	"world":       "folk",
 	"world music": "folk",
-
-	"gothic":     "gothic",
-	"industrial": "gothic",
 
 	"hip-hop": "hip-hop",
 
@@ -59,6 +57,7 @@ var Supertags = map[string]string{
 	"emo":              "rock",
 	"folk rock":        "rock",
 	"garage rock":      "rock",
+	"gothic":           "rock",
 	"hard rock":        "rock",
 	"indie rock":       "rock",
 	"j-rock":           "rock",
