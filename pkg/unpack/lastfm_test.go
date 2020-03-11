@@ -192,6 +192,60 @@ func TestLoadHistoryDayPage(t *testing.T) {
 	}
 }
 
+func TestLoadArtistInfo(t *testing.T) {
+	cases := []struct {
+		files     map[rsrc.Locator][]byte
+		artist    string
+		listeners int64
+		playCount int64
+		ok        bool
+	}{
+		{
+			map[rsrc.Locator][]byte{rsrc.ArtistInfo("xy"): nil},
+			"xy",
+			0, 0,
+			false,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.ArtistInfo("xy"): []byte(`{"artist":{"name":"xy","stats":{"listeners":"119","playcount":"4400"}}}`)},
+			"xy",
+			119, 4400,
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(c.files, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			info, err := LoadArtistInfo(c.artist, io)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error")
+			}
+
+			if err == nil {
+				if info.Name != c.artist {
+					t.Errorf("expected artist name '%v' but got '%v'",
+						c.artist, info.Name)
+				}
+				if info.Listeners != c.listeners {
+					t.Errorf("expected %v listeners but got %v",
+						c.listeners, info.Listeners)
+				}
+				if info.PlayCount != c.playCount {
+					t.Errorf("expected play count %v but got %v",
+						c.playCount, info.PlayCount)
+				}
+			}
+		})
+	}
+}
+
 func TestLoadArtistTags(t *testing.T) {
 	cases := []struct {
 		files  map[rsrc.Locator][]byte

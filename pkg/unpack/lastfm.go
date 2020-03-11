@@ -166,6 +166,44 @@ func (o *obHistorySingle) interpret(raw interface{}) (interface{}, error) {
 		data.RecentTracks.Attr.TotalPages}, nil
 }
 
+// ArtistInfo contains information about an artist
+type ArtistInfo struct {
+	Name      string
+	Listeners int64
+	PlayCount int64
+}
+
+type obArtistInfo struct {
+	name string
+}
+
+// LoadArtistInfo reads information of an artist.
+func LoadArtistInfo(artist string, r rsrc.Reader) (*ArtistInfo, error) {
+	data, err := obtain(&obArtistInfo{artist}, r)
+	if err != nil {
+		return nil, err
+	}
+	info := data.(*ArtistInfo)
+	return info, nil
+}
+
+func (o *obArtistInfo) locator() rsrc.Locator {
+	return rsrc.ArtistInfo(o.name)
+}
+
+func (o *obArtistInfo) deserializer() interface{} {
+	return &jsonArtistInfo{}
+}
+
+func (o *obArtistInfo) interpret(raw interface{}) (interface{}, error) {
+	ai := raw.(*jsonArtistInfo)
+	return &ArtistInfo{
+		Name:      ai.Artist.Name,
+		Listeners: ai.Artist.Stats.Listeners,
+		PlayCount: ai.Artist.Stats.PlayCount,
+	}, nil
+}
+
 // TagCount assigns a tag a value.
 type TagCount struct {
 	Name  string
