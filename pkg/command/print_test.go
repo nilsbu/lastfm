@@ -219,7 +219,7 @@ func TestPrint(t *testing.T) {
 				date: time.Time{},
 			},
 			&format.Charts{
-				Charts: charts.CompileArtists(
+				Charts: charts.CompileTags(
 					[]map[string]float64{
 						map[string]float64{"pop": 1, "rock": 0},
 						map[string]float64{"pop": 1, "rock": 1},
@@ -285,7 +285,7 @@ func TestPrint(t *testing.T) {
 				date: time.Time{},
 			},
 			&format.Charts{
-				Charts: charts.CompileArtists(
+				Charts: charts.CompileTags(
 					[]map[string]float64{
 						map[string]float64{"France": 1, "-": 0},
 						map[string]float64{"France": 1, "-": 1},
@@ -383,7 +383,7 @@ func TestPrint(t *testing.T) {
 				},
 			},
 			&format.Charts{
-				Charts: charts.CompileArtists(breakUp(map[string][]float64{
+				Charts: charts.CompileTags(breakUp(map[string][]float64{
 					"2017": append(iotaF(1, 30+31+31), repeat(92, 30+28)...),
 					"2018": append(repeat(0, 30+31+31), iotaF(1, 30+28)...)}),
 					rsrc.ParseDay("2017-12-30")),

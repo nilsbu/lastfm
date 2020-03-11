@@ -55,6 +55,37 @@ func TestCompileArtist(t *testing.T) {
 	}
 }
 
+func TestCompileTags(t *testing.T) {
+	cases := []struct {
+		days       []map[string]float64
+		registered rsrc.Day
+		charts     Charts
+	}{
+		{
+			[]map[string]float64{
+				{"ASD": 2},
+				{"WASD": 1},
+				{"ASD": 13, "WASD": 4},
+			},
+			rsrc.ParseDay("2008-01-01"),
+			Charts{
+				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-04")),
+				Keys:    []Key{tagKey("ASD"), tagKey("WASD")},
+				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}}},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			charts := CompileTags(c.days, c.registered)
+
+			if err := c.charts.AssertEqual(charts); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}
+
 func TestCompileSongs(t *testing.T) {
 	cases := []struct {
 		days       [][]Song

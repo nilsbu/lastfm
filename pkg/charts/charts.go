@@ -67,6 +67,19 @@ type Charts struct {
 func CompileArtists(
 	days []map[string]float64,
 	registered rsrc.Day) Charts {
+	return compile(days, registered, func(s string) Key { return simpleKey(s) })
+}
+
+func CompileTags(
+	days []map[string]float64,
+	registered rsrc.Day) Charts {
+	return compile(days, registered, func(s string) Key { return tagKey(s) })
+}
+
+func compile(
+	days []map[string]float64,
+	registered rsrc.Day,
+	toKey func(string) Key) Charts {
 	size := len(days)
 
 	keys := []Key{}
@@ -77,7 +90,7 @@ func CompileArtists(
 		for name, plays := range day {
 			if _, ok := charts[name]; !ok {
 				charts[name] = len(values)
-				keys = append(keys, simpleKey(name))
+				keys = append(keys, toKey(name))
 				values = append(values, make([]float64, size))
 			}
 			values[charts[name]][i] = plays
