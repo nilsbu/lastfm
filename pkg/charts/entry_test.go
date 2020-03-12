@@ -54,7 +54,7 @@ func TestChartsGetYearPartition(t *testing.T) {
 				Values:  [][]float64{}},
 			mapPart{
 				assoc:      map[string]Key{},
-				partitions: []Key{simpleKey("2017"), simpleKey("-")},
+				partitions: []Key{tagKey("2017"), tagKey("-")},
 			},
 		},
 		{
@@ -67,8 +67,8 @@ func TestChartsGetYearPartition(t *testing.T) {
 					append(repeat(0, 30+31+31), repeat(0, 28+31+30)...),
 				}},
 			mapPart{
-				assoc:      map[string]Key{"A": simpleKey("2018"), "B": simpleKey("2017")},
-				partitions: []Key{simpleKey("2017"), simpleKey("2018"), simpleKey("-")},
+				assoc:      map[string]Key{"A": tagKey("2018"), "B": tagKey("2017")},
+				partitions: []Key{tagKey("2017"), tagKey("2018"), tagKey("-")},
 			},
 		},
 	}
