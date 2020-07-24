@@ -46,6 +46,52 @@ func (cmd tableTotal) Execute(
 	return nil
 }
 
+type tableDays struct {
+	printCharts
+	step      int
+	normWidth float64
+}
+
+func (cmd tableDays) Accumulate(c charts.Charts) charts.Charts {
+	return c
+}
+
+func (cmd tableDays) Execute(
+	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	normalize := cmd.normalized
+	cmd.normalized = false
+	out, err := getOutCharts(session, cmd, s)
+	if err != nil {
+		return err
+	}
+
+	if normalize {
+		nm := charts.GaussianNormalizer{
+			Sigma:      cmd.normWidth,
+			MirrorBack: false}
+		out = nm.Normalize(out)
+	}
+
+	user, err := unpack.LoadUserInfo(session.User, s)
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
+	}
+
+	f := &format.Table{
+		Charts: out,
+		First:  user.Registered,
+		Step:   cmd.step,
+		Count:  cmd.n,
+	}
+
+	err = d.Display(f)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type tableFade struct {
 	printCharts
 	step int

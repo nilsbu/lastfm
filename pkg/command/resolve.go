@@ -65,18 +65,23 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
+		"after":    node{cmd: exePrintAfter},
 		"day":      node{cmd: exePrintDay},
 		"fade":     node{cmd: exePrintFade},
+		"last":     node{cmd: exePrintLastDays},
+		"lifex":    node{cmd: exePrintLifeExpectancy},
 		"period":   node{cmd: exePrintPeriod},
 		"interval": node{cmd: exePrintInterval},
 		"fademax":  node{cmd: exePrintFadeMax},
 		"tags":     node{cmd: exePrintTags},
 		"total":    node{cmd: exePrintTotal},
+		"totalx":   node{cmd: exePrintTotalX},
 	},
 }
 
 var cmdTable = node{
 	nodes: nodes{
+		"days":   node{cmd: exeTableDays},
 		"fade":   node{cmd: exeTableFade},
 		"period": node{cmd: exeTablePeriods},
 		"total":  node{cmd: exeTableTotal},
@@ -109,6 +114,38 @@ var exeHelp = &cmd{
 	},
 }
 
+var exePrintAfter = &cmd{
+	descr: "", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printAfterEntry{printCharts: printCharts{
+			keys:       opts["keys"].(string),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			days: params[0].(int),
+		}
+	},
+	params: params{&param{
+		"days",
+		"",
+		"int",
+	}},
+	options: options{
+		"keys":       optChartsKeys,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
+	},
+	session: true,
+}
+
 var exePrintFade = &cmd{
 	descr: "prints a user's top artists in fading charts", // TODO
 	get: func(params []interface{}, opts map[string]interface{}) command {
@@ -135,6 +172,64 @@ var exePrintFade = &cmd{
 		"normalized": optChartsNormalized,
 		"entry":      optChartsEntry,
 		"date":       optDate,
+	},
+	session: true,
+}
+
+var exePrintLifeExpectancy = &cmd{
+	descr: "", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printLifeExpectancy{printCharts: printCharts{
+			keys:       opts["keys"].(string),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+		}
+	},
+	options: options{
+		"keys":       optChartsKeys,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
+	},
+	session: true,
+}
+
+var exePrintLastDays = &cmd{
+	descr: "", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printLastDays{printCharts: printCharts{
+			keys:       opts["keys"].(string),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			days: params[0].(int),
+		}
+	},
+	params: params{&param{
+		"days",
+		"",
+		"int",
+	}},
+	options: options{
+		"keys":       optChartsKeys,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
 	},
 	session: true,
 }
@@ -248,11 +343,12 @@ var exePrintFadeMax = &cmd{
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
-			percentage: false, // Disabled since it makes no sense here
+			percentage: opts["%"].(bool),
 			normalized: opts["normalized"].(bool),
 			entry:      opts["entry"].(float64),
 		},
-			hl: params[0].(float64),
+			hl:  params[0].(float64),
+			min: opts["min"].(float64),
 		}
 	},
 	params: params{parHL},
@@ -261,8 +357,10 @@ var exePrintFadeMax = &cmd{
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
+		"%":          optChartsPercentage,
 		"normalized": optChartsNormalized,
 		"entry":      optChartsEntry,
+		"min":        optMinTotal,
 	},
 	session: true,
 }
@@ -303,6 +401,34 @@ var exePrintTotal = &cmd{
 	session: true,
 }
 
+var exePrintTotalX = &cmd{
+	descr: "tables a user's top artists by total number of plays",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printTotalX{printCharts: printCharts{
+			keys:       opts["keys"].(string),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			date: opts["date"].(time.Time),
+		}
+	},
+	options: options{
+		"keys":       optChartsKeys,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
+		"date":       optDate,
+	},
+	session: true,
+}
+
 var exeTimeline = &cmd{
 	descr: "timeline of events",
 	get: func(params []interface{}, opts map[string]interface{}) command {
@@ -314,6 +440,34 @@ var exeTimeline = &cmd{
 	options: options{
 		"from":   optDate,
 		"before": optDate,
+	},
+	session: true,
+}
+
+var exeTableDays = &cmd{
+	descr: "tables a user's top artists by dayly number of plays",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return tableDays{printCharts: printCharts{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			step:      opts["step"].(int),
+			normWidth: opts["nw"].(float64),
+		}
+	},
+	options: options{
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"entry":      optChartsEntry,
+		"step":       optStep,
+		"nw":         optNormWidth,
 	},
 	session: true,
 }
@@ -503,6 +657,20 @@ var optStep = &option{
 		"date step", // TODO
 		"int"},
 	"1",
+}
+
+var optMinTotal = &option{
+	param{"min",
+		"minimum total",
+		"float"},
+	"2",
+}
+
+var optNormWidth = &option{
+	param{"nw",
+		"normalization width", // TODO be more specific
+		"float"},
+	"7",
 }
 
 func resolve(args []string, session *unpack.SessionInfo) (cmd command, err error) {

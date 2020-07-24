@@ -237,7 +237,7 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "fademax", "66"},
 			&unpack.SessionInfo{User: "user"},
-			printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
+			printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66, min: 2}, true,
 		},
 		{
 			[]string{"lastfm", "print", "day", "2016-01-05"},
