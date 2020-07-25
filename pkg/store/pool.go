@@ -26,15 +26,18 @@ type pool interface {
 }
 
 type workerPool struct {
-	readPool
-	writePool
-	removePool
+	r  readWorker
+	w  writeWorker
+	rm removeWorker
+
+	o observer
 }
 
 // newPool constructs a pool. It requires a non-empty list of workers, which are
 // presumed to do identical jobs when provided with the same input.
 func newPool(
 	ios []rsrc.IO,
+	o observer,
 ) (pool, error) {
 	if len(ios) == 0 {
 		return nil, errors.New("pool must have at least one IO")
@@ -50,19 +53,22 @@ func newPool(
 				select {
 				case j := <-r:
 					data, err := io.Read(j.loc)
+					o.NotifyRead(j.loc)
 					j.back <- readResult{data: data, err: err}
 				case j := <-w:
 					err := io.Write(j.data, j.loc)
+					o.NotifyWrite(j.loc)
 					j.back <- err
 				case j := <-rm:
 					err := io.Remove(j.loc)
+					o.NotifyRemove(j.loc)
 					j.back <- err
 				}
 			}
 		}(io)
 	}
 
-	return workerPool{r, w, rm}, nil
+	return workerPool{r, w, rm, o}, nil
 }
 
 type readWorker chan readJob
@@ -78,9 +84,10 @@ type readResult struct {
 	err  error
 }
 
-func (r readWorker) read(loc rsrc.Locator) <-chan readResult {
+func (wp workerPool) read(loc rsrc.Locator) <-chan readResult {
+	wp.o.RequestRead(loc)
 	resultChan := make(chan readResult)
-	r <- readJob{loc: loc, back: resultChan}
+	wp.r <- readJob{loc: loc, back: resultChan}
 	return resultChan
 }
 
@@ -92,9 +99,10 @@ type writeJob struct {
 	back chan<- error
 }
 
-func (w writeWorker) write(data []byte, loc rsrc.Locator) <-chan error {
+func (wp workerPool) write(data []byte, loc rsrc.Locator) <-chan error {
+	wp.o.RequestWrite(loc)
 	resultChan := make(chan error)
-	w <- writeJob{data: data, loc: loc, back: resultChan}
+	wp.w <- writeJob{data: data, loc: loc, back: resultChan}
 	return resultChan
 }
 
@@ -105,8 +113,9 @@ type removeJob struct {
 	back chan<- error
 }
 
-func (rm removeWorker) remove(loc rsrc.Locator) <-chan error {
+func (wp workerPool) remove(loc rsrc.Locator) <-chan error {
+	wp.o.RequestRemove(loc)
 	resultChan := make(chan error)
-	rm <- removeJob{loc: loc, back: resultChan}
+	wp.rm <- removeJob{loc: loc, back: resultChan}
 	return resultChan
 }

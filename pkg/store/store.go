@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -42,16 +43,22 @@ type cache struct {
 // distant to close. Each layer must have at least one IO.
 //
 // TODO is it thread-safe?
-func New(
+func new(
 	ios [][]rsrc.IO,
+	obChans []chan<- format.Formatter,
 ) (Store, error) {
 	if len(ios) == 0 {
 		return nil, errors.New("store must have at least one layer")
 	}
+	if len(ios) != len(obChans) {
+		return nil, fmt.Errorf("has %v IOs but %v observer channels",
+			len(ios), len(obChans))
+	}
 
 	pools := make([]pool, len(ios))
 	for i := range ios {
-		pool, err := newPool(ios[i])
+		ob := NewObserver(obChans[i])
+		pool, err := newPool(ios[i], ob)
 		if err != nil {
 			return nil, err
 		}
@@ -59,6 +66,47 @@ func New(
 	}
 
 	return &cache{pools}, nil
+}
+
+func dumpChan() chan<- format.Formatter {
+	obChan := make(chan format.Formatter)
+	go func() {
+		for range obChan {
+		}
+	}()
+
+	return obChan
+}
+
+func dumpChans(n int) []chan<- format.Formatter {
+	chans := make([]chan<- format.Formatter, n)
+	for i := 0; i < n; i++ {
+		chans[i] = dumpChan()
+	}
+	return chans
+}
+
+// New creates a store. The layers are described by ios. They are ordered from
+// distant to close. Each layer must have at least one IO.
+//
+// TODO is it thread-safe?
+func New(
+	ios [][]rsrc.IO,
+) (Store, error) {
+	return new(ios, dumpChans(len(ios)))
+}
+
+// NewObserved creates a store. The layers are described by ios. They are
+// ordered from distant to close. Each layer must have at least one IO.
+//
+// Progress updates for each layer are sent to the obChans.
+//
+// TODO is it thread-safe?
+func NewObserved(
+	ios [][]rsrc.IO,
+	obChans []chan<- format.Formatter,
+) (Store, error) {
+	return new(ios, obChans)
 }
 
 func (s *cache) Read(loc rsrc.Locator) (data []byte, err error) {

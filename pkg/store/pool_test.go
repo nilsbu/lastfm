@@ -78,7 +78,7 @@ func TestPool(t *testing.T) {
 				ios = append(ios, io)
 			}
 
-			p, err := newPool(ios)
+			p, err := newPool(ios, NewObserver(dumpChan()))
 			if err != nil {
 				if c.ctorOK {
 					t.Error("unexpected error in constructor:", err)
