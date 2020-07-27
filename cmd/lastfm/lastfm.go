@@ -31,7 +31,7 @@ func createStore(webObserver chan<- format.Formatter) (store.Store, error) {
 	}
 
 	var webIOs []rsrc.IO
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 1; i++ {
 		webIOs = append(webIOs, io.NewWebIO(key))
 	}
 
