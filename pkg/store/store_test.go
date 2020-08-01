@@ -2,8 +2,11 @@ package store
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/display"
+	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -43,9 +46,9 @@ func TestStoreNew(t *testing.T) {
 
 			s, err := New(ios)
 			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
+				t.Fatal("unexpected error:", err)
 			} else if err == nil && !c.ok {
-				t.Error("expected error but non occurred")
+				t.Fatal("expected error but non occurred")
 			}
 
 			if err == nil && s == nil {
@@ -122,14 +125,14 @@ func TestStoreRead(t *testing.T) {
 
 			s, err := New(ios)
 			if err != nil {
-				t.Error("unexpected error in constructor")
+				t.Fatal("unexpected error in constructor:", err)
 			}
 
 			data, err := s.Read(c.loc)
 			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
+				t.Fatal("unexpected error:", err)
 			} else if err == nil && !c.ok {
-				t.Error("expected error but non occurred")
+				t.Fatal("expected error but non occurred")
 			}
 
 			if string(data) != string(c.data) {
@@ -248,14 +251,14 @@ func TestStoreUpdate(t *testing.T) {
 
 			s, err := New(ios)
 			if err != nil {
-				t.Error("unexpected error in constructor")
+				t.Fatal("unexpected error in constructor:", err)
 			}
 
 			data, err := s.Update(c.loc)
 			if err != nil && c.ok {
-				t.Error("unexpected error:", err)
+				t.Fatal("unexpected error:", err)
 			} else if err == nil && !c.ok {
-				t.Error("expected error but non occurred")
+				t.Fatal("expected error but non occurred")
 			}
 
 			if string(data) != string(c.data) {
@@ -338,12 +341,12 @@ func TestStoreWrite(t *testing.T) {
 
 			s, err := New(ios)
 			if err != nil {
-				t.Error("unexpected error in constructor")
+				t.Fatal("unexpected error in constructor:", err)
 			}
 
 			err = s.Write(c.data, c.loc)
 			if err != nil {
-				t.Error("unexpected error:", err)
+				t.Fatal("unexpected error:", err)
 			}
 
 			for i, io := range ios {
@@ -405,12 +408,12 @@ func TestStoreRemove(t *testing.T) {
 
 			s, err := New(ios)
 			if err != nil {
-				t.Error("unexpected error in constructor")
+				t.Fatal("unexpected error in constructor:", err)
 			}
 
 			err = s.Remove(c.loc)
 			if err != nil {
-				t.Error("unexpected error:", err)
+				t.Fatal("unexpected error:", err)
 			}
 
 			if err != nil {
@@ -425,5 +428,100 @@ func TestStoreRemove(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestStoreObserver(t *testing.T) {
+	cases := []struct {
+		files []map[rsrc.Locator][]byte
+		locf  []mock.Resolver
+		data  []byte
+		loc   rsrc.Locator
+		msgs  [][]format.Formatter
+	}{
+		{ // failed write (critical)
+			[]map[rsrc.Locator][]byte{{}},
+			[]mock.Resolver{mock.Path},
+			[]byte("xx"),
+			rsrc.UserInfo("abc"),
+			[][]format.Formatter{{
+				&format.Message{Msg: "r: 0/0, w: 0/1, rm: 0/0"},
+				&format.Message{Msg: "r: 0/0, w: 1/1, rm: 0/0"},
+			}},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			var ios [][]rsrc.IO
+			var ds []*mock.Display
+			var fChans []chan format.Formatter
+			var fChansOut []chan<- format.Formatter
+			var quits []chan bool
+
+			for i := range c.files {
+				io, err := mock.IO(c.files[i], c.locf[i])
+				if err != nil {
+					t.Fatal("setup error")
+				}
+				ios = append(ios, []rsrc.IO{io})
+
+				fChan := make(chan format.Formatter)
+				quit := make(chan bool)
+				d := mock.NewDisplay()
+				go func(
+					d display.Display,
+					fChan chan format.Formatter,
+					quit chan bool,
+				) {
+					for msg := range fChan {
+						d.Display(msg)
+					}
+					quit <- true
+				}(d, fChan, quit)
+
+				ds = append(ds, d)
+				fChans = append(fChans, fChan)
+				fChansOut = append(fChansOut, fChan)
+				quits = append(quits, quit)
+			}
+			s, err := NewObserved(ios, fChansOut)
+			if err != nil {
+				t.Error("unexpected error in constructor")
+			}
+
+			err = s.Write(c.data, c.loc)
+			if err != nil {
+				t.Error("unexpected error:", err)
+			}
+
+			for i := range ios {
+				close(fChans[i])
+				<-quits[i]
+
+				if len(c.msgs[i]) != len(ds[i].Msgs) {
+					t.Fatalf("expected %v messages but got %v", len(c.msgs[i]), len(ds[i].Msgs))
+				}
+				for j, expect := range c.msgs[i] {
+					if !reflect.DeepEqual(expect, ds[i].Msgs[j]) {
+						t.Errorf("expect %v, got %v", expect, ds[i].Msgs[j])
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestStoreWrongObserverCount(t *testing.T) {
+	var ios [][]rsrc.IO
+	io, err := mock.IO(map[rsrc.Locator][]byte{}, mock.Path)
+	if err != nil {
+		t.Fatal("setup error")
+	}
+	ios = append(ios, []rsrc.IO{io})
+
+	_, err = NewObserved(ios, dumpChans(len(ios)+2))
+	if err == nil {
+		t.Fatal("expected error in constructor")
 	}
 }

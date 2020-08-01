@@ -3,23 +3,35 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/nilsbu/lastfm/pkg/command"
 	"github.com/nilsbu/lastfm/pkg/display"
+	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-func createStore() (store.Store, error) {
+func dumpChan() chan<- format.Formatter {
+	obChan := make(chan format.Formatter)
+	go func() {
+		for range obChan {
+		}
+	}()
+
+	return obChan
+}
+
+func createStore(webObserver chan<- format.Formatter) (store.Store, error) {
 	key, err := unpack.LoadAPIKey(io.FileIO{})
 	if err != nil {
 		return nil, err
 	}
 
 	var webIOs []rsrc.IO
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 1; i++ {
 		webIOs = append(webIOs, io.NewWebIO(key))
 	}
 
@@ -28,7 +40,10 @@ func createStore() (store.Store, error) {
 		fileIOs = append(fileIOs, io.FileIO{})
 	}
 
-	st, err := store.New([][]rsrc.IO{webIOs, fileIOs})
+	st, err := store.NewObserved(
+		[][]rsrc.IO{webIOs, fileIOs},
+		[]chan<- format.Formatter{webObserver, dumpChan()},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +52,11 @@ func createStore() (store.Store, error) {
 }
 
 func main() {
-	s, err := createStore()
+
+	webObserver := make(chan format.Formatter)
+	d := display.NewTimedTerminal(webObserver, 1*time.Second)
+
+	s, err := createStore(webObserver)
 
 	if err != nil {
 		fmt.Println(err)
@@ -45,7 +64,6 @@ func main() {
 	}
 
 	session, _ := unpack.LoadSessionInfo(s)
-	d := display.NewTerminal()
 
 	err = command.Execute(os.Args, session, s, d)
 	if err != nil {
