@@ -50,6 +50,16 @@ func TestLastFMURL(t *testing.T) {
 			base + "api_key=a3ee123098128acf29ca9f0cf29ca9f0&method=artist.getTopTags&artist=M%26M",
 			true,
 		},
+		{ // ok
+			TrackInfo("A", "B"), "a3ee123098128acf29ca9f0cf29ca9f0",
+			base + "api_key=a3ee123098128acf29ca9f0cf29ca9f0&method=track.getInfo&artist=A&track=B",
+			true,
+		},
+		{ // ok
+			TrackInfo("A", "Bö A"), "a3ee123098128acf29ca9f0cf29ca9f0",
+			base + "api_key=a3ee123098128acf29ca9f0cf29ca9f0&method=track.getInfo&artist=A&track=B%C3%B6%20A",
+			true,
+		},
 	}
 
 	for _, c := range cases {
@@ -93,6 +103,14 @@ func TestLastFMPath(t *testing.T) {
 		{
 			History("abc", 1, ToDay(2*86400)),
 			".lastfm/raw/user.getRecentTracks/abc/86400/1970-01-03T00-00-00-1.json",
+		},
+		{
+			TrackInfo("A", "B"),
+			".lastfm/raw/track.getInfo/34/d0/e593db2e19f3846171ea117f698e16a2268a8da824a04fd1e083842b4a63.json",
+		},
+		{
+			TrackInfo("A", "C"),
+			".lastfm/raw/track.getInfo/23/06/1f13a4dcc11f9df1a088748772f1a2136994d3aced93b64ff99f19c53e38.json",
 		},
 	}
 

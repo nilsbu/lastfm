@@ -286,3 +286,24 @@ func (c Charts) AssertEqual(other Charts) error {
 
 	return nil
 }
+
+type artistNamePartition struct {
+	artistPartition
+}
+
+// NewArtistNamePartition creates a Partition in which each artist in charts is
+// its own partition.
+func NewArtistNamePartition(charts Charts) Partition {
+	p := artistNamePartition{}
+	p.assoc = make(map[string]Key)
+	for _, key := range charts.Keys {
+		if _, ok := p.assoc[key.ArtistName()]; !ok {
+			p.assoc[key.ArtistName()] = simpleKey(key.ArtistName())
+		}
+	}
+
+	for _, v := range p.assoc {
+		p.partitions = append(p.partitions, v)
+	}
+	return p
+}

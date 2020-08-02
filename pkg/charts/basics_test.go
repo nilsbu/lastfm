@@ -560,3 +560,49 @@ func TestChartsEqual(t *testing.T) {
 		})
 	}
 }
+
+func TestArtistNamePartition(t *testing.T) {
+	// test binning since that will be the application for this parition
+	cases := []struct {
+		in  Charts
+		out Charts
+	}{
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{1, 2, 3}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("xx")},
+				Values:  [][]float64{{1, 2, 3}},
+			},
+		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys: []Key{
+					Song{Artist: "a", Title: "b"},
+					Song{Artist: "a", Title: "c"},
+					Song{Artist: "X", Title: "Y"}},
+				Values: [][]float64{{1, 2, 3}, {3, 2, 1}, {0, 0, 1}},
+			},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
+				Keys:    []Key{simpleKey("a"), simpleKey("X")},
+				Values:  [][]float64{{4, 4, 4}, {0, 0, 1}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			artistCharts := c.in.Group(NewArtistNamePartition(c.in))
+
+			if err := c.out.AssertEqual(artistCharts); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}

@@ -106,6 +106,50 @@ func TestNormalizer(t *testing.T) {
 				Keys:    []Key{simpleKey("a")},
 				Values:  [][]float64{{1, 1, 1}}},
 		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{simpleKey("a")},
+				Values:  [][]float64{{1, 1, 1}}},
+			SongDurations{},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{simpleKey("a")},
+				Values:  [][]float64{{1, 1, 1}}},
+		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{simpleKey("a")},
+				Values:  [][]float64{{1, 1, 1}}},
+			SongDurations{"": {"": 60}},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{simpleKey("a")},
+				Values:  [][]float64{{60, 60, 60}}},
+		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{simpleKey("a")},
+				Values:  [][]float64{{1, 1, 1}}},
+			SongDurations{"": {"": 60}, "a": {"b": 2}},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{simpleKey("a")},
+				Values:  [][]float64{{60, 60, 60}}},
+		},
+		{
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{Song{Artist: "a", Title: "b"}, Song{Artist: "a", Title: "c"}},
+				Values:  [][]float64{{1, 1, 1}, {1, 2, 3}}},
+			SongDurations{"": {"": 60}, "a": {"b": 2}},
+			Charts{
+				Headers: Days(rsrc.ParseDay("2018-01-01"), rsrc.ParseDay("2018-01-04")),
+				Keys:    []Key{Song{Artist: "a", Title: "b"}, Song{Artist: "a", Title: "c"}},
+				Values:  [][]float64{{2, 2, 2}, {60, 120, 180}}},
+		},
 	}
 
 	for _, c := range cases {

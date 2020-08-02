@@ -512,3 +512,101 @@ func TestWriteLoadTagInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadTrackInfo(t *testing.T) {
+	cases := []struct {
+		files  map[rsrc.Locator][]byte
+		artist string
+		track  string
+		info   TrackInfo
+		ok     bool
+	}{
+		{
+			map[rsrc.Locator][]byte{rsrc.TrackInfo("xy", "a"): nil},
+			"xy", "a",
+			TrackInfo{},
+			false,
+		},
+		{
+			map[rsrc.Locator][]byte{rsrc.TrackInfo("xy", "a"): []byte(`{"track":{"duration":"123000","listeners":"2","playcount":"3"}}`)},
+			"xy", "a",
+			TrackInfo{
+				Artist:    "xy",
+				Track:     "a",
+				Duration:  123,
+				Listeners: 2,
+				Playcount: 3,
+			},
+			true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(c.files, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			info, err := LoadTrackInfo(c.artist, c.track, io)
+			if err != nil && c.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.ok {
+				t.Error("expected error")
+			}
+
+			if err == nil {
+				if !reflect.DeepEqual(info, c.info) {
+					t.Errorf("wrong data:\n has:  %v\nwant: %v",
+						info, c.info)
+				}
+			}
+		})
+	}
+}
+
+func TestWriteLoadTrackInfo(t *testing.T) {
+	// WritedTrackInfo only tested in combination with loading for simplicity.
+	cases := []struct {
+		artist string
+		track  string
+		info   TrackInfo
+	}{
+		{
+			"xy", "a",
+			TrackInfo{
+				Artist:    "xy",
+				Track:     "a",
+				Duration:  123,
+				Listeners: 2,
+				Playcount: 3,
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{rsrc.TrackInfo(c.artist, c.track): nil},
+				mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			err = WriteTrackInfo(c.artist, c.track, c.info, io)
+			if err != nil {
+				t.Fatal("unexpected error:", err)
+			}
+
+			info, err := LoadTrackInfo(c.artist, c.track, io)
+			if err != nil {
+				t.Fatal("unexpected error:", err)
+			}
+
+			if !reflect.DeepEqual(info, c.info) {
+				t.Errorf("wrong data:\n has:  %v\nwant: %v",
+					info, c.info)
+			}
+		})
+	}
+}

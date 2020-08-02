@@ -401,3 +401,63 @@ func (o *obTagInfo) raw(obj interface{}) interface{} {
 	}}
 	return js
 }
+
+// TrackInfo contains general information about a track.
+type TrackInfo struct {
+	Artist    string
+	Track     string
+	Duration  int
+	Listeners int64
+	Playcount int64
+}
+
+type obTrackInfo struct {
+	artist string
+	track  string
+}
+
+// LoadTrackInfo reads the track information.
+func LoadTrackInfo(artist, track string, r rsrc.Reader) (TrackInfo, error) {
+	data, err := obtain(&obTrackInfo{artist, track}, r)
+	if err != nil {
+		return TrackInfo{}, err
+	}
+	info := data.(TrackInfo)
+	info.Artist = artist
+	info.Track = track
+	return info, nil
+}
+
+// WriteTrackInfo writes the track information.
+func WriteTrackInfo(artist, track string, tags TrackInfo, w rsrc.Writer) error {
+	return deposit(tags, &obTrackInfo{artist: artist, track: track}, w)
+}
+
+func (o *obTrackInfo) locator() rsrc.Locator {
+	return rsrc.TrackInfo(o.artist, o.track)
+}
+
+func (o *obTrackInfo) deserializer() interface{} {
+	return &jsonTrackInfo{}
+}
+
+func (o *obTrackInfo) interpret(raw interface{}) (interface{}, error) {
+	ti := raw.(*jsonTrackInfo).Track
+
+	info := TrackInfo{
+		Duration:  ti.Duration / 1000,
+		Listeners: ti.Listeners,
+		Playcount: ti.Playcount,
+	}
+	return info, nil
+}
+
+func (o *obTrackInfo) raw(obj interface{}) interface{} {
+	info := obj.(TrackInfo)
+	js := jsonTrackInfo{Track: jsonTrackTrack{
+		Duration:  info.Duration * 1000,
+		Listeners: info.Listeners,
+		Playcount: info.Playcount,
+	}}
+	return js
+}

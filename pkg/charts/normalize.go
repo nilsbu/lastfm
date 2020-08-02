@@ -4,6 +4,7 @@ import (
 	"math"
 )
 
+// Normalizer contains a function that normalizes charts by some method.
 type Normalizer interface {
 	Normalize(charts Charts) Charts
 }
@@ -98,4 +99,44 @@ func getGaussianKernel(sigma float64, width int) []float64 {
 	}
 
 	return kernel
+}
+
+// SongDurations is a Normalizer that multiplies by song length.
+// If a length is not known and duration for duration[""][""] is included then
+// it will be used by default.
+type SongDurations map[string]map[string]int
+
+func (sd SongDurations) Normalize(charts Charts) Charts {
+	out := Charts{}
+
+	out.Headers = charts.Headers
+	out.Keys = charts.Keys
+
+	for i, key := range out.Keys {
+		values := make([]float64, len(charts.Values[i]))
+
+		f := 1.0
+		found := false
+		if song, ok := key.(Song); ok {
+			if t, ok := sd[song.Artist]; ok {
+				if duration, ok := t[song.Title]; ok {
+					f = float64(duration)
+					found = true
+				}
+			}
+		}
+		if !found {
+			if t, ok := sd[""]; ok {
+				if duration, ok := t[""]; ok {
+					f = float64(duration)
+				}
+			}
+		}
+
+		for j, v := range charts.Values[i] {
+			values[j] = f * v
+		}
+		out.Values = append(out.Values, values)
+	}
+	return out
 }

@@ -114,6 +114,17 @@ type jsonTagTag struct {
 	// Not included: wiki
 }
 
+type jsonTrackInfo struct {
+	Track jsonTrackTrack `json:"track"`
+}
+
+type jsonTrackTrack struct {
+	Duration  int   `json:"duration,string"`
+	Listeners int64 `json:"listeners,string"`
+	Playcount int64 `json:"playcount,string"`
+	// Not included: id, name, mbid, url, streamable, artist, album, toptags, wiki
+}
+
 type jsonAPIKey struct {
 	Key string `json:"apikey"`
 }
