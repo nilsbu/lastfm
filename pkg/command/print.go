@@ -17,11 +17,12 @@ import (
 )
 
 type printCharts struct {
-	keys       string //defaults to "artist"
+	keys       string // defaults to "artist"
 	by         string
 	name       string
 	percentage bool
 	normalized bool
+	duration   bool
 	entry      float64
 	n          int
 }
@@ -119,10 +120,20 @@ func getOutCharts(
 	}
 
 	var cha charts.Charts
-	if cmd.keys == "" || cmd.keys == "artist" {
-		cha = charts.ArtistsFromSongs(plays, user.Registered)
-	} else if cmd.keys == "song" {
+	if cmd.keys == "song" || cmd.duration {
 		cha = charts.CompileSongs(plays, user.Registered)
+		if cmd.duration {
+			cha, err = normalizeDuration(cha, r)
+			if err != nil {
+				return charts.Charts{}, err
+			}
+		}
+		if cmd.keys != "song" {
+			p := charts.NewArtistNamePartition(cha)
+			cha = cha.Group(p)
+		}
+	} else if cmd.keys == "" || cmd.keys == "artist" {
+		cha = charts.ArtistsFromSongs(plays, user.Registered)
 	}
 
 	replace, err := unpack.LoadArtistCorrections(session.User, r)
@@ -163,6 +174,46 @@ func getOutCharts(
 	}
 
 	return out, nil
+}
+
+func normalizeDuration(cha charts.Charts, r rsrc.Reader) (charts.Charts, error) {
+	// assume that cha is of songs without test
+	songs := make([]charts.Song, 0)
+	for _, key := range cha.Keys {
+		if song, ok := key.(charts.Song); ok {
+			songs = append(songs, song)
+		}
+	}
+	infos, err := organize.LoadTrackInfos(songs, r)
+	if err != nil {
+		if mErr, ok := err.(*organize.MultiError); ok {
+			nonLfm := []error{}
+			for _, err := range mErr.Errs {
+				if _, ok := err.(*unpack.LastfmError); !ok {
+					nonLfm = append(nonLfm, err)
+				}
+			}
+			if len(nonLfm) > 0 {
+				mErr.Errs = nonLfm
+				return charts.Charts{}, mErr
+			}
+		} else {
+			return charts.Charts{}, err
+		}
+	}
+
+	sd := charts.SongDurations{}
+	for _, info := range infos {
+		if info.Duration > 0 {
+			if _, ok := sd[info.Artist]; !ok {
+				sd[info.Artist] = make(map[string]int)
+			}
+			sd[info.Artist][info.Track] = info.Duration / 60
+		}
+	}
+	sd[""] = make(map[string]int)
+	sd[""][""] = 4
+	return sd.Normalize(cha), nil
 }
 
 type printTotal struct {

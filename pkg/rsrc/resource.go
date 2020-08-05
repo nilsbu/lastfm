@@ -18,6 +18,7 @@ type lastFM struct {
 	method   string
 	nameType string
 	name     string
+	track    string
 	page     int
 	day      Day
 	limit    int
@@ -29,6 +30,7 @@ func UserInfo(user string) Locator {
 		method:   "user.getInfo",
 		nameType: "user",
 		name:     user,
+		track:    "",
 		page:     -1,
 		day:      nil,
 		limit:    -1,
@@ -40,6 +42,7 @@ func History(user string, page int, day Day) Locator {
 		method:   "user.getRecentTracks",
 		nameType: "user",
 		name:     user,
+		track:    "",
 		page:     page,
 		day:      day,
 		limit:    200,
@@ -52,6 +55,7 @@ func ArtistInfo(artist string) Locator {
 		method:   "artist.getInfo",
 		nameType: "artist",
 		name:     artist,
+		track:    "",
 		page:     -1,
 		day:      nil,
 		limit:    -1,
@@ -64,6 +68,7 @@ func ArtistTags(artist string) Locator {
 		method:   "artist.getTopTags",
 		nameType: "artist",
 		name:     artist,
+		track:    "",
 		page:     -1,
 		day:      nil,
 		limit:    -1,
@@ -76,6 +81,20 @@ func TagInfo(tag string) Locator {
 		method:   "tag.getInfo",
 		nameType: "tag",
 		name:     tag,
+		track:    "",
+		page:     -1,
+		day:      nil,
+		limit:    -1,
+	}
+}
+
+// TrackInfo returns a locator for the Last.fm API call "track.getInfo".
+func TrackInfo(artist, track string) Locator {
+	return &lastFM{
+		method:   "track.getInfo",
+		nameType: "artist",
+		name:     artist,
+		track:    track,
 		page:     -1,
 		day:      nil,
 		limit:    -1,
@@ -89,12 +108,17 @@ func (loc *lastFM) URL(apiKey string) (string, error) {
 	base := "http://ws.audioscrobbler.com/2.0/"
 	params := "?format=json&api_key=%v&method=%v&%v=%v"
 
-	s := string(loc.name)
+	name := strings.Replace(url.PathEscape(loc.name), "&", "%26", -1)
+	track := strings.Replace(url.PathEscape(loc.track), "&", "%26", -1)
 	url := base + fmt.Sprintf(params, apiKey,
-		loc.method, loc.nameType, strings.Replace(url.PathEscape(s), "&", "%26", -1))
+		loc.method, loc.nameType, name)
+
+	if loc.track != "" {
+		url += fmt.Sprintf("&track=%s", track)
+	}
 
 	if loc.page > 0 {
-		url += fmt.Sprintf("&page=%d", int(loc.page))
+		url += fmt.Sprintf("&page=%d", loc.page)
 	}
 
 	if loc.day != nil {
@@ -140,6 +164,11 @@ func (loc *lastFM) Path() (string, error) {
 			t.Year(), int(t.Month()), t.Day(),
 			t.Hour(), t.Minute(), t.Second(),
 			loc.page)
+	case "track.getInfo":
+		key := fmt.Sprintf("%v\t%v", loc.name, loc.track)
+		h8 := sha256.Sum256([]byte(key))
+		hash := hex.EncodeToString(h8[:])
+		path = fmt.Sprintf("%v/%v/%v", hash[0:2], hash[2:4], hash[4:])
 	default:
 		h8 := sha256.Sum256([]byte(loc.name))
 		hash := hex.EncodeToString(h8[:])
