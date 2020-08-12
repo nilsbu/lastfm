@@ -127,20 +127,20 @@ func TestLazyEval(t *testing.T) {
 			}
 			{
 				col := c.lc.Column([]Title{KeyTitle("A"), KeyTitle("B")}, 1)
-				if !reflect.DeepEqual(col, c.colAB1) {
-					t.Error("col A,B 1 not equal:", col, "!=", c.colAB1)
+				if !eqColWithKeyTitle(c.colAB1, col) {
+					t.Error("col A,B 1 not equal:", c.colAB1, "!=", col)
 				}
 			}
 			{
 				col := c.lc.Column([]Title{KeyTitle("B")}, 3)
-				if !reflect.DeepEqual(col, c.colB3) {
-					t.Error("col B 3 not equal:", col, "!=", c.colB3)
+				if !eqColWithKeyTitle(c.colB3, col) {
+					t.Error("col B 3 not equal:", c.colB3, "!=", col)
 				}
 			}
 			{
 				data := c.lc.Data([]Title{KeyTitle("A"), KeyTitle("B")}, 1, 4)
-				if !reflect.DeepEqual(data, c.dataAB14) {
-					t.Error("data A,B 1-4 not equal:", data, "!=", c.dataAB14)
+				if !eqDataWithKeyTitle(c.dataAB14, data) {
+					t.Error("data A,B 1-4 not equal:", c.dataAB14, "!=", data)
 				}
 			}
 			{
@@ -157,6 +157,48 @@ func TestLazyEval(t *testing.T) {
 			}
 		})
 	}
+}
+
+func eqColWithKeyTitle(expect map[string]float64, actual TitleValueMap) bool {
+	if len(expect) != len(actual) {
+		return false
+	}
+
+	for t, v := range expect {
+		if tv, ok := actual[t]; ok {
+			if tv.Value != v {
+				return false
+			}
+			if !allEqual(KeyTitle(t), tv.Title) {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+
+	return true
+}
+
+func eqDataWithKeyTitle(expect map[string][]float64, actual TitleLineMap) bool {
+	if len(expect) != len(actual) {
+		return false
+	}
+
+	for t, v := range expect {
+		if tv, ok := actual[t]; ok {
+			if !reflect.DeepEqual(v, tv.Line) {
+				return false
+			}
+			if !allEqual(KeyTitle(t), tv.Title) {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+
+	return true
 }
 
 func allEqual(a, b Title) bool {

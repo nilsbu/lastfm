@@ -5,30 +5,36 @@ import (
 )
 
 type LazyCharts interface {
-	Row(key Title, begin, end int) []float64
-	Column(keys []Title, index int) map[string]float64
-	Data(keys []Title, begin, end int) map[string][]float64
+	Row(title Title, begin, end int) []float64
+	Column(titles []Title, index int) TitleValueMap
+	Data(titles []Title, begin, end int) TitleLineMap
 
 	Titles() []Title
 	Len() int
 }
 
-func (l *Charts) Row(key Title, begin, end int) []float64 {
-	return l.Values[key.Key()][begin:end]
+func (l *Charts) Row(title Title, begin, end int) []float64 {
+	return l.Values[title.Key()][begin:end]
 }
 
-func (l *Charts) Column(keys []Title, index int) map[string]float64 {
-	col := make(map[string]float64)
-	for _, k := range keys {
-		col[k.Key()] = l.Values[k.Key()][index]
+func (l *Charts) Column(titles []Title, index int) TitleValueMap {
+	col := make(TitleValueMap)
+	for _, t := range titles {
+		col[t.Key()] = TitleValue{
+			Title: t,
+			Value: l.Values[t.Key()][index],
+		}
 	}
 	return col
 }
 
-func (l *Charts) Data(keys []Title, begin, end int) map[string][]float64 {
-	data := make(map[string][]float64)
-	for _, k := range keys {
-		data[k.Key()] = l.Values[k.Key()][begin:end]
+func (l *Charts) Data(titles []Title, begin, end int) TitleLineMap {
+	data := make(TitleLineMap)
+	for _, t := range titles {
+		data[t.Key()] = TitleLine{
+			Title: t,
+			Line:  l.Values[t.Key()][begin:end],
+		}
 	}
 	return data
 }
@@ -115,9 +121,9 @@ type lineMapCharts struct {
 	f lineMap
 }
 
-func (l *lineMapCharts) Row(key Title, begin, end int) []float64 {
+func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
 
-	in := l.parent.Row(key, 0, end)
+	in := l.parent.Row(title, 0, end)
 	out := make([]float64, len(in))
 	for i, v := range in {
 		out[i] = l.f(i, v)
@@ -125,45 +131,34 @@ func (l *lineMapCharts) Row(key Title, begin, end int) []float64 {
 	return out[begin:]
 }
 
-type keyFloat struct {
-	key   Title
-	value float64
-}
+func (l *lineMapCharts) Column(titles []Title, index int) TitleValueMap {
+	col := make(TitleValueMap)
+	back := make(chan TitleValue)
 
-type keyLine struct {
-	key  Title
-	line []float64
-}
-
-func (l *lineMapCharts) Column(keys []Title, index int) map[string]float64 {
-	col := make(map[string]float64)
-	back := make(chan keyFloat)
-
-	for k := range keys {
-		go func(k int) {
-			in := l.parent.Row(keys[k], 0, index+1)
-			res := keyFloat{
-				key: keys[k],
+	for t := range titles {
+		go func(t int) {
+			in := l.parent.Row(titles[t], 0, index+1)
+			res := TitleValue{
+				Title: titles[t],
 			}
 			for i, v := range in {
-				res.value = l.f(i, v)
+				res.Value = l.f(i, v)
 			}
 			back <- res
-		}(k)
+		}(t)
 	}
 
-	for range keys {
+	for range titles {
 		kf := <-back
-		col[kf.key.Key()] = kf.value
+		col[kf.Title.Key()] = kf
 	}
 	return col
 }
 
-func (l *lineMapCharts) Data(keys []Title, begin, end int) map[string][]float64 {
-	data := make(map[string][]float64)
+func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
+	data := make(TitleLineMap)
 
-	titles := keys
-	back := make(chan keyLine)
+	back := make(chan TitleLine)
 
 	for k := range titles {
 		go func(k int) {
@@ -173,16 +168,16 @@ func (l *lineMapCharts) Data(keys []Title, begin, end int) map[string][]float64 
 				out[i] = l.f(i, v)
 			}
 
-			back <- keyLine{
-				key:  titles[k],
-				line: out[begin:],
+			back <- TitleLine{
+				Title: titles[k],
+				Line:  out[begin:],
 			}
 		}(k)
 	}
 
 	for range titles {
-		kl := <-back
-		data[kl.key.Key()] = kl.line
+		tl := <-back
+		data[tl.Title.Key()] = tl
 	}
 	return data
 }
@@ -193,26 +188,24 @@ type partitionSum struct {
 	key       func(Title) string
 }
 
-func (l *partitionSum) Row(key Title, begin, end int) []float64 {
-	titles := inverseMap(l.partition)[key.Key()]
-	back := make(chan keyLine)
+func (l *partitionSum) Row(title Title, begin, end int) []float64 {
+	titles := inverseMap(l.partition)[title.Key()]
+	back := make(chan []float64)
 
 	for _, t := range titles {
 		go func(t Title) {
-			back <- keyLine{
-				line: l.parent.Row(t, begin, end),
-			}
+			back <- l.parent.Row(t, begin, end)
 		}(KeyTitle(t))
 	}
 
 	var row []float64
 
 	for i := 0; i < len(titles); i++ {
-		kl := <-back
+		line := <-back
 		if len(row) == 0 {
-			row = make([]float64, len(kl.line))
+			row = make([]float64, len(line))
 		}
-		for i, v := range kl.line {
+		for i, v := range line {
 			row[i] += v
 		}
 	}
@@ -231,52 +224,54 @@ func inverseMap(keys map[string]string) map[string][]string {
 	return rev
 }
 
-type keyColumn struct {
+type titleColumn struct {
 	key string
-	col map[string]float64
+	col TitleValueMap
 }
 
-func (l *partitionSum) Column(keys []Title, index int) map[string]float64 {
-	col := make(map[string]float64)
+func (l *partitionSum) Column(titles []Title, index int) TitleValueMap {
+	col := make(TitleValueMap)
 	rev := inverseMap(l.partition)
-	back := make(chan keyColumn)
+	back := make(chan titleColumn)
 
-	for _, bin := range keys {
+	for _, bin := range titles {
 		ts := []Title{}
 		for _, r := range rev[bin.Key()] {
 			ts = append(ts, KeyTitle(r))
 		}
-		go func(keys []Title, bin Title) {
-			back <- keyColumn{
+		go func(titles []Title, bin Title) {
+			back <- titleColumn{
 				key: bin.Key(),
-				col: l.parent.Column(keys, index),
+				col: l.parent.Column(titles, index),
 			}
-
 		}(ts, bin)
 	}
 
-	for range keys {
+	for range titles {
 		kf := <-back
 		for _, v := range kf.col {
-			col[kf.key] += v
+			col[kf.key] = TitleValue{
+				Title: KeyTitle(kf.key),
+				Value: col[kf.key].Value + v.Value,
+			}
 		}
 	}
 
 	return col
 }
 
-func (l *partitionSum) Data(keys []Title, begin, end int) map[string][]float64 {
-	data := make(map[string][]float64)
+func (l *partitionSum) Data(titles []Title, begin, end int) TitleLineMap {
+	data := make(TitleLineMap)
 	rev := inverseMap(l.partition)
-	back := make(chan keyLine)
+	back := make(chan TitleLine)
 
 	n := 0
-	for _, bin := range keys {
+	for _, bin := range titles {
 		for _, key := range rev[bin.Key()] {
 			go func(key, bin Title) {
-				back <- keyLine{
-					key:  bin,
-					line: l.parent.Row(key, begin, end),
+				back <- TitleLine{
+					Title: bin,
+					Line:  l.parent.Row(key, begin, end),
 				}
 			}(KeyTitle(key), bin)
 			n++
@@ -285,14 +280,20 @@ func (l *partitionSum) Data(keys []Title, begin, end int) map[string][]float64 {
 
 	for i := 0; i < n; i++ {
 		kl := <-back
-		if _, ok := data[kl.key.Key()]; !ok {
-			data[kl.key.Key()] = make([]float64, len(kl.line))
+		if _, ok := data[kl.Title.Key()]; !ok {
+			data[kl.Title.Key()] = TitleLine{
+				Title: kl.Title,
+				Line:  make([]float64, len(kl.Line)),
+			}
 		}
-		line := data[kl.key.Key()]
-		for i, v := range kl.line {
+		line := data[kl.Title.Key()].Line
+		for i, v := range kl.Line {
 			line[i] += v
 		}
-		data[kl.key.Key()] = line
+		data[kl.Title.Key()] = TitleLine{
+			Title: data[kl.Title.Key()].Title,
+			Line:  line,
+		}
 	}
 
 	return data
@@ -304,9 +305,9 @@ func (l *partitionSum) Titles() []Title {
 	for _, v := range l.partition {
 		set[v] = KeyTitle(v)
 	}
-	keys := make([]Title, 0)
+	titles := make([]Title, 0)
 	for _, t := range set {
-		keys = append(keys, t)
+		titles = append(titles, t)
 	}
-	return keys
+	return titles
 }
