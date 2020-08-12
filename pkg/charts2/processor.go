@@ -184,18 +184,27 @@ func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
 
 type partitionSum struct {
 	chartsNode
-	partition map[string]string
-	key       func(Title) string
+	partition Partition
+}
+
+func Group(
+	parent LazyCharts,
+	partition Partition,
+) LazyCharts {
+	return &partitionSum{
+		chartsNode: chartsNode{parent: parent},
+		partition:  partition,
+	}
 }
 
 func (l *partitionSum) Row(title Title, begin, end int) []float64 {
-	titles := inverseMap(l.partition)[title.Key()]
+	titles := l.partition.Titles(title)
 	back := make(chan []float64)
 
 	for _, t := range titles {
 		go func(t Title) {
 			back <- l.parent.Row(t, begin, end)
-		}(KeyTitle(t))
+		}(t)
 	}
 
 	var row []float64
@@ -212,18 +221,6 @@ func (l *partitionSum) Row(title Title, begin, end int) []float64 {
 	return row
 }
 
-func inverseMap(keys map[string]string) map[string][]string {
-	rev := map[string][]string{}
-	for k, p := range keys {
-		if _, ok := rev[p]; !ok {
-			rev[p] = []string{k}
-		} else {
-			rev[p] = append(rev[p], k)
-		}
-	}
-	return rev
-}
-
 type titleColumn struct {
 	key string
 	col TitleValueMap
@@ -231,13 +228,12 @@ type titleColumn struct {
 
 func (l *partitionSum) Column(titles []Title, index int) TitleValueMap {
 	col := make(TitleValueMap)
-	rev := inverseMap(l.partition)
 	back := make(chan titleColumn)
 
 	for _, bin := range titles {
 		ts := []Title{}
-		for _, r := range rev[bin.Key()] {
-			ts = append(ts, KeyTitle(r))
+		for _, r := range l.partition.Titles(bin) {
+			ts = append(ts, r)
 		}
 		go func(titles []Title, bin Title) {
 			back <- titleColumn{
@@ -262,18 +258,17 @@ func (l *partitionSum) Column(titles []Title, index int) TitleValueMap {
 
 func (l *partitionSum) Data(titles []Title, begin, end int) TitleLineMap {
 	data := make(TitleLineMap)
-	rev := inverseMap(l.partition)
 	back := make(chan TitleLine)
 
 	n := 0
 	for _, bin := range titles {
-		for _, key := range rev[bin.Key()] {
+		for _, key := range l.partition.Titles(bin) {
 			go func(key, bin Title) {
 				back <- TitleLine{
 					Title: bin,
 					Line:  l.parent.Row(key, begin, end),
 				}
-			}(KeyTitle(key), bin)
+			}(key, bin)
 			n++
 		}
 	}
@@ -300,14 +295,5 @@ func (l *partitionSum) Data(titles []Title, begin, end int) TitleLineMap {
 }
 
 func (l *partitionSum) Titles() []Title {
-	// OPTIMIZE: doesn't need full lookup
-	set := map[string]Title{}
-	for _, v := range l.partition {
-		set[v] = KeyTitle(v)
-	}
-	titles := make([]Title, 0)
-	for _, t := range set {
-		titles = append(titles, t)
-	}
-	return titles
+	return l.partition.Partitions()
 }

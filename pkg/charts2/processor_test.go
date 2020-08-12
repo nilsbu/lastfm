@@ -93,12 +93,14 @@ func TestLazyEval(t *testing.T) {
 		},
 		{
 			"merge partition",
-			&partitionSum{chartsNode: chartsNode{parent: charts},
-				partition: map[string]string{
-					"A": "A", "B": "B", "C": "B",
-				},
-				key: func(t Title) string { return t.Key() },
-			},
+			Group(
+				charts,
+				KeyPartition([][2]Title{
+					{KeyTitle("A"), KeyTitle("A")},
+					{KeyTitle("B"), KeyTitle("B")},
+					{KeyTitle("C"), KeyTitle("B")},
+				}),
+			),
 			[]Title{KeyTitle("A"), KeyTitle("B")}, 4,
 			[]float64{8, 8, 0, 0},
 			[]float64{1, 2},
