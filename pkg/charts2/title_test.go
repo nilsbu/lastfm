@@ -21,3 +21,23 @@ func TestKeyTitle(t *testing.T) {
 		t.Errorf("Song() was expected to be '' but is '%v'", kt.Song())
 	}
 }
+
+func TestArtistTitle(t *testing.T) {
+	at := ArtistTitle("a")
+
+	if at.String() != "a" {
+		t.Errorf("String() was expected to be 'a' but is '%v'", at.String())
+	}
+
+	if at.Key() != "a" {
+		t.Errorf("Key() was expected to be 'a' but is '%v'", at.Key())
+	}
+
+	if at.Artist() != "a" {
+		t.Errorf("Artist() was expected to be 'a' but is '%v'", at.Artist())
+	}
+
+	if at.Song() != "" {
+		t.Errorf("Song() was expected to be '' but is '%v'", at.Song())
+	}
+}

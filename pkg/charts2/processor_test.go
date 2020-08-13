@@ -6,13 +6,31 @@ import (
 )
 
 func TestLazyEval(t *testing.T) {
-	charts := &Charts{
-		Values: map[string][]float64{
+	root := &charts{
+		values: map[string][]float64{
 			"A": {8, 8, 0, 0},
 			"B": {16, 0, 0, 0},
 			"C": {1, 1, 2, 1},
 		},
 		titles: []Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")},
+	}
+
+	songs := [][]Song{
+		{
+			{Artist: "A", Title: "a", Duration: 3},
+			{Artist: "A", Title: "b", Duration: 4},
+			{Artist: "A", Title: "a", Duration: 3},
+			{Artist: "B", Title: "x", Duration: 4.5},
+		},
+		{
+			{Artist: "A", Title: "a", Duration: 3},
+			{Artist: "A", Title: "b", Duration: 4},
+		},
+		{
+			{Artist: "B", Title: "x", Duration: 4.5},
+			{Artist: "B", Title: "y", Duration: 1},
+		},
+		{},
 	}
 
 	cs := []struct {
@@ -28,7 +46,7 @@ func TestLazyEval(t *testing.T) {
 	}{
 		{
 			"charts themselves",
-			charts,
+			root,
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 8, 0, 0},
 			[]float64{0, 0},
@@ -41,7 +59,7 @@ func TestLazyEval(t *testing.T) {
 		},
 		{
 			"sum",
-			Sum(charts),
+			Sum(root),
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 16, 16, 16},
 			[]float64{16, 16},
@@ -54,7 +72,7 @@ func TestLazyEval(t *testing.T) {
 		},
 		{
 			"sum of sum",
-			Sum(Sum(charts)),
+			Sum(Sum(root)),
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 24, 40, 56},
 			[]float64{32, 48},
@@ -67,7 +85,7 @@ func TestLazyEval(t *testing.T) {
 		},
 		{
 			"fade",
-			Fade(charts, 1),
+			Fade(root, 1),
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 12, 6, 3},
 			[]float64{8, 4},
@@ -80,7 +98,7 @@ func TestLazyEval(t *testing.T) {
 		},
 		{
 			"max of fade",
-			Max(Fade(charts, 1)),
+			Max(Fade(root, 1)),
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 12, 12, 12},
 			[]float64{16, 16},
@@ -94,7 +112,7 @@ func TestLazyEval(t *testing.T) {
 		{
 			"merge partition",
 			Group(
-				charts,
+				root,
 				KeyPartition([][2]Title{
 					{KeyTitle("A"), KeyTitle("A")},
 					{KeyTitle("B"), KeyTitle("B")},
@@ -109,6 +127,19 @@ func TestLazyEval(t *testing.T) {
 			map[string][]float64{
 				"A": {8, 0, 0},
 				"B": {1, 2, 1},
+			},
+		},
+		{
+			"artist charts",
+			Artists(songs),
+			[]Title{ArtistTitle("A"), ArtistTitle("B")}, 4,
+			[]float64{3, 2, 0, 0},
+			[]float64{0, 2},
+			map[string]float64{"A": 2, "B": 0},
+			map[string]float64{"B": 0},
+			map[string][]float64{
+				"A": {2, 0, 0},
+				"B": {0, 2, 0},
 			},
 		},
 	}
@@ -205,8 +236,8 @@ func eqDataWithKeyTitle(expect map[string][]float64, actual TitleLineMap) bool {
 
 func allEqual(a, b Title) bool {
 	return a.String() == b.String() &&
-		a.Artist() == b.Artist() &&
 		a.Key() == b.Key() &&
+		a.Artist() == b.Artist() &&
 		a.Song() == b.Song()
 }
 
@@ -235,7 +266,7 @@ func areTitlesSame(a, b []Title) bool {
 }
 
 func TestEmptyCharts(t *testing.T) {
-	c := &Charts{}
+	c := &charts{}
 
 	if c.Len() != -1 {
 		t.Error("unxecptected len:", c.Len())

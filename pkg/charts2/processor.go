@@ -13,33 +13,33 @@ type LazyCharts interface {
 	Len() int
 }
 
-func (l *Charts) Row(title Title, begin, end int) []float64 {
-	return l.Values[title.Key()][begin:end]
+func (l *charts) Row(title Title, begin, end int) []float64 {
+	return l.values[title.Key()][begin:end]
 }
 
-func (l *Charts) Column(titles []Title, index int) TitleValueMap {
+func (l *charts) Column(titles []Title, index int) TitleValueMap {
 	col := make(TitleValueMap)
 	for _, t := range titles {
 		col[t.Key()] = TitleValue{
 			Title: t,
-			Value: l.Values[t.Key()][index],
+			Value: l.values[t.Key()][index],
 		}
 	}
 	return col
 }
 
-func (l *Charts) Data(titles []Title, begin, end int) TitleLineMap {
+func (l *charts) Data(titles []Title, begin, end int) TitleLineMap {
 	data := make(TitleLineMap)
 	for _, t := range titles {
 		data[t.Key()] = TitleLine{
 			Title: t,
-			Line:  l.Values[t.Key()][begin:end],
+			Line:  l.values[t.Key()][begin:end],
 		}
 	}
 	return data
 }
 
-func (l *Charts) Titles() []Title {
+func (l *charts) Titles() []Title {
 	ts := make([]Title, len(l.titles))
 
 	for i, t := range l.titles {
@@ -49,8 +49,8 @@ func (l *Charts) Titles() []Title {
 	return ts
 }
 
-func (l *Charts) Len() int {
-	for _, line := range l.Values {
+func (l *charts) Len() int {
+	for _, line := range l.values {
 		return len(line)
 	}
 	return -1

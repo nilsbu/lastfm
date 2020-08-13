@@ -18,6 +18,7 @@ type Title interface {
 // and Song() are empty strings.
 type KeyTitle string
 
+// String returns the KeyTitle's string.
 func (t KeyTitle) String() string {
 	return string(t)
 }
@@ -34,5 +35,29 @@ func (t KeyTitle) Artist() string {
 
 // Song returns ''.
 func (t KeyTitle) Song() string {
+	return ""
+}
+
+// ArtistTitle is a Title which uses an artit's name as key and printed string.
+// Song() is "".
+type ArtistTitle string
+
+// String returns the artist's name.
+func (k ArtistTitle) String() string {
+	return string(k)
+}
+
+// Artist returns the artist's name.
+func (k ArtistTitle) Artist() string {
+	return string(k)
+}
+
+// Key returns the artist's name.
+func (k ArtistTitle) Key() string {
+	return string(k)
+}
+
+// Song returns "".
+func (k ArtistTitle) Song() string {
 	return ""
 }
