@@ -2,42 +2,41 @@ package charts2
 
 import "testing"
 
-func TestKeyTitle(t *testing.T) {
-	kt := KeyTitle("a")
-
-	if kt.String() != "a" {
-		t.Errorf("String() was expected to be 'a' but is '%v'", kt.String())
-	}
-
-	if kt.Key() != "a" {
-		t.Errorf("Key() was expected to be 'a' but is '%v'", kt.Key())
-	}
-
-	if kt.Artist() != "" {
-		t.Errorf("Artist() was expected to be '' but is '%v'", kt.Artist())
-	}
-
-	if kt.Song() != "" {
-		t.Errorf("Song() was expected to be '' but is '%v'", kt.Song())
-	}
-}
-
-func TestArtistTitle(t *testing.T) {
-	at := ArtistTitle("a")
-
-	if at.String() != "a" {
-		t.Errorf("String() was expected to be 'a' but is '%v'", at.String())
-	}
-
-	if at.Key() != "a" {
-		t.Errorf("Key() was expected to be 'a' but is '%v'", at.Key())
-	}
-
-	if at.Artist() != "a" {
-		t.Errorf("Artist() was expected to be 'a' but is '%v'", at.Artist())
-	}
-
-	if at.Song() != "" {
-		t.Errorf("Song() was expected to be '' but is '%v'", at.Song())
+func TestTitles(t *testing.T) {
+	for _, c := range []struct {
+		name                      string
+		title                     Title
+		string, key, artist, song string
+	}{
+		{
+			"key title",
+			KeyTitle("a"),
+			"a", "a", "", "",
+		},
+		{
+			"artist title",
+			ArtistTitle("x"),
+			"x", "x", "x", "",
+		},
+		{
+			"song title",
+			SongTitle(Song{Artist: "x", Title: "y"}),
+			"x - y", "x\ny", "x", "y",
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			if c.string != c.title.String() {
+				t.Errorf("String: %v != %v", c.string, c.title.String())
+			}
+			if c.key != c.title.Key() {
+				t.Errorf("Key: %v != %v", c.key, c.title.Key())
+			}
+			if c.artist != c.title.Artist() {
+				t.Errorf("Artist: %v != %v", c.artist, c.title.Artist())
+			}
+			if c.song != c.title.Song() {
+				t.Errorf("Song: %v != %v", c.song, c.title.Song())
+			}
+		})
 	}
 }

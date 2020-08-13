@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestLazyEval(t *testing.T) {
+func TestLazyCharts(t *testing.T) {
 	root := &charts{
 		values: map[string][]float64{
 			"A": {8, 8, 0, 0},
