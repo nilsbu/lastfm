@@ -53,6 +53,25 @@ func TestCharts(t *testing.T) {
 				{0, 1},
 			},
 		},
+		{
+			"single column normalizer",
+			SingleColumnNormalizer(Artists([][]Song{
+				{
+					Song{Artist: "A"}, Song{Artist: "A"},
+					Song{Artist: "B"},
+					Song{Artist: "C"},
+				},
+				{
+					Song{Artist: "B"}, Song{Artist: "B"}, Song{Artist: "B"},
+					Song{Artist: "C"}, Song{Artist: "C"}, Song{Artist: "C"},
+				},
+				{},
+			})),
+			[]Title{ArtistTitle("A"), ArtistTitle("B"), ArtistTitle("C")},
+			[][]float64{
+				{.5, 0, 0}, {.25, .5, 0}, {.25, .5, 0},
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if !areTitlesSame(c.titles, c.charts.Titles()) {
@@ -60,12 +79,29 @@ func TestCharts(t *testing.T) {
 					c.titles, c.charts.Titles())
 			}
 
+			data := c.charts.Data(c.titles, 0, c.charts.Len())
 			for i, title := range c.titles {
 				row := c.charts.Row(title, 0, c.charts.Len())
 				if !reflect.DeepEqual(c.lines[i], row) {
-					t.Errorf("'%v': %v != %v", title, c.lines[i], row)
+					t.Errorf("row, '%v': %v != %v", title, c.lines[i], row)
+				}
+
+				if !reflect.DeepEqual(c.lines[i], data[title.Key()].Line) {
+					t.Errorf("data, '%v': %v != %v", title, c.lines[i], data[title.Key()].Line)
 				}
 			}
+
+			for i := 0; i < c.charts.Len(); i++ {
+				col := c.charts.Column(c.titles, i)
+				for j, title := range c.titles {
+					if c.lines[j][i] != col[title.Key()].Value {
+						t.Errorf("col %v, %v: %v != %v",
+							title, i,
+							c.lines[j][i], col[title.Key()].Value)
+					}
+				}
+			}
+
 		})
 	}
 }
