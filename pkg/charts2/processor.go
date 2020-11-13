@@ -68,17 +68,22 @@ func (l chartsNode) Len() int {
 	return l.parent.Len()
 }
 
-type lineMap func(i int, v float64) float64
-
 func Sum(parent LazyCharts) LazyCharts {
 	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		f: func(i int, v float64) float64 {
+		mapF: func(i int, v float64) float64 {
 			if i == 0 {
 				acc = 0
 			}
 			acc += v
+			return acc
+		},
+		foldF: func(line []float64) float64 {
+			acc := 0.0
+			for _, v := range line {
+				acc += v
+			}
 			return acc
 		},
 	}
@@ -89,12 +94,20 @@ func Fade(parent LazyCharts, hl float64) LazyCharts {
 	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		f: func(i int, v float64) float64 {
+		mapF: func(i int, v float64) float64 {
 			if i == 0 {
 				acc = 0
 			}
 			acc *= fac
 			acc += v
+			return acc
+		},
+		foldF: func(line []float64) float64 {
+			acc := 0.0
+			for _, v := range line {
+				acc *= fac
+				acc += v
+			}
 			return acc
 		},
 	}
@@ -105,7 +118,7 @@ func Max(parent LazyCharts) LazyCharts {
 	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		f: func(i int, v float64) float64 {
+		mapF: func(i int, v float64) float64 {
 			if i == 0 {
 				acc = v
 			} else {
@@ -113,12 +126,23 @@ func Max(parent LazyCharts) LazyCharts {
 			}
 			return acc
 		},
+		foldF: func(line []float64) float64 {
+			acc := 0.0
+			for _, v := range line {
+				acc = math.Max(acc, v)
+			}
+			return acc
+		},
 	}
 }
 
+type lineMap func(i int, v float64) float64
+type lineFold func(line []float64) float64
+
 type lineMapCharts struct {
 	chartsNode
-	f lineMap
+	mapF  lineMap
+	foldF lineFold
 }
 
 func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
@@ -126,7 +150,7 @@ func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
 	in := l.parent.Row(title, 0, end)
 	out := make([]float64, len(in))
 	for i, v := range in {
-		out[i] = l.f(i, v)
+		out[i] = l.mapF(i, v)
 	}
 	return out[begin:]
 }
@@ -141,9 +165,7 @@ func (l *lineMapCharts) Column(titles []Title, index int) TitleValueMap {
 			res := TitleValue{
 				Title: titles[t],
 			}
-			for i, v := range in {
-				res.Value = l.f(i, v)
-			}
+			res.Value = l.foldF(in)
 			back <- res
 		}(t)
 	}
@@ -165,7 +187,7 @@ func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
 			in := l.parent.Row(titles[k], 0, end)
 			out := make([]float64, len(in))
 			for i, v := range in {
-				out[i] = l.f(i, v)
+				out[i] = l.mapF(i, v)
 			}
 
 			back <- TitleLine{
