@@ -1,6 +1,7 @@
 package charts2
 
 import (
+	"math"
 	"reflect"
 	"testing"
 )
@@ -270,5 +271,93 @@ func TestEmptyCharts(t *testing.T) {
 
 	if c.Len() != -1 {
 		t.Error("unxecptected len:", c.Len())
+	}
+}
+
+func TestGaussian(t *testing.T) {
+	root := &charts{
+		values: map[string][]float64{
+			"A": {0, 0, 0, 1, 0},
+			"B": {0, 1, 0, 1, 0},
+		},
+		titles: []Title{KeyTitle("A"), KeyTitle("B")},
+	}
+
+	f := 1 / math.Sqrt(2*math.Pi)
+	m := []float64{math.Exp(0), math.Exp(-.5), math.Exp(-2)}
+
+	cs := []struct {
+		name   string
+		lc     LazyCharts
+		expect LazyCharts
+	}{
+		{
+			"mirror none",
+			Gaussian(root, 1, 2, false, false),
+			&charts{
+				values: map[string][]float64{
+					"A": {0, f * m[2], f * m[1], f * m[0], f * m[1]},
+					"B": {f * m[1], f * (m[2] + m[0]), 2 * f * m[1], f * (m[2] + m[0]), f * m[1]},
+				},
+				titles: []Title{KeyTitle("A"), KeyTitle("B")},
+			},
+		},
+		{
+			"mirror begin",
+			Gaussian(root, 1, 2, true, false),
+			&charts{
+				values: map[string][]float64{
+					"A": {0, f * m[2], f * m[1], f * m[0], f * m[1]},
+					"B": {f * (m[1] + m[2]), f * (m[2] + m[0]), 2 * f * m[1], f * (m[2] + m[0]), f * m[1]},
+				},
+				titles: []Title{KeyTitle("A"), KeyTitle("B")},
+			},
+		},
+		{
+			"mirror both",
+			Gaussian(root, 1, 2, true, true),
+			&charts{
+				values: map[string][]float64{
+					"A": {0, f * m[2], f * m[1], f * m[0], f * (m[1] + m[2])},
+					"B": {f * (m[1] + m[2]), f * (m[2] + m[0]), 2 * f * m[1], f * (m[2] + m[0]), f * (m[1] + m[2])},
+				},
+				titles: []Title{KeyTitle("A"), KeyTitle("B")},
+			},
+		},
+	}
+
+	for _, c := range cs {
+		t.Run(c.name, func(t *testing.T) {
+			// Rows
+			for _, title := range c.expect.Titles() {
+				x := c.expect.Row(title, 0, c.expect.Len())
+				a := c.lc.Row(title, 0, c.expect.Len())
+				eq := true
+				for i := range x {
+					if math.Abs(x[i]-a[i]) > 1e-6 {
+						eq = false
+						break
+					}
+				}
+				if !eq {
+					t.Errorf("row(%v): expect=%v, actual=%v", title, x, a)
+				}
+			}
+
+			// Columns
+			for i := 0; i < c.expect.Len(); i++ {
+				x := c.expect.Column(c.expect.Titles(), i)
+				a := c.lc.Column(c.expect.Titles(), i)
+
+				for k := range x {
+					if math.Abs(x[k].Value-a[k].Value) > 1e-6 {
+						t.Errorf("col(%v, %v): expect=%v, actual=%v",
+							k, i, x[k].Value, a[k].Value)
+					}
+				}
+			}
+
+			// TODO data
+		})
 	}
 }

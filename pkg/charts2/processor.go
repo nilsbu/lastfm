@@ -72,20 +72,21 @@ func Sum(parent LazyCharts) LazyCharts {
 	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		mapF: func(i int, v float64) float64 {
+		mapF: func(i int, line []float64) float64 {
 			if i == 0 {
 				acc = 0
 			}
-			acc += v
+			acc += line[i]
 			return acc
 		},
-		foldF: func(line []float64) float64 {
+		foldF: func(i int, line []float64) float64 {
 			acc := 0.0
-			for _, v := range line {
-				acc += v
+			for j := 0; j <= i; j++ {
+				acc += line[j]
 			}
 			return acc
 		},
+		rangeF: fromBeginRange,
 	}
 }
 
@@ -94,22 +95,23 @@ func Fade(parent LazyCharts, hl float64) LazyCharts {
 	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		mapF: func(i int, v float64) float64 {
+		mapF: func(i int, line []float64) float64 {
 			if i == 0 {
 				acc = 0
 			}
 			acc *= fac
-			acc += v
+			acc += line[i]
 			return acc
 		},
-		foldF: func(line []float64) float64 {
+		foldF: func(i int, line []float64) float64 {
 			acc := 0.0
-			for _, v := range line {
+			for j := 0; j <= i; j++ {
 				acc *= fac
-				acc += v
+				acc += line[j]
 			}
 			return acc
 		},
+		rangeF: fromBeginRange,
 	}
 }
 
@@ -118,39 +120,103 @@ func Max(parent LazyCharts) LazyCharts {
 	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		mapF: func(i int, v float64) float64 {
+		mapF: func(i int, line []float64) float64 {
 			if i == 0 {
-				acc = v
+				acc = line[i]
 			} else {
-				acc = math.Max(acc, v)
+				acc = math.Max(acc, line[i])
 			}
 			return acc
 		},
-		foldF: func(line []float64) float64 {
+		foldF: func(i int, line []float64) float64 {
 			acc := 0.0
-			for _, v := range line {
-				acc = math.Max(acc, v)
+			for j := 0; j <= i; j++ {
+				acc = math.Max(acc, line[j])
 			}
 			return acc
+		},
+		rangeF: fromBeginRange,
+	}
+}
+
+// Gaussian blurs the data with a Gaussian kernel.
+func Gaussian(
+	parent LazyCharts,
+	sigma float64,
+	width int,
+	mirrorBegin, mirrorEnd bool) LazyCharts {
+
+	gaussian := make([]float64, width+1)
+	fac := 1 / (sigma * math.Sqrt(2*math.Pi))
+	for i := 0; i <= width; i++ {
+		gaussian[i] = fac * math.Exp(-.5*float64(i*i)/sigma/sigma)
+	}
+
+	f := func(i int, line []float64) float64 {
+		acc := 0.0
+		b := i - width
+		if b < 0 {
+			if mirrorBegin {
+				for j := 0; j < width-i; j++ {
+					acc += gaussian[i+j+1] * line[j]
+				}
+			}
+
+			b = 0
+		}
+		e := i + width + 1
+		if e > len(line) {
+			if mirrorEnd {
+				for j := len(line) - 1; j > 2*len(line)-i-2-width; j-- {
+					acc += gaussian[2*len(line)-(i+j+1)] * line[j]
+				}
+			}
+
+			e = len(line)
+		}
+
+		for j := b; j < e; j++ {
+			idx := j - i
+			if idx < 0 {
+				idx = -idx
+			}
+			acc += gaussian[idx] * line[j]
+		}
+		return acc
+	}
+
+	return &lineMapCharts{
+		chartsNode: chartsNode{parent: parent},
+		mapF:       f,
+		foldF:      f,
+		rangeF: func(size, begin, end int) (b, e int) {
+			if end+width > size {
+				return 0, size
+			}
+			return 0, end + width
 		},
 	}
 }
 
-type lineMap func(i int, v float64) float64
-type lineFold func(line []float64) float64
+type lineProc func(i int, line []float64) float64
+type rangeSpec func(size, begin, end int) (b, e int)
+
+func fromBeginRange(size, begin, end int) (b, e int) {
+	return 0, end
+}
 
 type lineMapCharts struct {
 	chartsNode
-	mapF  lineMap
-	foldF lineFold
+	mapF, foldF lineProc
+	rangeF      rangeSpec
 }
 
 func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
-
-	in := l.parent.Row(title, 0, end)
+	rb, re := l.rangeF(l.parent.Len(), begin, end)
+	in := l.parent.Row(title, rb, re)
 	out := make([]float64, len(in))
-	for i, v := range in {
-		out[i] = l.mapF(i, v)
+	for i := range in {
+		out[i] = l.mapF(i, in)
 	}
 	return out[begin:]
 }
@@ -158,14 +224,15 @@ func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
 func (l *lineMapCharts) Column(titles []Title, index int) TitleValueMap {
 	col := make(TitleValueMap)
 	back := make(chan TitleValue)
+	rb, re := l.rangeF(l.parent.Len(), index, index+1)
 
 	for t := range titles {
 		go func(t int) {
-			in := l.parent.Row(titles[t], 0, index+1)
+			in := l.parent.Row(titles[t], rb, re)
 			res := TitleValue{
 				Title: titles[t],
 			}
-			res.Value = l.foldF(in)
+			res.Value = l.foldF(index, in)
 			back <- res
 		}(t)
 	}
@@ -179,15 +246,15 @@ func (l *lineMapCharts) Column(titles []Title, index int) TitleValueMap {
 
 func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
 	data := make(TitleLineMap)
-
 	back := make(chan TitleLine)
+	rb, re := l.rangeF(l.parent.Len(), begin, end)
 
 	for k := range titles {
 		go func(k int) {
-			in := l.parent.Row(titles[k], 0, end)
+			in := l.parent.Row(titles[k], rb, re)
 			out := make([]float64, len(in))
-			for i, v := range in {
-				out[i] = l.mapF(i, v)
+			for i := range in {
+				out[i] = l.mapF(i, in)
 			}
 
 			back <- TitleLine{
