@@ -30,6 +30,21 @@ func TestCharts(t *testing.T) {
 			},
 		},
 		{
+			"ArtistsDuration",
+			ArtistsDuration([][]Song{
+				{Song{Artist: "A", Duration: 1},
+					Song{Artist: "B", Duration: 2},
+				},
+				{Song{Artist: "C", Duration: 1},
+					Song{Artist: "A", Duration: 1},
+				},
+			}),
+			[]Title{ArtistTitle("A"), ArtistTitle("B"), ArtistTitle("C")},
+			[][]float64{
+				{1, 1}, {2, 0}, {0, 1},
+			},
+		},
+		{
 			"Songs",
 			Songs([][]Song{
 				{
@@ -50,6 +65,30 @@ func TestCharts(t *testing.T) {
 			[][]float64{
 				{1, 0}, {1, 1},
 				{1, 0},
+				{0, 1},
+			},
+		},
+		{
+			"SongsDuration",
+			SongsDuration([][]Song{
+				{
+					Song{Artist: "A", Title: "b", Duration: 1},
+					Song{Artist: "B", Title: "b", Duration: 2},
+					Song{Artist: "A", Title: "a", Duration: 1},
+				},
+				{
+					Song{Artist: "C", Title: "b", Duration: 1},
+					Song{Artist: "A", Title: "b", Duration: 1},
+				},
+			}),
+			[]Title{
+				SongTitle(Song{Artist: "A", Title: "a"}), SongTitle(Song{Artist: "A", Title: "b"}),
+				SongTitle(Song{Artist: "B", Title: "b"}),
+				SongTitle(Song{Artist: "C", Title: "b"}),
+			},
+			[][]float64{
+				{1, 0}, {1, 1},
+				{2, 0},
 				{0, 1},
 			},
 		},
