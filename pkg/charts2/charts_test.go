@@ -94,7 +94,7 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"single column normalizer",
-			SingleColumnNormalizer(Artists([][]Song{
+			NormalizeColumn(Artists([][]Song{
 				{
 					Song{Artist: "A"}, Song{Artist: "A"},
 					Song{Artist: "B"},

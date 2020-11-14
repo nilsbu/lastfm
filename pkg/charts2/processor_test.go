@@ -457,7 +457,7 @@ func TestLazyCharts(t *testing.T) {
 	}
 
 	f := 1 / math.Sqrt(2*math.Pi)
-	m := []float64{math.Exp(0), math.Exp(-.5), math.Exp(-2)}
+	m := []float64{f * math.Exp(0), f * math.Exp(-.5), f * math.Exp(-2)}
 
 	cs := []struct {
 		name   string
@@ -469,8 +469,8 @@ func TestLazyCharts(t *testing.T) {
 			Gaussian(root, 1, 2, false, false),
 			&charts{
 				values: map[string][]float64{
-					"A": {0, f * m[2], f * m[1], f * m[0], f * m[1]},
-					"B": {f * m[1], f * (m[2] + m[0]), 2 * f * m[1], f * (m[2] + m[0]), f * m[1]},
+					"A": {0, m[2], m[1], m[0], m[1]},
+					"B": {m[1], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1]},
 				},
 				titles: []Title{KeyTitle("A"), KeyTitle("B")},
 			},
@@ -480,8 +480,8 @@ func TestLazyCharts(t *testing.T) {
 			Gaussian(root, 1, 2, true, false),
 			&charts{
 				values: map[string][]float64{
-					"A": {0, f * m[2], f * m[1], f * m[0], f * m[1]},
-					"B": {f * (m[1] + m[2]), f * (m[2] + m[0]), 2 * f * m[1], f * (m[2] + m[0]), f * m[1]},
+					"A": {0, m[2], m[1], m[0], m[1]},
+					"B": {m[1] + m[2], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1]},
 				},
 				titles: []Title{KeyTitle("A"), KeyTitle("B")},
 			},
@@ -491,8 +491,8 @@ func TestLazyCharts(t *testing.T) {
 			Gaussian(root, 1, 2, true, true),
 			&charts{
 				values: map[string][]float64{
-					"A": {0, f * m[2], f * m[1], f * m[0], f * (m[1] + m[2])},
-					"B": {f * (m[1] + m[2]), f * (m[2] + m[0]), 2 * f * m[1], f * (m[2] + m[0]), f * (m[1] + m[2])},
+					"A": {0, m[2], m[1], m[0], m[1] + m[2]},
+					"B": {m[1] + m[2], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1] + m[2]},
 				},
 				titles: []Title{KeyTitle("A"), KeyTitle("B")},
 			},

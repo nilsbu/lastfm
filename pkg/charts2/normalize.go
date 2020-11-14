@@ -2,69 +2,77 @@ package charts2
 
 type normalizer struct {
 	chartsNode
-	totals []float64
-	kernel []float64
+	totals LazyCharts
 }
 
-func SingleColumnNormalizer(c LazyCharts) LazyCharts {
+func NormalizeColumn(c LazyCharts) LazyCharts {
 	return &normalizer{
 		chartsNode: chartsNode{parent: c},
-		kernel:     []float64{1},
+		totals:     ColumnSum(c),
+	}
+}
+
+func NormalizeGaussian(
+	c LazyCharts,
+	sigma float64,
+	width int,
+	mirrorBegin, mirrorEnd bool) LazyCharts {
+	smooth := Cache(Gaussian(c, sigma, width, mirrorBegin, mirrorEnd))
+	return &normalizer{
+		chartsNode: chartsNode{parent: smooth},
+		totals:     ColumnSum(smooth),
 	}
 }
 
 func (c *normalizer) Row(title Title, begin, end int) []float64 {
-	c.calcTotals()
 	return c.Data([]Title{title}, begin, end)[title.Key()].Line
 }
 
 func (c *normalizer) Column(titles []Title, index int) TitleValueMap {
-	c.calcTotals()
+	total := c.totals.Row(StringTitle("total"), index, index+1)[0]
 
 	col := make(TitleValueMap)
-	back := make(chan TitleValue)
 
-	for t := range titles {
-		go func(t int) {
-			in := c.parent.Row(titles[t], 0, index+1)
-			res := TitleValue{
-				Title: titles[t],
+	if total == 0 {
+		for _, title := range titles {
+			col[title.Key()] = TitleValue{
+				Title: title,
+				Value: 0.0,
 			}
-			for _, v := range in {
-				if c.totals[index] > 0 {
-					res.Value = v / c.totals[index]
-				}
-			}
-			back <- res
-		}(t)
+		}
+		return col
 	}
 
-	for range titles {
-		kf := <-back
-		col[kf.Title.Key()] = kf
+	par := c.parent.Column(titles, index)
+
+	for k, tv := range par {
+		col[k] = TitleValue{
+			Title: tv.Title,
+			Value: tv.Value / total,
+		}
 	}
 	return col
 }
 
 func (c *normalizer) Data(titles []Title, begin, end int) TitleLineMap {
-	c.calcTotals()
+	totals := c.totals.Row(StringTitle("total"), begin, end)
 
 	data := make(TitleLineMap)
 	back := make(chan TitleLine)
 
 	for k := range titles {
 		go func(k int) {
-			in := c.parent.Row(titles[k], 0, end)
+			in := c.parent.Row(titles[k], begin, end)
 			out := make([]float64, len(in))
 			for i, v := range in {
-				if c.totals[i] > 0 {
-					out[i] = v / c.totals[i]
+				if totals[i] > 0 {
+					out[i] = v / totals[i]
 				}
 			}
 
 			back <- TitleLine{
 				Title: titles[k],
-				Line:  out[begin:],
+				Line:  out,
 			}
 		}(k)
 	}
@@ -74,19 +82,4 @@ func (c *normalizer) Data(titles []Title, begin, end int) TitleLineMap {
 		data[tl.Title.Key()] = tl
 	}
 	return data
-}
-
-func (c *normalizer) calcTotals() {
-	if len(c.totals) > 0 {
-		return
-	}
-
-	c.totals = make([]float64, c.Len())
-	data := c.parent.Data(c.Titles(), 0, c.Len())
-
-	for _, line := range data {
-		for i, v := range line.Line {
-			c.totals[i] += v
-		}
-	}
 }
