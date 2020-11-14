@@ -7,7 +7,8 @@ import (
 	"testing"
 )
 
-func TestLazyCharts(t *testing.T) {
+// TODO merge with LazyCharts
+func TestLazyChartsPartial(t *testing.T) {
 	root := &charts{
 		values: map[string][]float64{
 			"A": {8, 8, 0, 0},
@@ -447,7 +448,7 @@ func checkLazyCharts(t *testing.T, expect, actual LazyCharts, nRand int) {
 	checkData(t, expect, actual, nRand)
 }
 
-func TestGaussian(t *testing.T) {
+func TestLazyCharts(t *testing.T) {
 	root := &charts{
 		values: map[string][]float64{
 			"A": {0, 0, 0, 1, 0},
@@ -465,7 +466,7 @@ func TestGaussian(t *testing.T) {
 		expect LazyCharts
 	}{
 		{
-			"mirror none",
+			"Gaussian mirror none",
 			Gaussian(root, 1, 2, false, false),
 			&charts{
 				values: map[string][]float64{
@@ -476,7 +477,7 @@ func TestGaussian(t *testing.T) {
 			},
 		},
 		{
-			"mirror begin",
+			"Gaussian mirror begin",
 			Gaussian(root, 1, 2, true, false),
 			&charts{
 				values: map[string][]float64{
@@ -487,7 +488,7 @@ func TestGaussian(t *testing.T) {
 			},
 		},
 		{
-			"mirror both",
+			"Gaussian mirror both",
 			Gaussian(root, 1, 2, true, true),
 			&charts{
 				values: map[string][]float64{
@@ -495,6 +496,23 @@ func TestGaussian(t *testing.T) {
 					"B": {f * (m[1] + m[2]), f * (m[2] + m[0]), 2 * f * m[1], f * (m[2] + m[0]), f * (m[1] + m[2])},
 				},
 				titles: []Title{KeyTitle("A"), KeyTitle("B")},
+			},
+		},
+		{
+			"ColumnSum",
+			ColumnSum(&charts{
+				values: map[string][]float64{
+					"A": {0, 1, 2, 3, 4},
+					"B": {2, 2, 2, -1, -1},
+					"":  {0, 0, 0, 0, 0},
+				},
+				titles: []Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("")},
+			}),
+			&charts{
+				values: map[string][]float64{
+					"": {2, 3, 4, 2, 3},
+				},
+				titles: []Title{StringTitle("total")},
 			},
 		},
 	}

@@ -38,7 +38,7 @@ func (t KeyTitle) Song() string {
 	return ""
 }
 
-// ArtistTitle is a Title which uses an artit's name as key and printed string.
+// ArtistTitle is a Title which uses an artist's name as key and printed string.
 // Song() is "".
 type ArtistTitle string
 
@@ -87,4 +87,27 @@ func (t songTitle) Key() string {
 
 func (t songTitle) Song() string {
 	return t.title
+}
+
+// StringTitle is a Title which is non-empty only for String().
+type StringTitle string
+
+// String returns the the string.
+func (k StringTitle) String() string {
+	return string(k)
+}
+
+// Artist returns ""
+func (k StringTitle) Artist() string {
+	return ""
+}
+
+// Key returns ""
+func (k StringTitle) Key() string {
+	return ""
+}
+
+// Song returns "".
+func (k StringTitle) Song() string {
+	return ""
 }

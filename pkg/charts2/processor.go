@@ -311,7 +311,7 @@ func (l *partitionSum) Row(title Title, begin, end int) []float64 {
 }
 
 type titleColumn struct {
-	key string
+	key Title
 	col TitleValueMap
 }
 
@@ -326,7 +326,7 @@ func (l *partitionSum) Column(titles []Title, index int) TitleValueMap {
 		}
 		go func(titles []Title, bin Title) {
 			back <- titleColumn{
-				key: bin.Key(),
+				key: bin,
 				col: l.parent.Column(titles, index),
 			}
 		}(ts, bin)
@@ -335,9 +335,9 @@ func (l *partitionSum) Column(titles []Title, index int) TitleValueMap {
 	for range titles {
 		kf := <-back
 		for _, v := range kf.col {
-			col[kf.key] = TitleValue{
-				Title: KeyTitle(kf.key),
-				Value: col[kf.key].Value + v.Value,
+			col[kf.key.Key()] = TitleValue{
+				Title: kf.key,
+				Value: col[kf.key.Key()].Value + v.Value,
 			}
 		}
 	}
@@ -385,4 +385,10 @@ func (l *partitionSum) Data(titles []Title, begin, end int) TitleLineMap {
 
 func (l *partitionSum) Titles() []Title {
 	return l.partition.Partitions()
+}
+
+// ColumnSum is a LazyCharts that sums up all columns.
+// TODO can be optmized by bypassing partitions
+func ColumnSum(parent LazyCharts) LazyCharts {
+	return Group(parent, totalPartition(parent.Titles()))
 }

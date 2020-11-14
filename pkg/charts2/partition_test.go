@@ -54,6 +54,20 @@ func TestPartiton(t *testing.T) {
 			},
 			[]Title{KeyTitle("l"), KeyTitle("u")},
 		},
+		{
+			"totalPartition",
+			totalPartition([]Title{KeyTitle("a"), KeyTitle("b")}),
+			[]titlePartition{
+				{KeyTitle("a"), StringTitle("total")},
+				{KeyTitle("b"), StringTitle("total")},
+				{KeyTitle("B"), KeyTitle("")},
+			},
+			[]partitionTitles{
+				{StringTitle("total"), []Title{KeyTitle("a"), KeyTitle("b")}},
+				{KeyTitle("n"), []Title{}},
+			},
+			[]Title{StringTitle("total")},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			for i, tp := range c.titlePartitions {
@@ -66,7 +80,8 @@ func TestPartiton(t *testing.T) {
 			for i, pt := range c.partitionTitles {
 				titles := c.partition.Titles(pt.partition)
 				if len(titles) != len(pt.titles) {
-					t.Fatal(len(titles), "!=", len(pt.titles))
+					t.Fatalf("for partition '%v': %v != %v",
+						pt.partition, len(titles), len(pt.titles))
 				}
 				for j := range titles {
 					if pt.titles[j].Key() != titles[j].Key() {
