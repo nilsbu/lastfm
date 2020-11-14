@@ -392,3 +392,86 @@ func (l *partitionSum) Titles() []Title {
 func ColumnSum(parent LazyCharts) LazyCharts {
 	return Group(parent, totalPartition(parent.Titles()))
 }
+
+type cache struct {
+	chartsNode
+	charts charts
+	ranges map[string][2]int
+}
+
+// Cache is a LazyCharts that stores data to avoid duplicating work in parent.
+// The cache is filled when the data is requested. The data is stored in one
+// continuous block per row. Non-requested parts in between are filled.
+// E.g. if Row("A", 0, 4) and Column({"A"}, 16) are called, row "A" will store
+// range [0, 17).
+func Cache(parent LazyCharts) LazyCharts {
+	return &cache{
+		chartsNode: chartsNode{parent},
+		charts: charts{
+			titles: make([]Title, 0),
+			values: make(map[string][]float64),
+		},
+		ranges: make(map[string][2]int),
+	}
+}
+
+func (c *cache) Row(title Title, begin, end int) []float64 {
+	if line, ok := c.charts.values[title.Key()]; ok {
+		r := c.ranges[title.Key()]
+		if r[0] <= begin && r[1] >= end {
+			return line[begin-r[0] : end-r[0]]
+		}
+
+		if begin < r[0] {
+			line = append(c.parent.Row(title, begin, r[0]), line...)
+			r[0] = begin
+		}
+		if r[1] < end {
+			line = append(line, c.parent.Row(title, r[1], end)...)
+			r[1] = end
+		}
+
+		c.charts.values[title.Key()] = line
+		c.ranges[title.Key()] = r
+		return line[begin-r[0] : end-r[0]]
+	}
+
+	pLine := c.parent.Row(title, begin, end)
+	c.charts.values[title.Key()] = pLine
+	c.ranges[title.Key()] = [2]int{begin, end}
+	return pLine
+}
+
+func (c *cache) Column(titles []Title, index int) TitleValueMap {
+	data := c.Data(titles, index, index+1)
+	tvm := make(TitleValueMap)
+
+	for k, l := range data {
+		tvm[k] = TitleValue{
+			Title: l.Title,
+			Value: l.Line[0],
+		}
+	}
+
+	return tvm
+}
+
+func (c *cache) Data(titles []Title, begin, end int) TitleLineMap {
+	data := make(TitleLineMap)
+	back := make(chan TitleLine)
+
+	for k := range titles {
+		go func(k int) {
+			back <- TitleLine{
+				Title: titles[k],
+				Line:  c.Row(titles[k], begin, end),
+			}
+		}(k)
+	}
+
+	for range titles {
+		tl := <-back
+		data[tl.Title.Key()] = tl
+	}
+	return data
+}
