@@ -218,7 +218,7 @@ func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
 	for i := range in {
 		out[i] = l.mapF(i, in)
 	}
-	return out[begin:]
+	return out[begin-rb : end-rb]
 }
 
 func (l *lineMapCharts) Column(titles []Title, index int) TitleValueMap {
@@ -259,7 +259,7 @@ func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
 
 			back <- TitleLine{
 				Title: titles[k],
-				Line:  out[begin:],
+				Line:  out[begin-rb : end-rb],
 			}
 		}(k)
 	}

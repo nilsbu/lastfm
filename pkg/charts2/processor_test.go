@@ -2,6 +2,7 @@ package charts2
 
 import (
 	"math"
+	"math/rand"
 	"reflect"
 	"testing"
 )
@@ -274,6 +275,178 @@ func TestEmptyCharts(t *testing.T) {
 	}
 }
 
+func checkTitle(t *testing.T, x, a Title) {
+	if x.String() != a.String() {
+		t.Fatalf("String(): expect=%v, actual=%v",
+			x.String(), a.String())
+	}
+	if x.Key() != a.Key() {
+		t.Fatalf("Key(): expect=%v, actual=%v",
+			x.Key(), a.Key())
+	}
+	if x.Artist() != a.Artist() {
+		t.Fatalf("Artist(): expect=%v, actual=%v",
+			x.Artist(), a.Artist())
+	}
+	if x.Song() != a.Song() {
+		t.Fatalf("Song(): expect=%v, actual=%v",
+			x.Song(), a.Song())
+	}
+}
+
+func checkMeta(t *testing.T, expect, actual LazyCharts) {
+
+	if expect.Len() != actual.Len() {
+		t.Fatalf("len differs: expect=%v, actual %v", expect.Len(), actual.Len())
+	}
+
+	tx := expect.Titles()
+	ta := actual.Titles()
+	if len(tx) != len(ta) {
+		t.Fatalf("number of titles differs: expect=%v, actual %v",
+			len(tx), len(ta))
+	}
+	for i := range tx {
+		checkTitle(t, tx[i], ta[i])
+	}
+}
+
+func ranges(nRand, size int) [][2]int {
+	ranges := [][2]int{{0, size}}
+	for i := 0; i < nRand; i++ {
+		b := rand.Int() % (size - 1)
+		s := rand.Int() % (size - b)
+		ranges = append(ranges, [2]int{b, b + s})
+	}
+	return ranges
+}
+
+func checkRows(t *testing.T, expect, actual LazyCharts, nRand int) {
+
+	for _, be := range ranges(nRand, expect.Len()) {
+		for _, title := range expect.Titles() {
+			x := expect.Row(title, be[0], be[1])
+			a := actual.Row(title, be[0], be[1])
+
+			if len(a) != be[1]-be[0] {
+				t.Fatalf("row length: expect=%v-%v=%v, actual=%v",
+					be[1], be[0], be[1]-be[0], len(a))
+			}
+			if len(x) != be[1]-be[0] {
+				t.Fatalf("row length: expect=%v-%v=%v, ground truth=%v",
+					be[1], be[0], be[1]-be[0], len(x))
+			}
+
+			eq := true
+			for i := range x {
+				if math.Abs(x[i]-a[i]) > 1e-6 {
+					eq = false
+					break
+				}
+			}
+			if !eq {
+				t.Errorf("row(%v, [%v-%v]): expect=%v, actual=%v",
+					title, be[0], be[1], x, a)
+			}
+		}
+	}
+}
+
+func sets(nRand int, titles []Title) [][]Title {
+	sets := [][]Title{titles}
+
+	for i := 0; i < nRand; i++ {
+		set := []Title{}
+		for _, t := range titles {
+			set = append(set, t)
+		}
+
+		rand.Shuffle(len(set), func(i, j int) {
+			set[i], set[j] = set[j], set[i]
+		})
+
+		n := rand.Int() % len(set)
+		sets = append(sets, set[:n])
+	}
+
+	return sets
+}
+
+func checkCols(t *testing.T, expect, actual LazyCharts, nRand int) {
+
+	for _, set := range sets(nRand, expect.Titles()) {
+		for i := 0; i < expect.Len(); i++ {
+			x := expect.Column(set, i)
+			a := actual.Column(set, i)
+
+			if len(a) != len(set) {
+				t.Fatalf("col length: expect=%v, actual=%v",
+					len(set), len(a))
+			}
+			if len(x) != len(set) {
+				t.Fatalf("col length: expect=%v, ground truth=%v",
+					len(set), len(x))
+			}
+
+			for k := range x {
+				checkTitle(t, x[k].Title, a[k].Title)
+				if math.Abs(x[k].Value-a[k].Value) > 1e-6 {
+					t.Errorf("col(%v, %v): expect=%v, actual=%v",
+						k, i, x[k].Value, a[k].Value)
+				}
+			}
+		}
+	}
+}
+
+func checkData(t *testing.T, expect, actual LazyCharts, nRand int) {
+
+	ranges := ranges(nRand, expect.Len())
+	sets := sets(nRand, expect.Titles())
+
+	for i := range sets {
+		set := sets[i]
+		b, e := ranges[i][0], ranges[i][1]
+
+		x := expect.Data(set, b, e)
+		a := actual.Data(set, b, e)
+
+		for k := range x {
+			rowX := x[k]
+			rowA := a[k]
+			checkTitle(t, rowX.Title, rowA.Title)
+
+			if len(rowA.Line) != e-b {
+				t.Fatalf("data row length: expect=%v-%v=%v, actual=%v",
+					e, b, e-b, len(rowA.Line))
+			}
+			if len(rowA.Line) != e-b {
+				t.Fatalf("data row length: expect=%v-%v=%v, ground truth=%v",
+					e, b, e-b, len(rowX.Line))
+			}
+
+			eq := true
+			for i := range rowX.Line {
+				if math.Abs(rowX.Line[i]-rowA.Line[i]) > 1e-6 {
+					eq = false
+					break
+				}
+			}
+			if !eq {
+				t.Errorf("row(%v, [%v-%v]): expect=%v, actual=%v",
+					k, b, e, rowX.Line, rowA.Line)
+			}
+		}
+	}
+}
+
+func checkLazyCharts(t *testing.T, expect, actual LazyCharts, nRand int) {
+	checkMeta(t, expect, actual)
+	checkRows(t, expect, actual, nRand)
+	checkCols(t, expect, actual, nRand)
+	checkData(t, expect, actual, nRand)
+}
+
 func TestGaussian(t *testing.T) {
 	root := &charts{
 		values: map[string][]float64{
@@ -288,7 +461,7 @@ func TestGaussian(t *testing.T) {
 
 	cs := []struct {
 		name   string
-		lc     LazyCharts
+		actual LazyCharts
 		expect LazyCharts
 	}{
 		{
@@ -328,36 +501,7 @@ func TestGaussian(t *testing.T) {
 
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
-			// Rows
-			for _, title := range c.expect.Titles() {
-				x := c.expect.Row(title, 0, c.expect.Len())
-				a := c.lc.Row(title, 0, c.expect.Len())
-				eq := true
-				for i := range x {
-					if math.Abs(x[i]-a[i]) > 1e-6 {
-						eq = false
-						break
-					}
-				}
-				if !eq {
-					t.Errorf("row(%v): expect=%v, actual=%v", title, x, a)
-				}
-			}
-
-			// Columns
-			for i := 0; i < c.expect.Len(); i++ {
-				x := c.expect.Column(c.expect.Titles(), i)
-				a := c.lc.Column(c.expect.Titles(), i)
-
-				for k := range x {
-					if math.Abs(x[k].Value-a[k].Value) > 1e-6 {
-						t.Errorf("col(%v, %v): expect=%v, actual=%v",
-							k, i, x[k].Value, a[k].Value)
-					}
-				}
-			}
-
-			// TODO data
+			checkLazyCharts(t, c.expect, c.actual, 5)
 		})
 	}
 }
