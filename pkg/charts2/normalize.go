@@ -8,7 +8,7 @@ type normalizer struct {
 func NormalizeColumn(c LazyCharts) LazyCharts {
 	return &normalizer{
 		chartsNode: chartsNode{parent: c},
-		totals:     ColumnSum(c),
+		totals:     Cache(ColumnSum(c)),
 	}
 }
 

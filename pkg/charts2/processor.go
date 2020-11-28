@@ -395,9 +395,21 @@ func ColumnSum(parent LazyCharts) LazyCharts {
 
 type cache struct {
 	chartsNode
-	charts charts
-	ranges map[string][2]int
+	rows map[string]*cacheRow
 }
+
+type cacheRow struct {
+	channel    chan cacheRowRequest
+	begin, end int
+	data       []float64
+}
+
+type cacheRowRequest struct {
+	back       chan cacheRowAnswer
+	begin, end int
+}
+
+type cacheRowAnswer []float64
 
 // Cache is a LazyCharts that stores data to avoid duplicating work in parent.
 // The cache is filled when the data is requested. The data is stored in one
@@ -405,41 +417,67 @@ type cache struct {
 // E.g. if Row("A", 0, 4) and Column({"A"}, 16) are called, row "A" will store
 // range [0, 17).
 func Cache(parent LazyCharts) LazyCharts {
+	rows := make(map[string]*cacheRow)
+	for _, k := range parent.Titles() {
+		row := &cacheRow{
+			channel: make(chan cacheRowRequest),
+			begin:   -1, end: -1,
+			data: make([]float64, 0),
+		}
+		rows[k.Key()] = row
+
+		go func(title Title, row *cacheRow, parent LazyCharts) {
+			for request := range row.channel {
+
+				if row.begin > -1 {
+					if row.begin <= request.begin && row.end >= request.end {
+
+					} else {
+
+						if request.begin < row.begin {
+							row.data = append(
+								parent.Row(title, request.begin, row.begin),
+								row.data...)
+
+							row.begin = request.begin
+						}
+						if row.end < request.end {
+							row.data = append(
+								row.data,
+								parent.Row(title, row.end, request.end)...)
+
+							row.end = request.end
+						}
+
+						answer := row.data[request.begin-row.begin : request.end-row.begin]
+						request.back <- answer
+						continue
+					}
+				}
+
+				row.data = parent.Row(title, request.begin, request.end)
+				row.begin, row.end = request.begin, request.end
+
+				request.back <- row.data
+			}
+		}(k, row, parent)
+	}
+
 	return &cache{
 		chartsNode: chartsNode{parent},
-		charts: charts{
-			titles: make([]Title, 0),
-			values: make(map[string][]float64),
-		},
-		ranges: make(map[string][2]int),
+		rows:       rows,
 	}
 }
 
 func (c *cache) Row(title Title, begin, end int) []float64 {
-	if line, ok := c.charts.values[title.Key()]; ok {
-		r := c.ranges[title.Key()]
-		if r[0] <= begin && r[1] >= end {
-			return line[begin-r[0] : end-r[0]]
-		}
+	row := c.rows[title.Key()]
 
-		if begin < r[0] {
-			line = append(c.parent.Row(title, begin, r[0]), line...)
-			r[0] = begin
-		}
-		if r[1] < end {
-			line = append(line, c.parent.Row(title, r[1], end)...)
-			r[1] = end
-		}
+	back := make(chan cacheRowAnswer)
 
-		c.charts.values[title.Key()] = line
-		c.ranges[title.Key()] = r
-		return line[begin-r[0] : end-r[0]]
-	}
-
-	pLine := c.parent.Row(title, begin, end)
-	c.charts.values[title.Key()] = pLine
-	c.ranges[title.Key()] = [2]int{begin, end}
-	return pLine
+	row.channel <- cacheRowRequest{back, begin, end}
+	answer := <-back
+	close(back)
+	return answer
 }
 
 func (c *cache) Column(titles []Title, index int) TitleValueMap {
