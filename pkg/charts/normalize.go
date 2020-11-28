@@ -46,7 +46,7 @@ func (n GaussianNormalizer) Normalize(charts Charts) Charts {
 
 	blurredTotal := total.mapLine(func(in, out []float64) {
 		n2 := n
-		n2.MirrorBack = true
+		n2.MirrorBack = n.MirrorBack
 		n2.normalize(in, out, wing, kernel)
 	})
 
