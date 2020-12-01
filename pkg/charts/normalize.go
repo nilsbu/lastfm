@@ -70,9 +70,9 @@ func (n GaussianNormalizer) normalize(
 
 			for {
 				if jj < 0 {
-					jj = -jj
+					jj = -jj - 1
 				} else if jj >= len(in) {
-					jj = 2*len(in) - jj - 2
+					jj = 2*len(in) - jj - 1
 				} else {
 					break
 				}
