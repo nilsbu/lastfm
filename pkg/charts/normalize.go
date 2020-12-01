@@ -104,7 +104,7 @@ func getGaussianKernel(sigma float64, width int) []float64 {
 // SongDurations is a Normalizer that multiplies by song length.
 // If a length is not known and duration for duration[""][""] is included then
 // it will be used by default.
-type SongDurations map[string]map[string]int
+type SongDurations map[string]map[string]float64
 
 func (sd SongDurations) Normalize(charts Charts) Charts {
 	out := Charts{}
@@ -120,7 +120,7 @@ func (sd SongDurations) Normalize(charts Charts) Charts {
 		if song, ok := key.(Song); ok {
 			if t, ok := sd[song.Artist]; ok {
 				if duration, ok := t[song.Title]; ok {
-					f = float64(duration)
+					f = duration
 					found = true
 				}
 			}
@@ -128,7 +128,7 @@ func (sd SongDurations) Normalize(charts Charts) Charts {
 		if !found {
 			if t, ok := sd[""]; ok {
 				if duration, ok := t[""]; ok {
-					f = float64(duration)
+					f = duration
 				}
 			}
 		}

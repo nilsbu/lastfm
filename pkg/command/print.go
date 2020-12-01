@@ -205,13 +205,13 @@ func normalizeDuration(cha charts.Charts, r rsrc.Reader) (charts.Charts, error) 
 	for _, info := range infos {
 		if info.Duration > 0 {
 			if _, ok := sd[info.Artist]; !ok {
-				sd[info.Artist] = make(map[string]int)
+				sd[info.Artist] = make(map[string]float64)
 			}
-			sd[info.Artist][info.Track] = info.Duration / 60
+			sd[info.Artist][info.Track] = float64(info.Duration) / 60.0
 		}
 	}
-	sd[""] = make(map[string]int)
-	sd[""][""] = 4
+	sd[""] = make(map[string]float64)
+	sd[""][""] = 4.0
 	return sd.Normalize(cha), nil
 }
 
