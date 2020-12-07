@@ -1,5 +1,9 @@
 package charts2
 
+import (
+	legacy "github.com/nilsbu/lastfm/pkg/charts"
+)
+
 // Partition divides titles into separate groups called partitions.
 // Each title belongs to no more than one partition which can be obtained by
 // Partition(title). Conversely Titles(partition) will include all titles
@@ -93,5 +97,35 @@ func totalPartition(titles []Title) Partition {
 	for i, title := range titles {
 		tpPairs[i] = [2]Title{title, p}
 	}
+	return KeyPartition(tpPairs)
+}
+
+// FirstTagPartition creates a partition where a select group of tags point to
+// the partitions. Each key is assigned to its partition by first tag included
+// in tagToPartition. Corrections can override this.
+func FirstTagPartition(
+	tags map[string][]legacy.Tag, // TODO: use different type or move struct here
+	tagToPartition map[string]string,
+	corrections map[string]string,
+) Partition {
+	// if corrections == nil {
+	// 	corrections = make(map[string]string)
+	// }
+
+	tpPairs := [][2]Title{}
+
+	for title, list := range tags {
+		for _, tag := range list {
+			if partition, ok := corrections[tag.Name]; ok {
+				tpPairs = append(tpPairs, [2]Title{ArtistTitle(title), KeyTitle(partition)})
+				break
+			}
+			if partition, ok := tagToPartition[tag.Name]; ok {
+				tpPairs = append(tpPairs, [2]Title{ArtistTitle(title), KeyTitle(partition)})
+				break
+			}
+		}
+	}
+
 	return KeyPartition(tpPairs)
 }

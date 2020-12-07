@@ -2,6 +2,8 @@ package charts2
 
 import (
 	"testing"
+
+	legacy "github.com/nilsbu/lastfm/pkg/charts"
 )
 
 type titlePartition struct {
@@ -68,12 +70,80 @@ func TestPartiton(t *testing.T) {
 			},
 			[]Title{StringTitle("total")},
 		},
+		{
+			"empty first key partition",
+			FirstTagPartition(
+				map[string][]legacy.Tag{},
+				map[string]string{},
+				nil,
+			),
+			[]titlePartition{
+				{KeyTitle("a"), KeyTitle("")},
+			},
+			[]partitionTitles{
+				{KeyTitle("x"), []Title{}},
+			},
+			[]Title{},
+		},
+		{
+			"first key partition without correction",
+			FirstTagPartition(
+				map[string][]legacy.Tag{
+					"A": []legacy.Tag{{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
+					"B": []legacy.Tag{{Name: "b", Weight: 25}, {Name: "c", Weight: 100}}, // Ignore Weight
+					"C": []legacy.Tag{{Name: "-", Weight: 100}, {Name: "c", Weight: 50}},
+				},
+				map[string]string{
+					"a": "vowel", "b": "consonant", "c": "consonant",
+				},
+				nil,
+			),
+			[]titlePartition{
+				{ArtistTitle("A"), KeyTitle("vowel")},
+				{ArtistTitle("B"), KeyTitle("consonant")},
+				{ArtistTitle("C"), KeyTitle("consonant")},
+				{ArtistTitle("X"), KeyTitle("")},
+			},
+			[]partitionTitles{
+				{KeyTitle("consonant"), []Title{ArtistTitle("B"), ArtistTitle("C")}},
+				{KeyTitle("vowel"), []Title{ArtistTitle("A")}},
+			},
+			[]Title{KeyTitle("vowel"), KeyTitle("consonant")},
+		},
+		{
+			"first key partition with correction",
+			FirstTagPartition(
+				map[string][]legacy.Tag{
+					"A": []legacy.Tag{{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
+					"Y": []legacy.Tag{{Name: "b", Weight: 25}, {Name: "y", Weight: 100}}, // Ignore Weight
+					"Ü": []legacy.Tag{{Name: "-", Weight: 100}, {Name: "ü", Weight: 50}},
+				},
+				map[string]string{
+					"a": "vowel", "y": "consonant", "ü": "vowel",
+				},
+				map[string]string{
+					"y": "vowel", "ü": "umlaut",
+				},
+			),
+			[]titlePartition{
+				{ArtistTitle("A"), KeyTitle("vowel")},
+				{ArtistTitle("Y"), KeyTitle("vowel")},
+				{ArtistTitle("Ü"), KeyTitle("umlaut")},
+				{ArtistTitle("X"), KeyTitle("")},
+			},
+			[]partitionTitles{
+				{KeyTitle("consonant"), []Title{}},
+				{KeyTitle("vowel"), []Title{ArtistTitle("A"), ArtistTitle("Y")}},
+				{KeyTitle("umlaut"), []Title{ArtistTitle("Ü")}},
+			},
+			[]Title{KeyTitle("vowel"), KeyTitle("umlaut")},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			for i, tp := range c.titlePartitions {
+			for _, tp := range c.titlePartitions {
 				partition := c.partition.Partition(tp.title)
 				if tp.partition.Key() != partition.Key() {
-					t.Errorf("%v: '%v' != '%v'", i, tp.partition, partition)
+					t.Errorf("'%v': '%v' != '%v'", tp.title, tp.partition, partition)
 				}
 			}
 
