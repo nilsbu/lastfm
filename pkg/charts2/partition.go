@@ -108,10 +108,6 @@ func FirstTagPartition(
 	tagToPartition map[string]string,
 	corrections map[string]string,
 ) Partition {
-	// if corrections == nil {
-	// 	corrections = make(map[string]string)
-	// }
-
 	tpPairs := [][2]Title{}
 
 	for title, list := range tags {

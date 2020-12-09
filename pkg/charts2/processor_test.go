@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"reflect"
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 // TODO merge with LazyCharts
@@ -518,6 +520,26 @@ func TestLazyCharts(t *testing.T) {
 			"cached Gaussian",
 			Gaussian(root, 1, 2, false, false),
 			Cache(Gaussian(root, 1, 2, false, false)),
+		},
+		{
+			"Interval",
+			Interval(&charts{
+				values: map[string][]float64{
+					"A": {0, 1, 2, 3, 4},
+				},
+				titles: []Title{KeyTitle("A")},
+			},
+				Range{
+					Begin:      rsrc.ParseDay("2020-01-01"),
+					End:        rsrc.ParseDay("2020-01-03"),
+					Registered: rsrc.ParseDay("2019-12-31")},
+			),
+			&charts{
+				values: map[string][]float64{
+					"A": {1, 2},
+				},
+				titles: []Title{KeyTitle("A")},
+			},
 		},
 	}
 
