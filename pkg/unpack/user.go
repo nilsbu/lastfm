@@ -183,7 +183,22 @@ func LoadArtistCorrections(user string, r rsrc.Reader,
 // is a map with the artist names as keys and intended supertags as values.
 func LoadSupertagCorrections(user string, r rsrc.Reader,
 ) (map[string]string, error) {
-	data, err := obtain(obCorrections{user, rsrc.SupertagCorrections}, r)
+	return loadTagCorrections(user, r, rsrc.SupertagCorrections)
+}
+
+// LoadCountryCorrections loads corrections for artist's country. The result
+// is a map with the artist names as keys and intended supertags as values.
+func LoadCountryCorrections(user string, r rsrc.Reader,
+) (map[string]string, error) {
+	return loadTagCorrections(user, r, rsrc.CountryCorrections)
+}
+
+func loadTagCorrections(
+	user string,
+	r rsrc.Reader,
+	corrections func(string) rsrc.Locator,
+) (map[string]string, error) {
+	data, err := obtain(obCorrections{user, corrections}, r)
 	if err != nil {
 		return nil, err
 	}
