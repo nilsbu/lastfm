@@ -9,6 +9,7 @@ var Countries = map[string]string{
 	"australian":    "Australia",
 	"austrian":      "Austria",
 	"bangladeshi":   "Bangladesh",
+	"barbadian":     "Barbados",
 	"belgian":       "Belgium",
 	"bolivian":      "Bolivia",
 	"batswana":      "Botswana",
