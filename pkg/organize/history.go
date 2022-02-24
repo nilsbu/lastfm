@@ -23,6 +23,7 @@ func LoadHistory(
 	}
 
 	registered := user.Registered.Midnight()
+	cache := unpack.NewCachedLoader(r)
 
 	days := int((until.Midnight() - registered) / 86400)
 	result := make([][]charts.Song, days+1)
@@ -30,7 +31,7 @@ func LoadHistory(
 	for i := range result {
 		go func(i int) {
 			date := user.Registered.AddDate(0, 0, i)
-			dp, err := loadDayPlays(user.Name, date, r)
+			dp, err := loadDayPlays(user.Name, date, r, cache)
 			if err == nil {
 				result[i] = dp
 			}
@@ -60,12 +61,18 @@ type loadDayPlaysResult struct {
 func loadDayPlays(
 	user string,
 	time rsrc.Day,
-	r rsrc.Reader,
+	r rsrc.Reader, cache *unpack.CachedLoader,
 ) ([]charts.Song, error) {
 	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
 	if err != nil {
 		return nil, err
-	} else if firstPage.Pages < 2 {
+	}
+	err = attachDuration(firstPage.Plays, cache)
+	if err != nil {
+		return nil, err
+	}
+
+	if firstPage.Pages < 2 {
 		return firstPage.Plays, nil
 	}
 
@@ -79,7 +86,8 @@ func loadDayPlays(
 			if tmpErr != nil {
 				back <- loadDayPlaysResult{nil, page, tmpErr}
 			} else {
-				back <- loadDayPlaysResult{histPage.Plays, page, nil}
+				err := attachDuration(histPage.Plays, cache)
+				back <- loadDayPlaysResult{histPage.Plays, page, err}
 			}
 		}(page)
 	}
@@ -101,6 +109,55 @@ func loadDayPlays(
 	return plays, err
 }
 
+// TODO put somewhere else?
+
+// Pi executes f in parallel n times
+func Pi(n int, f func(int)) {
+	back := make(chan bool, n)
+
+	for i := 0; i < n; i++ {
+		go func(i int) {
+			f(i)
+			back <- true
+		}(i)
+	}
+
+	for i := 0; i < n; i++ {
+		<-back
+	}
+}
+
+func attachDuration(songs []charts.Song, cache *unpack.CachedLoader) error {
+	errs := make([]error, len(songs))
+	hasError := false
+
+	Pi(len(songs), func(i int) {
+		if hasError {
+			return
+		} else if info, err := unpack.LoadTrackInfo(songs[i].Artist, songs[i].Title, cache); err == nil {
+			songs[i].Duration = float64(info.Duration) / 60.0
+		} else {
+			hasError = true
+			errs[i] = err
+		}
+	})
+
+	if !hasError {
+		return nil
+	}
+
+	merr := &MultiError{
+		Msg:  "couldn't load track info",
+		Errs: []error{},
+	}
+	for _, err := range errs {
+		if err != nil {
+			merr.Errs = append(merr.Errs, err)
+		}
+	}
+	return merr
+}
+
 // UpdateHistory loads saved daily plays from preprocessed all day plays and
 // reads the remaining days from raw data. The last saved day gets reloaded.
 func UpdateHistory(
@@ -114,6 +171,8 @@ func UpdateHistory(
 	}
 	registeredDay := user.Registered.Midnight()
 	begin := registeredDay
+
+	cache := unpack.NewCachedLoader(s)
 
 	oldPlays, err := unpack.LoadSongHistory(user.Name, s)
 	if err != nil {
@@ -145,6 +204,13 @@ func UpdateHistory(
 	newPlays, err := LoadHistory(
 		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
 		until, store.Fresh(s))
+
+	for _, plays := range newPlays {
+		err = attachDuration(plays, cache)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return append(oldPlays, newPlays...), err
 }
