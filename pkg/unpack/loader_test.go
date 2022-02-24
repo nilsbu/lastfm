@@ -18,7 +18,7 @@ func TestCachedLoaderShutdownOnError(t *testing.T) {
 		t.Fatal("setup error")
 	}
 
-	buf := NewCachedLoader(io)
+	buf := NewCached(io)
 
 	_, err = LoadTagInfo("error", buf)
 	if err == nil {

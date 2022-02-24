@@ -16,7 +16,7 @@ type updateHistory struct{}
 
 func (cmd updateHistory) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	user, err := unpack.LoadUserInfo(session.User, s)
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
 	if err != nil {
 		return errors.Wrap(err, "failed to load user info")
 	}

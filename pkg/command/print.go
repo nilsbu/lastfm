@@ -110,7 +110,7 @@ func getOutCharts(
 ) (charts.Charts, error) {
 	cmd := pcd.PrintCharts()
 
-	user, err := unpack.LoadUserInfo(session.User, r)
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(r))
 	if err != nil {
 		return charts.Charts{}, errors.Wrap(err, "failed to load user info")
 	}
@@ -454,7 +454,7 @@ type printTags struct {
 func (cmd printTags) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
 
-	tags, err := unpack.LoadArtistTags(cmd.artist, s)
+	tags, err := unpack.LoadArtistTags(cmd.artist, unpack.NewCacheless(s))
 	if err != nil {
 		return err
 	}

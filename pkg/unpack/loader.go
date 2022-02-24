@@ -5,8 +5,26 @@ import (
 	"github.com/pkg/errors"
 )
 
-// CachedLoader if a buffer that stores tag information.
-type CachedLoader struct {
+// Loader is able to load and unpack data
+type Loader interface {
+	load(ob obtainer) (interface{}, error)
+}
+
+// cacheless is a loader that doesn't use a cache
+type cacheless struct {
+	rsrc.Reader
+}
+
+func NewCacheless(r rsrc.Reader) Loader {
+	return &cacheless{Reader: r}
+}
+
+func (l *cacheless) load(ob obtainer) (interface{}, error) {
+	return obtain(ob, l)
+}
+
+// cached if a buffer that stores tag information.
+type cached struct {
 	reader      rsrc.Reader
 	requestChan chan cacheRequest
 }
@@ -22,21 +40,21 @@ type cachedResult struct {
 	err  error
 }
 
-// NewCachedLoader creates a buffer which can read and store information.
-func NewCachedLoader(r rsrc.Reader) *CachedLoader {
-	buf := &CachedLoader{
+// NewCached creates a buffer which can read and store information.
+func NewCached(r rsrc.Reader) Loader {
+	l := &cached{
 		reader:      r,
 		requestChan: make(chan cacheRequest),
 	}
 
-	go buf.worker()
-	return buf
+	go l.worker()
+	return l
 }
 
-func (buf *CachedLoader) Load(ob obtainer) (interface{}, error) {
+func (l *cached) load(ob obtainer) (interface{}, error) {
 	back := make(chan cachedResult)
 
-	buf.requestChan <- cacheRequest{
+	l.requestChan <- cacheRequest{
 		ob:   ob,
 		back: back,
 	}
@@ -49,7 +67,7 @@ func (buf *CachedLoader) Load(ob obtainer) (interface{}, error) {
 	return result.data, nil
 }
 
-func (buf *CachedLoader) worker() {
+func (l *cached) worker() {
 	resultChan := make(chan cachedResult)
 
 	requests := make(map[string][]cacheRequest)
@@ -59,7 +77,7 @@ func (buf *CachedLoader) worker() {
 
 	for {
 		select {
-		case request := <-buf.requestChan:
+		case request := <-l.requestChan:
 			path, _ := request.ob.locator().Path()
 			if ic, ok := itemCounts[path]; ok {
 				request.back <- ic
@@ -75,7 +93,7 @@ func (buf *CachedLoader) worker() {
 				path, _ := request.ob.locator().Path()
 				requests[path] = append(requests[path], request)
 				go func(request cacheRequest) {
-					data, err := obtain(request.ob, buf.reader)
+					data, err := obtain(request.ob, l.reader)
 					if err != nil {
 						hasFatal = hasFatal || isFatal(err)
 						resultChan <- cachedResult{request.ob.locator(), nil, err}

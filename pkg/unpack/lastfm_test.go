@@ -58,7 +58,7 @@ func TestLoadUserInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			user, err := LoadUserInfo(c.name, io)
+			user, err := LoadUserInfo(c.name, NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -175,7 +175,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			hist, err := LoadHistoryDayPage(c.user, c.page, c.day, io)
+			hist, err := LoadHistoryDayPage(c.user, c.page, c.day, NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -221,7 +221,7 @@ func TestLoadArtistInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			info, err := LoadArtistInfo(c.artist, io)
+			info, err := LoadArtistInfo(c.artist, NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -280,7 +280,7 @@ func TestLoadArtistTags(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			tags, err := LoadArtistTags(c.artist, io)
+			tags, err := LoadArtistTags(c.artist, NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -323,7 +323,7 @@ func TestWriteLoadArtistTags(t *testing.T) {
 				t.Fatal("unexpected error:", err)
 			}
 
-			tags, err := LoadArtistTags(c.artist, io)
+			tags, err := LoadArtistTags(c.artist, NewCacheless(io))
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
@@ -402,7 +402,7 @@ func TestLoadTagInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			buf := NewCachedLoader(io)
+			buf := NewCached(io)
 
 			n := 0
 			for _, names := range c.names {
@@ -471,7 +471,7 @@ func TestWriteLoadTagInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			ctl := NewCachedLoader(io)
+			ctl := NewCached(io)
 
 			err = WriteTagInfo(c.tag, io)
 			if err != nil {
@@ -526,7 +526,7 @@ func TestLoadTrackInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			buf := NewCachedLoader(io)
+			buf := NewCached(io)
 
 			info, err := LoadTrackInfo(c.artist, c.track, buf)
 			if err != nil && c.ok {
@@ -578,7 +578,7 @@ func TestWriteLoadTrackInfo(t *testing.T) {
 				t.Fatal("unexpected error:", err)
 			}
 
-			info, err := LoadTrackInfo(c.artist, c.track, NewCachedLoader(io))
+			info, err := LoadTrackInfo(c.artist, c.track, NewCached(io))
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}

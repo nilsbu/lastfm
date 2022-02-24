@@ -18,7 +18,7 @@ func LoadTrackInfos(
 ) ([]unpack.TrackInfo, error) {
 	trackInfos := make([]unpack.TrackInfo, len(songs))
 
-	cache := unpack.NewCachedLoader(r)
+	cache := unpack.NewCached(r)
 
 	feedback := make(chan *trackInfoResult)
 	for i, song := range songs {

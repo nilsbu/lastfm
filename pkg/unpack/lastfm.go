@@ -47,8 +47,8 @@ type obUserInfo struct {
 
 // LoadUserInfo loads a user's registration date. It is returned along with the
 // name.
-func LoadUserInfo(name string, r rsrc.Reader) (*User, error) {
-	data, err := obtain(&obUserInfo{name}, r)
+func LoadUserInfo(name string, l Loader) (*User, error) {
+	data, err := l.load(&obUserInfo{name})
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +104,10 @@ type obHistorySingle struct {
 
 // LoadHistoryDayPage loads a page of a user's played tracks.
 func LoadHistoryDayPage(
-	user string, page int, day rsrc.Day, r rsrc.Reader) (*HistoryDayPage, error) {
-	data, err := obtain(&obHistory{user, page, day}, r)
+	user string, page int, day rsrc.Day, l Loader) (*HistoryDayPage, error) {
+	data, err := l.load(&obHistory{user, page, day})
 	if err != nil {
-		data, err = obtain(&obHistorySingle{obHistory{user, page, day}}, r)
+		data, err = l.load(&obHistorySingle{obHistory{user, page, day}})
 		if err != nil {
 			return nil, err
 		}
@@ -177,8 +177,8 @@ type obArtistInfo struct {
 }
 
 // LoadArtistInfo reads information of an artist.
-func LoadArtistInfo(artist string, r rsrc.Reader) (*ArtistInfo, error) {
-	data, err := obtain(&obArtistInfo{artist}, r)
+func LoadArtistInfo(artist string, l Loader) (*ArtistInfo, error) {
+	data, err := l.load(&obArtistInfo{artist})
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +214,8 @@ type obArtistTags struct {
 }
 
 // LoadArtistTags reads the top tags of an artist.
-func LoadArtistTags(artist string, r rsrc.Reader) ([]TagCount, error) {
-	data, err := obtain(&obArtistTags{artist}, r)
+func LoadArtistTags(artist string, l Loader) ([]TagCount, error) {
+	data, err := l.load(&obArtistTags{artist})
 	if err != nil {
 		return nil, err
 	}
@@ -267,8 +267,8 @@ type obTagInfo struct {
 }
 
 // LoadTagInfo loads tag information.
-func LoadTagInfo(tag string, buf *CachedLoader) (*charts.Tag, error) {
-	data, err := buf.Load(&obTagInfo{tag})
+func LoadTagInfo(tag string, l Loader) (*charts.Tag, error) {
+	data, err := l.load(&obTagInfo{tag})
 	if err != nil {
 		return nil, err
 	}
@@ -322,8 +322,8 @@ type obTrackInfo struct {
 }
 
 // LoadTrackInfo reads the track information.
-func LoadTrackInfo(artist, track string, buf *CachedLoader) (TrackInfo, error) {
-	data, err := buf.Load(&obTrackInfo{artist, track})
+func LoadTrackInfo(artist, track string, l Loader) (TrackInfo, error) {
+	data, err := l.load(&obTrackInfo{artist, track})
 	if err != nil {
 		return TrackInfo{}, err
 	}
