@@ -526,7 +526,9 @@ func TestLoadTrackInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			info, err := LoadTrackInfo(c.artist, c.track, io)
+			buf := NewCachedLoader(io)
+
+			info, err := LoadTrackInfo(c.artist, c.track, buf)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -576,7 +578,7 @@ func TestWriteLoadTrackInfo(t *testing.T) {
 				t.Fatal("unexpected error:", err)
 			}
 
-			info, err := LoadTrackInfo(c.artist, c.track, io)
+			info, err := LoadTrackInfo(c.artist, c.track, NewCachedLoader(io))
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}

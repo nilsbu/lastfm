@@ -322,8 +322,8 @@ type obTrackInfo struct {
 }
 
 // LoadTrackInfo reads the track information.
-func LoadTrackInfo(artist, track string, r rsrc.Reader) (TrackInfo, error) {
-	data, err := obtain(&obTrackInfo{artist, track}, r)
+func LoadTrackInfo(artist, track string, buf *CachedLoader) (TrackInfo, error) {
+	data, err := buf.Load(&obTrackInfo{artist, track})
 	if err != nil {
 		return TrackInfo{}, err
 	}

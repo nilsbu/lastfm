@@ -18,10 +18,12 @@ func LoadTrackInfos(
 ) ([]unpack.TrackInfo, error) {
 	trackInfos := make([]unpack.TrackInfo, len(songs))
 
+	cache := unpack.NewCachedLoader(r)
+
 	feedback := make(chan *trackInfoResult)
 	for i, song := range songs {
 		go func(i int, song charts.Song) {
-			infos, err := unpack.LoadTrackInfo(song.Artist, song.Title, r)
+			infos, err := unpack.LoadTrackInfo(song.Artist, song.Title, cache)
 			feedback <- &trackInfoResult{i, infos, err}
 		}(i, song)
 	}
