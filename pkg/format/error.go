@@ -29,3 +29,7 @@ func (f *Error) Plain(w io.Writer) error {
 	_, err := io.WriteString(w, str)
 	return err
 }
+
+func (f *Error) HTML(w io.Writer) error {
+	return f.Plain(w)
+}

@@ -6,4 +6,5 @@ import "io"
 type Formatter interface {
 	CSV(w io.Writer, decimal string) error
 	Plain(io.Writer) error
+	HTML(io.Writer) error
 }

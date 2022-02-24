@@ -33,7 +33,7 @@ func (f *Table) CSV(w io.Writer, decimal string) error {
 	}
 	io.WriteString(w, "\n")
 
-	return f.formatBody(w, ";", ";", decimal, true)
+	return f.formatBody(w, "", "\n", ";", ";", decimal, true)
 }
 
 func (f *Table) Plain(w io.Writer) error {
@@ -41,12 +41,23 @@ func (f *Table) Plain(w io.Writer) error {
 		return nil
 	}
 
-	return f.formatBody(w, ": ", ", ", ".", false)
+	return f.formatBody(w, "", "\n", ": ", ", ", ".", false)
+}
+
+func (f *Table) HTML(w io.Writer) error {
+	if f.Charts.Len() == 0 {
+		return nil
+	}
+
+	io.WriteString(w, "<table>")
+	defer io.WriteString(w, "</table>")
+
+	return f.formatBody(w, "<tr><td>", "</td></tr>", "</td><td>", "</td><td>", ".", false)
 }
 
 func (f *Table) formatBody(
 	w io.Writer,
-	delim0, delim, decimal string,
+	start, end, delim0, delim, decimal string,
 	quoteName bool) error {
 	var pattern string
 	if quoteName {
@@ -59,6 +70,8 @@ func (f *Table) formatBody(
 	col, _ := f.Charts.Column(-1)
 
 	for _, x := range col.Top(f.Count) {
+		io.WriteString(w, start)
+
 		var line []float64
 		for i, key := range f.Charts.Keys {
 			if key.String() == x.Name {
@@ -80,7 +93,7 @@ func (f *Table) formatBody(
 			}
 			io.WriteString(w, s)
 		}
-		io.WriteString(w, "\n")
+		io.WriteString(w, end)
 	}
 
 	return nil

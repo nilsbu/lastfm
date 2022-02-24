@@ -44,6 +44,7 @@ var cmdRoot = node{
 	nodes: map[string]node{
 		"lastfm":     cmdLastfm,
 		"lastfm-csv": cmdLastfm,
+		"lastfm-srv": cmdLastfm,
 	},
 }
 

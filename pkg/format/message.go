@@ -33,3 +33,14 @@ func (f *Message) Plain(w io.Writer) error {
 
 	return nil
 }
+
+func (f *Message) HTML(w io.Writer) error {
+	if f.Msg == "" {
+		return nil
+	}
+
+	var html string = strings.ReplaceAll(f.Msg, "\n", "<br/>")
+	_, err := fmt.Fprintf(w, "%v", html)
+
+	return err
+}
