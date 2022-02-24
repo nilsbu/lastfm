@@ -107,7 +107,7 @@ func TestLoadHistory(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			io, _ := mock.IO(tc.files, mock.Path)
 
-			dps, err := LoadHistory(tc.user, tc.until, io)
+			dps, err := loadHistory(tc.user, tc.until, io, unpack.NewCached(io))
 			if err != nil && tc.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !tc.ok {
