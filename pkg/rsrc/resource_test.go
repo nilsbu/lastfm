@@ -202,6 +202,7 @@ func TestUserDataPath(t *testing.T) {
 		{SongHistory("user1"), ".lastfm/user/user1/history.json"},
 		{ArtistCorrections("user1"), ".lastfm/user/user1/artistcorrections.json"},
 		{SupertagCorrections("user1"), ".lastfm/user/user1/supertagcorrections.json"},
+		{CountryCorrections("user1"), ".lastfm/user/user1/countrycorrections.json"},
 	}
 
 	for _, c := range cases {

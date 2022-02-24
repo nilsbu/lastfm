@@ -36,6 +36,14 @@ func (f *Charts) Plain(w io.Writer) error {
 	return colFormatter.Plain(w)
 }
 
+func (f *Charts) HTML(w io.Writer) error {
+	colFormatter := f.column()
+	if colFormatter == nil {
+		return nil
+	}
+	return colFormatter.HTML(w)
+}
+
 func (f *Charts) column() *Column {
 	col, err := f.Charts.Column(f.Column)
 	if err != nil {
@@ -80,6 +88,12 @@ func (f *Column) CSV(w io.Writer, decimal string) error {
 
 func (f *Column) Plain(w io.Writer) error {
 	return f.format("", f.getPlainPattern(), ".", w)
+}
+
+func (f *Column) HTML(w io.Writer) error {
+	io.WriteString(w, "<table>")
+	defer io.WriteString(w, "</table>")
+	return f.format("", f.getHTMLPattern(), ".", w)
 }
 
 func (f *Column) format(
@@ -131,6 +145,18 @@ func (f *Column) getPlainPattern() (pattern string) {
 
 	maxNameLen := strconv.Itoa(f.getMaxNameLen())
 	pattern += "%-" + maxNameLen + "v - %v\n"
+
+	return pattern
+}
+
+func (f *Column) getHTMLPattern() (pattern string) {
+
+	pattern = "<tr>"
+	if f.Numbered {
+		pattern += "<td>%d</td>"
+	}
+
+	pattern += "<td>%v</td><td>%v</td></tr>"
 
 	return pattern
 }

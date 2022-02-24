@@ -246,6 +246,13 @@ func SupertagCorrections(user string) Locator {
 	}
 }
 
+func CountryCorrections(user string) Locator {
+	return &userData{
+		method: "countrycorrections",
+		name:   user,
+	}
+}
+
 func (u userData) URL(apiKey string) (string, error) {
 	return "", fmt.Errorf("'%v' cannot be used as a URL", u.method)
 }

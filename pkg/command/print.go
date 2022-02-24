@@ -67,7 +67,9 @@ func (cmd printCharts) getPartition(
 			return nil, err
 		}
 
-		return charts.FirstTagPartition(tags, config.Countries, nil), nil
+		corrections, _ := unpack.LoadCountryCorrections(session.User, r)
+
+		return charts.FirstTagPartition(tags, config.Countries, corrections), nil
 	default:
 		return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
 	}

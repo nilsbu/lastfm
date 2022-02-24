@@ -66,3 +66,36 @@ func TestMessagePlain(t *testing.T) {
 		})
 	}
 }
+
+func TestMessageHTML(t *testing.T) {
+	cases := []struct {
+		msg       string
+		formatted string
+	}{
+		{
+			"",
+			"",
+		},
+		{
+			"some text\nnew line",
+			"some text<br/>new line",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			formatter := &Message{Msg: c.msg}
+			formatter.HTML(buf)
+
+			msg := buf.String()
+			if c.formatted == "" {
+				if msg != "" {
+					t.Error("something was printed despite empty message")
+				}
+			} else if msg != c.formatted {
+				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", msg, c.formatted)
+			}
+		})
+	}
+}
