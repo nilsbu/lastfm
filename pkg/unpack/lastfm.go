@@ -5,7 +5,6 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/pkg/errors"
 )
 
 // LastfmError wraps an error returned  by Last.fm.
@@ -263,111 +262,17 @@ func (o *obArtistTags) raw(obj interface{}) interface{} {
 	return js
 }
 
-// CachedTagLoader if a buffer that stores tag information.
-type CachedTagLoader struct {
-	reader      rsrc.Reader
-	requestChan chan tagRequest
-}
-
-type tagRequest struct {
-	name string
-	back chan tagResult
-}
-
-type tagResult struct {
-	name string
-	tag  *charts.Tag
-	err  error
-}
-
 type obTagInfo struct {
 	name string
 }
 
-// NewCachedTagLoader creates a buffer which can read and store tag information.
-func NewCachedTagLoader(r rsrc.Reader) *CachedTagLoader {
-	buf := &CachedTagLoader{
-		reader:      r,
-		requestChan: make(chan tagRequest),
-	}
-
-	go buf.worker()
-	return buf
-}
-
-func (buf *CachedTagLoader) worker() {
-	resultChan := make(chan tagResult)
-
-	requests := make(map[string][]tagRequest)
-	tagCounts := make(map[string]tagResult)
-
-	hasFatal := false
-
-	for {
-		select {
-		case request := <-buf.requestChan:
-			if tc, ok := tagCounts[request.name]; ok {
-				request.back <- tc
-				close(request.back)
-			} else if hasFatal {
-				request.back <- tagResult{
-					name: request.name,
-					tag:  nil,
-					err:  errors.New("abort due to previous error"),
-				}
-				close(request.back)
-			} else {
-
-				requests[request.name] = append(requests[request.name], request)
-				go func(request tagRequest) {
-					data, err := obtain(&obTagInfo{request.name}, buf.reader)
-					if err != nil {
-						hasFatal = hasFatal || isFatal(err)
-						resultChan <- tagResult{request.name, nil, err}
-					} else {
-						tag := data.(*charts.Tag)
-						resultChan <- tagResult{request.name, tag, nil}
-					}
-				}(request)
-			}
-
-		case tag := <-resultChan:
-			tagCounts[tag.name] = tag
-
-			for _, request := range requests[tag.name] {
-				request.back <- tag
-				close(request.back)
-			}
-
-			requests[tag.name] = nil
-		}
-	}
-}
-
-func isFatal(err error) bool {
-	switch err.(type) {
-	case *LastfmError:
-		return err.(*LastfmError).IsFatal()
-	default:
-		return true
-	}
-}
-
 // LoadTagInfo loads tag information.
-func (buf *CachedTagLoader) LoadTagInfo(tag string) (*charts.Tag, error) {
-	back := make(chan tagResult)
-
-	buf.requestChan <- tagRequest{
-		name: tag,
-		back: back,
+func LoadTagInfo(tag string, buf *CachedLoader) (*charts.Tag, error) {
+	data, err := buf.Load(&obTagInfo{tag})
+	if err != nil {
+		return nil, err
 	}
-
-	result := <-back
-	if result.err != nil {
-		return nil, result.err
-	}
-
-	return result.tag, nil
+	return data.(*charts.Tag), nil
 }
 
 // WriteTagInfo writes tag infos.

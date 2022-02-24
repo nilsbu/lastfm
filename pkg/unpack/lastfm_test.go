@@ -390,7 +390,7 @@ func TestLoadTagInfo(t *testing.T) {
 			[][]string{{"error"}, {"african"}},
 			[]*charts.Tag{
 				nil,
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493}},
+				{Name: "african", Total: 55266, Reach: 10493}},
 			false,
 		},
 	}
@@ -402,7 +402,7 @@ func TestLoadTagInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			buf := NewCachedTagLoader(io)
+			buf := NewCachedLoader(io)
 
 			n := 0
 			for _, names := range c.names {
@@ -417,7 +417,7 @@ func TestLoadTagInfo(t *testing.T) {
 			for _, names := range c.names {
 				for i := range names {
 					go func(i int) {
-						res, err := buf.LoadTagInfo(names[i])
+						res, err := LoadTagInfo(names[i], buf)
 						tags[i+n] = res
 						feedback <- err
 					}(i)
@@ -451,28 +451,6 @@ func TestLoadTagInfo(t *testing.T) {
 	}
 }
 
-func TestTagInfoShutdownOnError(t *testing.T) {
-	io, err := mock.IO(map[rsrc.Locator][]byte{
-		rsrc.TagInfo("error"):   []byte(`{"error":29,"message":"Rate Limit Exceeded"}`),
-		rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
-	}, mock.Path)
-	if err != nil {
-		t.Fatal("setup error")
-	}
-
-	buf := NewCachedTagLoader(io)
-
-	_, err = buf.LoadTagInfo("error")
-	if err == nil {
-		t.Fatal("expected error but none occurred for tag 'error'")
-	}
-
-	_, err = buf.LoadTagInfo("african")
-	if err == nil {
-		t.Fatal("expected error but none occurred for tag 'african'")
-	}
-}
-
 func TestWriteLoadTagInfo(t *testing.T) {
 	// WriteTagInfo only tested in combination with loading for simplicity.
 	cases := []struct {
@@ -493,14 +471,14 @@ func TestWriteLoadTagInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			ctl := NewCachedTagLoader(io)
+			ctl := NewCachedLoader(io)
 
 			err = WriteTagInfo(c.tag, io)
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
 
-			tag, err := ctl.LoadTagInfo(c.tag.Name)
+			tag, err := LoadTagInfo(c.tag.Name, ctl)
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
