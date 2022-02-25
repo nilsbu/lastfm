@@ -22,22 +22,22 @@ func UpdateHistory(
 			user.Name)
 	}
 	registeredDay := user.Registered.Midnight()
-	begin := user.Registered
+	endCached := user.Registered
 
 	cache := unpack.NewCached(s)
 
 	bookmark, err := unpack.LoadBookmark(user.Name, s)
 	if err == nil {
-		begin = bookmark
+		endCached = bookmark
 	}
 
-	oldPlays, err := loadDays(user.Name, user.Registered, begin, s)
+	oldPlays, err := loadDays(user.Name, user.Registered, endCached, s)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(oldPlays) > 0 {
-		days := int((begin.Midnight() - registeredDay) / 86400)
+		days := int((endCached.Midnight() - registeredDay) / 86400)
 		oldPlays = oldPlays[:days]
 	}
 
@@ -45,13 +45,13 @@ func UpdateHistory(
 		return nil, errors.New("'until' is not a valid day")
 	}
 
-	if begin.Midnight() > until.Midnight()+86400 {
-		days := int((begin.Midnight()-registeredDay)/86400) - 1
+	if endCached.Midnight() > until.Midnight()+86400 {
+		days := int((endCached.Midnight()-registeredDay)/86400) - 1
 		return oldPlays[:days], nil
 	}
 
 	newPlays, err := loadHistory(
-		unpack.User{Name: user.Name, Registered: begin},
+		unpack.User{Name: user.Name, Registered: endCached},
 		until, store.Fresh(s), cache) // TODO make fresh optional
 
 	for _, plays := range newPlays {
@@ -84,7 +84,7 @@ func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]charts.Song,
 func loadHistory(
 	user unpack.User,
 	until rsrc.Day,
-	r rsrc.Reader,
+	io rsrc.IO,
 	l unpack.Loader) ([][]charts.Song, error) {
 
 	if until == nil {
@@ -101,7 +101,7 @@ func loadHistory(
 	for i := range result {
 		go func(i int) {
 			date := user.Registered.AddDate(0, 0, i)
-			dp, err := loadDayPlays(user.Name, date, r, l)
+			dp, err := loadDayPlays(user.Name, date, io, l)
 			if err == nil {
 				result[i] = dp
 			}
@@ -131,9 +131,9 @@ type loadDayPlaysResult struct {
 func loadDayPlays(
 	user string,
 	time rsrc.Day,
-	r rsrc.Reader, cache unpack.Loader,
+	io rsrc.IO, cache unpack.Loader,
 ) ([]charts.Song, error) {
-	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, unpack.NewCacheless(r))
+	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, unpack.NewCacheless(io))
 	if err != nil {
 		return nil, err
 	}
@@ -143,6 +143,7 @@ func loadDayPlays(
 	}
 
 	if firstPage.Pages < 2 {
+		unpack.WriteDayHistory(firstPage.Plays, user, time, io)
 		return firstPage.Plays, nil
 	}
 
@@ -152,7 +153,7 @@ func loadDayPlays(
 	back := make(chan loadDayPlaysResult)
 	for page := 2; page <= len(pages); page++ {
 		go func(page int) {
-			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page, time, unpack.NewCacheless(r))
+			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page, time, unpack.NewCacheless(io))
 			if tmpErr != nil {
 				back <- loadDayPlaysResult{nil, page, tmpErr}
 			} else {
@@ -175,6 +176,7 @@ func loadDayPlays(
 	plays := []charts.Song{}
 	for _, page := range pages {
 		plays = append(plays, page...)
+		unpack.WriteDayHistory(plays, user, time, io)
 	}
 	return plays, err
 }
@@ -221,7 +223,7 @@ func Pi(n int, f func(int) error) error {
 }
 
 func attachDuration(songs []charts.Song, cache unpack.Loader) error {
-	return Pi(len(songs), func(i int) error {
+	Pi(len(songs), func(i int) error {
 		if info, err := unpack.LoadTrackInfo(songs[i].Artist, songs[i].Title, cache); err == nil {
 			songs[i].Duration = float64(info.Duration) / 60.0
 			return nil
@@ -229,4 +231,7 @@ func attachDuration(songs []charts.Song, cache unpack.Loader) error {
 			return err
 		}
 	})
+
+	// not all tracks are found, ignore this
+	return nil
 }
