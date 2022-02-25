@@ -41,9 +41,10 @@ func (s tagKey) FullTitle() string {
 }
 
 type Song struct {
-	Artist string
-	Title  string
-	Album  string
+	Artist   string
+	Title    string
+	Album    string
+	Duration float64
 }
 
 func (s Song) String() string {

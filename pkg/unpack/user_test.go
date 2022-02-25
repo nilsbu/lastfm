@@ -173,6 +173,61 @@ func TestSongHistory(t *testing.T) {
 	}
 }
 
+func TestDayHistory(t *testing.T) {
+	cases := []struct {
+		plays  []charts.Song
+		write  bool
+		readOK bool
+	}{
+		{
+			[]charts.Song{},
+			true, true,
+		},
+		{
+			[]charts.Song{
+				{Artist: "ABC", Title: "a", Album: "y", Duration: 1.3}},
+			false, false,
+		},
+		{
+			[]charts.Song{
+				{Artist: "ABC", Title: "|xöü#ß", Album: "", Duration: 1.3},
+				{Artist: "<<><", Title: "22", Album: "y", Duration: 4.2},
+			},
+			true, true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{rsrc.DayHistory("user", rsrc.ParseDay("2019-12-31")): nil}, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			if c.write {
+				err = WriteDayHistory(c.plays, "user", rsrc.ParseDay("2019-12-31"), io)
+				if err != nil {
+					t.Error("unexpected error during write:", err)
+				}
+			}
+
+			plays, err := LoadDayHistory("user", rsrc.ParseDay("2019-12-31"), io)
+			if err != nil && c.readOK {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.readOK {
+				t.Error("expected error but none occurred")
+			}
+
+			if err == nil {
+				if !reflect.DeepEqual(plays, c.plays) {
+					t.Errorf("wrong data\nhas:  '%v'\nwant: '%v'", plays, c.plays)
+				}
+			}
+		})
+	}
+}
+
 func TestLoadArtistCorrections(t *testing.T) {
 	cases := []struct {
 		json        []byte

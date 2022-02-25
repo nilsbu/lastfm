@@ -2,6 +2,7 @@ package unpack
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -131,7 +132,7 @@ func LoadSongHistory(user string, r rsrc.Reader) ([][]charts.Song, error) {
 	return outDays, nil
 }
 
-// WriteAllDayPlays writed the pre-processed history of a user.
+// WriteSongHistory writes the pre-processed history of a user.
 func WriteSongHistory(days [][]charts.Song, user string, w rsrc.Writer) error {
 	outDays := make([][][]string, len(days))
 	for i, inDay := range days {
@@ -158,6 +159,63 @@ func (o obSongHistory) interpret(raw interface{}) (interface{}, error) {
 }
 
 func (o obSongHistory) raw(obj interface{}) interface{} {
+	return obj
+}
+
+type obDayHistory struct {
+	user string
+	day  rsrc.Day
+}
+
+// LoadDayHistory loads the pre-processed history of a user for a single day, called history.
+func LoadDayHistory(user string, day rsrc.Day, r rsrc.Reader) ([]charts.Song, error) {
+	data, err := obtain(obDayHistory{user, day}, r)
+	if err != nil {
+		return nil, err
+	}
+
+	inSongs := data.([][]string)
+	outSongs := make([]charts.Song, len(inSongs))
+
+	for i, song := range inSongs {
+		duration, err := strconv.ParseFloat(song[3], 64)
+		if err != nil {
+			return nil, err
+		}
+		outSongs[i] = charts.Song{
+			Artist:   song[0],
+			Title:    song[1],
+			Album:    song[2],
+			Duration: duration,
+		}
+	}
+
+	return outSongs, nil
+}
+
+// WritDayHistory write the pre-processed history of a user for a single day.
+func WriteDayHistory(songs []charts.Song, user string, day rsrc.Day, w rsrc.Writer) error {
+	outSongs := make([][]string, len(songs))
+	for i, song := range songs {
+		outSongs[i] = []string{song.Artist, song.Title, song.Album, fmt.Sprintf("%f", song.Duration)}
+	}
+
+	return deposit(outSongs, obDayHistory{user, day}, w)
+}
+
+func (o obDayHistory) locator() rsrc.Locator {
+	return rsrc.DayHistory(o.user, o.day)
+}
+
+func (o obDayHistory) deserializer() interface{} {
+	return &[][]string{}
+}
+
+func (o obDayHistory) interpret(raw interface{}) (interface{}, error) {
+	return *raw.(*[][]string), nil
+}
+
+func (o obDayHistory) raw(obj interface{}) interface{} {
 	return obj
 }
 

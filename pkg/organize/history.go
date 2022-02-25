@@ -10,11 +10,82 @@ import (
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-// LoadHistory load plays from all days since the registration of the user.
-func LoadHistory(
+// UpdateHistory loads saved daily plays from preprocessed all day plays and
+// reads the remaining days from raw data. The last saved day gets reloaded.
+func UpdateHistory(
+	user *unpack.User,
+	until rsrc.Day, // TODO change to end/before
+	s store.Store,
+) (plays [][]charts.Song, err error) {
+	if user.Registered == nil {
+		return nil, fmt.Errorf("user '%v' has no valid registration date",
+			user.Name)
+	}
+	registeredDay := user.Registered.Midnight()
+	endCached := user.Registered
+
+	cache := unpack.NewCached(s)
+
+	bookmark, err := unpack.LoadBookmark(user.Name, s)
+	if err == nil {
+		endCached = bookmark
+	}
+
+	oldPlays, err := loadDays(user.Name, user.Registered, endCached, s)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(oldPlays) > 0 {
+		days := int((endCached.Midnight() - registeredDay) / 86400)
+		oldPlays = oldPlays[:days]
+	}
+
+	if until == nil {
+		return nil, errors.New("'until' is not a valid day")
+	}
+
+	if endCached.Midnight() > until.Midnight()+86400 {
+		days := int((endCached.Midnight()-registeredDay)/86400) - 1
+		return oldPlays[:days], nil
+	}
+
+	newPlays, err := loadHistory(
+		unpack.User{Name: user.Name, Registered: endCached},
+		until, store.Fresh(s), cache) // TODO make fresh optional
+
+	for _, plays := range newPlays {
+		err = attachDuration(plays, cache)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return append(oldPlays, newPlays...), err
+}
+
+func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]charts.Song, error) {
+	days := (end.Midnight() - begin.Midnight()) / 86400
+	plays := make([][]charts.Song, days)
+
+	err := Pi(int(days), func(i int) error {
+		if songs, err := unpack.LoadDayHistory(user, begin.AddDate(0, 0, i), r); err == nil {
+			plays[i] = songs
+			return nil
+		} else {
+			return err
+		}
+	})
+
+	return plays, err
+}
+
+// loadHistory load plays from all days since the registration of the user.
+func loadHistory(
 	user unpack.User,
 	until rsrc.Day,
-	r rsrc.Reader) ([][]charts.Song, error) {
+	io rsrc.IO,
+	l unpack.Loader) ([][]charts.Song, error) {
 
 	if until == nil {
 		return nil, errors.New("parameter 'until' is no valid Day")
@@ -30,7 +101,7 @@ func LoadHistory(
 	for i := range result {
 		go func(i int) {
 			date := user.Registered.AddDate(0, 0, i)
-			dp, err := loadDayPlays(user.Name, date, r)
+			dp, err := loadDayPlays(user.Name, date, io, l)
 			if err == nil {
 				result[i] = dp
 			}
@@ -60,12 +131,19 @@ type loadDayPlaysResult struct {
 func loadDayPlays(
 	user string,
 	time rsrc.Day,
-	r rsrc.Reader,
+	io rsrc.IO, cache unpack.Loader,
 ) ([]charts.Song, error) {
-	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, r)
+	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, unpack.NewCacheless(io))
 	if err != nil {
 		return nil, err
-	} else if firstPage.Pages < 2 {
+	}
+	err = attachDuration(firstPage.Plays, cache)
+	if err != nil {
+		return nil, err
+	}
+
+	if firstPage.Pages < 2 {
+		unpack.WriteDayHistory(firstPage.Plays, user, time, io)
 		return firstPage.Plays, nil
 	}
 
@@ -75,11 +153,12 @@ func loadDayPlays(
 	back := make(chan loadDayPlaysResult)
 	for page := 2; page <= len(pages); page++ {
 		go func(page int) {
-			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page, time, r)
+			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page, time, unpack.NewCacheless(io))
 			if tmpErr != nil {
 				back <- loadDayPlaysResult{nil, page, tmpErr}
 			} else {
-				back <- loadDayPlaysResult{histPage.Plays, page, nil}
+				err := attachDuration(histPage.Plays, cache)
+				back <- loadDayPlaysResult{histPage.Plays, page, err}
 			}
 		}(page)
 	}
@@ -97,54 +176,62 @@ func loadDayPlays(
 	plays := []charts.Song{}
 	for _, page := range pages {
 		plays = append(plays, page...)
+		unpack.WriteDayHistory(plays, user, time, io)
 	}
 	return plays, err
 }
 
-// UpdateHistory loads saved daily plays from preprocessed all day plays and
-// reads the remaining days from raw data. The last saved day gets reloaded.
-func UpdateHistory(
-	user *unpack.User,
-	until rsrc.Day, // TODO change to end/before
-	s store.Store,
-) (plays [][]charts.Song, err error) {
-	if user.Registered == nil {
-		return nil, fmt.Errorf("user '%v' has no valid registration date",
-			user.Name)
-	}
-	registeredDay := user.Registered.Midnight()
-	begin := registeredDay
+// TODO put somewhere else?
 
-	oldPlays, err := unpack.LoadSongHistory(user.Name, s)
-	if err != nil {
-		oldPlays = [][]charts.Song{}
-	} else if len(oldPlays) > 0 {
-		// TODO cleanup the use of time in this function
-		begin = user.Registered.AddDate(0, 0, len(oldPlays)-1).Midnight()
-	}
+// Pi executes f in parallel n times
+func Pi(n int, f func(int) error) error {
+	errs := make([]error, n)
+	hasError := false
 
-	bookmark, err := unpack.LoadBookmark(user.Name, s)
-	if err == nil && bookmark.Midnight() < begin {
-		begin = bookmark.Midnight()
+	back := make(chan bool, n)
+
+	for i := 0; i < n; i++ {
+		go func(i int) {
+			if !hasError {
+				if err := f(i); err != nil {
+					hasError = true
+					errs[i] = err
+				}
+			}
+			back <- true
+		}(i)
 	}
 
-	if len(oldPlays) > 0 {
-		days := int((begin - registeredDay) / 86400)
-		oldPlays = oldPlays[:days]
+	for i := 0; i < n; i++ {
+		<-back
 	}
 
-	if until == nil {
-		return nil, errors.New("'until' is not a valid day")
+	if !hasError {
+		return nil
 	}
 
-	if begin > until.Midnight()+86400 {
-		days := int((begin-registeredDay)/86400) - 1
-		return oldPlays[:days], nil
+	merr := &MultiError{
+		Msg:  "error while executing in parallel",
+		Errs: []error{},
 	}
+	for _, err := range errs {
+		if err != nil {
+			merr.Errs = append(merr.Errs, err)
+		}
+	}
+	return merr
+}
 
-	newPlays, err := LoadHistory(
-		unpack.User{Name: user.Name, Registered: rsrc.ToDay(begin)},
-		until, store.Fresh(s))
+func attachDuration(songs []charts.Song, cache unpack.Loader) error {
+	Pi(len(songs), func(i int) error {
+		if info, err := unpack.LoadTrackInfo(songs[i].Artist, songs[i].Title, cache); err == nil {
+			songs[i].Duration = float64(info.Duration) / 60.0
+			return nil
+		} else {
+			return err
+		}
+	})
 
-	return append(oldPlays, newPlays...), err
+	// not all tracks are found, ignore this
+	return nil
 }

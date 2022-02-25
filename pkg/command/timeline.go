@@ -27,7 +27,7 @@ func (cmd printTimeline) Execute(
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, s)
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
 	if err != nil {
 		return errors.Wrap(err, "failed to load user info")
 	}
