@@ -129,6 +129,11 @@ func TestUpdateHistory(t *testing.T) {
 	h2 := rsrc.History("AA", 1, rsrc.ParseDay("2018-01-12"))
 	h3 := rsrc.History("AA", 1, rsrc.ParseDay("2018-01-13"))
 
+	b0 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-10"))
+	b1 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-11"))
+	b2 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-12"))
+	b3 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-13"))
+
 	bm := rsrc.Bookmark("AA")
 
 	tASDF := rsrc.TrackInfo("ASDF", "")
@@ -196,13 +201,15 @@ func TestUpdateHistory(t *testing.T) {
 			rsrc.ParseDay("2018-01-13"),
 			rsrc.ParseDay("2018-01-12"),
 			[][]charts.Song{
-				{{Artist: "XX"}, {Artist: "XX"}, {Artist: "XX"}, {Artist: "XX"}},
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{}, // will be overwritten
 			},
 			map[rsrc.Locator][]byte{
 				h1:    []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 				h2:    []byte(`{"recenttracks":{"track":[], "@attr":{"totalPages":"1"}}}`),
 				h3:    nil,
+				b1:    nil,
+				b2:    nil,
 				bm:    nil,
 				tASDF: []byte(`{"track":{"duration":"120000"}}`),
 				tXX:   []byte(`{"track":{"duration":"60000"}}`),
@@ -214,7 +221,7 @@ func TestUpdateHistory(t *testing.T) {
 				h3: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
 			[][]charts.Song{
-				{{Artist: "XX"}, {Artist: "XX"}, {Artist: "XX"}, {Artist: "XX"}}, // TODO fix this!!!
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "ASDF", Duration: 2}},
 				{{Artist: "B", Duration: 1}},
 			},
@@ -225,8 +232,8 @@ func TestUpdateHistory(t *testing.T) {
 			rsrc.ParseDay("2018-01-11"),
 			rsrc.ParseDay("2018-01-13"),
 			[][]charts.Song{
-				{{Artist: "XX"}, {Artist: "XX"}},
-				{{Artist: "A"}},
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
+				{{Artist: "A", Duration: 4}},
 				{{Artist: "DropMe"}},
 				{{Artist: "DropMeToo"}, {Artist: "DropMeToo"}, {Artist: "DropMeToo"}},
 			},
@@ -234,11 +241,15 @@ func TestUpdateHistory(t *testing.T) {
 				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
 				bm: nil,
+				b0: nil,
+				b1: nil,
+				b2: nil,
+				b3: nil,
 			},
 			map[rsrc.Locator][]byte{},
 			[][]charts.Song{
-				{{Artist: "XX"}, {Artist: "XX"}},
-				{{Artist: "A"}},
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
+				{{Artist: "A", Duration: 4}},
 			},
 			true,
 		},
@@ -247,10 +258,10 @@ func TestUpdateHistory(t *testing.T) {
 			rsrc.ParseDay("2018-01-13"),
 			rsrc.ParseDay("2018-01-12"),
 			[][]charts.Song{
-				{{Artist: "XX"}, {Artist: "XX"}},
-				{{Artist: "A"}},
-				{{Artist: "hui"}},
-				{{Artist: "hui"}},
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
+				{{Artist: "A", Duration: 4}},
+				{{Artist: "hui", Duration: 1}},
+				{{Artist: "hui", Duration: 1}},
 			},
 			map[rsrc.Locator][]byte{
 				h0:   []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
@@ -258,13 +269,17 @@ func TestUpdateHistory(t *testing.T) {
 				h2:   []byte(`{"recenttracks":{"track":[{"artist":{"#text":"hui"}},{"artist":{"#text":"hui"}}], "@attr":{"totalPages":"1"}}}`),
 				h3:   []byte(`{"recenttracks":{"track":[{"artist":{"#text":"hui"}},{"artist":{"#text":"hui"}}], "@attr":{"totalPages":"1"}}}`),
 				bm:   nil,
+				b0:   nil,
+				b1:   nil,
+				b2:   nil,
+				b3:   nil,
 				tXX:  []byte(`{"track":{"duration":"60000"}}`),
 				thui: []byte(`{"track":{"duration":"60000"}}`),
 			},
 			map[rsrc.Locator][]byte{},
 			[][]charts.Song{
-				{{Artist: "XX"}, {Artist: "XX"}},
-				{{Artist: "A"}}, // TODO fix this!!!
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
+				{{Artist: "A", Duration: 4}},
 				{{Artist: "hui", Duration: 1}, {Artist: "hui", Duration: 1}},
 				{{Artist: "hui", Duration: 1}, {Artist: "hui", Duration: 1}},
 			},
@@ -281,18 +296,24 @@ func TestUpdateHistory(t *testing.T) {
 				{{Artist: "hui"}},
 			},
 			map[rsrc.Locator][]byte{
-				h0:   nil,
-				h1:   nil,
-				h2:   nil, // ensure that these days aren't read
-				h3:   []byte(`{"recenttracks":{"track":[{"artist":{"#text":"hui"}},{"artist":{"#text":"hui"}}], "@attr":{"totalPages":"1"}}}`),
-				bm:   nil,
-				thui: []byte(`{"track":{"duration":"60000"}}`),
+				h0:    []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				h1:    []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
+				h2:    []byte(`{"recenttracks":{"track":[{"artist":{"#text":"hui"}},{"artist":{"#text":"hui"}}], "@attr":{"totalPages":"1"}}}`),
+				h3:    []byte(`{"recenttracks":{"track":[{"artist":{"#text":"hui"}},{"artist":{"#text":"hui"}}], "@attr":{"totalPages":"1"}}}`),
+				bm:    nil,
+				b0:    nil,
+				b1:    nil,
+				b2:    nil,
+				b3:    nil,
+				tASDF: []byte(`{"track":{"duration":"120000"}}`),
+				tXX:   []byte(`{"track":{"duration":"60000"}}`),
+				thui:  []byte(`{"track":{"duration":"60000"}}`),
 			},
 			map[rsrc.Locator][]byte{},
 			[][]charts.Song{
-				{{Artist: "XX"}, {Artist: "XX"}},
-				{{Artist: "A"}},
-				{{Artist: "hui"}, {Artist: "hui"}}, // TODO this this
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
+				{{Artist: "ASDF", Duration: 2}},
+				{{Artist: "hui", Duration: 1}, {Artist: "hui", Duration: 1}},
 				{{Artist: "hui", Duration: 1}, {Artist: "hui", Duration: 1}},
 			},
 			true,
@@ -314,9 +335,14 @@ func TestUpdateHistory(t *testing.T) {
 			tc.tracksFile[rsrc.SongHistory(tc.user.Name)] = nil
 			io1, _ := mock.IO(tc.tracksFile, mock.Path)
 			if tc.saved != nil {
-				if err := unpack.WriteSongHistory(tc.saved, tc.user.Name, io1); err != nil {
-					t.Fatal("unexpected error during write of all day plays:", err)
+				for i, songs := range tc.saved {
+					if err := unpack.WriteDayHistory(songs, tc.user.Name, tc.user.Registered.AddDate(0, 0, i), io1); err != nil {
+						t.Fatal("unexpected error during write of all day plays:", err)
+					}
 				}
+				// if err := unpack.WriteSongHistory(tc.saved, tc.user.Name, io1); err != nil {
+				// 	t.Fatal("unexpected error during write of all day plays:", err)
+				// }
 			}
 
 			if tc.bookmark != nil {
