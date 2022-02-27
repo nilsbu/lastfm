@@ -188,9 +188,9 @@ func TestPrint(t *testing.T) {
 			&format.Charts{
 				Charts: charts.CompileArtists(
 					[]map[string]float64{
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 2},
+						{"X": 1},
+						{"X": 1},
+						{"X": 2},
 					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
@@ -221,9 +221,9 @@ func TestPrint(t *testing.T) {
 			&format.Charts{
 				Charts: charts.CompileTags(
 					[]map[string]float64{
-						map[string]float64{"pop": 1, "rock": 0},
-						map[string]float64{"pop": 1, "rock": 1},
-						map[string]float64{"pop": 2, "rock": 1},
+						{"pop": 1, "rock": 0},
+						{"pop": 1, "rock": 1},
+						{"pop": 2, "rock": 1},
 					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
@@ -254,9 +254,9 @@ func TestPrint(t *testing.T) {
 			&format.Charts{
 				Charts: charts.CompileArtists(
 					[]map[string]float64{
-						map[string]float64{"Y": 1},
-						map[string]float64{"Y": 2},
-						map[string]float64{"Y": 2},
+						{"Y": 1},
+						{"Y": 2},
+						{"Y": 2},
 					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
@@ -287,9 +287,9 @@ func TestPrint(t *testing.T) {
 			&format.Charts{
 				Charts: charts.CompileTags(
 					[]map[string]float64{
-						map[string]float64{"France": 1, "-": 0},
-						map[string]float64{"France": 1, "-": 1},
-						map[string]float64{"France": 2, "-": 1},
+						{"France": 1, "-": 0},
+						{"France": 1, "-": 1},
+						{"France": 2, "-": 1},
 					}, rsrc.ParseDay("2018-01-01")),
 				Column:     -1,
 				Count:      10,
@@ -479,7 +479,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.CompileArtists(breakUp(map[string][]float64{
-					"X": []float64{1, 1, 2}}),
+					"X": {1, 1, 2}}),
 					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
@@ -509,7 +509,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.CompileArtists(breakUp(map[string][]float64{
-					"total": []float64{1, 2, 3}}),
+					"total": {1, 2, 3}}),
 					rsrc.ParseDay("2018-01-01")),
 				Column:     0,
 				Count:      10,
@@ -541,7 +541,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.CompileArtists(breakUp(map[string][]float64{
-					"X": []float64{1, 0.5, 0.25}}),
+					"X": {1, 0.5, 0.25}}),
 					rsrc.ParseDay("2017-12-30")),
 				Column:     -1,
 				Count:      10,
@@ -871,9 +871,9 @@ func TestPrint(t *testing.T) {
 			&format.Charts{
 				Charts: charts.CompileArtists(
 					[]map[string]float64{
-						map[string]float64{"X": 1},
-						map[string]float64{"Y": 1},
-						map[string]float64{"X": 1},
+						{"X": 1},
+						{"Y": 1},
+						{"X": 1},
 					}, rsrc.ParseDay("2018-01-01")),
 				Column:     1,
 				Count:      10,
@@ -889,18 +889,27 @@ func TestPrint(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.descr, func(t *testing.T) {
-			files, _ := mock.IO(
+			expectedFiles :=
 				map[rsrc.Locator][]byte{
 					rsrc.SongHistory(user):       nil,
+					rsrc.Bookmark(user):          nil,
 					rsrc.ArtistCorrections(user): nil,
 					rsrc.UserInfo(user):          nil,
 					rsrc.ArtistTags("X"):         nil,
 					rsrc.ArtistTags("Y"):         nil,
 					rsrc.TagInfo("pop"):          nil,
 					rsrc.TagInfo("rock"):         nil,
-					rsrc.TagInfo("french"):       nil},
+					rsrc.TagInfo("french"):       nil}
+
+			if c.user != nil && c.history != nil {
+				for i := range c.history {
+					expectedFiles[rsrc.DayHistory(user, c.user.Registered.AddDate(0, 0, i))] = nil
+				}
+			}
+
+			files, _ := mock.IO(expectedFiles,
 				mock.Path)
-			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
+			s, _ := store.New([][]rsrc.IO{{files}})
 			d := mock.NewDisplay()
 
 			unpack.WriteArtistTags("X", tagsX, s)
@@ -909,10 +918,14 @@ func TestPrint(t *testing.T) {
 			unpack.WriteTagInfo(tagRock, s)
 			unpack.WriteTagInfo(tagFrench, s)
 
-			if c.history != nil {
-				err := unpack.WriteSongHistory(c.history, user, s)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
+			if c.user != nil && c.history != nil {
+				unpack.WriteBookmark(c.user.Registered.AddDate(0, 0, len(c.history)-1), user, s)
+
+				for i, day := range c.history {
+					err := unpack.WriteDayHistory(day, user, c.user.Registered.AddDate(0, 0, i), s)
+					if err != nil {
+						t.Fatalf("unexpected error: %v", err)
+					}
 				}
 			}
 
@@ -986,7 +999,7 @@ func TestPrintTags(t *testing.T) {
 				map[rsrc.Locator][]byte{
 					rsrc.ArtistTags(artist): nil},
 				mock.Path)
-			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
+			s, _ := store.New([][]rsrc.IO{{files}})
 			d := mock.NewDisplay()
 
 			unpack.WriteArtistTags(artist, c.tags, s)

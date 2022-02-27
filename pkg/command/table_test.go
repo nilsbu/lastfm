@@ -30,9 +30,9 @@ func TestTable(t *testing.T) {
 			nil,
 			charts.CompileArtists(
 				[]map[string]float64{
-					map[string]float64{"X": 1},
-					map[string]float64{"X": 0},
-					map[string]float64{"X": 1},
+					{"X": 1},
+					{"X": 0},
+					{"X": 1},
 				}, rsrc.ParseDay("2018-01-01")), true,
 			[]byte("{}"),
 			tableTotal{
@@ -59,9 +59,9 @@ func TestTable(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			charts.CompileArtists(
 				[]map[string]float64{
-					map[string]float64{"X": 1},
-					map[string]float64{"X": 0},
-					map[string]float64{"X": 1},
+					{"X": 1},
+					{"X": 0},
+					{"X": 1},
 				}, rsrc.ParseDay("2018-01-01")), true,
 			nil,
 			tableTotal{
@@ -71,9 +71,9 @@ func TestTable(t *testing.T) {
 			&format.Table{
 				Charts: charts.CompileArtists(
 					[]map[string]float64{
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 2},
+						{"X": 1},
+						{"X": 1},
+						{"X": 2},
 					}, rsrc.ParseDay("2018-01-01")),
 				First: rsrc.ParseDay("2018-01-01"),
 				Step:  1,
@@ -86,9 +86,9 @@ func TestTable(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			charts.CompileArtists(
 				[]map[string]float64{
-					map[string]float64{"X": 1},
-					map[string]float64{"X": 0},
-					map[string]float64{"X": 1},
+					{"X": 1},
+					{"X": 0},
+					{"X": 1},
 				}, rsrc.ParseDay("2018-01-01")), true,
 			[]byte("{}"),
 			tableTotal{
@@ -98,9 +98,9 @@ func TestTable(t *testing.T) {
 			&format.Table{
 				Charts: charts.CompileArtists(
 					[]map[string]float64{
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 1},
-						map[string]float64{"X": 2},
+						{"X": 1},
+						{"X": 1},
+						{"X": 2},
 					}, rsrc.ParseDay("2018-01-01")),
 				First: rsrc.ParseDay("2018-01-01"),
 				Step:  1,
@@ -113,9 +113,9 @@ func TestTable(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			charts.CompileArtists(
 				[]map[string]float64{
-					map[string]float64{"X": 1},
-					map[string]float64{"X": 0},
-					map[string]float64{"X": 1},
+					{"X": 1},
+					{"X": 0},
+					{"X": 1},
 				}, rsrc.ParseDay("2018-01-01")), true,
 			[]byte("{}"),
 			tableTotal{
@@ -182,10 +182,10 @@ func TestTable(t *testing.T) {
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
 			charts.CompileArtists(
 				[]map[string]float64{
-					map[string]float64{"X": 1},
-					map[string]float64{"X": 0},
-					map[string]float64{"X": 1},
-					map[string]float64{"X": 5},
+					{"X": 1},
+					{"X": 0},
+					{"X": 1},
+					{"X": 5},
 				}, rsrc.ParseDay("2017-12-30")), true,
 			[]byte("{}"),
 			tablePeriods{
@@ -198,20 +198,32 @@ func TestTable(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.descr, func(t *testing.T) {
-			files, _ := mock.IO(
-				map[rsrc.Locator][]byte{
-					rsrc.SongHistory(user):       nil,
-					rsrc.ArtistCorrections(user): c.correctionsRaw,
-					rsrc.UserInfo(user):          nil},
+			expectedFiles := map[rsrc.Locator][]byte{
+				rsrc.SongHistory(user):       nil,
+				rsrc.Bookmark(user):          nil,
+				rsrc.ArtistCorrections(user): c.correctionsRaw,
+				rsrc.UserInfo(user):          nil}
 
-				mock.Path)
-			s, _ := store.New([][]rsrc.IO{[]rsrc.IO{files}})
+			if c.user != nil && c.hasCharts {
+				for i := 0; i < c.charts.Len(); i++ {
+					expectedFiles[rsrc.DayHistory(user, c.user.Registered.AddDate(0, 0, i))] = nil
+				}
+			}
+
+			files, _ := mock.IO(expectedFiles, mock.Path)
+			s, _ := store.New([][]rsrc.IO{{files}})
 
 			d := mock.NewDisplay()
-			if c.hasCharts {
-				err := unpack.WriteSongHistory(c.charts.UnravelSongs(), user, s)
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
+
+			if c.hasCharts && c.user != nil {
+				history := c.charts.UnravelSongs()
+				unpack.WriteBookmark(c.user.Registered.AddDate(0, 0, len(history)-1), user, s)
+
+				for i, day := range history {
+					err := unpack.WriteDayHistory(day, user, c.user.Registered.AddDate(0, 0, i), s)
+					if err != nil {
+						t.Fatalf("unexpected error: %v", err)
+					}
 				}
 			}
 

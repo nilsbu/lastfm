@@ -36,7 +36,7 @@ type tagResult struct {
 // LoadArtistTags loads the tags for all given artists.
 func LoadArtistTags(artists []string, r rsrc.Reader,
 ) (map[string][]charts.Tag, error) {
-	tagLoader := unpack.NewCachedTagLoader(r)
+	tagLoader := unpack.NewCached(r)
 
 	artistTags := make(map[string][]charts.Tag)
 	feedback := make(chan *tagResult)
@@ -71,18 +71,17 @@ func LoadArtistTags(artists []string, r rsrc.Reader,
 func loadArtistTags(
 	artist string,
 	r rsrc.Reader,
-	tl *unpack.CachedTagLoader,
+	tl unpack.Loader,
 ) ([]charts.Tag, error) {
 
-	tags, err := unpack.LoadArtistTags(artist, r)
+	tags, err := unpack.LoadArtistTags(artist, tl)
 	if err != nil {
-		switch err.(type) {
+		switch err := err.(type) {
 		case *unpack.LastfmError:
-			lfmErr := err.(*unpack.LastfmError)
-			lfmErr.Message = fmt.Sprintf(
+			err.Message = fmt.Sprintf(
 				"could not load tags of '%v': %v",
 				artist,
-				lfmErr.Message)
+				err.Message)
 			return nil, err
 		default:
 			return nil, errors.Wrapf(err, "could not load tags of '%v'", artist)
@@ -93,7 +92,7 @@ func loadArtistTags(
 	feedback := make(chan error)
 	for i, tag := range tags {
 		go func(i int, tag unpack.TagCount) {
-			ti, terr := tl.LoadTagInfo(tag.Name)
+			ti, terr := unpack.LoadTagInfo(tag.Name, tl)
 			if terr == nil {
 				wtags[i] = *ti
 				wtags[i].Weight = tag.Count

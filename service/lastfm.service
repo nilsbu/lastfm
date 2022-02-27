@@ -1,0 +1,13 @@
+[Unit]
+Description=Last.FM server
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=nils
+ExecStart=/home/nils/lastfm_server.bash
+
+[Install]
+WantedBy=multi-user.target

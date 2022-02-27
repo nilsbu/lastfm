@@ -110,12 +110,26 @@ func getOutCharts(
 ) (charts.Charts, error) {
 	cmd := pcd.PrintCharts()
 
-	user, err := unpack.LoadUserInfo(session.User, r)
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(r))
 	if err != nil {
 		return charts.Charts{}, errors.Wrap(err, "failed to load user info")
 	}
 
-	plays, err := unpack.LoadSongHistory(session.User, r)
+	bookmark, err := unpack.LoadBookmark(session.User, r)
+	if err != nil {
+		return charts.Charts{}, err
+	}
+
+	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
+	plays := make([][]charts.Song, days+1)
+	for i := 0; i < days+1; i++ {
+		day := user.Registered.AddDate(0, 0, i)
+		if songs, err := unpack.LoadDayHistory(session.User, day, r); err == nil {
+			plays[i] = songs
+		} else {
+			return charts.Charts{}, err
+		}
+	}
 	if err != nil {
 		return charts.Charts{}, err
 	}
@@ -178,38 +192,14 @@ func getOutCharts(
 }
 
 func normalizeDuration(cha charts.Charts, r rsrc.Reader) (charts.Charts, error) {
-	// assume that cha is of songs without test
-	songs := make([]charts.Song, 0)
-	for _, key := range cha.Keys {
-		if song, ok := key.(charts.Song); ok {
-			songs = append(songs, song)
-		}
-	}
-	infos, err := organize.LoadTrackInfos(songs, r)
-	if err != nil {
-		if mErr, ok := err.(*organize.MultiError); ok {
-			nonLfm := []error{}
-			for _, err := range mErr.Errs {
-				if _, ok := err.(*unpack.LastfmError); !ok {
-					nonLfm = append(nonLfm, err)
-				}
-			}
-			if len(nonLfm) > 0 {
-				mErr.Errs = nonLfm
-				return charts.Charts{}, mErr
-			}
-		} else {
-			return charts.Charts{}, err
-		}
-	}
-
 	sd := charts.SongDurations{}
-	for _, info := range infos {
+	for _, key := range cha.Keys {
+		info := key.(charts.Song)
 		if info.Duration > 0 {
 			if _, ok := sd[info.Artist]; !ok {
 				sd[info.Artist] = make(map[string]float64)
 			}
-			sd[info.Artist][info.Track] = float64(info.Duration) / 60.0
+			sd[info.Artist][info.Title] = info.Duration
 		}
 	}
 	sd[""] = make(map[string]float64)
@@ -454,7 +444,7 @@ type printTags struct {
 func (cmd printTags) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
 
-	tags, err := unpack.LoadArtistTags(cmd.artist, s)
+	tags, err := unpack.LoadArtistTags(cmd.artist, unpack.NewCacheless(s))
 	if err != nil {
 		return err
 	}

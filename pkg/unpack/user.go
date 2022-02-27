@@ -2,6 +2,7 @@ package unpack
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -102,62 +103,60 @@ func (o obAllDayPlays) raw(obj interface{}) interface{} {
 	return obj
 }
 
-type obSongHistory struct {
+type obDayHistory struct {
 	user string
+	day  rsrc.Day
 }
 
-// LoadSongHistory loads the pre-processed history of a user, called history.
-func LoadSongHistory(user string, r rsrc.Reader) ([][]charts.Song, error) {
-	data, err := obtain(obSongHistory{user}, r)
+// LoadDayHistory loads the pre-processed history of a user for a single day, called history.
+func LoadDayHistory(user string, day rsrc.Day, r rsrc.Reader) ([]charts.Song, error) {
+	data, err := obtain(obDayHistory{user, day}, r)
 	if err != nil {
 		return nil, err
 	}
 
-	inDays := data.([][][]string)
-	outDays := make([][]charts.Song, len(inDays))
+	inSongs := data.([][]string)
+	outSongs := make([]charts.Song, len(inSongs))
 
-	for i, inDay := range inDays {
-		outDay := []charts.Song{}
-		for _, song := range inDay {
-			outDay = append(outDay, charts.Song{
-				Artist: song[0],
-				Title:  song[1],
-				Album:  song[2],
-			})
+	for i, song := range inSongs {
+		duration, err := strconv.ParseFloat(song[3], 64)
+		if err != nil {
+			return nil, err
 		}
-		outDays[i] = outDay
+		outSongs[i] = charts.Song{
+			Artist:   song[0],
+			Title:    song[1],
+			Album:    song[2],
+			Duration: duration,
+		}
 	}
 
-	return outDays, nil
+	return outSongs, nil
 }
 
-// WriteAllDayPlays writed the pre-processed history of a user.
-func WriteSongHistory(days [][]charts.Song, user string, w rsrc.Writer) error {
-	outDays := make([][][]string, len(days))
-	for i, inDay := range days {
-		outDay := [][]string{}
-		for _, song := range inDay {
-			outDay = append(outDay, []string{song.Artist, song.Title, song.Album})
-		}
-		outDays[i] = outDay
+// WritDayHistory write the pre-processed history of a user for a single day.
+func WriteDayHistory(songs []charts.Song, user string, day rsrc.Day, w rsrc.Writer) error {
+	outSongs := make([][]string, len(songs))
+	for i, song := range songs {
+		outSongs[i] = []string{song.Artist, song.Title, song.Album, fmt.Sprintf("%f", song.Duration)}
 	}
 
-	return deposit(outDays, obSongHistory{user}, w)
+	return deposit(outSongs, obDayHistory{user, day}, w)
 }
 
-func (o obSongHistory) locator() rsrc.Locator {
-	return rsrc.SongHistory(o.user)
+func (o obDayHistory) locator() rsrc.Locator {
+	return rsrc.DayHistory(o.user, o.day)
 }
 
-func (o obSongHistory) deserializer() interface{} {
-	return &[][][]string{}
+func (o obDayHistory) deserializer() interface{} {
+	return &[][]string{}
 }
 
-func (o obSongHistory) interpret(raw interface{}) (interface{}, error) {
-	return *raw.(*[][][]string), nil
+func (o obDayHistory) interpret(raw interface{}) (interface{}, error) {
+	return *raw.(*[][]string), nil
 }
 
-func (o obSongHistory) raw(obj interface{}) interface{} {
+func (o obDayHistory) raw(obj interface{}) interface{} {
 	return obj
 }
 

@@ -5,7 +5,6 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/pkg/errors"
 )
 
 // LastfmError wraps an error returned  by Last.fm.
@@ -48,8 +47,8 @@ type obUserInfo struct {
 
 // LoadUserInfo loads a user's registration date. It is returned along with the
 // name.
-func LoadUserInfo(name string, r rsrc.Reader) (*User, error) {
-	data, err := obtain(&obUserInfo{name}, r)
+func LoadUserInfo(name string, l Loader) (*User, error) {
+	data, err := l.load(&obUserInfo{name})
 	if err != nil {
 		return nil, err
 	}
@@ -105,10 +104,10 @@ type obHistorySingle struct {
 
 // LoadHistoryDayPage loads a page of a user's played tracks.
 func LoadHistoryDayPage(
-	user string, page int, day rsrc.Day, r rsrc.Reader) (*HistoryDayPage, error) {
-	data, err := obtain(&obHistory{user, page, day}, r)
+	user string, page int, day rsrc.Day, l Loader) (*HistoryDayPage, error) {
+	data, err := l.load(&obHistory{user, page, day})
 	if err != nil {
-		data, err = obtain(&obHistorySingle{obHistory{user, page, day}}, r)
+		data, err = l.load(&obHistorySingle{obHistory{user, page, day}})
 		if err != nil {
 			return nil, err
 		}
@@ -178,8 +177,8 @@ type obArtistInfo struct {
 }
 
 // LoadArtistInfo reads information of an artist.
-func LoadArtistInfo(artist string, r rsrc.Reader) (*ArtistInfo, error) {
-	data, err := obtain(&obArtistInfo{artist}, r)
+func LoadArtistInfo(artist string, l Loader) (*ArtistInfo, error) {
+	data, err := l.load(&obArtistInfo{artist})
 	if err != nil {
 		return nil, err
 	}
@@ -215,8 +214,8 @@ type obArtistTags struct {
 }
 
 // LoadArtistTags reads the top tags of an artist.
-func LoadArtistTags(artist string, r rsrc.Reader) ([]TagCount, error) {
-	data, err := obtain(&obArtistTags{artist}, r)
+func LoadArtistTags(artist string, l Loader) ([]TagCount, error) {
+	data, err := l.load(&obArtistTags{artist})
 	if err != nil {
 		return nil, err
 	}
@@ -263,111 +262,17 @@ func (o *obArtistTags) raw(obj interface{}) interface{} {
 	return js
 }
 
-// CachedTagLoader if a buffer that stores tag information.
-type CachedTagLoader struct {
-	reader      rsrc.Reader
-	requestChan chan tagRequest
-}
-
-type tagRequest struct {
-	name string
-	back chan tagResult
-}
-
-type tagResult struct {
-	name string
-	tag  *charts.Tag
-	err  error
-}
-
 type obTagInfo struct {
 	name string
 }
 
-// NewCachedTagLoader creates a buffer which can read and store tag information.
-func NewCachedTagLoader(r rsrc.Reader) *CachedTagLoader {
-	buf := &CachedTagLoader{
-		reader:      r,
-		requestChan: make(chan tagRequest),
-	}
-
-	go buf.worker()
-	return buf
-}
-
-func (buf *CachedTagLoader) worker() {
-	resultChan := make(chan tagResult)
-
-	requests := make(map[string][]tagRequest)
-	tagCounts := make(map[string]tagResult)
-
-	hasFatal := false
-
-	for {
-		select {
-		case request := <-buf.requestChan:
-			if tc, ok := tagCounts[request.name]; ok {
-				request.back <- tc
-				close(request.back)
-			} else if hasFatal {
-				request.back <- tagResult{
-					name: request.name,
-					tag:  nil,
-					err:  errors.New("abort due to previous error"),
-				}
-				close(request.back)
-			} else {
-
-				requests[request.name] = append(requests[request.name], request)
-				go func(request tagRequest) {
-					data, err := obtain(&obTagInfo{request.name}, buf.reader)
-					if err != nil {
-						hasFatal = hasFatal || isFatal(err)
-						resultChan <- tagResult{request.name, nil, err}
-					} else {
-						tag := data.(*charts.Tag)
-						resultChan <- tagResult{request.name, tag, nil}
-					}
-				}(request)
-			}
-
-		case tag := <-resultChan:
-			tagCounts[tag.name] = tag
-
-			for _, request := range requests[tag.name] {
-				request.back <- tag
-				close(request.back)
-			}
-
-			requests[tag.name] = nil
-		}
-	}
-}
-
-func isFatal(err error) bool {
-	switch err.(type) {
-	case *LastfmError:
-		return err.(*LastfmError).IsFatal()
-	default:
-		return true
-	}
-}
-
 // LoadTagInfo loads tag information.
-func (buf *CachedTagLoader) LoadTagInfo(tag string) (*charts.Tag, error) {
-	back := make(chan tagResult)
-
-	buf.requestChan <- tagRequest{
-		name: tag,
-		back: back,
+func LoadTagInfo(tag string, l Loader) (*charts.Tag, error) {
+	data, err := l.load(&obTagInfo{tag})
+	if err != nil {
+		return nil, err
 	}
-
-	result := <-back
-	if result.err != nil {
-		return nil, result.err
-	}
-
-	return result.tag, nil
+	return data.(*charts.Tag), nil
 }
 
 // WriteTagInfo writes tag infos.
@@ -417,8 +322,8 @@ type obTrackInfo struct {
 }
 
 // LoadTrackInfo reads the track information.
-func LoadTrackInfo(artist, track string, r rsrc.Reader) (TrackInfo, error) {
-	data, err := obtain(&obTrackInfo{artist, track}, r)
+func LoadTrackInfo(artist, track string, l Loader) (TrackInfo, error) {
+	data, err := l.load(&obTrackInfo{artist, track})
 	if err != nil {
 		return TrackInfo{}, err
 	}

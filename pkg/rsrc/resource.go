@@ -208,6 +208,7 @@ func (u util) Path() (string, error) {
 
 type userData struct {
 	method string
+	day    Day
 	name   string
 }
 
@@ -228,6 +229,14 @@ func AllDayPlays(user string) Locator {
 func SongHistory(user string) Locator {
 	return &userData{
 		method: "history",
+		name:   user,
+	}
+}
+
+func DayHistory(user string, day Day) Locator {
+	return &userData{
+		method: "days",
+		day:    day,
 		name:   user,
 	}
 }
@@ -258,5 +267,8 @@ func (u userData) URL(apiKey string) (string, error) {
 }
 
 func (u userData) Path() (string, error) {
+	if u.method == "days" {
+		return fmt.Sprintf(".lastfm/user/%v/history/%v.json", u.name, u.day), nil
+	}
 	return fmt.Sprintf(".lastfm/user/%v/%v.json", u.name, u.method), nil
 }
