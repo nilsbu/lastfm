@@ -22,7 +22,7 @@ type printTimeline struct {
 func (cmd printTimeline) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
 
-	plays, err := unpack.LoadSongHistory(session.User, s)
+	bookmark, err := unpack.LoadBookmark(session.User, s)
 	if err != nil {
 		return err
 	}
@@ -30,6 +30,17 @@ func (cmd printTimeline) Execute(
 	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
 	if err != nil {
 		return errors.Wrap(err, "failed to load user info")
+	}
+
+	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
+	plays := make([][]charts.Song, days+1)
+	for i := 0; i < days+1; i++ {
+		day := user.Registered.AddDate(0, 0, i)
+		if songs, err := unpack.LoadDayHistory(session.User, day, s); err == nil {
+			plays = append(plays, songs)
+		} else {
+			return err
+		}
 	}
 
 	cha := charts.ArtistsFromSongs(plays, user.Registered)

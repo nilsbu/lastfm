@@ -22,14 +22,9 @@ func (cmd updateHistory) Execute(
 	}
 
 	today := rsrc.DayFromTime(time.Now())
-	plays, err := organize.UpdateHistory(user, today, s)
+	_, err = organize.UpdateHistory(user, today, s)
 	if err != nil {
 		return errors.Wrap(err, "failed to update user history")
-	}
-
-	err = unpack.WriteSongHistory(plays, user.Name, s)
-	if err != nil {
-		return errors.Wrap(err, "failed to write song history")
 	}
 
 	err = unpack.WriteBookmark(today, user.Name, s)
