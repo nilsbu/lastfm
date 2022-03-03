@@ -240,7 +240,8 @@ func eqDataWithKeyTitle(expect map[string][]float64, actual TitleLineMap) bool {
 }
 
 func allEqual(a, b Title) bool {
-	return a.String() == b.String() &&
+	return a != nil && b != nil &&
+		a.String() == b.String() &&
 		a.Key() == b.Key() &&
 		a.Artist() == b.Artist() &&
 		a.Song() == b.Song()

@@ -1,7 +1,6 @@
 package charts2
 
 type charts struct {
-	// Headers charts.Interval
 	titles []Title
 	values map[string][]float64
 }
@@ -70,6 +69,22 @@ func compileCharts(
 				charts.values[k.Key()][d] = value(song)
 			}
 		}
+	}
+
+	return charts
+}
+
+func chartsFromMap(data map[string][]float64) LazyCharts {
+	titles := make([]Title, len(data))
+	i := 0
+	for t := range data {
+		titles[i] = KeyTitle(t)
+		i++
+	}
+
+	charts := &charts{
+		values: data,
+		titles: titles,
 	}
 
 	return charts
