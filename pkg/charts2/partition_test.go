@@ -58,7 +58,7 @@ func TestPartiton(t *testing.T) {
 		},
 		{
 			"totalPartition",
-			totalPartition([]Title{KeyTitle("a"), KeyTitle("b")}),
+			TotalPartition([]Title{KeyTitle("a"), KeyTitle("b")}),
 			[]titlePartition{
 				{KeyTitle("a"), StringTitle("total")},
 				{KeyTitle("b"), StringTitle("total")},

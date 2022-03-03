@@ -394,7 +394,7 @@ func (l *partitionSum) Titles() []Title {
 // ColumnSum is a LazyCharts that sums up all columns.
 // TODO can be optmized by bypassing partitions
 func ColumnSum(parent LazyCharts) LazyCharts {
-	return Group(parent, totalPartition(parent.Titles()))
+	return Group(parent, TotalPartition(parent.Titles()))
 }
 
 type cache struct {

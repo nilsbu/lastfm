@@ -89,9 +89,9 @@ func buildPartitions(tpPairs [][2]Title, key func(Title) string) []Title {
 	return partitions
 }
 
-// totalPartition is a Partition where all titles are mapped to the same
+// TotalPartition is a Partition where all titles are mapped to the same
 // partition.
-func totalPartition(titles []Title) Partition {
+func TotalPartition(titles []Title) Partition {
 	p := StringTitle("total")
 	tpPairs := make([][2]Title, len(titles))
 	for i, title := range titles {
