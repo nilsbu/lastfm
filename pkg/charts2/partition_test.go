@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	legacy "github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type titlePartition struct {
@@ -89,9 +90,9 @@ func TestPartiton(t *testing.T) {
 			"first key partition without correction",
 			FirstTagPartition(
 				map[string][]legacy.Tag{
-					"A": []legacy.Tag{{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
-					"B": []legacy.Tag{{Name: "b", Weight: 25}, {Name: "c", Weight: 100}}, // Ignore Weight
-					"C": []legacy.Tag{{Name: "-", Weight: 100}, {Name: "c", Weight: 50}},
+					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
+					"B": {{Name: "b", Weight: 25}, {Name: "c", Weight: 100}}, // Ignore Weight
+					"C": {{Name: "-", Weight: 100}, {Name: "c", Weight: 50}},
 				},
 				map[string]string{
 					"a": "vowel", "b": "consonant", "c": "consonant",
@@ -114,9 +115,9 @@ func TestPartiton(t *testing.T) {
 			"first key partition with correction",
 			FirstTagPartition(
 				map[string][]legacy.Tag{
-					"A": []legacy.Tag{{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
-					"Y": []legacy.Tag{{Name: "b", Weight: 25}, {Name: "y", Weight: 100}}, // Ignore Weight
-					"Ü": []legacy.Tag{{Name: "-", Weight: 100}, {Name: "ü", Weight: 50}},
+					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
+					"Y": {{Name: "b", Weight: 25}, {Name: "y", Weight: 100}}, // Ignore Weight
+					"Ü": {{Name: "-", Weight: 100}, {Name: "ü", Weight: 50}},
 				},
 				map[string]string{
 					"a": "vowel", "y": "consonant", "ü": "vowel",
@@ -138,6 +139,54 @@ func TestPartiton(t *testing.T) {
 			},
 			[]Title{KeyTitle("vowel"), KeyTitle("umlaut")},
 		},
+		{
+			"year partition with no eligible artists",
+			YearPartition(
+				chartsFromMap(map[string][]float64{"not": {0, 1}}),
+				chartsFromMap(map[string][]float64{"not": {0, 1}}),
+				rsrc.ParseDay("2019-12-31"),
+			),
+			[]titlePartition{
+				{ArtistTitle("not"), KeyTitle("")},
+			},
+			[]partitionTitles{
+				{KeyTitle("2019"), []Title{}},
+				{KeyTitle("2020"), []Title{}},
+			},
+			[]Title{KeyTitle("2019"), KeyTitle("2020")},
+		},
+		{
+			"year partition with values",
+			YearPartition(
+				chartsFromMap(map[string][]float64{
+					"not":    {0, 0, 1, 0},
+					"first":  {0, 4, 10, 0}, // higher value irrelevant since 4 is reached in 2019
+					"first2": {0, 2, 1, 0},
+					"last":   {0, 2, 1, 0},
+					"last2":  {0, 1, 2, 0},
+				}),
+				chartsFromMap(map[string][]float64{
+					"not":    {0, 0, 1, 1},
+					"first":  {0, 4, 4, 4},
+					"first2": {0, 3, 4, 4},
+					"last":   {0, 1, 3, 3},
+					"last2":  {0, 2, 3, 3},
+				}),
+				rsrc.ParseDay("2019-12-30"),
+			),
+			[]titlePartition{
+				{ArtistTitle("not"), KeyTitle("")},
+				{ArtistTitle("first"), KeyTitle("2019")},
+				{ArtistTitle("first2"), KeyTitle("2019")},
+				{ArtistTitle("last"), KeyTitle("2020")},
+				{ArtistTitle("last2"), KeyTitle("2020")},
+			},
+			[]partitionTitles{
+				{KeyTitle("2019"), []Title{KeyTitle("first"), KeyTitle("first2")}},
+				{KeyTitle("2020"), []Title{KeyTitle("last"), KeyTitle("last2")}},
+			},
+			[]Title{KeyTitle("2019"), KeyTitle("2020")},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			for _, tp := range c.titlePartitions {
@@ -147,16 +196,14 @@ func TestPartiton(t *testing.T) {
 				}
 			}
 
-			for i, pt := range c.partitionTitles {
+			for _, pt := range c.partitionTitles {
 				titles := c.partition.Titles(pt.partition)
 				if len(titles) != len(pt.titles) {
 					t.Fatalf("for partition '%v': %v != %v",
 						pt.partition, len(titles), len(pt.titles))
 				}
-				for j := range titles {
-					if pt.titles[j].Key() != titles[j].Key() {
-						t.Errorf("%v, %v: '%v' != '%v'", i, j, pt.titles[j], titles[j])
-					}
+				if !areTitlesSame(pt.titles, titles) {
+					t.Errorf("for partition '%v', titles unequal: %v != %v", pt.partition, pt.titles, titles)
 				}
 			}
 

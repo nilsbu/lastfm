@@ -361,9 +361,7 @@ func sets(titles []Title, nRand int) [][]Title {
 
 	for i := 0; i < nRand; i++ {
 		set := []Title{}
-		for _, t := range titles {
-			set = append(set, t)
-		}
+		set = append(set, titles...)
 
 		rand.Shuffle(len(set), func(i, j int) {
 			set[i], set[j] = set[j], set[i]

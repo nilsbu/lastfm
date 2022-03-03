@@ -40,13 +40,8 @@ func (l *charts) Data(titles []Title, begin, end int) TitleLineMap {
 }
 
 func (l *charts) Titles() []Title {
-	ts := make([]Title, len(l.titles))
-
-	for i, t := range l.titles {
-		ts[i] = t
-	}
-
-	return ts
+	// assumption: noone touches the return value
+	return l.titles
 }
 
 func (l *charts) Len() int {
@@ -159,7 +154,11 @@ func Gaussian(
 		b := i - width
 		if b < 0 {
 			if mirrorBegin {
-				for j := 0; j < width-i; j++ {
+				ee := width - i
+				if ee > len(line) {
+					ee = len(line)
+				}
+				for j := 0; j < ee; j++ {
 					acc += gaussian[i+j+1] * line[j]
 				}
 			}
@@ -169,7 +168,11 @@ func Gaussian(
 		e := i + width + 1
 		if e > len(line) {
 			if mirrorEnd {
-				for j := len(line) - 1; j > 2*len(line)-i-2-width; j-- {
+				bb := 2*len(line) - i - 1 - width
+				if bb < 0 {
+					bb = 0
+				}
+				for j := len(line) - 1; j >= bb; j-- {
 					acc += gaussian[2*len(line)-(i+j+1)] * line[j]
 				}
 			}
@@ -324,10 +327,7 @@ func (l *partitionSum) Column(titles []Title, index int) TitleValueMap {
 	back := make(chan titleColumn)
 
 	for _, bin := range titles {
-		ts := []Title{}
-		for _, r := range l.partition.Titles(bin) {
-			ts = append(ts, r)
-		}
+		ts := l.partition.Titles(bin)
 		go func(titles []Title, bin Title) {
 			back <- titleColumn{
 				key: bin,
@@ -516,4 +516,37 @@ func (c *cache) Data(titles []Title, begin, end int) TitleLineMap {
 		data[tl.Title.Key()] = tl
 	}
 	return data
+}
+
+type only struct {
+	chartsNode
+	titles []Title
+}
+
+// Cache is a LazyCharts that stores data to avoid duplicating work in parent.
+// The cache is filled when the data is requested. The data is stored in one
+// continuous block per row. Non-requested parts in between are filled.
+// E.g. if Row("A", 0, 4) and Column({"A"}, 16) are called, row "A" will store
+// range [0, 17).
+func Only(parent LazyCharts, titles []Title) LazyCharts {
+	return &only{
+		chartsNode: chartsNode{parent: parent},
+		titles:     titles,
+	}
+}
+
+func (c *only) Titles() []Title {
+	return c.titles
+}
+
+func (c *only) Row(title Title, begin, end int) []float64 {
+	return c.parent.Row(title, begin, end)
+}
+
+func (c *only) Column(titles []Title, index int) TitleValueMap {
+	return c.parent.Column(titles, index)
+}
+
+func (c *only) Data(titles []Title, begin, end int) TitleLineMap {
+	return c.parent.Data(titles, begin, end)
 }

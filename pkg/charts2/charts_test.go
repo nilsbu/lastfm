@@ -123,6 +123,18 @@ func TestCharts(t *testing.T) {
 				{1, 1}, {1, 0}, {0, 1},
 			},
 		},
+		{
+			"chartsFromMap",
+			Only(chartsFromMap(map[string][]float64{
+				"A": {1, 1},
+				"B": {1, 0},
+				"C": {0, 1},
+			}), []Title{KeyTitle("A"), KeyTitle("C")}),
+			[]Title{KeyTitle("A"), KeyTitle("C")},
+			[][]float64{
+				{1, 1}, {0, 1},
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if !areTitlesSame(c.titles, c.charts.Titles()) {
