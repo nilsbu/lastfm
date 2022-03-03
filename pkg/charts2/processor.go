@@ -69,15 +69,16 @@ func (l chartsNode) Len() int {
 }
 
 func Sum(parent LazyCharts) LazyCharts {
-	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		mapF: func(i int, line []float64) float64 {
-			if i == 0 {
-				acc = 0
+		mapF: func(in []float64) []float64 {
+			out := make([]float64, len(in))
+			acc := 0.0
+			for i := range in {
+				acc += in[i]
+				out[i] = acc
 			}
-			acc += line[i]
-			return acc
+			return out
 		},
 		foldF: func(i int, line []float64) float64 {
 			acc := 0.0
@@ -92,16 +93,17 @@ func Sum(parent LazyCharts) LazyCharts {
 
 func Fade(parent LazyCharts, hl float64) LazyCharts {
 	fac := math.Pow(0.5, 1.0/hl)
-	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		mapF: func(i int, line []float64) float64 {
-			if i == 0 {
-				acc = 0
+		mapF: func(in []float64) []float64 {
+			out := make([]float64, len(in))
+			acc := 0.0
+			for i := range in {
+				acc *= fac
+				acc += in[i]
+				out[i] = acc
 			}
-			acc *= fac
-			acc += line[i]
-			return acc
+			return out
 		},
 		foldF: func(i int, line []float64) float64 {
 			acc := 0.0
@@ -117,16 +119,16 @@ func Fade(parent LazyCharts, hl float64) LazyCharts {
 
 // Max calculates the maximum of the parent charts.
 func Max(parent LazyCharts) LazyCharts {
-	acc := 0.0
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		mapF: func(i int, line []float64) float64 {
-			if i == 0 {
-				acc = line[i]
-			} else {
-				acc = math.Max(acc, line[i])
+		mapF: func(in []float64) []float64 {
+			out := make([]float64, len(in))
+			acc := -math.MaxFloat64
+			for i := range in {
+				acc = math.Max(acc, in[i])
+				out[i] = acc
 			}
-			return acc
+			return out
 		},
 		foldF: func(i int, line []float64) float64 {
 			acc := 0.0
@@ -187,8 +189,14 @@ func Gaussian(
 
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
-		mapF:       f,
-		foldF:      f,
+		mapF: func(in []float64) []float64 {
+			out := make([]float64, len(in))
+			for i := range in {
+				out[i] = f(i, in)
+			}
+			return out
+		},
+		foldF: f,
 		rangeF: func(size, begin, end int) (b, e int) {
 			if end+width > size {
 				return 0, size
@@ -198,7 +206,8 @@ func Gaussian(
 	}
 }
 
-type lineProc func(i int, line []float64) float64
+type valueProc func(i int, line []float64) float64
+type lineProc func(line []float64) []float64
 type rangeSpec func(size, begin, end int) (b, e int)
 
 func fromBeginRange(size, begin, end int) (b, e int) {
@@ -207,17 +216,15 @@ func fromBeginRange(size, begin, end int) (b, e int) {
 
 type lineMapCharts struct {
 	chartsNode
-	mapF, foldF lineProc
-	rangeF      rangeSpec
+	mapF   lineProc
+	foldF  valueProc
+	rangeF rangeSpec
 }
 
 func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
 	rb, re := l.rangeF(l.parent.Len(), begin, end)
 	in := l.parent.Row(title, rb, re)
-	out := make([]float64, len(in))
-	for i := range in {
-		out[i] = l.mapF(i, in)
-	}
+	out := l.mapF(in)
 	return out[begin-rb : end-rb]
 }
 
@@ -252,10 +259,7 @@ func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
 	for k := range titles {
 		go func(k int) {
 			in := l.parent.Row(titles[k], rb, re)
-			out := make([]float64, len(in))
-			for i := range in {
-				out[i] = l.mapF(i, in)
-			}
+			out := l.mapF(in)
 
 			back <- TitleLine{
 				Title: titles[k],
