@@ -283,6 +283,7 @@ type partitionSum struct {
 	partition Partition
 }
 
+// Group is a LazyCharts that combines the subsets of the partition from the parent.
 func Group(
 	parent LazyCharts,
 	partition Partition,
@@ -389,6 +390,15 @@ func (l *partitionSum) Data(titles []Title, begin, end int) TitleLineMap {
 
 func (l *partitionSum) Titles() []Title {
 	return l.partition.Partitions()
+}
+
+// Subset is a LazyCharts that picks a single subset of the partition from the parent.
+func Subset(
+	parent LazyCharts,
+	partition Partition,
+	title Title,
+) LazyCharts {
+	return Only(parent, partition.Titles(title))
 }
 
 // ColumnSum is a LazyCharts that sums up all columns.
