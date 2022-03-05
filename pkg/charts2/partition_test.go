@@ -123,7 +123,7 @@ func TestPartiton(t *testing.T) {
 					"a": "vowel", "y": "consonant", "ü": "vowel",
 				},
 				map[string]string{
-					"y": "vowel", "ü": "umlaut",
+					"Y": "vowel", "Ü": "umlaut",
 				},
 			),
 			[]titlePartition{

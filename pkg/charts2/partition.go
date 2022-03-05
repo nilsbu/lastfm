@@ -116,13 +116,12 @@ func FirstTagPartition(
 	tpPairs := [][2]Title{}
 
 	for title, list := range tags {
+		if partition, ok := corrections[title]; ok {
+			tpPairs = append(tpPairs, [2]Title{ArtistTitle(title), KeyTitle(partition)})
+			continue
+		}
 		found := false
 		for _, tag := range list {
-			if partition, ok := corrections[tag.Name]; ok {
-				tpPairs = append(tpPairs, [2]Title{ArtistTitle(title), KeyTitle(partition)})
-				found = true
-				break
-			}
 			if partition, ok := tagToPartition[tag.Name]; ok {
 				tpPairs = append(tpPairs, [2]Title{ArtistTitle(title), KeyTitle(partition)})
 				found = true
