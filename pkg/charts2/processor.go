@@ -533,11 +533,7 @@ type only struct {
 	titles []Title
 }
 
-// Cache is a LazyCharts that stores data to avoid duplicating work in parent.
-// The cache is filled when the data is requested. The data is stored in one
-// continuous block per row. Non-requested parts in between are filled.
-// E.g. if Row("A", 0, 4) and Column({"A"}, 16) are called, row "A" will store
-// range [0, 17).
+// Only keeps only a subset of titles from the parent
 func Only(parent LazyCharts, titles []Title) LazyCharts {
 	return &only{
 		chartsNode: chartsNode{parent: parent},
@@ -559,4 +555,43 @@ func (c *only) Column(titles []Title, index int) TitleValueMap {
 
 func (c *only) Data(titles []Title, begin, end int) TitleLineMap {
 	return c.parent.Data(titles, begin, end)
+}
+
+type top struct {
+	chartsNode
+	n int
+}
+
+func Top(c LazyCharts, n int) []Title {
+	col := c.Column(c.Titles(), c.Len()-1)
+	m := n
+	if len(col) < n {
+		m = len(col)
+	}
+
+	tvs := make([]TitleValue, m)
+	// k := 0
+	i := 0
+	for _, tv := range col {
+		if i == m && tv.Value <= tvs[m-1].Value {
+			continue
+		}
+		tvs[i] = tv
+		for j := i; j > 0; j-- {
+			if tvs[j-1].Value < tvs[j].Value {
+				tvs[j-1], tvs[j] = tvs[j], tvs[j-1]
+			} else {
+				break
+			}
+		}
+		if i+1 < m {
+			i++
+		}
+	}
+
+	titles := make([]Title, m)
+	for i, tv := range tvs {
+		titles[i] = tv.Title
+	}
+	return titles
 }

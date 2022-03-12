@@ -76,6 +76,14 @@ func cropRange(r Range, l int) (Range, error) {
 	return c, nil
 }
 
+func CroppedRange(begin, end, registered rsrc.Day, l int) (Range, error) {
+	return cropRange(Range{
+		Begin:      begin,
+		End:        end,
+		Registered: registered,
+	}, l)
+}
+
 type interval struct {
 	chartsNode
 	Range Range

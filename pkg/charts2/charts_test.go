@@ -124,7 +124,7 @@ func TestCharts(t *testing.T) {
 			},
 		},
 		{
-			"chartsFromMap",
+			"Only",
 			Only(chartsFromMap(map[string][]float64{
 				"A": {1, 1},
 				"B": {1, 0},

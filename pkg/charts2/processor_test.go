@@ -591,3 +591,47 @@ func TestCacheIncremental(t *testing.T) {
 		checkData(t, expect, actual, ranges, sets)
 	}
 }
+
+func TestTop(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		charts LazyCharts
+		n      int
+		titles []Title
+	}{
+		{
+			"empty",
+			chartsFromMap(map[string][]float64{}),
+			2,
+			[]Title{},
+		},
+		{
+			"2 out of 3",
+			chartsFromMap(map[string][]float64{
+				"A": {1, 3},
+				"B": {1, 1},
+				"C": {0, 2},
+			}),
+			2,
+			[]Title{KeyTitle("A"), KeyTitle("C")},
+		},
+		{
+			"n > len",
+			chartsFromMap(map[string][]float64{
+				"A": {1, 3},
+				"B": {1, 1},
+				"C": {0, 2},
+			}),
+			4,
+			[]Title{KeyTitle("A"), KeyTitle("C"), KeyTitle("B")},
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			titles := Top(c.charts, c.n)
+			if !areTitlesSame(c.titles, titles) {
+				t.Errorf("expect: %v\nactual: %v", c.titles, titles)
+			}
+		})
+	}
+
+}
