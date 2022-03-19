@@ -118,9 +118,9 @@ func (l *cached) worker() {
 }
 
 func isFatal(err error) bool {
-	switch err.(type) {
+	switch err := err.(type) {
 	case *LastfmError:
-		return err.(*LastfmError).IsFatal()
+		return err.IsFatal()
 	default:
 		return true
 	}

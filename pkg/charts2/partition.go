@@ -5,7 +5,6 @@ import (
 	"math"
 	"time"
 
-	legacy "github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -109,7 +108,7 @@ func TotalPartition(titles []Title) Partition {
 // the partitions. Each key is assigned to its partition by first tag included
 // in tagToPartition. Corrections can override this.
 func FirstTagPartition(
-	tags map[string][]legacy.Tag, // TODO: use different type or move struct here
+	tags map[string][]Tag, // TODO: use different type or move struct here
 	tagToPartition map[string]string,
 	corrections map[string]string,
 ) Partition {

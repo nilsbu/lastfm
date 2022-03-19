@@ -269,6 +269,7 @@ func Top(c LazyCharts, n int) []Title {
 	return ts
 }
 
+// Id returns the parent
 func Id(parent LazyCharts) LazyCharts {
 	return parent
 }

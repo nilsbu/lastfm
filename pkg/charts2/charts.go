@@ -15,12 +15,6 @@ type charts struct {
 	values map[string][]float64
 }
 
-// Song contains basic information about a song.
-type Song struct {
-	Artist, Title, Album string
-	Duration             float64
-}
-
 // Artists compiles LazyCharts in which all songs by an artist are grouped.
 func Artists(songs [][]Song) LazyCharts {
 	return compileCharts(

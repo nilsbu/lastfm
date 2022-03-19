@@ -63,17 +63,17 @@ func TestPrint(t *testing.T) {
 		{Name: "french", Count: 88}}
 	tagsY := []unpack.TagCount{{Name: "rock", Count: 100}}
 
-	tagPop := &charts.Tag{
+	tagPop := &charts2.Tag{
 		Name:  "pop",
 		Total: 100,
 		Reach: 25,
 	}
-	tagRock := &charts.Tag{
+	tagRock := &charts2.Tag{
 		Name:  "rock",
 		Total: 100,
 		Reach: 25,
 	}
-	tagFrench := &charts.Tag{
+	tagFrench := &charts2.Tag{
 		Name:  "french",
 		Total: 100,
 		Reach: 25,

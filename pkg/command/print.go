@@ -173,7 +173,7 @@ func (cmd printCharts) getPartition(
 func loadArtistTags(
 	cha charts2.LazyCharts,
 	r rsrc.Reader,
-) (map[string][]charts.Tag, error) {
+) (map[string][]charts2.Tag, error) {
 	keys := []string{}
 
 	for _, key := range cha.Titles() {

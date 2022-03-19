@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -243,7 +244,7 @@ func (o *obArtistTags) interpret(raw interface{}) (interface{}, error) {
 
 	tags := make([]TagCount, len)
 	for i, tag := range at.TopTags.Tags {
-		tags[i] = TagCount{Name: tag.Name, Count: tag.Count}
+		tags[i] = TagCount(tag)
 	}
 	return tags, nil
 }
@@ -252,7 +253,7 @@ func (o *obArtistTags) raw(obj interface{}) interface{} {
 	tags := obj.([]TagCount)
 	jsTags := []jsonTag{}
 	for _, tag := range tags {
-		jsTags = append(jsTags, jsonTag{Name: tag.Name, Count: tag.Count})
+		jsTags = append(jsTags, jsonTag(tag))
 	}
 
 	js := jsonArtistTags{TopTags: jsonTopTags{
@@ -267,16 +268,16 @@ type obTagInfo struct {
 }
 
 // LoadTagInfo loads tag information.
-func LoadTagInfo(tag string, l Loader) (*charts.Tag, error) {
+func LoadTagInfo(tag string, l Loader) (*charts2.Tag, error) {
 	data, err := l.load(&obTagInfo{tag})
 	if err != nil {
 		return nil, err
 	}
-	return data.(*charts.Tag), nil
+	return data.(*charts2.Tag), nil
 }
 
 // WriteTagInfo writes tag infos.
-func WriteTagInfo(tag *charts.Tag, w rsrc.Writer) error {
+func WriteTagInfo(tag *charts2.Tag, w rsrc.Writer) error {
 	return deposit(tag, &obTagInfo{name: tag.Name}, w)
 }
 
@@ -291,14 +292,14 @@ func (o *obTagInfo) deserializer() interface{} {
 func (o *obTagInfo) interpret(raw interface{}) (interface{}, error) {
 	tag := raw.(*jsonTagInfo)
 
-	return &charts.Tag{
+	return &charts2.Tag{
 		Name:  tag.Tag.Name,
 		Total: tag.Tag.Total,
 		Reach: tag.Tag.Reach}, nil
 }
 
 func (o *obTagInfo) raw(obj interface{}) interface{} {
-	tag := obj.(*charts.Tag)
+	tag := obj.(*charts2.Tag)
 	js := jsonTagInfo{Tag: jsonTagTag{
 		Name:  tag.Name,
 		Total: tag.Total,

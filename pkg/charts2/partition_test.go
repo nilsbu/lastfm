@@ -3,7 +3,6 @@ package charts2
 import (
 	"testing"
 
-	legacy "github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -74,7 +73,7 @@ func TestPartiton(t *testing.T) {
 		{
 			"empty first key partition",
 			FirstTagPartition(
-				map[string][]legacy.Tag{},
+				map[string][]Tag{},
 				map[string]string{},
 				nil,
 			),
@@ -89,7 +88,7 @@ func TestPartiton(t *testing.T) {
 		{
 			"first key partition without correction",
 			FirstTagPartition(
-				map[string][]legacy.Tag{
+				map[string][]Tag{
 					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
 					"B": {{Name: "b", Weight: 25}, {Name: "c", Weight: 100}}, // Ignore Weight
 					"C": {{Name: "-", Weight: 100}, {Name: "c", Weight: 50}},
@@ -114,7 +113,7 @@ func TestPartiton(t *testing.T) {
 		{
 			"first key partition with correction",
 			FirstTagPartition(
-				map[string][]legacy.Tag{
+				map[string][]Tag{
 					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
 					"Y": {{Name: "b", Weight: 25}, {Name: "y", Weight: 100}}, // Ignore Weight
 					"Ü": {{Name: "-", Weight: 100}, {Name: "ü", Weight: 50}},

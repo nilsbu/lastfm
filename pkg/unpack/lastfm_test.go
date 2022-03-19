@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
 func TestLastfmError(t *testing.T) {
-	var err error
-	err = &LastfmError{
+	err := &LastfmError{
 		Code:    3,
 		Message: "some error",
 	}
@@ -268,7 +268,7 @@ func TestLoadArtistTags(t *testing.T) {
 		{
 			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"toptags":{"tag":[{"name":"bui", "count":100},{"count":12,"name":"asdf"}],"@attr":{"artist":"xy"}}}`)},
 			"xy",
-			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
+			[]TagCount{{"bui", 100}, {"asdf", 12}},
 			true,
 		},
 	}
@@ -305,7 +305,7 @@ func TestWriteLoadArtistTags(t *testing.T) {
 	}{
 		{
 			"xy",
-			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
+			[]TagCount{{"bui", 100}, {"asdf", 12}},
 		},
 	}
 
@@ -340,36 +340,36 @@ func TestLoadTagInfo(t *testing.T) {
 	cases := []struct {
 		files map[rsrc.Locator][]byte
 		names [][]string
-		tags  []*charts.Tag
+		tags  []*charts2.Tag
 		ok    bool
 	}{
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): nil},
-			[][]string{[]string{"african"}},
-			[]*charts.Tag{nil},
+			[][]string{{"african"}},
+			[]*charts2.Tag{nil},
 			false,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
-			[][]string{[]string{"african"}},
-			[]*charts.Tag{&charts.Tag{}},
+			[][]string{{"african"}},
+			[]*charts2.Tag{{}},
 			true, // no error is thrown, therefore this is acceppted
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
-			[][]string{[]string{"african", "african"}},
-			[]*charts.Tag{
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+			[][]string{{"african", "african"}},
+			[]*charts2.Tag{
+				{Name: "african", Total: 55266, Reach: 10493},
+				{Name: "african", Total: 55266, Reach: 10493},
 			},
 			true,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
-			[][]string{[]string{"african"}, []string{"african"}},
-			[]*charts.Tag{
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+			[][]string{{"african"}, {"african"}},
+			[]*charts2.Tag{
+				{Name: "african", Total: 55266, Reach: 10493},
+				{Name: "african", Total: 55266, Reach: 10493},
 			},
 			true,
 		},
@@ -379,7 +379,7 @@ func TestLoadTagInfo(t *testing.T) {
 				rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
 			},
 			[][]string{{"error"}, {"african"}},
-			[]*charts.Tag{},
+			[]*charts2.Tag{},
 			false,
 		},
 		{
@@ -388,7 +388,7 @@ func TestLoadTagInfo(t *testing.T) {
 				rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
 			},
 			[][]string{{"error"}, {"african"}},
-			[]*charts.Tag{
+			[]*charts2.Tag{
 				nil,
 				{Name: "african", Total: 55266, Reach: 10493}},
 			false,
@@ -409,7 +409,7 @@ func TestLoadTagInfo(t *testing.T) {
 				n += len(names)
 			}
 
-			tags := make([]*charts.Tag, n)
+			tags := make([]*charts2.Tag, n)
 			feedback := make(chan error)
 			errs := []error{}
 
@@ -454,10 +454,10 @@ func TestLoadTagInfo(t *testing.T) {
 func TestWriteLoadTagInfo(t *testing.T) {
 	// WriteTagInfo only tested in combination with loading for simplicity.
 	cases := []struct {
-		tag *charts.Tag
+		tag *charts2.Tag
 	}{
 		{
-			&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+			&charts2.Tag{Name: "african", Total: 55266, Reach: 10493},
 		},
 	}
 
