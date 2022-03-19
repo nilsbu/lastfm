@@ -14,51 +14,59 @@ type Title interface {
 	Song() string
 }
 
+type keyTitle string
+
 // KeyTitle is a Title which has the same key as the printed string. Artist()
 // and Song() are empty strings.
-type KeyTitle string
+func KeyTitle(s string) Title {
+	return keyTitle(s)
+}
 
-// String returns the KeyTitle's string.
-func (t KeyTitle) String() string {
+// String returns the keyTitle's string.
+func (t keyTitle) String() string {
 	return string(t)
 }
 
-// Key returns the KeyTitle's string.
-func (t KeyTitle) Key() string {
+// Key returns the keyTitle's string.
+func (t keyTitle) Key() string {
 	return string(t)
 }
 
 // Artist returns ''.
-func (t KeyTitle) Artist() string {
+func (t keyTitle) Artist() string {
 	return ""
 }
 
 // Song returns ''.
-func (t KeyTitle) Song() string {
+func (t keyTitle) Song() string {
 	return ""
 }
 
+type artistTitle string
+
 // ArtistTitle is a Title which uses an artist's name as key and printed string.
 // Song() is "".
-type ArtistTitle string
+func ArtistTitle(s string) Title {
+	return artistTitle(s)
+}
 
 // String returns the artist's name.
-func (k ArtistTitle) String() string {
+func (k artistTitle) String() string {
 	return string(k)
 }
 
 // Artist returns the artist's name.
-func (k ArtistTitle) Artist() string {
+func (k artistTitle) Artist() string {
 	return string(k)
 }
 
 // Key returns the artist's name.
-func (k ArtistTitle) Key() string {
+func (k artistTitle) Key() string {
 	return string(k)
 }
 
 // Song returns "".
-func (k ArtistTitle) Song() string {
+func (k artistTitle) Song() string {
 	return ""
 }
 
