@@ -55,7 +55,7 @@ var cmdLastfm = node{
 		"print":    cmdPrint,
 		"session":  cmdSession,
 		"table":    cmdTable,
-		"timeline": node{cmd: exeTimeline},
+		"timeline": {cmd: exeTimeline},
 		"update":   cmdUpdate,
 	},
 }

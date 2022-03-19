@@ -29,8 +29,7 @@ type printCharts struct {
 
 // TODO document
 type printChartsDescriptor interface {
-	Accumulate(c charts.Charts) charts.Charts
-	Accumulate2(c charts2.LazyCharts) charts2.LazyCharts
+	Accumulate(c charts2.LazyCharts) charts2.LazyCharts
 	PrintCharts() printCharts
 }
 
@@ -38,159 +37,7 @@ func (cmd printCharts) PrintCharts() printCharts {
 	return cmd
 }
 
-func (cmd printCharts) getPartition(
-	session *unpack.SessionInfo,
-	r rsrc.Reader,
-	cha charts.Charts,
-) (charts.Partition, error) {
-	switch cmd.by {
-	case "all":
-		return nil, nil
-	case "year":
-		entry := cmd.entry
-		if entry == 0 {
-			entry = 2
-		}
-		return cha.GetYearPartition(entry), nil
-	case "total":
-		return charts.TotalPartition{}, nil
-	case "super":
-		tags, err := loadArtistTags(cha, r)
-		if err != nil {
-			return nil, err
-		}
-
-		corrections, _ := unpack.LoadSupertagCorrections(session.User, r)
-
-		return charts.FirstTagPartition(tags, config.Supertags, corrections), nil
-	case "country":
-		tags, err := loadArtistTags(cha, r)
-		if err != nil {
-			return nil, err
-		}
-
-		corrections, _ := unpack.LoadCountryCorrections(session.User, r)
-
-		return charts.FirstTagPartition(tags, config.Countries, corrections), nil
-	default:
-		return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
-	}
-}
-
-func loadArtistTags(
-	cha charts.Charts,
-	r rsrc.Reader,
-) (map[string][]charts.Tag, error) {
-	keys := []string{}
-
-	for _, key := range cha.Keys {
-		keys = append(keys, key.ArtistName())
-	}
-
-	tags, err := organize.LoadArtistTags(keys, r)
-	if err != nil {
-		for _, e := range err.(*organize.MultiError).Errs {
-			switch e.(type) {
-			case *unpack.LastfmError:
-				// TODO can this be tested?
-				if e.(*unpack.LastfmError).IsFatal() {
-					return nil, err
-				}
-			default:
-				return nil, err
-			}
-		}
-	}
-
-	return tags, nil
-}
-
 func getOutCharts(
-	session *unpack.SessionInfo,
-	pcd printChartsDescriptor,
-	r rsrc.Reader,
-) (charts.Charts, error) {
-	cmd := pcd.PrintCharts()
-
-	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(r))
-	if err != nil {
-		return charts.Charts{}, errors.Wrap(err, "failed to load user info")
-	}
-
-	bookmark, err := unpack.LoadBookmark(session.User, r)
-	if err != nil {
-		return charts.Charts{}, err
-	}
-
-	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
-	plays := make([][]charts.Song, days+1)
-	for i := 0; i < days+1; i++ {
-		day := user.Registered.AddDate(0, 0, i)
-		if songs, err := unpack.LoadDayHistory(session.User, day, r); err == nil {
-			plays[i] = songs
-		} else {
-			return charts.Charts{}, err
-		}
-	}
-
-	var cha charts.Charts
-	if cmd.keys == "song" || cmd.duration {
-		cha = charts.CompileSongs(plays, user.Registered)
-		if cmd.duration {
-			cha, err = normalizeDuration(cha, r)
-			if err != nil {
-				return charts.Charts{}, err
-			}
-		}
-		if cmd.keys != "song" {
-			p := charts.NewArtistNamePartition(cha)
-			cha = cha.Group(p)
-		}
-	} else if cmd.keys == "" || cmd.keys == "artist" {
-		cha = charts.ArtistsFromSongs(plays, user.Registered)
-	}
-
-	replace, err := unpack.LoadArtistCorrections(session.User, r)
-	if err == nil {
-		// TODO correct does not work for songs
-		cha = cha.Correct(replace)
-	}
-
-	partition, err := cmd.getPartition(session, r, cha)
-	if err != nil {
-		return charts.Charts{}, err
-	}
-
-	if cmd.normalized {
-		nm := charts.GaussianNormalizer{
-			Sigma:      7,
-			MirrorBack: false}
-		cha = nm.Normalize(cha)
-	}
-
-	accCharts := pcd.Accumulate(cha)
-
-	if cmd.name == "" {
-		if partition == nil {
-			return accCharts, nil
-		}
-
-		return accCharts.Group(partition), nil
-	}
-
-	if partition == nil {
-		return charts.Charts{}, errors.New("name must be empty for chart type 'all'")
-	}
-
-	out, ok := accCharts.Split(partition)[cmd.name]
-	if !ok {
-		return charts.Charts{}, fmt.Errorf("name '%v' not found", cmd.name)
-	}
-
-	return out, nil
-}
-
-func getOutCharts2(
 	session *unpack.SessionInfo,
 	pcd printChartsDescriptor,
 	r rsrc.Reader,
@@ -254,9 +101,9 @@ func getOutCharts2(
 		base = normalized
 	}
 
-	accCharts := pcd.Accumulate2(base)
+	accCharts := pcd.Accumulate(base)
 
-	partition, err := cmd.getPartition2(session, r, gaussian, accCharts, user.Registered)
+	partition, err := cmd.getPartition(session, r, gaussian, accCharts, user.Registered)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +134,7 @@ func getOutCharts2(
 	return charts2.Subset(accCharts, partition, charts2.KeyTitle(cmd.name)), nil
 }
 
-func (cmd printCharts) getPartition2(
+func (cmd printCharts) getPartition(
 	session *unpack.SessionInfo,
 	r rsrc.Reader,
 	gaussian, normalized charts2.LazyCharts,
@@ -301,7 +148,7 @@ func (cmd printCharts) getPartition2(
 	case "total":
 		return charts2.TotalPartition(normalized.Titles()), nil
 	case "super":
-		tags, err := loadArtistTags2(normalized, r)
+		tags, err := loadArtistTags(normalized, r)
 		if err != nil {
 			return nil, err
 		}
@@ -310,7 +157,7 @@ func (cmd printCharts) getPartition2(
 
 		return charts2.FirstTagPartition(tags, config.Supertags, corrections), nil
 	case "country":
-		tags, err := loadArtistTags2(normalized, r)
+		tags, err := loadArtistTags(normalized, r)
 		if err != nil {
 			return nil, err
 		}
@@ -323,7 +170,7 @@ func (cmd printCharts) getPartition2(
 	}
 }
 
-func loadArtistTags2(
+func loadArtistTags(
 	cha charts2.LazyCharts,
 	r rsrc.Reader,
 ) (map[string][]charts.Tag, error) {
@@ -336,10 +183,10 @@ func loadArtistTags2(
 	tags, err := organize.LoadArtistTags(keys, r)
 	if err != nil {
 		for _, e := range err.(*organize.MultiError).Errs {
-			switch e.(type) {
+			switch e := e.(type) {
 			case *unpack.LastfmError:
 				// TODO can this be tested?
-				if e.(*unpack.LastfmError).IsFatal() {
+				if e.IsFatal() {
 					return nil, err
 				}
 			default:
@@ -351,65 +198,18 @@ func loadArtistTags2(
 	return tags, nil
 }
 
-type keyWrapper struct {
-	title charts2.Title
-}
-
-func (kw keyWrapper) ArtistName() string {
-	return kw.title.Artist()
-}
-
-func (kw keyWrapper) FullTitle() string {
-	return kw.title.Key()
-}
-
-func (kw keyWrapper) String() string {
-	return kw.title.String()
-}
-
-func convertToOld(in charts2.LazyCharts, registered rsrc.Day) (out charts.Charts) {
-	out.Headers = charts.Days(registered, registered.AddDate(0, 0, in.Len()))
-	data := in.Data(in.Titles(), 0, in.Len())
-	for _, v := range data {
-		out.Keys = append(out.Keys, keyWrapper{v.Title})
-		out.Values = append(out.Values, v.Line)
-	}
-
-	return
-}
-
-func normalizeDuration(cha charts.Charts, r rsrc.Reader) (charts.Charts, error) {
-	sd := charts.SongDurations{}
-	for _, key := range cha.Keys {
-		info := key.(charts.Song)
-		if info.Duration > 0 {
-			if _, ok := sd[info.Artist]; !ok {
-				sd[info.Artist] = make(map[string]float64)
-			}
-			sd[info.Artist][info.Title] = info.Duration
-		}
-	}
-	sd[""] = make(map[string]float64)
-	sd[""][""] = 4.0
-	return sd.Normalize(cha), nil
-}
-
 type printTotal struct {
 	printCharts
 	date time.Time
 }
 
-func (cmd printTotal) Accumulate(c charts.Charts) charts.Charts {
-	return c.Sum()
-}
-
-func (cmd printTotal) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+func (cmd printTotal) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 	return charts2.Sum(c)
 }
 
 func (cmd printTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	cha, err := getOutCharts2(session, cmd, s)
+	cha, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -447,17 +247,13 @@ type printFade struct {
 	date time.Time
 }
 
-func (cmd printFade) Accumulate(c charts.Charts) charts.Charts {
-	return c.Fade(cmd.hl)
-}
-
-func (cmd printFade) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+func (cmd printFade) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 	return charts2.Fade(c, cmd.hl)
 }
 
 func (cmd printFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	cha, err := getOutCharts2(session, cmd, s)
+	cha, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -490,17 +286,13 @@ type printPeriod struct {
 	period string
 }
 
-func (cmd printPeriod) Accumulate(c charts.Charts) charts.Charts {
-	return c.Sum()
-}
-
-func (cmd printPeriod) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+func (cmd printPeriod) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 	return c
 }
 
 func (cmd printPeriod) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	cha, err := getOutCharts2(session, cmd, s)
+	cha, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -541,17 +333,13 @@ type printInterval struct {
 	before time.Time
 }
 
-func (cmd printInterval) Accumulate(c charts.Charts) charts.Charts {
-	return c.Sum()
-}
-
-func (cmd printInterval) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+func (cmd printInterval) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 	return c
 }
 
 func (cmd printInterval) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	cha, err := getOutCharts2(session, cmd, s)
+	cha, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -594,11 +382,7 @@ func (cmd printInterval) Execute(
 // 	hl float64
 // }
 
-// func (cmd printFadeMax) Accumulate(c charts.Charts) charts.Charts {
-// 	return c.Fade(cmd.hl)
-// }
-
-// func (cmd printFadeMax) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+// func (cmd printFadeMax) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 // 	return charts2.Fade(c, cmd.hl)
 // }
 

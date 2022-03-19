@@ -1,11 +1,9 @@
 package command
 
 import (
-	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/pkg/errors"
@@ -16,17 +14,13 @@ type tableTotal struct {
 	step int
 }
 
-func (cmd tableTotal) Accumulate(c charts.Charts) charts.Charts {
-	return c.Sum()
-}
-
-func (cmd tableTotal) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+func (cmd tableTotal) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 	return charts2.Sum(c)
 }
 
 func (cmd tableTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts2(session, cmd, s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -57,17 +51,13 @@ type tableFade struct {
 	hl   float64
 }
 
-func (cmd tableFade) Accumulate(c charts.Charts) charts.Charts {
-	return c.Fade(cmd.hl)
-}
-
-func (cmd tableFade) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+func (cmd tableFade) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 	return charts2.Fade(c, cmd.hl)
 }
 
 func (cmd tableFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts2(session, cmd, s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -97,17 +87,13 @@ type tablePeriods struct {
 	period string
 }
 
-func (cmd tablePeriods) Accumulate(c charts.Charts) charts.Charts {
-	return c.Sum()
-}
-
-func (cmd tablePeriods) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+func (cmd tablePeriods) Accumulate(c charts2.LazyCharts) charts2.LazyCharts {
 	return charts2.Sum(c)
 }
 
 func (cmd tablePeriods) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts2(session, cmd, s)
+	out, err := getOutCharts(session, cmd, s)
 	if err != nil {
 		return err
 	}
@@ -115,12 +101,6 @@ func (cmd tablePeriods) Execute(
 	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
 	if err != nil {
 		return errors.Wrap(err, "failed to load user info")
-	}
-
-	end := rsrc.ToDay(user.Registered.Midnight() + int64(86400*out.Len()))
-	intervals, err := charts.ToIntervals(cmd.period, user.Registered, end)
-	if err != nil || intervals.Len() == 0 {
-		return err
 	}
 
 	ranges, err := charts2.ParseRanges(cmd.period, user.Registered, out.Len())
@@ -131,7 +111,7 @@ func (cmd tablePeriods) Execute(
 
 	f := &format.Table{
 		Charts: out,
-		First:  intervals.At(0).Begin,
+		First:  ranges.Delims[0],
 		Step:   1,
 		Count:  cmd.n,
 	}

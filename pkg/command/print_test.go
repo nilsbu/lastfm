@@ -21,29 +21,6 @@ func date(str string) time.Time {
 	return date
 }
 
-func breakUp(plays map[string][]float64) (days []map[string]float64) {
-	days = []map[string]float64{}
-
-	size := 0
-	for _, values := range plays {
-		size = len(values)
-	}
-
-	if size == 0 {
-		return
-	}
-
-	for i := 0; i < size; i++ {
-		day := map[string]float64{}
-		for key, values := range plays {
-			day[key] = values[i]
-		}
-		days = append(days, day)
-	}
-
-	return
-}
-
 func iotaF(base float64, n int) []float64 {
 	nums := make([]float64, n)
 	for i := range nums {
