@@ -39,9 +39,6 @@ func TestTitles(t *testing.T) {
 			if c.artist != c.title.Artist() {
 				t.Errorf("Artist: %v != %v", c.artist, c.title.Artist())
 			}
-			if c.song != c.title.Song() {
-				t.Errorf("Song: %v != %v", c.song, c.title.Song())
-			}
 		})
 	}
 }

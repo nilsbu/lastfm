@@ -201,8 +201,7 @@ func allEqual(a, b Title) bool {
 	return a != nil && b != nil &&
 		a.String() == b.String() &&
 		a.Key() == b.Key() &&
-		a.Artist() == b.Artist() &&
-		a.Song() == b.Song()
+		a.Artist() == b.Artist()
 }
 
 func areTitlesSame(a, b []Title) bool {
@@ -249,10 +248,6 @@ func checkTitle(t *testing.T, x, a Title) {
 	if x.Artist() != a.Artist() {
 		t.Fatalf("Artist(): expect=%v, actual=%v",
 			x.Artist(), a.Artist())
-	}
-	if x.Song() != a.Song() {
-		t.Fatalf("Song(): expect=%v, actual=%v",
-			x.Song(), a.Song())
 	}
 }
 

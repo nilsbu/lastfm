@@ -128,3 +128,15 @@ func (l *charts) Len() int {
 	}
 	return -1
 }
+
+type chartsNode struct {
+	parent LazyCharts
+}
+
+func (l chartsNode) Titles() []Title {
+	return l.parent.Titles()
+}
+
+func (l chartsNode) Len() int {
+	return l.parent.Len()
+}
