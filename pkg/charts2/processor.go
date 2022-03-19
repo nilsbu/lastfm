@@ -6,7 +6,7 @@ import (
 
 type LazyCharts interface {
 	Row(title Title, begin, end int) []float64
-	Column(titles []Title, index int) TitleValueMap
+	Column(titles []Title, index int) []float64
 	Data(titles []Title, begin, end int) TitleLineMap
 
 	Titles() []Title
@@ -17,13 +17,10 @@ func (l *charts) Row(title Title, begin, end int) []float64 {
 	return l.values[title.Key()][begin:end]
 }
 
-func (l *charts) Column(titles []Title, index int) TitleValueMap {
-	col := make(TitleValueMap)
-	for _, t := range titles {
-		col[t.Key()] = TitleValue{
-			Title: t,
-			Value: l.values[t.Key()][index],
-		}
+func (l *charts) Column(titles []Title, index int) []float64 {
+	col := make([]float64, len(titles))
+	for i, t := range titles {
+		col[i] = l.values[t.Key()][index]
 	}
 	return col
 }
@@ -231,25 +228,29 @@ func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
 	return out[begin-rb : end-rb]
 }
 
-func (l *lineMapCharts) Column(titles []Title, index int) TitleValueMap {
-	col := make(TitleValueMap)
-	back := make(chan TitleValue)
+type iv struct {
+	i int
+	v float64
+}
+
+func (l *lineMapCharts) Column(titles []Title, index int) []float64 {
+	col := make([]float64, len(titles))
+	back := make(chan iv)
 	rb, re := l.rangeF(l.parent.Len(), index, index+1)
 
 	for t := range titles {
 		go func(t int) {
 			in := l.parent.Row(titles[t], rb, re)
-			res := TitleValue{
-				Title: titles[t],
+			back <- iv{
+				i: t,
+				v: l.foldF(index, in),
 			}
-			res.Value = l.foldF(index, in)
-			back <- res
 		}(t)
 	}
 
 	for range titles {
 		kf := <-back
-		col[kf.Title.Key()] = kf
+		col[kf.i] = kf.v
 	}
 	return col
 }
@@ -319,31 +320,28 @@ func (l *partitionSum) Row(title Title, begin, end int) []float64 {
 }
 
 type titleColumn struct {
-	key Title
-	col TitleValueMap
+	key int
+	col []float64
 }
 
-func (l *partitionSum) Column(titles []Title, index int) TitleValueMap {
-	col := make(TitleValueMap)
+func (l *partitionSum) Column(titles []Title, index int) []float64 {
+	col := make([]float64, len(titles))
 	back := make(chan titleColumn)
 
-	for _, bin := range titles {
+	for i, bin := range titles {
 		ts := l.partition.Titles(bin)
-		go func(titles []Title, bin Title) {
+		go func(titles []Title, i int) {
 			back <- titleColumn{
-				key: bin,
+				key: i,
 				col: l.parent.Column(titles, index),
 			}
-		}(ts, bin)
+		}(ts, i)
 	}
 
 	for range titles {
 		kf := <-back
 		for _, v := range kf.col {
-			col[kf.key.Key()] = TitleValue{
-				Title: kf.key,
-				Value: col[kf.key.Key()].Value + v.Value,
-			}
+			col[kf.key] += v
 		}
 	}
 
@@ -494,17 +492,12 @@ func (c *cache) Row(title Title, begin, end int) []float64 {
 	return answer
 }
 
-func (c *cache) Column(titles []Title, index int) TitleValueMap {
+func (c *cache) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
-	tvm := make(TitleValueMap)
-
-	for k, l := range data {
-		tvm[k] = TitleValue{
-			Title: l.Title,
-			Value: l.Line[0],
-		}
+	tvm := make([]float64, len(titles))
+	for i, title := range titles {
+		tvm[i] = data[title.Key()].Line[0]
 	}
-
 	return tvm
 }
 
@@ -549,7 +542,7 @@ func (c *only) Row(title Title, begin, end int) []float64 {
 	return c.parent.Row(title, begin, end)
 }
 
-func (c *only) Column(titles []Title, index int) TitleValueMap {
+func (c *only) Column(titles []Title, index int) []float64 {
 	return c.parent.Column(titles, index)
 }
 
@@ -558,19 +551,23 @@ func (c *only) Data(titles []Title, begin, end int) TitleLineMap {
 }
 
 func Top(c LazyCharts, n int) []Title {
-	col := c.Column(c.Titles(), c.Len()-1)
+	fullTitles := c.Titles()
+	col := c.Column(fullTitles, c.Len()-1)
 	m := n + 1
 	if len(col) < n {
 		m = len(col)
 	}
 
-	tvs := make([]TitleValue, m)
+	vs := make([]float64, m)
+	ts := make([]Title, m)
 	i := 0
-	for _, tv := range col {
-		tvs[i] = tv
+	for k, tv := range col {
+		vs[i] = tv
+		ts[i] = fullTitles[k]
 		for j := i; j > 0; j-- {
-			if tvs[j-1].Value < tvs[j].Value {
-				tvs[j-1], tvs[j] = tvs[j], tvs[j-1]
+			if vs[j-1] < vs[j] {
+				vs[j-1], vs[j] = vs[j], vs[j-1]
+				ts[j-1], ts[j] = ts[j], ts[j-1]
 			} else {
 				break
 			}
@@ -579,13 +576,13 @@ func Top(c LazyCharts, n int) []Title {
 			i++
 		}
 	}
-	if len(tvs) > n {
-		tvs = tvs[:n]
+	if len(ts) > n {
+		ts = ts[:n]
 	}
 
-	titles := make([]Title, len(tvs))
-	for i, tv := range tvs {
-		titles[i] = tv.Title
+	titles := make([]Title, len(ts))
+	for i, t := range ts {
+		titles[i] = t
 	}
 	return titles
 }

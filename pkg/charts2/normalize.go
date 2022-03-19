@@ -67,14 +67,11 @@ func (c *normalizer) Row(title Title, begin, end int) []float64 {
 	return c.Data([]Title{title}, begin, end)[title.Key()].Line
 }
 
-func (c *normalizer) Column(titles []Title, index int) TitleValueMap {
+func (c *normalizer) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
-	tvm := make(TitleValueMap)
-	for title, line := range data {
-		tvm[title] = TitleValue{
-			Title: line.Title,
-			Value: line.Line[0],
-		}
+	tvm := make([]float64, len(titles))
+	for i, title := range titles {
+		tvm[i] = data[title.Key()].Line[0]
 	}
 	return tvm
 }

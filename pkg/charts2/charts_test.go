@@ -178,10 +178,10 @@ func TestCharts(t *testing.T) {
 			for i := 0; i < c.charts.Len(); i++ {
 				col := c.charts.Column(c.titles, i)
 				for j, title := range c.titles {
-					if c.lines[j][i] != col[title.Key()].Value {
+					if c.lines[j][i] != col[j] {
 						t.Errorf("col %v, %v: %v != %v",
 							title, i,
-							c.lines[j][i], col[title.Key()].Value)
+							c.lines[j][i], col[j])
 					}
 				}
 			}

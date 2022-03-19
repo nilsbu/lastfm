@@ -45,8 +45,8 @@ func TestLazyChartsPartial(t *testing.T) {
 		len      int
 		rowA04   []float64
 		rowB13   []float64
-		colAB1   map[string]float64
-		colB3    map[string]float64
+		colAB1   []float64
+		colB3    []float64
 		dataAB14 map[string][]float64
 	}{
 		{
@@ -55,8 +55,8 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 8, 0, 0},
 			[]float64{0, 0},
-			map[string]float64{"A": 8, "B": 0},
-			map[string]float64{"B": 0},
+			[]float64{8, 0},
+			[]float64{0},
 			map[string][]float64{
 				"A": {8, 0, 0},
 				"B": {0, 0, 0},
@@ -68,8 +68,8 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 16, 16, 16},
 			[]float64{16, 16},
-			map[string]float64{"A": 16, "B": 16},
-			map[string]float64{"B": 16},
+			[]float64{16, 16},
+			[]float64{16},
 			map[string][]float64{
 				"A": {16, 16, 16},
 				"B": {16, 16, 16},
@@ -81,8 +81,8 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 24, 40, 56},
 			[]float64{32, 48},
-			map[string]float64{"A": 24, "B": 32},
-			map[string]float64{"B": 64},
+			[]float64{24, 32},
+			[]float64{64},
 			map[string][]float64{
 				"A": {24, 40, 56},
 				"B": {32, 48, 64},
@@ -94,8 +94,8 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 12, 6, 3},
 			[]float64{8, 4},
-			map[string]float64{"A": 12, "B": 8},
-			map[string]float64{"B": 2},
+			[]float64{12, 8},
+			[]float64{2},
 			map[string][]float64{
 				"A": {12, 6, 3},
 				"B": {8, 4, 2},
@@ -107,8 +107,8 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
 			[]float64{8, 12, 12, 12},
 			[]float64{16, 16},
-			map[string]float64{"A": 12, "B": 16},
-			map[string]float64{"B": 16},
+			[]float64{12, 16},
+			[]float64{16},
 			map[string][]float64{
 				"A": {12, 12, 12},
 				"B": {16, 16, 16},
@@ -127,8 +127,8 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]Title{KeyTitle("A"), KeyTitle("B")}, 4,
 			[]float64{8, 8, 0, 0},
 			[]float64{1, 2},
-			map[string]float64{"A": 8, "B": 1},
-			map[string]float64{"B": 1},
+			[]float64{8, 1},
+			[]float64{1},
 			map[string][]float64{
 				"A": {8, 0, 0},
 				"B": {1, 2, 1},
@@ -140,8 +140,8 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]Title{ArtistTitle("A"), ArtistTitle("B")}, 4,
 			[]float64{3, 2, 0, 0},
 			[]float64{0, 2},
-			map[string]float64{"A": 2, "B": 0},
-			map[string]float64{"B": 0},
+			[]float64{2, 0},
+			[]float64{0},
 			map[string][]float64{
 				"A": {2, 0, 0},
 				"B": {0, 2, 0},
@@ -165,13 +165,13 @@ func TestLazyChartsPartial(t *testing.T) {
 			}
 			{
 				col := c.lc.Column([]Title{KeyTitle("A"), KeyTitle("B")}, 1)
-				if !eqColWithKeyTitle(c.colAB1, col) {
+				if !reflect.DeepEqual(c.colAB1, col) {
 					t.Error("col A,B 1 not equal:", c.colAB1, "!=", col)
 				}
 			}
 			{
 				col := c.lc.Column([]Title{KeyTitle("B")}, 3)
-				if !eqColWithKeyTitle(c.colB3, col) {
+				if !reflect.DeepEqual(c.colB3, col) {
 					t.Error("col B 3 not equal:", c.colB3, "!=", col)
 				}
 			}
@@ -195,27 +195,6 @@ func TestLazyChartsPartial(t *testing.T) {
 			}
 		})
 	}
-}
-
-func eqColWithKeyTitle(expect map[string]float64, actual TitleValueMap) bool {
-	if len(expect) != len(actual) {
-		return false
-	}
-
-	for t, v := range expect {
-		if tv, ok := actual[t]; ok {
-			if tv.Value != v {
-				return false
-			}
-			if !allEqual(KeyTitle(t), tv.Title) {
-				return false
-			}
-		} else {
-			return false
-		}
-	}
-
-	return true
 }
 
 func eqDataWithKeyTitle(expect map[string][]float64, actual TitleLineMap) bool {
@@ -391,10 +370,9 @@ func checkCols(t *testing.T, expect, actual LazyCharts, sets [][]Title) {
 			}
 
 			for k := range x {
-				checkTitle(t, x[k].Title, a[k].Title)
-				if math.Abs(x[k].Value-a[k].Value) > 1e-6 {
+				if math.Abs(x[k]-a[k]) > 1e-6 {
 					t.Errorf("col(%v, %v): expect=%v, actual=%v",
-						k, i, x[k].Value, a[k].Value)
+						k, i, x[k], a[k])
 				}
 			}
 		}
