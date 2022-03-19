@@ -64,28 +64,25 @@ func NormalizeGaussian(
 }
 
 func (c *normalizer) Row(title Title, begin, end int) []float64 {
-	return c.Data([]Title{title}, begin, end)[title.Key()].Line
+	return c.Data([]Title{title}, begin, end)[0]
 }
 
 func (c *normalizer) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
 	tvm := make([]float64, len(titles))
-	for i, title := range titles {
-		tvm[i] = data[title.Key()].Line[0]
+	for i := range titles {
+		tvm[i] = data[i][0]
 	}
 	return tvm
 }
 
-func (c *normalizer) Data(titles []Title, begin, end int) TitleLineMap {
-	data := make(TitleLineMap)
+func (c *normalizer) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
 	back := make(chan bool, len(titles))
 
-	for _, title := range titles {
+	for i, title := range titles {
 		out := make([]float64, end-begin)
-		data[title.Key()] = TitleLine{
-			Title: title,
-			Line:  out,
-		}
+		data[i] = out
 		c.lineChan <- normalizerJob{
 			in:    c.parent.Row(title, begin, end),
 			out:   out,

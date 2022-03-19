@@ -69,19 +69,17 @@ func (f *Table) formatBody(
 	titles := charts2.Top(f.Charts, f.Count)
 	data := f.Charts.Data(titles, 0, f.Charts.Len())
 
-	for _, x := range titles {
+	for t, x := range titles {
 		io.WriteString(w, start)
-
-		line := data[x.Key()].Line
 
 		fmt.Fprintf(w, pattern, x.String(), delim0)
 
-		for i := 0; i < len(line); i += f.Step {
+		for i := 0; i < len(data[t]); i += f.Step {
 			if i > 0 {
 				io.WriteString(w, delim)
 			}
 
-			s := fmt.Sprintf("%.08g", line[i])
+			s := fmt.Sprintf("%.08g", data[t][i])
 			if decimal != "." {
 				s = strings.Replace(s, ".", decimal, 1)
 			}

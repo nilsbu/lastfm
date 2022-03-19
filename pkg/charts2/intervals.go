@@ -123,34 +123,34 @@ func (c interval) Len() int {
 }
 
 func (c interval) Row(title Title, begin, end int) []float64 {
-	return c.Data([]Title{title}, begin, end)[title.Key()].Line
+	return c.Data([]Title{title}, begin, end)[0]
 }
 
 func (c interval) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
 	tvm := make([]float64, len(titles))
-	for i, title := range titles {
-		tvm[i] = data[title.Key()].Line[0]
+	for i := range titles {
+		tvm[i] = data[i][0]
 	}
 	return tvm
 }
 
-func (c interval) Data(titles []Title, begin, end int) TitleLineMap {
-	data := make(TitleLineMap)
-	back := make(chan TitleLine)
+func (c interval) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
+	back := make(chan indexLine)
 
 	for k := range titles {
 		go func(k int) {
-			back <- TitleLine{
-				Title: titles[k],
-				Line:  c.parent.Row(titles[k], begin+c.begin, end+c.begin),
+			back <- indexLine{
+				i:  k,
+				vs: c.parent.Row(titles[k], begin+c.begin, end+c.begin),
 			}
 		}(k)
 	}
 
 	for range titles {
 		tl := <-back
-		data[tl.Title.Key()] = tl
+		data[tl.i] = tl.vs
 	}
 	return data
 }
@@ -242,21 +242,19 @@ func (c intervals) Len() int {
 }
 
 func (c intervals) Row(title Title, begin, end int) []float64 {
-	return c.Data([]Title{title}, begin, end)[title.Key()].Line
+	return c.Data([]Title{title}, begin, end)[0]
 }
 
 func (c intervals) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
 	tvm := make([]float64, len(titles))
-	for i, title := range titles {
-		tvm[i] = data[title.Key()].Line[0]
+	for i := range titles {
+		tvm[i] = data[i][0]
 	}
 	return tvm
 }
 
-func (c intervals) Data(titles []Title, begin, end int) TitleLineMap {
-	data := make(TitleLineMap)
-
+func (c intervals) Data(titles []Title, begin, end int) [][]float64 {
 	// TODO speedup
 	// data := c.parent.Data(titles, c.delims[begin], c.delims[end])
 
@@ -274,12 +272,5 @@ func (c intervals) Data(titles []Title, begin, end int) TitleLineMap {
 		}
 	}
 
-	for j, title := range titles {
-		data[title.Key()] = TitleLine{
-			Title: title,
-			Line:  lines[j],
-		}
-	}
-
-	return data
+	return lines
 }

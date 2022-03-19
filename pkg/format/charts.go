@@ -111,9 +111,9 @@ func (f *Column) format(
 		outCol = f.Column
 	}
 
-	data := outCol.Data(outCol.Titles(), 0, outCol.Len())
+	data := outCol.Data(f.Column.Titles(), 0, outCol.Len())
 	for i, title := range f.Column.Titles() {
-		sscore := fmt.Sprintf(f.getScorePattern(), data[title.Key()].Line[0])
+		sscore := fmt.Sprintf(f.getScorePattern(), data[i][0])
 		if decimal != "." {
 			sscore = strings.Replace(sscore, ".", decimal, 1)
 		}
@@ -188,13 +188,14 @@ func (f *Column) getPercentageColumn() charts2.LazyCharts {
 	sum := f.SumTotal
 
 	result := map[string][]float64{}
+	titles := f.Column.Titles()
 	if sum > 0 {
-		for _, line := range f.Column.Data(f.Column.Titles(), 0, f.Column.Len()) {
-			result[line.Title.Key()] = []float64{100 * line.Line[len(line.Line)-1] / sum}
+		for i, line := range f.Column.Data(titles, 0, f.Column.Len()) {
+			result[titles[i].Key()] = []float64{100 * line[len(line)-1] / sum}
 		}
 	} else {
-		for _, line := range f.Column.Data(f.Column.Titles(), 0, f.Column.Len()) {
-			result[line.Title.Key()] = []float64{0}
+		for i := range f.Column.Data(f.Column.Titles(), 0, f.Column.Len()) {
+			result[titles[i].Key()] = []float64{0}
 		}
 	}
 

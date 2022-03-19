@@ -4,15 +4,17 @@ import (
 	"math"
 )
 
+// TODO this belongs in charts.go
 type LazyCharts interface {
 	Row(title Title, begin, end int) []float64
 	Column(titles []Title, index int) []float64
-	Data(titles []Title, begin, end int) TitleLineMap
+	Data(titles []Title, begin, end int) [][]float64
 
 	Titles() []Title
 	Len() int
 }
 
+// TODO these belong in charts.go
 func (l *charts) Row(title Title, begin, end int) []float64 {
 	return l.values[title.Key()][begin:end]
 }
@@ -25,13 +27,10 @@ func (l *charts) Column(titles []Title, index int) []float64 {
 	return col
 }
 
-func (l *charts) Data(titles []Title, begin, end int) TitleLineMap {
-	data := make(TitleLineMap)
-	for _, t := range titles {
-		data[t.Key()] = TitleLine{
-			Title: t,
-			Line:  l.values[t.Key()][begin:end],
-		}
+func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
+	for i, t := range titles {
+		data[i] = l.values[t.Key()][begin:end]
 	}
 	return data
 }
@@ -255,9 +254,14 @@ func (l *lineMapCharts) Column(titles []Title, index int) []float64 {
 	return col
 }
 
-func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
-	data := make(TitleLineMap)
-	back := make(chan TitleLine)
+type indexLine struct {
+	i  int
+	vs []float64
+}
+
+func (l *lineMapCharts) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
+	back := make(chan indexLine)
 	rb, re := l.rangeF(l.parent.Len(), begin, end)
 
 	for k := range titles {
@@ -265,16 +269,16 @@ func (l *lineMapCharts) Data(titles []Title, begin, end int) TitleLineMap {
 			in := l.parent.Row(titles[k], rb, re)
 			out := l.mapF(in)
 
-			back <- TitleLine{
-				Title: titles[k],
-				Line:  out[begin-rb : end-rb],
+			back <- indexLine{
+				i:  k,
+				vs: out[begin-rb : end-rb],
 			}
 		}(k)
 	}
 
 	for range titles {
-		tl := <-back
-		data[tl.Title.Key()] = tl
+		il := <-back
+		data[il.i] = il.vs
 	}
 	return data
 }
@@ -348,39 +352,28 @@ func (l *partitionSum) Column(titles []Title, index int) []float64 {
 	return col
 }
 
-func (l *partitionSum) Data(titles []Title, begin, end int) TitleLineMap {
-	data := make(TitleLineMap)
-	back := make(chan TitleLine)
+func (l *partitionSum) Data(titles []Title, begin, end int) [][]float64 {
+	back := make(chan indexLine)
 
-	n := 0
-	for _, bin := range titles {
-		for _, key := range l.partition.Titles(bin) {
-			go func(key, bin Title) {
-				back <- TitleLine{
-					Title: bin,
-					Line:  l.parent.Row(key, begin, end),
+	for i, bin := range titles {
+		go func(i int, bin Title) {
+			line := make([]float64, end-begin)
+			for _, key := range l.partition.Titles(bin) {
+				for j, v := range l.parent.Row(key, begin, end) {
+					line[j] += v
 				}
-			}(key, bin)
-			n++
-		}
+			}
+			back <- indexLine{
+				i:  i,
+				vs: line,
+			}
+		}(i, bin)
 	}
 
-	for i := 0; i < n; i++ {
-		kl := <-back
-		if _, ok := data[kl.Title.Key()]; !ok {
-			data[kl.Title.Key()] = TitleLine{
-				Title: kl.Title,
-				Line:  make([]float64, len(kl.Line)),
-			}
-		}
-		line := data[kl.Title.Key()].Line
-		for i, v := range kl.Line {
-			line[i] += v
-		}
-		data[kl.Title.Key()] = TitleLine{
-			Title: data[kl.Title.Key()].Title,
-			Line:  line,
-		}
+	data := make([][]float64, len(titles))
+	for i := 0; i < len(titles); i++ {
+		b := <-back
+		data[b.i] = b.vs
 	}
 
 	return data
@@ -495,28 +488,28 @@ func (c *cache) Row(title Title, begin, end int) []float64 {
 func (c *cache) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
 	tvm := make([]float64, len(titles))
-	for i, title := range titles {
-		tvm[i] = data[title.Key()].Line[0]
+	for i := range titles {
+		tvm[i] = data[i][0]
 	}
 	return tvm
 }
 
-func (c *cache) Data(titles []Title, begin, end int) TitleLineMap {
-	data := make(TitleLineMap)
-	back := make(chan TitleLine)
+func (c *cache) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
+	back := make(chan indexLine)
 
 	for k := range titles {
 		go func(k int) {
-			back <- TitleLine{
-				Title: titles[k],
-				Line:  c.Row(titles[k], begin, end),
+			back <- indexLine{
+				i:  k,
+				vs: c.Row(titles[k], begin, end),
 			}
 		}(k)
 	}
 
 	for range titles {
 		tl := <-back
-		data[tl.Title.Key()] = tl
+		data[tl.i] = tl.vs
 	}
 	return data
 }
@@ -546,7 +539,7 @@ func (c *only) Column(titles []Title, index int) []float64 {
 	return c.parent.Column(titles, index)
 }
 
-func (c *only) Data(titles []Title, begin, end int) TitleLineMap {
+func (c *only) Data(titles []Title, begin, end int) [][]float64 {
 	return c.parent.Data(titles, begin, end)
 }
 
@@ -580,11 +573,7 @@ func Top(c LazyCharts, n int) []Title {
 		ts = ts[:n]
 	}
 
-	titles := make([]Title, len(ts))
-	for i, t := range ts {
-		titles[i] = t
-	}
-	return titles
+	return ts
 }
 
 func Id(parent LazyCharts) LazyCharts {

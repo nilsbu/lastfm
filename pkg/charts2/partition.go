@@ -160,7 +160,7 @@ func YearPartition(gaussian, sums LazyCharts, registered rsrc.Day) Partition {
 		maxI := 0
 		for i, idx := range yearIdxs {
 			// TODO use Column if you decide to keep that method
-			v := sums.Data([]Title{title}, idx, idx+1)[title.Key()].Line[0]
+			v := sums.Data([]Title{title}, idx, idx+1)[0][0]
 			if v < 2 { // TODO no magic numbers
 				continue
 			}
@@ -168,7 +168,7 @@ func YearPartition(gaussian, sums LazyCharts, registered rsrc.Day) Partition {
 				Begin:      registered.AddDate(0, 0, prev),
 				End:        registered.AddDate(0, 0, idx+1),
 				Registered: registered,
-			})).Data([]Title{title}, idx-prev, idx-prev+1)[title.Key()].Line[0]
+			})).Data([]Title{title}, idx-prev, idx-prev+1)[0][0]
 
 			prev = idx + 1
 			if m > maxM {

@@ -47,7 +47,7 @@ func TestLazyChartsPartial(t *testing.T) {
 		rowB13   []float64
 		colAB1   []float64
 		colB3    []float64
-		dataAB14 map[string][]float64
+		dataAB14 [][]float64
 	}{
 		{
 			"charts themselves",
@@ -57,9 +57,9 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]float64{0, 0},
 			[]float64{8, 0},
 			[]float64{0},
-			map[string][]float64{
-				"A": {8, 0, 0},
-				"B": {0, 0, 0},
+			[][]float64{
+				{8, 0, 0},
+				{0, 0, 0},
 			},
 		},
 		{
@@ -70,9 +70,9 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]float64{16, 16},
 			[]float64{16, 16},
 			[]float64{16},
-			map[string][]float64{
-				"A": {16, 16, 16},
-				"B": {16, 16, 16},
+			[][]float64{
+				{16, 16, 16},
+				{16, 16, 16},
 			},
 		},
 		{
@@ -83,9 +83,9 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]float64{32, 48},
 			[]float64{24, 32},
 			[]float64{64},
-			map[string][]float64{
-				"A": {24, 40, 56},
-				"B": {32, 48, 64},
+			[][]float64{
+				{24, 40, 56},
+				{32, 48, 64},
 			},
 		},
 		{
@@ -96,9 +96,9 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]float64{8, 4},
 			[]float64{12, 8},
 			[]float64{2},
-			map[string][]float64{
-				"A": {12, 6, 3},
-				"B": {8, 4, 2},
+			[][]float64{
+				{12, 6, 3},
+				{8, 4, 2},
 			},
 		},
 		{
@@ -109,9 +109,9 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]float64{16, 16},
 			[]float64{12, 16},
 			[]float64{16},
-			map[string][]float64{
-				"A": {12, 12, 12},
-				"B": {16, 16, 16},
+			[][]float64{
+				{12, 12, 12},
+				{16, 16, 16},
 			},
 		},
 		{
@@ -129,9 +129,9 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]float64{1, 2},
 			[]float64{8, 1},
 			[]float64{1},
-			map[string][]float64{
-				"A": {8, 0, 0},
-				"B": {1, 2, 1},
+			[][]float64{
+				{8, 0, 0},
+				{1, 2, 1},
 			},
 		},
 		{
@@ -142,9 +142,9 @@ func TestLazyChartsPartial(t *testing.T) {
 			[]float64{0, 2},
 			[]float64{2, 0},
 			[]float64{0},
-			map[string][]float64{
-				"A": {2, 0, 0},
-				"B": {0, 2, 0},
+			[][]float64{
+				{2, 0, 0},
+				{0, 2, 0},
 			},
 		},
 	}
@@ -177,7 +177,7 @@ func TestLazyChartsPartial(t *testing.T) {
 			}
 			{
 				data := c.lc.Data([]Title{KeyTitle("A"), KeyTitle("B")}, 1, 4)
-				if !eqDataWithKeyTitle(c.dataAB14, data) {
+				if !reflect.DeepEqual(c.dataAB14, data) {
 					t.Error("data A,B 1-4 not equal:", c.dataAB14, "!=", data)
 				}
 			}
@@ -195,27 +195,6 @@ func TestLazyChartsPartial(t *testing.T) {
 			}
 		})
 	}
-}
-
-func eqDataWithKeyTitle(expect map[string][]float64, actual TitleLineMap) bool {
-	if len(expect) != len(actual) {
-		return false
-	}
-
-	for t, v := range expect {
-		if tv, ok := actual[t]; ok {
-			if !reflect.DeepEqual(v, tv.Line) {
-				return false
-			}
-			if !allEqual(KeyTitle(t), tv.Title) {
-				return false
-			}
-		} else {
-			return false
-		}
-	}
-
-	return true
 }
 
 func allEqual(a, b Title) bool {
@@ -392,27 +371,25 @@ func checkData(t *testing.T, expect, actual LazyCharts,
 		for k := range x {
 			rowX := x[k]
 			rowA := a[k]
-			checkTitle(t, rowX.Title, rowA.Title)
-
-			if len(rowA.Line) != e-b {
+			if len(rowA) != e-b {
 				t.Fatalf("data row length: expect=%v-%v=%v, actual=%v",
-					e, b, e-b, len(rowA.Line))
+					e, b, e-b, len(rowA))
 			}
-			if len(rowA.Line) != e-b {
+			if len(rowA) != e-b {
 				t.Fatalf("data row length: expect=%v-%v=%v, ground truth=%v",
-					e, b, e-b, len(rowX.Line))
+					e, b, e-b, len(rowX))
 			}
 
 			eq := true
-			for i := range rowX.Line {
-				if math.Abs(rowX.Line[i]-rowA.Line[i]) > 1e-6 {
+			for i := range rowX {
+				if math.Abs(rowX[i]-rowA[i]) > 1e-6 {
 					eq = false
 					break
 				}
 			}
 			if !eq {
 				t.Errorf("row(%v, [%v-%v]): expect=%v, actual=%v",
-					k, b, e, rowX.Line, rowA.Line)
+					k, b, e, rowX, rowA)
 			}
 		}
 	}

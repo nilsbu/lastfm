@@ -170,8 +170,8 @@ func TestCharts(t *testing.T) {
 					t.Errorf("row, '%v': %v != %v", title, c.lines[i], row)
 				}
 
-				if !reflect.DeepEqual(c.lines[i], data[title.Key()].Line) {
-					t.Errorf("data, '%v': %v != %v", title, c.lines[i], data[title.Key()].Line)
+				if !reflect.DeepEqual(c.lines[i], data[i]) {
+					t.Errorf("data, '%v': %v != %v", title, c.lines[i], data[i])
 				}
 			}
 
