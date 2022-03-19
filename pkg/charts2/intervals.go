@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
+	"time"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -86,19 +88,38 @@ func CroppedRange(begin, end, registered rsrc.Day, l int) (Range, error) {
 
 type interval struct {
 	chartsNode
-	Range Range
+	begin, end int
 }
 
 // Interval crops the charts to a certain Range.
 func Interval(parent LazyCharts, r Range) LazyCharts {
+	begin := int(r.Begin.Time().Sub(r.Registered.Time()).Hours()) / 24
+	end := int(r.End.Time().Sub(r.Registered.Time()).Hours()) / 24
+
+	return Crop(parent, begin, end)
+}
+
+func Crop(parent LazyCharts, begin, end int) LazyCharts {
 	return interval{
 		chartsNode: chartsNode{parent: parent},
-		Range:      r,
+		begin:      begin,
+		end:        end,
+	}
+}
+
+func Column(parent LazyCharts, col int) LazyCharts {
+	if col < 0 {
+		col += parent.Len()
+	}
+	return interval{
+		chartsNode: chartsNode{parent: parent},
+		begin:      col,
+		end:        col + 1,
 	}
 }
 
 func (c interval) Len() int {
-	return int(c.Range.End.Time().Sub(c.Range.Begin.Time()).Hours()) / 24
+	return c.end - c.begin
 }
 
 func (c interval) Row(title Title, begin, end int) []float64 {
@@ -121,13 +142,11 @@ func (c interval) Data(titles []Title, begin, end int) TitleLineMap {
 	data := make(TitleLineMap)
 	back := make(chan TitleLine)
 
-	boffset := int(c.Range.Begin.Time().Sub(c.Range.Registered.Time()).Hours()) / 24
-
 	for k := range titles {
 		go func(k int) {
 			back <- TitleLine{
 				Title: titles[k],
-				Line:  c.parent.Row(titles[k], begin+boffset, end+boffset),
+				Line:  c.parent.Row(titles[k], begin+c.begin, end+c.begin),
 			}
 		}(k)
 	}
@@ -136,5 +155,137 @@ func (c interval) Data(titles []Title, begin, end int) TitleLineMap {
 		tl := <-back
 		data[tl.Title.Key()] = tl
 	}
+	return data
+}
+
+type Ranges struct {
+	Delims     []rsrc.Day
+	Registered rsrc.Day
+}
+
+func ParseRanges(
+	descr string, registered rsrc.Day, l int,
+) (Ranges, error) {
+
+	re := regexp.MustCompile(`^\d*[yMd]$`)
+	if !re.MatchString(descr) {
+		return Ranges{}, fmt.Errorf("ranges descriptor '%v' invalid", descr)
+	}
+
+	t := registered.Time()
+	y, M := t.Year(), t.Month()
+	var date rsrc.Day
+	k := descr[len(descr)-1]
+	switch k {
+	case 'y':
+		date = rsrc.DayFromTime(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC))
+		if date.Midnight() < registered.Midnight() {
+			date = date.AddDate(1, 0, 0)
+		}
+	case 'M':
+		date = rsrc.DayFromTime(time.Date(y, M, 1, 0, 0, 0, 0, time.UTC))
+		if date.Midnight() < registered.Midnight() {
+			date = date.AddDate(0, 1, 0)
+		}
+	default:
+		date = registered
+	}
+
+	n, err := strconv.Atoi(descr[:len(descr)-1])
+	if err != nil {
+		n = 1
+	}
+
+	dates := []rsrc.Day{}
+	end := registered.AddDate(0, 0, l).Midnight()
+	for date.Midnight() <= end {
+		dates = append(dates, date)
+		switch k {
+		case 'y':
+			date = date.AddDate(n, 0, 0)
+		case 'M':
+			date = date.AddDate(0, n, 0)
+		default:
+			date = date.AddDate(0, 0, n)
+		}
+	}
+
+	return Ranges{
+		Delims:     dates,
+		Registered: registered,
+	}, nil
+}
+
+type intervals struct {
+	chartsNode
+	delims []int
+	f      func(LazyCharts) LazyCharts
+}
+
+// Intervals
+func Intervals(parent LazyCharts, rs Ranges, f func(LazyCharts) LazyCharts) LazyCharts {
+	delims := make([]int, len(rs.Delims))
+	for i, r := range rs.Delims {
+		delims[i] = int(r.Time().Sub(rs.Registered.Time()).Hours()) / 24
+	}
+
+	return crops(parent, delims, f)
+}
+
+func crops(parent LazyCharts, delims []int, f func(LazyCharts) LazyCharts) LazyCharts {
+	return intervals{
+		chartsNode: chartsNode{parent: parent},
+		delims:     delims,
+		f:          f,
+	}
+}
+
+func (c intervals) Len() int {
+	return len(c.delims) - 1
+}
+
+func (c intervals) Row(title Title, begin, end int) []float64 {
+	return c.Data([]Title{title}, begin, end)[title.Key()].Line
+}
+
+func (c intervals) Column(titles []Title, index int) TitleValueMap {
+	data := c.Data(titles, index, index+1)
+	tvm := make(TitleValueMap)
+	for title, line := range data {
+		tvm[title] = TitleValue{
+			Title: line.Title,
+			Value: line.Line[0],
+		}
+	}
+	return tvm
+}
+
+func (c intervals) Data(titles []Title, begin, end int) TitleLineMap {
+	data := make(TitleLineMap)
+
+	// TODO speedup
+	// data := c.parent.Data(titles, c.delims[begin], c.delims[end])
+
+	lines := make([][]float64, len(titles))
+	for j := range titles {
+		lines[j] = make([]float64, end-begin)
+	}
+
+	// cha := make([]LazyCharts, end-begin)
+	for i := begin; i < end; i++ {
+		cha := c.f(Crop(c.parent, c.delims[i], c.delims[i+1]))
+		cdata := cha.Column(titles, cha.Len()-1)
+		for j, title := range titles {
+			lines[j][i-begin] = cdata[title.Key()].Value
+		}
+	}
+
+	for j, title := range titles {
+		data[title.Key()] = TitleLine{
+			Title: title,
+			Line:  lines[j],
+		}
+	}
+
 	return data
 }

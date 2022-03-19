@@ -1,10 +1,12 @@
 package command
 
 import (
-	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
@@ -69,12 +71,9 @@ func TestTable(t *testing.T) {
 				step:        1,
 			},
 			&format.Table{
-				Charts: charts.CompileArtists(
-					[]map[string]float64{
-						{"X": 1},
-						{"X": 1},
-						{"X": 2},
-					}, rsrc.ParseDay("2018-01-01")),
+				Charts: charts2.FromMap(map[string][]float64{
+					"X": {1, 1, 2},
+				}),
 				First: rsrc.ParseDay("2018-01-01"),
 				Step:  1,
 				Count: 10,
@@ -96,12 +95,9 @@ func TestTable(t *testing.T) {
 				step:        1,
 			},
 			&format.Table{
-				Charts: charts.CompileArtists(
-					[]map[string]float64{
-						{"X": 1},
-						{"X": 1},
-						{"X": 2},
-					}, rsrc.ParseDay("2018-01-01")),
+				Charts: charts2.FromMap(map[string][]float64{
+					"X": {1, 1, 2},
+				}),
 				First: rsrc.ParseDay("2018-01-01"),
 				Step:  1,
 				Count: 10,
@@ -123,9 +119,9 @@ func TestTable(t *testing.T) {
 				step:        2,
 			},
 			&format.Table{
-				Charts: charts.CompileArtists(
-					[]map[string]float64{{"X": 1}, {"X": 1}, {"X": 2}},
-					rsrc.ParseDay("2018-01-01")),
+				Charts: charts2.FromMap(map[string][]float64{
+					"X": {1, 1, 2},
+				}),
 				First: rsrc.ParseDay("2018-01-01"),
 				Step:  2,
 				Count: 3,
@@ -247,8 +243,12 @@ func TestTable(t *testing.T) {
 				} else if len(d.Msgs) > 1 {
 					t.Fatalf("got %v messages but expected 1", len(d.Msgs))
 				} else {
-					if !reflect.DeepEqual(d.Msgs[0], c.table) {
-						t.Errorf("%v != %v", d.Msgs[0], c.table)
+					var sb0 strings.Builder
+					display.NewTerminal().Display(c.table)
+					var sb1 strings.Builder
+					display.NewTerminal().Display(d.Msgs[0])
+					if sb0.String() != sb1.String() {
+						t.Errorf("formatter does not match expected: %v != %v", c.table, d.Msgs[0])
 					}
 				}
 			}

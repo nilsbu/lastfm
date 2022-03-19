@@ -104,7 +104,7 @@ func (k StringTitle) Artist() string {
 
 // Key returns ""
 func (k StringTitle) Key() string {
-	return ""
+	return string(k)
 }
 
 // Song returns "".

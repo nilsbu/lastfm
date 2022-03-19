@@ -6,6 +6,7 @@ import (
 
 	"github.com/nilsbu/lastfm/config"
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/organize"
@@ -29,6 +30,7 @@ type printCharts struct {
 // TODO document
 type printChartsDescriptor interface {
 	Accumulate(c charts.Charts) charts.Charts
+	Accumulate2(c charts2.LazyCharts) charts2.LazyCharts
 	PrintCharts() printCharts
 }
 
@@ -130,9 +132,6 @@ func getOutCharts(
 			return charts.Charts{}, err
 		}
 	}
-	if err != nil {
-		return charts.Charts{}, err
-	}
 
 	var cha charts.Charts
 	if cmd.keys == "song" || cmd.duration {
@@ -191,6 +190,194 @@ func getOutCharts(
 	return out, nil
 }
 
+func getOutCharts2(
+	session *unpack.SessionInfo,
+	pcd printChartsDescriptor,
+	r rsrc.Reader,
+) (charts2.LazyCharts, error) {
+	cmd := pcd.PrintCharts()
+
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(r))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load user info")
+	}
+
+	bookmark, err := unpack.LoadBookmark(session.User, r)
+	if err != nil {
+		return nil, err
+	}
+
+	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
+	plays := make([][]charts.Song, days+1)
+	for i := 0; i < days+1; i++ {
+		day := user.Registered.AddDate(0, 0, i)
+		if songs, err := unpack.LoadDayHistory(session.User, day, r); err == nil {
+			plays[i] = songs
+		} else {
+			return nil, err
+		}
+	}
+
+	plays2 := make([][]charts2.Song, len(plays))
+	for i, day := range plays {
+		day2 := make([]charts2.Song, len(day))
+		for j, play := range day {
+			day2[j] = charts2.Song{
+				Artist:   play.Artist,
+				Album:    play.Album,
+				Title:    play.Title,
+				Duration: play.Duration,
+			}
+		}
+		plays2[i] = day2
+	}
+
+	var base, gaussian, normalized charts2.LazyCharts
+	switch {
+	case cmd.keys == "song" && cmd.duration:
+		base = charts2.SongsDuration(plays2)
+		gaussian = charts2.ArtistsDuration(plays2)
+	case cmd.keys == "song" && !cmd.duration:
+		base = charts2.Songs(plays2)
+		gaussian = charts2.ArtistsDuration(plays2)
+	case cmd.duration:
+		base = charts2.ArtistsDuration(plays2)
+		gaussian = base
+	default:
+		base = charts2.Artists(plays2)
+		gaussian = charts2.ArtistsDuration(plays2)
+	}
+
+	normalized = charts2.NormalizeGaussian(base, 7, 2*7+1, true, false)
+
+	if cmd.normalized {
+		base = normalized
+	}
+
+	accCharts := pcd.Accumulate2(base)
+
+	partition, err := cmd.getPartition2(session, r, gaussian, accCharts, user.Registered)
+	if err != nil {
+		return nil, err
+	}
+
+	if cmd.name == "" {
+		if partition == nil {
+			return accCharts, nil
+		}
+
+		return charts2.Group(accCharts, partition), nil
+	}
+
+	if partition == nil {
+		return nil, errors.New("name must be empty for chart type 'all'")
+	}
+
+	found := false
+	for _, partition := range partition.Partitions() {
+		if partition.Key() == cmd.name {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("name '%v' is no partition", cmd.name)
+	}
+
+	return charts2.Subset(accCharts, partition, charts2.KeyTitle(cmd.name)), nil
+}
+
+func (cmd printCharts) getPartition2(
+	session *unpack.SessionInfo,
+	r rsrc.Reader,
+	gaussian, normalized charts2.LazyCharts,
+	registered rsrc.Day,
+) (charts2.Partition, error) {
+	switch cmd.by {
+	case "all":
+		return nil, nil
+	case "year":
+		return charts2.YearPartition(gaussian, normalized, registered), nil
+	case "total":
+		return charts2.TotalPartition(normalized.Titles()), nil
+	case "super":
+		tags, err := loadArtistTags2(normalized, r)
+		if err != nil {
+			return nil, err
+		}
+
+		corrections, _ := unpack.LoadSupertagCorrections(session.User, r)
+
+		return charts2.FirstTagPartition(tags, config.Supertags, corrections), nil
+	case "country":
+		tags, err := loadArtistTags2(normalized, r)
+		if err != nil {
+			return nil, err
+		}
+
+		corrections, _ := unpack.LoadCountryCorrections(session.User, r)
+
+		return charts2.FirstTagPartition(tags, config.Countries, corrections), nil
+	default:
+		return nil, fmt.Errorf("chart type '%v' not supported", cmd.by)
+	}
+}
+
+func loadArtistTags2(
+	cha charts2.LazyCharts,
+	r rsrc.Reader,
+) (map[string][]charts.Tag, error) {
+	keys := []string{}
+
+	for _, key := range cha.Titles() {
+		keys = append(keys, key.Artist())
+	}
+
+	tags, err := organize.LoadArtistTags(keys, r)
+	if err != nil {
+		for _, e := range err.(*organize.MultiError).Errs {
+			switch e.(type) {
+			case *unpack.LastfmError:
+				// TODO can this be tested?
+				if e.(*unpack.LastfmError).IsFatal() {
+					return nil, err
+				}
+			default:
+				return nil, err
+			}
+		}
+	}
+
+	return tags, nil
+}
+
+type keyWrapper struct {
+	title charts2.Title
+}
+
+func (kw keyWrapper) ArtistName() string {
+	return kw.title.Artist()
+}
+
+func (kw keyWrapper) FullTitle() string {
+	return kw.title.Key()
+}
+
+func (kw keyWrapper) String() string {
+	return kw.title.String()
+}
+
+func convertToOld(in charts2.LazyCharts, registered rsrc.Day) (out charts.Charts) {
+	out.Headers = charts.Days(registered, registered.AddDate(0, 0, in.Len()))
+	data := in.Data(in.Titles(), 0, in.Len())
+	for _, v := range data {
+		out.Keys = append(out.Keys, keyWrapper{v.Title})
+		out.Values = append(out.Values, v.Line)
+	}
+
+	return
+}
+
 func normalizeDuration(cha charts.Charts, r rsrc.Reader) (charts.Charts, error) {
 	sd := charts.SongDurations{}
 	for _, key := range cha.Keys {
@@ -216,18 +403,26 @@ func (cmd printTotal) Accumulate(c charts.Charts) charts.Charts {
 	return c.Sum()
 }
 
+func (cmd printTotal) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+	return charts2.Sum(c)
+}
+
 func (cmd printTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
+	cha, err := getOutCharts2(session, cmd, s)
 	if err != nil {
 		return err
 	}
 
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
+	}
+
 	col := -1
-	var null time.Time
-	null = time.Time{}
+	null := time.Time{}
 	if cmd.date != null {
-		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
+		col = int((rsrc.DayFromTime(cmd.date).Midnight() - user.Registered.Midnight()) / 86400)
 	}
 
 	prec := 0
@@ -235,7 +430,7 @@ func (cmd printTotal) Execute(
 		prec = 2
 	}
 	f := &format.Charts{
-		Charts:     out,
+		Charts:     cha,
 		Column:     col,
 		Count:      cmd.n,
 		Numbered:   true,
@@ -256,22 +451,30 @@ func (cmd printFade) Accumulate(c charts.Charts) charts.Charts {
 	return c.Fade(cmd.hl)
 }
 
+func (cmd printFade) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+	return charts2.Fade(c, cmd.hl)
+}
+
 func (cmd printFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
+	cha, err := getOutCharts2(session, cmd, s)
 	if err != nil {
 		return err
 	}
 
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
+	}
+
 	col := -1
-	var null time.Time
-	null = time.Time{}
+	null := time.Time{}
 	if cmd.date != null {
-		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
+		col = int((rsrc.DayFromTime(cmd.date).Midnight() - user.Registered.Midnight()) / 86400)
 	}
 
 	f := &format.Charts{
-		Charts:     out,
+		Charts:     cha,
 		Column:     col,
 		Count:      cmd.n,
 		Numbered:   true,
@@ -291,32 +494,42 @@ func (cmd printPeriod) Accumulate(c charts.Charts) charts.Charts {
 	return c.Sum()
 }
 
+func (cmd printPeriod) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+	return c
+}
+
 func (cmd printPeriod) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
+	cha, err := getOutCharts2(session, cmd, s)
 	if err != nil {
 		return err
 	}
 
-	period, err := charts.Period(cmd.period)
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to load user info")
 	}
 
-	col := out.Interval(period)
-	sumTotal := col.Sum()
-	col = col.Top(cmd.n)
+	rnge, err := charts2.ParseRange(cmd.period, user.Registered, cha.Len())
+	if err != nil {
+		return errors.Wrap(err, "invalid range")
+	}
+
+	cha = charts2.Sum(charts2.Interval(cha, rnge))
+
+	col := -1
 
 	prec := 0
 	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
-	f := &format.Column{
+	f := &format.Charts{
+		Charts:     cha,
 		Column:     col,
+		Count:      cmd.n,
 		Numbered:   true,
-		Percentage: cmd.percentage,
 		Precision:  prec,
-		SumTotal:   sumTotal,
+		Percentage: cmd.percentage,
 	}
 
 	return d.Display(f)
@@ -332,101 +545,40 @@ func (cmd printInterval) Accumulate(c charts.Charts) charts.Charts {
 	return c.Sum()
 }
 
-func (cmd printInterval) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
-	if err != nil {
-		return err
-	}
-
-	interval := charts.Interval{
-		Begin:  rsrc.DayFromTime(cmd.begin),
-		Before: rsrc.DayFromTime(cmd.before),
-	}
-
-	col := out.Interval(interval)
-	sumTotal := col.Sum()
-	col = col.Top(cmd.n)
-
-	prec := 0
-	if cmd.percentage || cmd.normalized {
-		prec = 2
-	}
-	f := &format.Column{
-		Column:     col,
-		Numbered:   true,
-		Percentage: cmd.percentage,
-		Precision:  prec,
-		SumTotal:   sumTotal,
-	}
-
-	return d.Display(f)
-}
-
-type printFadeMax struct {
-	printCharts
-	hl float64
-}
-
-func (cmd printFadeMax) Accumulate(c charts.Charts) charts.Charts {
-	return c.Fade(cmd.hl)
-}
-
-func (cmd printFadeMax) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
-	if err != nil {
-		return err
-	}
-
-	col := out.Max()
-	sumTotal := col.Sum()
-	col = col.Top(cmd.n)
-
-	prec := 0
-	if cmd.normalized {
-		prec = 2
-	}
-	f := &format.Column{
-		Column:     col,
-		Numbered:   true,
-		Percentage: cmd.percentage,
-		Precision:  prec,
-		SumTotal:   sumTotal,
-	}
-
-	return d.Display(f)
-}
-
-type printDay struct {
-	printTotal
-	// date time.Time
-}
-
-func (cmd printDay) Accumulate(c charts.Charts) charts.Charts {
+func (cmd printInterval) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
 	return c
 }
 
-func (cmd printDay) Execute(
+func (cmd printInterval) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
+	cha, err := getOutCharts2(session, cmd, s)
 	if err != nil {
 		return err
 	}
 
-	col := -1
-	var null time.Time
-	null = time.Time{}
-	if cmd.date != null {
-		col = out.Headers.Index(rsrc.DayFromTime(cmd.date))
+	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
+	if err != nil {
+		return errors.Wrap(err, "failed to load user info")
 	}
+
+	rnge, err := charts2.CroppedRange(
+		rsrc.DayFromTime(cmd.begin),
+		rsrc.DayFromTime(cmd.before),
+		user.Registered, cha.Len())
+	if err != nil {
+		return errors.Wrap(err, "invalid range")
+	}
+
+	cha = charts2.Sum(charts2.Interval(cha, rnge))
+
+	col := -1
 
 	prec := 0
 	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
 	f := &format.Charts{
-		Charts:     out,
+		Charts:     cha,
 		Column:     col,
 		Count:      cmd.n,
 		Numbered:   true,
@@ -436,6 +588,45 @@ func (cmd printDay) Execute(
 
 	return d.Display(f)
 }
+
+// type printFadeMax struct {
+// 	printCharts
+// 	hl float64
+// }
+
+// func (cmd printFadeMax) Accumulate(c charts.Charts) charts.Charts {
+// 	return c.Fade(cmd.hl)
+// }
+
+// func (cmd printFadeMax) Accumulate2(c charts2.LazyCharts) charts2.LazyCharts {
+// 	return charts2.Fade(c, cmd.hl)
+// }
+
+// func (cmd printFadeMax) Execute(
+// 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+// 	cha, err := getOutCharts2(session, cmd, s)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	max := charts2.Max(cha)
+// 	sumTotal := charts2.Sum(max)
+// 	col = col.Top(cmd.n)
+
+// 	prec := 0
+// 	if cmd.normalized {
+// 		prec = 2
+// 	}
+// 	f := &format.Column{
+// 		Column:     col,
+// 		Numbered:   true,
+// 		Percentage: cmd.percentage,
+// 		Precision:  prec,
+// 		SumTotal:   sumTotal,
+// 	}
+
+// 	return d.Display(f)
+// }
 
 type printTags struct {
 	artist string
@@ -449,14 +640,18 @@ func (cmd printTags) Execute(
 		return err
 	}
 
-	col := make(charts.Column, len(tags))
-	for i, tag := range tags {
-		col[i] = charts.Score{Name: tag.Name, Score: float64(tag.Count)}
+	col := make(map[string][]float64, len(tags))
+	for _, tag := range tags {
+		col[tag.Name] = []float64{float64(tag.Count)}
 	}
 
 	f := &format.Column{
-		Column:   col,
-		Numbered: true}
+		Column:     charts2.FromMap(col),
+		Numbered:   true,
+		Precision:  0,
+		Percentage: false,
+		SumTotal:   0,
+	}
 
 	return d.Display(f)
 }

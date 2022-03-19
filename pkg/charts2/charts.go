@@ -1,5 +1,7 @@
 package charts2
 
+import "sort"
+
 type charts struct {
 	titles []Title
 	values map[string][]float64
@@ -74,13 +76,14 @@ func compileCharts(
 	return charts
 }
 
-func chartsFromMap(data map[string][]float64) LazyCharts {
+func FromMap(data map[string][]float64) LazyCharts {
 	titles := make([]Title, len(data))
 	i := 0
 	for t := range data {
 		titles[i] = KeyTitle(t)
 		i++
 	}
+	sort.Slice(titles, func(i, j int) bool { return titles[i].Key() < titles[j].Key() })
 
 	charts := &charts{
 		values: data,

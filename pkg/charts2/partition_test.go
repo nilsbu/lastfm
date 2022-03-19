@@ -142,8 +142,8 @@ func TestPartiton(t *testing.T) {
 		{
 			"year partition with no eligible artists",
 			YearPartition(
-				chartsFromMap(map[string][]float64{"not": {0, 1}}),
-				chartsFromMap(map[string][]float64{"not": {0, 1}}),
+				FromMap(map[string][]float64{"not": {0, 1}}),
+				FromMap(map[string][]float64{"not": {0, 1}}),
 				rsrc.ParseDay("2019-12-31"),
 			),
 			[]titlePartition{
@@ -158,14 +158,14 @@ func TestPartiton(t *testing.T) {
 		{
 			"year partition with values",
 			YearPartition(
-				chartsFromMap(map[string][]float64{
+				FromMap(map[string][]float64{
 					"not":    {0, 0, 1, 0},
 					"first":  {0, 4, 10, 0}, // higher value irrelevant since 4 is reached in 2019
 					"first2": {0, 2, 1, 0},
 					"last":   {0, 2, 1, 0},
 					"last2":  {0, 1, 2, 0},
 				}),
-				chartsFromMap(map[string][]float64{
+				FromMap(map[string][]float64{
 					"not":    {0, 0, 1, 1},
 					"first":  {0, 4, 4, 4},
 					"first2": {0, 3, 4, 4},

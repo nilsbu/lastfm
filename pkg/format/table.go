@@ -5,12 +5,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type Table struct {
-	Charts charts.Charts
+	Charts charts2.LazyCharts
 	First  rsrc.Day
 	Step   int
 	Count  int
@@ -66,21 +66,15 @@ func (f *Table) formatBody(
 		pattern = "%v%v"
 	}
 
-	// f.Charts is asserted to non-empty without check
-	col, _ := f.Charts.Column(-1)
+	titles := charts2.Top(f.Charts, f.Count)
+	data := f.Charts.Data(titles, 0, f.Charts.Len())
 
-	for _, x := range col.Top(f.Count) {
+	for _, x := range titles {
 		io.WriteString(w, start)
 
-		var line []float64
-		for i, key := range f.Charts.Keys {
-			if key.String() == x.Name {
-				line = f.Charts.Values[i]
-				break
-			}
-		}
+		line := data[x.Key()].Line
 
-		fmt.Fprintf(w, pattern, x.Name, delim0)
+		fmt.Fprintf(w, pattern, x.String(), delim0)
 
 		for i := 0; i < len(line); i += f.Step {
 			if i > 0 {

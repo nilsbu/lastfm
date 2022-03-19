@@ -8,11 +8,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/charts2"
 )
 
 type Charts struct {
-	Charts     charts.Charts
+	Charts     charts2.LazyCharts
 	Column     int
 	Count      int
 	Numbered   bool
@@ -45,18 +45,18 @@ func (f *Charts) HTML(w io.Writer) error {
 }
 
 func (f *Charts) column() *Column {
-	col, err := f.Charts.Column(f.Column)
-	if err != nil {
-		return nil
+	col := charts2.Column(f.Charts, -1)
+	cache := charts2.Cache(col)
+	sumTotal := 0.
+	if totals := charts2.ColumnSum(cache).Row(charts2.KeyTitle("total"), 0, 1); len(totals) > 0 {
+		sumTotal = totals[0]
 	}
-
-	sumTotal := col.Sum()
 
 	n := f.Count
 	if n == 0 {
 		n = 10
 	}
-	top := col.Top(n)
+	top := charts2.Only(cache, charts2.Top(cache, n))
 
 	return &Column{
 		Column:     top,
@@ -68,7 +68,7 @@ func (f *Charts) column() *Column {
 }
 
 type Column struct {
-	Column     charts.Column
+	Column     charts2.LazyCharts
 	Numbered   bool
 	Precision  int
 	Percentage bool
@@ -98,30 +98,32 @@ func (f *Column) HTML(w io.Writer) error {
 
 func (f *Column) format(
 	header, pattern, decimal string, w io.Writer) error {
-	if len(f.Column) == 0 {
+	if f.Column.Len() == 0 {
 		return nil
 	}
 
 	io.WriteString(w, header)
 
-	var outCol charts.Column
+	var outCol charts2.LazyCharts
 	if f.Percentage {
 		outCol = f.getPercentageColumn()
 	} else {
 		outCol = f.Column
 	}
 
-	for i, score := range outCol {
-		sscore := fmt.Sprintf(f.getScorePattern(), score.Score)
+	data := outCol.Data(outCol.Titles(), 0, outCol.Len())
+	for i, title := range f.Column.Titles() {
+		sscore := fmt.Sprintf(f.getScorePattern(), data[title.Key()].Line[0])
 		if decimal != "." {
 			sscore = strings.Replace(sscore, ".", decimal, 1)
 		}
 
 		if f.Numbered {
-			fmt.Fprintf(w, pattern, i+1, score.Name, sscore)
+			fmt.Fprintf(w, pattern, i+1, title, sscore)
 		} else {
-			fmt.Fprintf(w, pattern, score.Name, sscore)
+			fmt.Fprintf(w, pattern, title, sscore)
 		}
+		i++
 	}
 
 	return nil
@@ -139,7 +141,7 @@ func (f *Column) getCSVPattern() (pattern string) {
 
 func (f *Column) getPlainPattern() (pattern string) {
 	if f.Numbered {
-		width := int(math.Log10(float64(len(f.Column)))) + 1
+		width := int(math.Log10(float64(len(f.Column.Titles())))) + 1
 		pattern = "%" + strconv.Itoa(width) + "d: "
 	}
 
@@ -163,10 +165,10 @@ func (f *Column) getHTMLPattern() (pattern string) {
 
 func (f *Column) getScorePattern() (pattern string) {
 	var maxValueLen int
-	if len(f.Column) == 0 || f.Column[0].Score == 0 {
+	if len(f.Column.Titles()) == 0 || f.Column.Row(f.Column.Titles()[0], 0, 1)[0] == 0 {
 		maxValueLen = 1
 	} else {
-		maxValueLen = int(math.Log10(f.Column[0].Score)) + 1
+		maxValueLen = int(math.Log10(f.Column.Row(f.Column.Titles()[0], 0, 1)[0])) + 1
 	}
 	if f.Precision > 0 {
 		maxValueLen += 1 + f.Precision
@@ -182,34 +184,27 @@ func (f *Column) getScorePattern() (pattern string) {
 	return pattern
 }
 
-func (f *Column) getPercentageColumn() charts.Column {
-	var sum float64
-	if f.SumTotal == 0.0 {
-		sum = f.Column.Sum()
-	} else {
-		sum = f.SumTotal
-	}
+func (f *Column) getPercentageColumn() charts2.LazyCharts {
+	sum := f.SumTotal
 
-	result := charts.Column{}
+	result := map[string][]float64{}
 	if sum > 0 {
-		for _, line := range f.Column {
-			result = append(result, charts.Score{
-				Name:  line.Name,
-				Score: 100 * line.Score / sum})
+		for _, line := range f.Column.Data(f.Column.Titles(), 0, f.Column.Len()) {
+			result[line.Title.Key()] = []float64{100 * line.Line[len(line.Line)-1] / sum}
 		}
 	} else {
-		for _, line := range f.Column {
-			result = append(result, charts.Score{Name: line.Name, Score: 0})
+		for _, line := range f.Column.Data(f.Column.Titles(), 0, f.Column.Len()) {
+			result[line.Title.Key()] = []float64{0}
 		}
 	}
 
-	return result
+	return charts2.FromMap(result)
 }
 
 func (f *Column) getMaxNameLen() int {
 	maxLen := 0
-	for _, score := range f.Column {
-		runeCnt := utf8.RuneCountInString(score.Name)
+	for _, title := range f.Column.Titles() {
+		runeCnt := utf8.RuneCountInString(title.String())
 		if maxLen < runeCnt {
 			maxLen = runeCnt
 		}

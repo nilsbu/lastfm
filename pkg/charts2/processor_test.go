@@ -510,7 +510,7 @@ func TestLazyCharts(t *testing.T) {
 			}),
 			&charts{
 				values: map[string][]float64{
-					"": {2, 3, 4, 2, 3},
+					"total": {2, 3, 4, 2, 3},
 				},
 				titles: []Title{StringTitle("total")},
 			},
@@ -599,31 +599,47 @@ func TestTop(t *testing.T) {
 		n      int
 		titles []Title
 	}{
+		// {
+		// 	"empty",
+		// 	FromMap(map[string][]float64{}),
+		// 	2,
+		// 	[]Title{},
+		// },
+		// {
+		// 	"2 out of 3",
+		// 	FromMap(map[string][]float64{
+		// 		"A": {1, 3},
+		// 		"B": {1, 1},
+		// 		"C": {0, 2},
+		// 	}),
+		// 	2,
+		// 	[]Title{KeyTitle("A"), KeyTitle("C")},
+		// },
+		// {
+		// 	"n > len",
+		// 	FromMap(map[string][]float64{
+		// 		"A": {1, 3},
+		// 		"B": {1, 1},
+		// 		"C": {0, 2},
+		// 	}),
+		// 	4,
+		// 	[]Title{KeyTitle("A"), KeyTitle("C"), KeyTitle("B")},
+		// },
 		{
-			"empty",
-			chartsFromMap(map[string][]float64{}),
-			2,
-			[]Title{},
-		},
-		{
-			"2 out of 3",
-			chartsFromMap(map[string][]float64{
+			"many",
+			FromMap(map[string][]float64{
 				"A": {1, 3},
 				"B": {1, 1},
-				"C": {0, 2},
+				"C": {0, 6},
+				"D": {0, 0},
+				"E": {0, 8},
+				"F": {0, 11},
+				"G": {0, 2},
+				"H": {0, -1},
+				"I": {0, 99},
 			}),
-			2,
-			[]Title{KeyTitle("A"), KeyTitle("C")},
-		},
-		{
-			"n > len",
-			chartsFromMap(map[string][]float64{
-				"A": {1, 3},
-				"B": {1, 1},
-				"C": {0, 2},
-			}),
-			4,
-			[]Title{KeyTitle("A"), KeyTitle("C"), KeyTitle("B")},
+			3,
+			[]Title{KeyTitle("I"), KeyTitle("F"), KeyTitle("E")},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

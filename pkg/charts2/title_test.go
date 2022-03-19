@@ -26,7 +26,7 @@ func TestTitles(t *testing.T) {
 		{
 			"string title",
 			StringTitle("a"),
-			"a", "", "", "",
+			"a", "a", "", "",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

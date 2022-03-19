@@ -3,6 +3,8 @@ package charts2
 import (
 	"reflect"
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func TestCharts(t *testing.T) {
@@ -113,7 +115,7 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"chartsFromMap",
-			chartsFromMap(map[string][]float64{
+			FromMap(map[string][]float64{
 				"A": {1, 1},
 				"B": {1, 0},
 				"C": {0, 1},
@@ -125,7 +127,7 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"Only",
-			Only(chartsFromMap(map[string][]float64{
+			Only(FromMap(map[string][]float64{
 				"A": {1, 1},
 				"B": {1, 0},
 				"C": {0, 1},
@@ -133,6 +135,25 @@ func TestCharts(t *testing.T) {
 			[]Title{KeyTitle("A"), KeyTitle("C")},
 			[][]float64{
 				{1, 1}, {0, 1},
+			},
+		},
+		{
+			"Intervals with Sum",
+			Intervals(FromMap(map[string][]float64{
+				"A": {1, 1, 0, 1, 3, 3, 2, 0},
+				"B": {1, 0, 1, 0, 0, 0, 0, 5},
+				"C": {0, 1, 0, 9, 0, 2, 0, 0},
+			}), Ranges{
+				Delims: []rsrc.Day{
+					rsrc.ParseDay("2022-01-01"),
+					rsrc.ParseDay("2022-01-03"),
+					rsrc.ParseDay("2022-01-05"),
+					rsrc.ParseDay("2022-01-08")},
+				Registered: rsrc.ParseDay("2022-01-01"),
+			}, Sum),
+			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")},
+			[][]float64{
+				{2, 1, 8}, {1, 1, 0}, {1, 9, 2},
 			},
 		},
 	} {

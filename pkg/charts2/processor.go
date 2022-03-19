@@ -557,25 +557,16 @@ func (c *only) Data(titles []Title, begin, end int) TitleLineMap {
 	return c.parent.Data(titles, begin, end)
 }
 
-type top struct {
-	chartsNode
-	n int
-}
-
 func Top(c LazyCharts, n int) []Title {
 	col := c.Column(c.Titles(), c.Len()-1)
-	m := n
+	m := n + 1
 	if len(col) < n {
 		m = len(col)
 	}
 
 	tvs := make([]TitleValue, m)
-	// k := 0
 	i := 0
 	for _, tv := range col {
-		if i == m && tv.Value <= tvs[m-1].Value {
-			continue
-		}
 		tvs[i] = tv
 		for j := i; j > 0; j-- {
 			if tvs[j-1].Value < tvs[j].Value {
@@ -588,10 +579,17 @@ func Top(c LazyCharts, n int) []Title {
 			i++
 		}
 	}
+	if len(tvs) > n {
+		tvs = tvs[:n]
+	}
 
-	titles := make([]Title, m)
+	titles := make([]Title, len(tvs))
 	for i, tv := range tvs {
 		titles[i] = tv.Title
 	}
 	return titles
+}
+
+func Id(parent LazyCharts) LazyCharts {
+	return parent
 }
