@@ -165,7 +165,7 @@ func TestCharts(t *testing.T) {
 
 			data := c.charts.Data(c.titles, 0, c.charts.Len())
 			for i, title := range c.titles {
-				row := c.charts.Row(title, 0, c.charts.Len())
+				row := c.charts.Data([]Title{title}, 0, c.charts.Len())[0]
 				if !reflect.DeepEqual(c.lines[i], row) {
 					t.Errorf("row, '%v': %v != %v", title, c.lines[i], row)
 				}

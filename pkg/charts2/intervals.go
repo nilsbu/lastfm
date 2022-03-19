@@ -122,10 +122,6 @@ func (c interval) Len() int {
 	return c.end - c.begin
 }
 
-func (c interval) Row(title Title, begin, end int) []float64 {
-	return c.Data([]Title{title}, begin, end)[0]
-}
-
 func (c interval) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
 	tvm := make([]float64, len(titles))
@@ -143,7 +139,7 @@ func (c interval) Data(titles []Title, begin, end int) [][]float64 {
 		go func(k int) {
 			back <- indexLine{
 				i:  k,
-				vs: c.parent.Row(titles[k], begin+c.begin, end+c.begin),
+				vs: c.parent.Data([]Title{titles[k]}, begin+c.begin, end+c.begin)[0],
 			}
 		}(k)
 	}
@@ -239,10 +235,6 @@ func crops(parent LazyCharts, delims []int, f func(LazyCharts) LazyCharts) LazyC
 
 func (c intervals) Len() int {
 	return len(c.delims) - 1
-}
-
-func (c intervals) Row(title Title, begin, end int) []float64 {
-	return c.Data([]Title{title}, begin, end)[0]
 }
 
 func (c intervals) Column(titles []Title, index int) []float64 {

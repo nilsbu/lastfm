@@ -97,25 +97,29 @@ func (t songTitle) Song() string {
 	return t.title
 }
 
+type stringTitle string
+
 // StringTitle is a Title which is non-empty only for String().
-type StringTitle string
+func StringTitle(s string) Title {
+	return stringTitle(s)
+}
 
 // String returns the the string.
-func (k StringTitle) String() string {
+func (k stringTitle) String() string {
 	return string(k)
 }
 
 // Artist returns ""
-func (k StringTitle) Artist() string {
+func (k stringTitle) Artist() string {
 	return ""
 }
 
 // Key returns ""
-func (k StringTitle) Key() string {
+func (k stringTitle) Key() string {
 	return string(k)
 }
 
 // Song returns "".
-func (k StringTitle) Song() string {
+func (k stringTitle) Song() string {
 	return ""
 }

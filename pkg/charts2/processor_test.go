@@ -152,13 +152,13 @@ func TestLazyChartsPartial(t *testing.T) {
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
 			{
-				row := c.lc.Row(KeyTitle("A"), 0, 4)
+				row := c.lc.Data([]Title{KeyTitle("A")}, 0, 4)[0]
 				if !reflect.DeepEqual(row, c.rowA04) {
 					t.Error("row A 0-4 not equal:", row, "!=", c.rowA04)
 				}
 			}
 			{
-				row := c.lc.Row(KeyTitle("B"), 1, 3)
+				row := c.lc.Data([]Title{KeyTitle("B")}, 1, 3)[0]
 				if !reflect.DeepEqual(row, c.rowB13) {
 					t.Error("row B 1-3 not equal:", row, "!=", c.rowB13)
 				}
@@ -284,11 +284,11 @@ func ranges(size, nRand int) [][2]int {
 }
 
 func checkRows(t *testing.T, expect, actual LazyCharts, ranges [][2]int) {
-
+	// Since Rows() doesn't exist anymore, this is just another Data() test
 	for _, be := range ranges {
 		for _, title := range expect.Titles() {
-			x := expect.Row(title, be[0], be[1])
-			a := actual.Row(title, be[0], be[1])
+			x := expect.Data([]Title{title}, be[0], be[1])[0]
+			a := actual.Data([]Title{title}, be[0], be[1])[0]
 
 			if len(a) != be[1]-be[0] {
 				t.Fatalf("row length: expect=%v-%v=%v, actual=%v",

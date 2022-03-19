@@ -37,7 +37,7 @@ func newNormalizer(parent LazyCharts, totals LazyCharts) *normalizer {
 	for i := 0; i < workers; i++ {
 		go func() {
 			// TODO is there a way to not query the entire length of the totals?
-			totals := n.totals.Row(StringTitle("total"), 0, parent.Len())
+			totals := n.totals.Data([]Title{StringTitle("total")}, 0, parent.Len())[0]
 			for job := range n.lineChan {
 				f(job.in, job.out, totals, job.begin, job.end)
 				job.back <- true
@@ -63,10 +63,6 @@ func NormalizeGaussian(
 	return newNormalizer(smooth, ColumnSum(smooth))
 }
 
-func (c *normalizer) Row(title Title, begin, end int) []float64 {
-	return c.Data([]Title{title}, begin, end)[0]
-}
-
 func (c *normalizer) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
 	tvm := make([]float64, len(titles))
@@ -84,7 +80,7 @@ func (c *normalizer) Data(titles []Title, begin, end int) [][]float64 {
 		out := make([]float64, end-begin)
 		data[i] = out
 		c.lineChan <- normalizerJob{
-			in:    c.parent.Row(title, begin, end),
+			in:    c.parent.Data([]Title{title}, begin, end)[0],
 			out:   out,
 			begin: begin,
 			end:   end,

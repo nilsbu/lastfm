@@ -48,7 +48,7 @@ func (f *Charts) column() *Column {
 	col := charts2.Column(f.Charts, -1)
 	cache := charts2.Cache(col)
 	sumTotal := 0.
-	if totals := charts2.ColumnSum(cache).Row(charts2.KeyTitle("total"), 0, 1); len(totals) > 0 {
+	if totals := charts2.ColumnSum(cache).Data([]charts2.Title{charts2.KeyTitle("total")}, 0, 1)[0]; len(totals) > 0 {
 		sumTotal = totals[0]
 	}
 
@@ -165,10 +165,10 @@ func (f *Column) getHTMLPattern() (pattern string) {
 
 func (f *Column) getScorePattern() (pattern string) {
 	var maxValueLen int
-	if len(f.Column.Titles()) == 0 || f.Column.Row(f.Column.Titles()[0], 0, 1)[0] == 0 {
+	if len(f.Column.Titles()) == 0 || f.Column.Data(f.Column.Titles()[:1], 0, 1)[0][0] == 0 {
 		maxValueLen = 1
 	} else {
-		maxValueLen = int(math.Log10(f.Column.Row(f.Column.Titles()[0], 0, 1)[0])) + 1
+		maxValueLen = int(math.Log10(f.Column.Data(f.Column.Titles()[:1], 0, 1)[0][0])) + 1
 	}
 	if f.Precision > 0 {
 		maxValueLen += 1 + f.Precision

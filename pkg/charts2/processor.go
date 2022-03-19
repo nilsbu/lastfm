@@ -4,49 +4,6 @@ import (
 	"math"
 )
 
-// TODO this belongs in charts.go
-type LazyCharts interface {
-	Row(title Title, begin, end int) []float64
-	Column(titles []Title, index int) []float64
-	Data(titles []Title, begin, end int) [][]float64
-
-	Titles() []Title
-	Len() int
-}
-
-// TODO these belong in charts.go
-func (l *charts) Row(title Title, begin, end int) []float64 {
-	return l.values[title.Key()][begin:end]
-}
-
-func (l *charts) Column(titles []Title, index int) []float64 {
-	col := make([]float64, len(titles))
-	for i, t := range titles {
-		col[i] = l.values[t.Key()][index]
-	}
-	return col
-}
-
-func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
-	data := make([][]float64, len(titles))
-	for i, t := range titles {
-		data[i] = l.values[t.Key()][begin:end]
-	}
-	return data
-}
-
-func (l *charts) Titles() []Title {
-	// assumption: noone touches the return value
-	return l.titles
-}
-
-func (l *charts) Len() int {
-	for _, line := range l.values {
-		return len(line)
-	}
-	return -1
-}
-
 type chartsNode struct {
 	parent LazyCharts
 }
@@ -220,13 +177,6 @@ type lineMapCharts struct {
 	rangeF rangeSpec
 }
 
-func (l *lineMapCharts) Row(title Title, begin, end int) []float64 {
-	rb, re := l.rangeF(l.parent.Len(), begin, end)
-	in := l.parent.Row(title, rb, re)
-	out := l.mapF(in)
-	return out[begin-rb : end-rb]
-}
-
 type iv struct {
 	i int
 	v float64
@@ -239,7 +189,7 @@ func (l *lineMapCharts) Column(titles []Title, index int) []float64 {
 
 	for t := range titles {
 		go func(t int) {
-			in := l.parent.Row(titles[t], rb, re)
+			in := l.parent.Data([]Title{titles[t]}, rb, re)[0]
 			back <- iv{
 				i: t,
 				v: l.foldF(index, in),
@@ -266,7 +216,7 @@ func (l *lineMapCharts) Data(titles []Title, begin, end int) [][]float64 {
 
 	for k := range titles {
 		go func(k int) {
-			in := l.parent.Row(titles[k], rb, re)
+			in := l.parent.Data([]Title{titles[k]}, rb, re)[0]
 			out := l.mapF(in)
 
 			back <- indexLine{
@@ -297,30 +247,6 @@ func Group(
 		chartsNode: chartsNode{parent: parent},
 		partition:  partition,
 	}
-}
-
-func (l *partitionSum) Row(title Title, begin, end int) []float64 {
-	titles := l.partition.Titles(title)
-	back := make(chan []float64)
-
-	for _, t := range titles {
-		go func(t Title) {
-			back <- l.parent.Row(t, begin, end)
-		}(t)
-	}
-
-	var row []float64
-
-	for i := 0; i < len(titles); i++ {
-		line := <-back
-		if len(row) == 0 {
-			row = make([]float64, len(line))
-		}
-		for i, v := range line {
-			row[i] += v
-		}
-	}
-	return row
 }
 
 type titleColumn struct {
@@ -359,7 +285,7 @@ func (l *partitionSum) Data(titles []Title, begin, end int) [][]float64 {
 		go func(i int, bin Title) {
 			line := make([]float64, end-begin)
 			for _, key := range l.partition.Titles(bin) {
-				for j, v := range l.parent.Row(key, begin, end) {
+				for j, v := range l.parent.Data([]Title{key}, begin, end)[0] {
 					line[j] += v
 				}
 			}
@@ -419,7 +345,7 @@ type cacheRowAnswer []float64
 // Cache is a LazyCharts that stores data to avoid duplicating work in parent.
 // The cache is filled when the data is requested. The data is stored in one
 // continuous block per row. Non-requested parts in between are filled.
-// E.g. if Row("A", 0, 4) and Column({"A"}, 16) are called, row "A" will store
+// E.g. if Data({"A"}, 0, 4) and Column({"A"}, 16) are called, row "A" will store
 // range [0, 17).
 func Cache(parent LazyCharts) LazyCharts {
 	rows := make(map[string]*cacheRow)
@@ -441,7 +367,7 @@ func Cache(parent LazyCharts) LazyCharts {
 
 						if request.begin < row.begin {
 							row.data = append(
-								parent.Row(title, request.begin, row.begin),
+								parent.Data([]Title{title}, request.begin, row.begin)[0],
 								row.data...)
 
 							row.begin = request.begin
@@ -449,7 +375,7 @@ func Cache(parent LazyCharts) LazyCharts {
 						if row.end < request.end {
 							row.data = append(
 								row.data,
-								parent.Row(title, row.end, request.end)...)
+								parent.Data([]Title{title}, row.end, request.end)[0]...)
 
 							row.end = request.end
 						}
@@ -460,7 +386,7 @@ func Cache(parent LazyCharts) LazyCharts {
 					}
 				}
 
-				row.data = parent.Row(title, request.begin, request.end)
+				row.data = parent.Data([]Title{title}, request.begin, request.end)[0]
 				row.begin, row.end = request.begin, request.end
 
 				request.back <- row.data
@@ -474,7 +400,7 @@ func Cache(parent LazyCharts) LazyCharts {
 	}
 }
 
-func (c *cache) Row(title Title, begin, end int) []float64 {
+func (c *cache) row(title Title, begin, end int) []float64 {
 	row := c.rows[title.Key()]
 
 	back := make(chan cacheRowAnswer)
@@ -502,7 +428,7 @@ func (c *cache) Data(titles []Title, begin, end int) [][]float64 {
 		go func(k int) {
 			back <- indexLine{
 				i:  k,
-				vs: c.Row(titles[k], begin, end),
+				vs: c.row(titles[k], begin, end),
 			}
 		}(k)
 	}
@@ -529,10 +455,6 @@ func Only(parent LazyCharts, titles []Title) LazyCharts {
 
 func (c *only) Titles() []Title {
 	return c.titles
-}
-
-func (c *only) Row(title Title, begin, end int) []float64 {
-	return c.parent.Row(title, begin, end)
 }
 
 func (c *only) Column(titles []Title, index int) []float64 {

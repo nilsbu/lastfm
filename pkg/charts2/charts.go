@@ -2,6 +2,14 @@ package charts2
 
 import "sort"
 
+type LazyCharts interface {
+	Column(titles []Title, index int) []float64
+	Data(titles []Title, begin, end int) [][]float64
+
+	Titles() []Title
+	Len() int
+}
+
 type charts struct {
 	titles []Title
 	values map[string][]float64
@@ -91,4 +99,32 @@ func FromMap(data map[string][]float64) LazyCharts {
 	}
 
 	return charts
+}
+
+func (l *charts) Column(titles []Title, index int) []float64 {
+	col := make([]float64, len(titles))
+	for i, t := range titles {
+		col[i] = l.values[t.Key()][index]
+	}
+	return col
+}
+
+func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
+	for i, t := range titles {
+		data[i] = l.values[t.Key()][begin:end]
+	}
+	return data
+}
+
+func (l *charts) Titles() []Title {
+	// assumption: noone touches the return value
+	return l.titles
+}
+
+func (l *charts) Len() int {
+	for _, line := range l.values {
+		return len(line)
+	}
+	return -1
 }
