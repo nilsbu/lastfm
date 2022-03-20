@@ -1,2 +1,4 @@
+github.com/nilsbu/async v0.0.0-20220320104752-a9302ca9ae0f h1:qmLhbiDd0UvSYfb5jkaCpWub/taDxZHpjdapGTMIitI=
+github.com/nilsbu/async v0.0.0-20220320104752-a9302ca9ae0f/go.mod h1:Yp2c35NOIvWdhJSLzytE+b27ytGMUEhV9RuhfR5HNxI=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

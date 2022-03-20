@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
@@ -68,7 +69,7 @@ func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]charts.Song,
 	days := (end.Midnight() - begin.Midnight()) / 86400
 	plays := make([][]charts.Song, days)
 
-	err := Pi(int(days), func(i int) error {
+	err := async.Pie(int(days), func(i int) error {
 		if songs, err := unpack.LoadDayHistory(user, begin.AddDate(0, 0, i), r); err == nil {
 			plays[i] = songs
 			return nil
@@ -181,49 +182,8 @@ func loadDayPlays(
 	return plays, err
 }
 
-// TODO put somewhere else?
-
-// Pi executes f in parallel n times
-func Pi(n int, f func(int) error) error {
-	errs := make([]error, n)
-	hasError := false
-
-	back := make(chan bool, n)
-
-	for i := 0; i < n; i++ {
-		go func(i int) {
-			if !hasError {
-				if err := f(i); err != nil {
-					hasError = true
-					errs[i] = err
-				}
-			}
-			back <- true
-		}(i)
-	}
-
-	for i := 0; i < n; i++ {
-		<-back
-	}
-
-	if !hasError {
-		return nil
-	}
-
-	merr := &MultiError{
-		Msg:  "error while executing in parallel",
-		Errs: []error{},
-	}
-	for _, err := range errs {
-		if err != nil {
-			merr.Errs = append(merr.Errs, err)
-		}
-	}
-	return merr
-}
-
 func attachDuration(songs []charts.Song, cache unpack.Loader) error {
-	Pi(len(songs), func(i int) error {
+	async.Pie(len(songs), func(i int) error {
 		if info, err := unpack.LoadTrackInfo(songs[i].Artist, songs[i].Title, cache); err == nil {
 			songs[i].Duration = float64(info.Duration) / 60.0
 			return nil

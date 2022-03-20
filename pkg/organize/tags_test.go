@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
@@ -11,9 +12,9 @@ import (
 )
 
 func TestMultiError(t *testing.T) {
-	err := &MultiError{
-		"message",
-		[]error{errors.New("error 1"), errors.New("error 2")}}
+	err := &async.MultiError{
+		Msg:  "message",
+		Errs: []error{errors.New("error 1"), errors.New("error 2")}}
 
 	msg := err.Error()
 	str := "message:\n  error 1\n  error 2"

@@ -4,28 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	async "github.com/nilsbu/async"
 	"github.com/pkg/errors"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
-
-// MultiError captures multiple errors.
-type MultiError struct {
-	Msg  string
-	Errs []error
-}
-
-func (err *MultiError) Error() string {
-	msg := err.Msg + ":"
-
-	for _, e := range err.Errs {
-		msg += "\n  " + e.Error()
-	}
-
-	return msg
-}
 
 type tagResult struct {
 	artist string
@@ -48,7 +33,7 @@ func LoadArtistTags(artists []string, r rsrc.Reader,
 	}
 
 	quit := make(chan bool)
-	err := &MultiError{"could not load tags", []error{}}
+	err := &async.MultiError{Msg: "could not load tags", Errs: []error{}}
 	go func() {
 		for range artists {
 			res := <-feedback
