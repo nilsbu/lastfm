@@ -238,11 +238,11 @@ func TestResolve(t *testing.T) {
 				begin:       time.Date(2007, time.January, 1, 0, 0, 0, 0, time.UTC),
 				before:      time.Date(2018, time.December, 24, 0, 0, 0, 0, time.UTC)}, true,
 		},
-		// {
-		// 	[]string{"lastfm", "print", "fademax", "66"},
-		// 	&unpack.SessionInfo{User: "user"},
-		// 	printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
-		// },
+		{
+			[]string{"lastfm", "print", "fademax", "66"},
+			&unpack.SessionInfo{User: "user"},
+			printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
+		},
 		{
 			[]string{"lastfm", "print", "tags", "Add"},
 			&unpack.SessionInfo{User: "user"}, printTags{"Add"}, true,

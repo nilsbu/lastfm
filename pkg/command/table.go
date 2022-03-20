@@ -1,12 +1,13 @@
 package command
 
 import (
+	"fmt"
+
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
-	"github.com/pkg/errors"
 )
 
 type tableTotal struct {
@@ -20,19 +21,22 @@ func (cmd tableTotal) Accumulate(c charts.LazyCharts) charts.LazyCharts {
 
 func (cmd tableTotal) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
+	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
+	setStep(steps, "sum")
+
+	w := newWeb(session, s)
+	cha, err := w.Execute(steps)
 	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
+		return err
 	}
 
 	f := &format.Table{
-		Charts: out,
-		First:  user.Registered,
+		Charts: cha,
+		First:  w.Registered(),
 		Step:   cmd.step,
 		Count:  cmd.n,
 	}
@@ -57,19 +61,22 @@ func (cmd tableFade) Accumulate(c charts.LazyCharts) charts.LazyCharts {
 
 func (cmd tableFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
+	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
+	setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
+
+	w := newWeb(session, s)
+	cha, err := w.Execute(steps)
 	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
+		return err
 	}
 
 	f := &format.Table{
-		Charts: out,
-		First:  user.Registered,
+		Charts: cha,
+		First:  w.Registered(),
 		Step:   cmd.step,
 		Count:  cmd.n,
 	}
@@ -93,27 +100,25 @@ func (cmd tablePeriods) Accumulate(c charts.LazyCharts) charts.LazyCharts {
 
 func (cmd tablePeriods) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
-	out, err := getOutCharts(session, cmd, s)
+	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
 	}
 
-	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
-	if err != nil {
-		return errors.Wrap(err, "failed to load user info")
-	}
+	setStep(steps, "id")
+	steps = append(steps, fmt.Sprintf("periods %v", cmd.period))
 
-	ranges, err := charts.ParseRanges(cmd.period, user.Registered, out.Len())
+	w := newWeb(session, s)
+	cha, err := w.Execute(steps)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse interval")
+		return err
 	}
-	out = charts.Intervals(out, ranges, charts.Id)
 
 	f := &format.Table{
-		Charts: out,
-		First:  ranges.Delims[0],
-		Step:   1,
-		Count:  cmd.n,
+		Charts: cha,
+		// First:  ranges.Delims[0], // TODO
+		Step:  1,
+		Count: cmd.n,
 	}
 
 	return d.Display(f)

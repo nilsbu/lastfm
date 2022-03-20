@@ -11,7 +11,6 @@ func TestChartsCSV(t *testing.T) {
 	cases := []struct {
 		name       string
 		charts     charts.LazyCharts
-		col        int
 		n          int
 		numbered   bool
 		precision  int
@@ -22,7 +21,7 @@ func TestChartsCSV(t *testing.T) {
 		{
 			"empty charts",
 			charts.FromMap(map[string][]float64{}),
-			-1, 3, false, 0, false, ".",
+			3, false, 0, false, ".",
 			"\"Name\";\"Value\"\n",
 		},
 		{
@@ -32,7 +31,7 @@ func TestChartsCSV(t *testing.T) {
 					"ABC": {123.4},
 					"X":   {1.238},
 				}),
-			-1, 2, false, 2, false, ",",
+			2, false, 2, false, ",",
 			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";  1,24\n",
 		},
 		{
@@ -42,7 +41,7 @@ func TestChartsCSV(t *testing.T) {
 					"a": {12},
 					"b": {4},
 				}),
-			-1, 2, false, 0, true, ".",
+			2, false, 0, true, ".",
 			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
 		},
 		{
@@ -52,7 +51,7 @@ func TestChartsCSV(t *testing.T) {
 					"a": {12.1},
 					"b": {4},
 				}),
-			-1, 2, true, 1, false, ",",
+			2, true, 1, false, ",",
 			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\"; 4,0\n",
 		},
 	}
@@ -62,7 +61,6 @@ func TestChartsCSV(t *testing.T) {
 			buf := new(bytes.Buffer)
 			formatter := &Charts{
 				Charts:     c.charts,
-				Column:     c.col,
 				Count:      c.n,
 				Numbered:   c.numbered,
 				Precision:  c.precision,
@@ -164,7 +162,6 @@ func TestChartsPlain(t *testing.T) {
 			buf := new(bytes.Buffer)
 			formatter := &Charts{
 				Charts:     c.charts,
-				Column:     c.col,
 				Count:      c.n,
 				Numbered:   c.numbered,
 				Precision:  c.precision,
@@ -184,7 +181,6 @@ func TestChartsHTML(t *testing.T) {
 	cases := []struct {
 		name       string
 		charts     charts.LazyCharts
-		col        int
 		n          int
 		numbered   bool
 		precision  int
@@ -199,7 +195,7 @@ func TestChartsHTML(t *testing.T) {
 					"AB":          {3},
 					"Týrs":        {12},
 				}),
-			0, 2, false, 0, false,
+			2, false, 0, false,
 			"<table><tr><td>Týrs</td><td>12</td></tr><tr><td>AB</td><td> 3</td></tr></table>", // TODO: numbers are aligned by length by don't neet to be
 		},
 	}
@@ -209,7 +205,6 @@ func TestChartsHTML(t *testing.T) {
 			buf := new(bytes.Buffer)
 			formatter := &Charts{
 				Charts:     c.charts,
-				Column:     c.col,
 				Count:      c.n,
 				Numbered:   c.numbered,
 				Precision:  c.precision,

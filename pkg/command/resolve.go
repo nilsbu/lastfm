@@ -69,9 +69,9 @@ var cmdPrint = node{
 		"fade":     node{cmd: exePrintFade},
 		"period":   node{cmd: exePrintPeriod},
 		"interval": node{cmd: exePrintInterval},
-		// "fademax":  node{cmd: exePrintFadeMax},
-		"tags":  node{cmd: exePrintTags},
-		"total": node{cmd: exePrintTotal},
+		"fademax":  node{cmd: exePrintFadeMax},
+		"tags":     node{cmd: exePrintTags},
+		"total":    node{cmd: exePrintTotal},
 	},
 }
 
@@ -214,35 +214,34 @@ var exePrintInterval = &cmd{
 	session: true,
 }
 
-// TODO add again
-// var exePrintFadeMax = &cmd{
-// 	descr: "", // TODO
-// 	get: func(params []interface{}, opts map[string]interface{}) command {
-// 		return printFadeMax{printCharts: printCharts{
-// 			keys:       opts["keys"].(string),
-// 			by:         opts["by"].(string),
-// 			name:       opts["name"].(string),
-// 			n:          opts["n"].(int),
-// 			percentage: false, // Disabled since it makes no sense here
-// 			normalized: opts["normalized"].(bool),
-// 			duration:   opts["duration"].(bool),
-// 			entry:      opts["entry"].(float64),
-// 		},
-// 			hl: params[0].(float64),
-// 		}
-// 	},
-// 	params: params{parHL},
-// 	options: options{
-// 		"keys":       optChartsKeys,
-// 		"by":         optChartType,
-// 		"name":       optGenericName,
-// 		"n":          optArtistCount,
-// 		"normalized": optChartsNormalized,
-// 		"duration":   optChartsDuration,
-// 		"entry":      optChartsEntry,
-// 	},
-// 	session: true,
-// }
+var exePrintFadeMax = &cmd{
+	descr: "", // TODO
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printFadeMax{printCharts: printCharts{
+			keys:       opts["keys"].(string),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: false, // Disabled since it makes no sense here
+			normalized: opts["normalized"].(bool),
+			duration:   opts["duration"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			hl: params[0].(float64),
+		}
+	},
+	params: params{parHL},
+	options: options{
+		"keys":       optChartsKeys,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"normalized": optChartsNormalized,
+		"duration":   optChartsDuration,
+		"entry":      optChartsEntry,
+	},
+	session: true,
+}
 
 var exePrintTags = &cmd{
 	descr: "prints the top tags of an artist",

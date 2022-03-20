@@ -13,7 +13,6 @@ import (
 
 type Charts struct {
 	Charts     charts.LazyCharts
-	Column     int
 	Count      int
 	Numbered   bool
 	Precision  int
@@ -45,7 +44,7 @@ func (f *Charts) HTML(w io.Writer) error {
 }
 
 func (f *Charts) column() *Column {
-	col := charts.Column(f.Charts, f.Column)
+	col := charts.Column(f.Charts, -1)
 	cache := charts.Cache(col)
 	sumTotal := 0.
 	if totals := charts.ColumnSum(cache).Data([]charts.Title{charts.KeyTitle("total")}, 0, 1)[0]; len(totals) > 0 {

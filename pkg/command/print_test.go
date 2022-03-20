@@ -167,7 +167,6 @@ func TestPrint(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
-				Column:     -1,
 				Count:      10,
 				Numbered:   true,
 				Precision:  0,
@@ -198,7 +197,33 @@ func TestPrint(t *testing.T) {
 					"pop":  {1, 1, 2},
 					"rock": {0, 1, 1},
 				}),
-				Column:     -1,
+				Count:      10,
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+			},
+			true,
+		},
+		{
+			"day",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
+			[][]charts.Song{
+				{{Artist: "X", Title: "x"}},
+				{{Artist: "Y", Title: "y"}},
+				{{Artist: "X", Title: "x"}},
+			},
+			printTotal{
+				printCharts: printCharts{
+					by: "all",
+					n:  10,
+				},
+				date: rsrc.ParseDay("2018-01-02").Time(),
+			},
+			&format.Charts{
+				Charts: charts.FromMap(map[string][]float64{
+					"X": {1},
+					"Y": {1},
+				}),
 				Count:      10,
 				Numbered:   true,
 				Precision:  0,
@@ -228,7 +253,6 @@ func TestPrint(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"Y": {1, 2, 2},
 				}),
-				Column:     -1,
 				Count:      10,
 				Numbered:   true,
 				Precision:  2,
@@ -260,7 +284,6 @@ func TestPrint(t *testing.T) {
 					"France": {1, 1, 2},
 					"-":      {0, 1, 1},
 				}),
-				Column:     -1,
 				Count:      10,
 				Numbered:   true,
 				Precision:  0,
@@ -356,7 +379,6 @@ func TestPrint(t *testing.T) {
 					"2017": append(iotaF(1, 30+31+31), repeat(92, 30+28)...),
 					"2018": append(repeat(0, 30+31+31), iotaF(1, 30+28)...),
 				}),
-				Column:     -1,
 				Count:      10,
 				Numbered:   true,
 				Precision:  0,
@@ -384,7 +406,6 @@ func TestPrint(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": append(iotaF(1, 31), repeat(31, 30)...),
 				}),
-				Column:     -1,
 				Count:      10,
 				Numbered:   true,
 				Precision:  0,
@@ -450,7 +471,6 @@ func TestPrint(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
-				Column:     -1,
 				Count:      10,
 				Numbered:   true,
 				Precision:  2,
@@ -478,9 +498,8 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.FromMap(map[string][]float64{
-					"total": {1, 2, 3},
+					"total": {1},
 				}),
-				Column:     0,
 				Count:      10,
 				Numbered:   true,
 				Precision:  0,
@@ -512,7 +531,6 @@ func TestPrint(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, .5, .25},
 				}),
-				Column:     -1,
 				Count:      10,
 				Numbered:   true,
 				Precision:  2,
@@ -896,7 +914,7 @@ func TestPrint(t *testing.T) {
 
 					// TODO checking Plain() is no a sufficient test
 					if buf0.String() != buf1.String() {
-						t.Errorf("formatter does not match expected: %v != %v", c.formatter, d.Msgs[0])
+						t.Errorf("formatter does not match expected:\n%v----------\n%v", buf0.String(), buf1.String())
 					}
 				}
 			}
@@ -964,7 +982,7 @@ func TestPrintTags(t *testing.T) {
 					var sb1 strings.Builder
 					display.NewTerminal().Display(d.Msgs[0])
 					if sb0.String() != sb1.String() {
-						t.Errorf("formatter does not match expected: %v != %v", c.formatter, d.Msgs[0])
+						t.Errorf("formatter does not match expected:\n%v----------\n%v", sb0.String(), sb1.String())
 					}
 				}
 			}
