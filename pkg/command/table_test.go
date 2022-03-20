@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
-	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
@@ -227,9 +226,9 @@ func TestTable(t *testing.T) {
 					t.Fatalf("got %v messages but expected 1", len(d.Msgs))
 				} else {
 					var sb0 strings.Builder
-					display.NewTerminal().Display(c.table)
+					c.table.Plain(&sb0)
 					var sb1 strings.Builder
-					display.NewTerminal().Display(d.Msgs[0])
+					d.Msgs[0].Plain(&sb1)
 					if sb0.String() != sb1.String() {
 						t.Errorf("formatter does not match expected: %v != %v", c.table, d.Msgs[0])
 					}

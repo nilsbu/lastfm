@@ -159,6 +159,25 @@ func Gaussian(
 	}
 }
 
+// Multiply multiplies the charts by a factor
+// TODO test
+func Multiply(parent LazyCharts, s float64) LazyCharts {
+	return &lineMapCharts{
+		chartsNode: chartsNode{parent: parent},
+		mapF: func(in []float64) []float64 {
+			out := make([]float64, len(in))
+			for i := range in {
+				out[i] = s * in[i]
+			}
+			return out
+		},
+		foldF: func(i int, line []float64) float64 {
+			return s*line[len(line)] - 1
+		},
+		rangeF: fromBeginRange,
+	}
+}
+
 func (l *lineMapCharts) Column(titles []Title, index int) []float64 {
 	type iv struct {
 		i int

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
-	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
@@ -251,7 +250,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.FromMap(map[string][]float64{
-					"Y": {1, 2, 2},
+					"Y": {.5},
 				}),
 				Count:      10,
 				Numbered:   true,
@@ -469,7 +468,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.FromMap(map[string][]float64{
-					"X": {1, 1, 2},
+					"X": {1},
 				}),
 				Count:      10,
 				Numbered:   true,
@@ -520,21 +519,20 @@ func TestPrint(t *testing.T) {
 				printCharts: printCharts{
 					by:         "all",
 					name:       "",
-					percentage: true,
+					percentage: false,
 					normalized: false,
-					n:          10,
+					n:          1,
 				},
-				hl:   1,
-				date: date("2018-01-01"),
+				hl: 1,
 			},
 			&format.Charts{
 				Charts: charts.FromMap(map[string][]float64{
-					"X": {1, .5, .25},
+					"X": {1.25},
 				}),
 				Count:      10,
 				Numbered:   true,
 				Precision:  2,
-				Percentage: true,
+				Percentage: false,
 			},
 			true,
 		},
@@ -672,7 +670,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.FromMap(map[string][]float64{
-					"X": {9},
+					"X": {1},
 				}),
 				Numbered:   true,
 				Precision:  2,
@@ -776,7 +774,7 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: charts.FromMap(map[string][]float64{
-					"X": {9},
+					"X": {1},
 				}),
 				Numbered:   true,
 				Precision:  2,
@@ -914,7 +912,7 @@ func TestPrint(t *testing.T) {
 
 					// TODO checking Plain() is no a sufficient test
 					if buf0.String() != buf1.String() {
-						t.Errorf("formatter does not match expected:\n%v----------\n%v", buf0.String(), buf1.String())
+						t.Errorf("actual does not match expected:\n%v----------\n%v", buf1.String(), buf0.String())
 					}
 				}
 			}
@@ -978,11 +976,11 @@ func TestPrintTags(t *testing.T) {
 					t.Fatalf("got %v messages but expected 1", len(d.Msgs))
 				} else {
 					var sb0 strings.Builder
-					display.NewTerminal().Display(c.formatter)
+					c.formatter.Plain(&sb0)
 					var sb1 strings.Builder
-					display.NewTerminal().Display(d.Msgs[0])
+					d.Msgs[0].Plain(&sb1)
 					if sb0.String() != sb1.String() {
-						t.Errorf("formatter does not match expected:\n%v----------\n%v", sb0.String(), sb1.String())
+						t.Errorf("actual does not match expected:\n%v----------\n%v", sb1.String(), sb0.String())
 					}
 				}
 			}

@@ -26,7 +26,7 @@ func (cmd tableTotal) Execute(
 		return err
 	}
 
-	setStep(steps, "sum")
+	steps = setStep(steps, "sum")
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -66,7 +66,7 @@ func (cmd tableFade) Execute(
 		return err
 	}
 
-	setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
+	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -105,7 +105,7 @@ func (cmd tablePeriods) Execute(
 		return err
 	}
 
-	setStep(steps, "id")
+	steps = setStep(steps, "id")
 	steps = append(steps, fmt.Sprintf("periods %v", cmd.period))
 
 	w := newWeb(session, s)

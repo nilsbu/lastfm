@@ -137,9 +137,16 @@ func (w *web) step(step string, parent charts.LazyCharts) (charts.LazyCharts, er
 	case "max":
 		return charts.Max(parent), nil
 
+	case "normalize":
+		return charts.Normalize(parent), nil
+
 	case "fade":
 		hl, _ := strconv.ParseFloat(split[1], 64)
 		return charts.Fade(parent, hl), nil
+
+	case "multiply":
+		s, _ := strconv.ParseFloat(split[1], 64)
+		return charts.Multiply(parent, s), nil
 
 	case "group":
 		partition, err := w.getPartition(split[1], w.charts["gaussian"], parent)

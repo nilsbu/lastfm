@@ -46,10 +46,6 @@ func (f *Charts) HTML(w io.Writer) error {
 func (f *Charts) column() *Column {
 	col := charts.Column(f.Charts, -1)
 	cache := charts.Cache(col)
-	sumTotal := 0.
-	if totals := charts.ColumnSum(cache).Data([]charts.Title{charts.KeyTitle("total")}, 0, 1)[0]; len(totals) > 0 {
-		sumTotal = totals[0]
-	}
 
 	n := f.Count
 	if n == 0 {
@@ -62,7 +58,6 @@ func (f *Charts) column() *Column {
 		Numbered:   f.Numbered,
 		Precision:  f.Precision,
 		Percentage: f.Percentage,
-		SumTotal:   sumTotal,
 	}
 }
 
@@ -71,7 +66,6 @@ type Column struct {
 	Numbered   bool
 	Precision  int
 	Percentage bool
-	SumTotal   float64
 }
 
 func (f *Column) CSV(w io.Writer, decimal string) error {
@@ -103,16 +97,16 @@ func (f *Column) format(
 
 	io.WriteString(w, header)
 
-	var outCol charts.LazyCharts
+	var multi float64
 	if f.Percentage {
-		outCol = f.getPercentageColumn()
+		multi = 100
 	} else {
-		outCol = f.Column
+		multi = 1
 	}
 
-	data := outCol.Data(f.Column.Titles(), 0, outCol.Len())
+	data := f.Column.Data(f.Column.Titles(), 0, f.Column.Len())
 	for i, title := range f.Column.Titles() {
-		sscore := fmt.Sprintf(f.getScorePattern(), data[i][0])
+		sscore := fmt.Sprintf(f.getScorePattern(), multi*data[i][0])
 		if decimal != "." {
 			sscore = strings.Replace(sscore, ".", decimal, 1)
 		}
@@ -181,24 +175,6 @@ func (f *Column) getScorePattern() (pattern string) {
 	}
 
 	return pattern
-}
-
-func (f *Column) getPercentageColumn() charts.LazyCharts {
-	sum := f.SumTotal
-
-	result := map[string][]float64{}
-	titles := f.Column.Titles()
-	if sum > 0 {
-		for i, line := range f.Column.Data(titles, 0, f.Column.Len()) {
-			result[titles[i].Key()] = []float64{100 * line[len(line)-1] / sum}
-		}
-	} else {
-		for i := range f.Column.Data(f.Column.Titles(), 0, f.Column.Len()) {
-			result[titles[i].Key()] = []float64{0}
-		}
-	}
-
-	return charts.FromMap(result)
 }
 
 func (f *Column) getMaxNameLen() int {

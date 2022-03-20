@@ -38,6 +38,10 @@ func (cmd printCharts) getSteps() ([]string, error) {
 
 	steps := []string{s0, "*"}
 
+	if cmd.percentage {
+		steps = append(steps, "normalize")
+	}
+
 	if cmd.by != "all" {
 		var s1 string
 		if cmd.name == "" {
@@ -55,12 +59,17 @@ func (cmd printCharts) getSteps() ([]string, error) {
 	return steps, nil
 }
 
-func setStep(steps []string, sub string) {
+func setStep(steps []string, sub ...string) []string {
 	for i, step := range steps {
 		if step == "*" {
-			steps[i] = sub
+			var filled []string
+			filled = append(filled, steps[:i]...)
+			filled = append(filled, sub...)
+			filled = append(filled, steps[i+1:]...)
+			return filled
 		}
 	}
+	return steps
 }
 
 type printTotal struct {
@@ -83,7 +92,7 @@ func (cmd printTotal) Execute(
 		return err
 	}
 
-	setStep(steps, "sum")
+	steps = setStep(steps, "sum")
 
 	null := time.Time{}
 	if cmd.date != null {
@@ -124,7 +133,7 @@ func (cmd printFade) Execute(
 		return err
 	}
 
-	setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
+	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
 
 	null := time.Time{}
 	if cmd.date != null {
@@ -162,8 +171,7 @@ func (cmd printPeriod) Execute(
 		return err
 	}
 
-	setStep(steps, "id")
-	steps = append(steps, fmt.Sprintf("period %v", cmd.period), "sum")
+	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum")
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -199,9 +207,7 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	setStep(steps, "id")
-	steps = append(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)))
-	steps = append(steps, "sum")
+	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum")
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -240,7 +246,7 @@ func (cmd printFadeMax) Execute(
 		return err
 	}
 
-	setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
+	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
 	steps = append(steps, "max")
 
 	w := newWeb(session, s)
@@ -284,7 +290,6 @@ func (cmd printTags) Execute(
 		Numbered:   true,
 		Precision:  0,
 		Percentage: false,
-		SumTotal:   0,
 	}
 
 	return d.Display(f)

@@ -35,11 +35,11 @@ func TestChartsCSV(t *testing.T) {
 			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";  1,24\n",
 		},
 		{
-			"percentage with no total",
+			"percentage",
 			charts.FromMap(
 				map[string][]float64{
-					"a": {12},
-					"b": {4},
+					"a": {.75},
+					"b": {.25},
 				}),
 			2, false, 0, true, ".",
 			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
@@ -139,9 +139,9 @@ func TestChartsPlain(t *testing.T) {
 			"percentage with sum total",
 			charts.FromMap(
 				map[string][]float64{
-					"AKSLJDHLJKH": {1},
-					"AB":          {3},
-					"Týrs":        {4},
+					"AKSLJDHLJKH": {.125},
+					"AB":          {.375},
+					"Týrs":        {.5},
 				}),
 			0, 2, false, 1, true,
 			"Týrs - 50.0%\nAB   - 37.5%\n",
