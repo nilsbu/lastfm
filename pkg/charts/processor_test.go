@@ -1,4 +1,4 @@
-package charts
+package charts_test
 
 import (
 	"math"
@@ -6,21 +6,19 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 // TODO merge with LazyCharts
 func TestLazyChartsPartial(t *testing.T) {
-	root := &charts{
-		values: map[string][]float64{
-			"A": {8, 8, 0, 0},
-			"B": {16, 0, 0, 0},
-			"C": {1, 1, 2, 1},
-		},
-		titles: []Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")},
-	}
+	root := charts.FromMap(map[string][]float64{
+		"A": {8, 8, 0, 0},
+		"B": {16, 0, 0, 0},
+		"C": {1, 1, 2, 1},
+	})
 
-	songs := [][]Song{
+	songs := [][]charts.Song{
 		{
 			{Artist: "A", Title: "a", Duration: 3},
 			{Artist: "A", Title: "b", Duration: 4},
@@ -40,8 +38,8 @@ func TestLazyChartsPartial(t *testing.T) {
 
 	cs := []struct {
 		name     string
-		lc       LazyCharts
-		titles   []Title
+		lc       charts.LazyCharts
+		titles   []charts.Title
 		len      int
 		rowA04   []float64
 		rowB13   []float64
@@ -52,7 +50,7 @@ func TestLazyChartsPartial(t *testing.T) {
 		{
 			"charts themselves",
 			root,
-			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")}, 4,
 			[]float64{8, 8, 0, 0},
 			[]float64{0, 0},
 			[]float64{8, 0},
@@ -64,8 +62,8 @@ func TestLazyChartsPartial(t *testing.T) {
 		},
 		{
 			"sum",
-			Sum(root),
-			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
+			charts.Sum(root),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")}, 4,
 			[]float64{8, 16, 16, 16},
 			[]float64{16, 16},
 			[]float64{16, 16},
@@ -77,8 +75,8 @@ func TestLazyChartsPartial(t *testing.T) {
 		},
 		{
 			"sum of sum",
-			Sum(Sum(root)),
-			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
+			charts.Sum(charts.Sum(root)),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")}, 4,
 			[]float64{8, 24, 40, 56},
 			[]float64{32, 48},
 			[]float64{24, 32},
@@ -90,8 +88,8 @@ func TestLazyChartsPartial(t *testing.T) {
 		},
 		{
 			"fade",
-			Fade(root, 1),
-			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
+			charts.Fade(root, 1),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")}, 4,
 			[]float64{8, 12, 6, 3},
 			[]float64{8, 4},
 			[]float64{12, 8},
@@ -103,8 +101,8 @@ func TestLazyChartsPartial(t *testing.T) {
 		},
 		{
 			"max of fade",
-			Max(Fade(root, 1)),
-			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")}, 4,
+			charts.Max(charts.Fade(root, 1)),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")}, 4,
 			[]float64{8, 12, 12, 12},
 			[]float64{16, 16},
 			[]float64{12, 16},
@@ -116,15 +114,15 @@ func TestLazyChartsPartial(t *testing.T) {
 		},
 		{
 			"merge partition",
-			Group(
+			charts.Group(
 				root,
-				KeyPartition([][2]Title{
-					{KeyTitle("A"), KeyTitle("A")},
-					{KeyTitle("B"), KeyTitle("B")},
-					{KeyTitle("C"), KeyTitle("B")},
+				charts.KeyPartition([][2]charts.Title{
+					{charts.KeyTitle("A"), charts.KeyTitle("A")},
+					{charts.KeyTitle("B"), charts.KeyTitle("B")},
+					{charts.KeyTitle("C"), charts.KeyTitle("B")},
 				}),
 			),
-			[]Title{KeyTitle("A"), KeyTitle("B")}, 4,
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 4,
 			[]float64{8, 8, 0, 0},
 			[]float64{1, 2},
 			[]float64{8, 1},
@@ -136,8 +134,8 @@ func TestLazyChartsPartial(t *testing.T) {
 		},
 		{
 			"artist charts",
-			Artists(songs),
-			[]Title{ArtistTitle("A"), ArtistTitle("B")}, 4,
+			charts.Artists(songs),
+			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B")}, 4,
 			[]float64{3, 2, 0, 0},
 			[]float64{0, 2},
 			[]float64{2, 0},
@@ -152,31 +150,31 @@ func TestLazyChartsPartial(t *testing.T) {
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
 			{
-				row := c.lc.Data([]Title{KeyTitle("A")}, 0, 4)[0]
+				row := c.lc.Data([]charts.Title{charts.KeyTitle("A")}, 0, 4)[0]
 				if !reflect.DeepEqual(row, c.rowA04) {
 					t.Error("row A 0-4 not equal:", row, "!=", c.rowA04)
 				}
 			}
 			{
-				row := c.lc.Data([]Title{KeyTitle("B")}, 1, 3)[0]
+				row := c.lc.Data([]charts.Title{charts.KeyTitle("B")}, 1, 3)[0]
 				if !reflect.DeepEqual(row, c.rowB13) {
 					t.Error("row B 1-3 not equal:", row, "!=", c.rowB13)
 				}
 			}
 			{
-				col := c.lc.Column([]Title{KeyTitle("A"), KeyTitle("B")}, 1)
+				col := c.lc.Column([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1)
 				if !reflect.DeepEqual(c.colAB1, col) {
 					t.Error("col A,B 1 not equal:", c.colAB1, "!=", col)
 				}
 			}
 			{
-				col := c.lc.Column([]Title{KeyTitle("B")}, 3)
+				col := c.lc.Column([]charts.Title{charts.KeyTitle("B")}, 3)
 				if !reflect.DeepEqual(c.colB3, col) {
 					t.Error("col B 3 not equal:", c.colB3, "!=", col)
 				}
 			}
 			{
-				data := c.lc.Data([]Title{KeyTitle("A"), KeyTitle("B")}, 1, 4)
+				data := c.lc.Data([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1, 4)
 				if !reflect.DeepEqual(c.dataAB14, data) {
 					t.Error("data A,B 1-4 not equal:", c.dataAB14, "!=", data)
 				}
@@ -197,14 +195,14 @@ func TestLazyChartsPartial(t *testing.T) {
 	}
 }
 
-func allEqual(a, b Title) bool {
+func allEqual(a, b charts.Title) bool {
 	return a != nil && b != nil &&
 		a.String() == b.String() &&
 		a.Key() == b.Key() &&
 		a.Artist() == b.Artist()
 }
 
-func areTitlesSame(a, b []Title) bool {
+func areTitlesSame(a, b []charts.Title) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -229,14 +227,14 @@ func areTitlesSame(a, b []Title) bool {
 }
 
 func TestEmptyCharts(t *testing.T) {
-	c := &charts{}
+	c := charts.FromMap(map[string][]float64{})
 
 	if c.Len() != -1 {
 		t.Error("unxecptected len:", c.Len())
 	}
 }
 
-func checkTitle(t *testing.T, x, a Title) {
+func checkTitle(t *testing.T, x, a charts.Title) {
 	if x.String() != a.String() {
 		t.Fatalf("String(): expect=%v, actual=%v",
 			x.String(), a.String())
@@ -251,7 +249,7 @@ func checkTitle(t *testing.T, x, a Title) {
 	}
 }
 
-func checkMeta(t *testing.T, expect, actual LazyCharts) {
+func checkMeta(t *testing.T, expect, actual charts.LazyCharts) {
 
 	if expect.Len() != actual.Len() {
 		t.Fatalf("len differs: expect=%v, actual %v", expect.Len(), actual.Len())
@@ -278,12 +276,12 @@ func ranges(size, nRand int) [][2]int {
 	return ranges
 }
 
-func checkRows(t *testing.T, expect, actual LazyCharts, ranges [][2]int) {
+func checkRows(t *testing.T, expect, actual charts.LazyCharts, ranges [][2]int) {
 	// Since Rows() doesn't exist anymore, this is just another Data() test
 	for _, be := range ranges {
 		for _, title := range expect.Titles() {
-			x := expect.Data([]Title{title}, be[0], be[1])[0]
-			a := actual.Data([]Title{title}, be[0], be[1])[0]
+			x := expect.Data([]charts.Title{title}, be[0], be[1])[0]
+			a := actual.Data([]charts.Title{title}, be[0], be[1])[0]
 
 			if len(a) != be[1]-be[0] {
 				t.Fatalf("row length: expect=%v-%v=%v, actual=%v",
@@ -309,11 +307,11 @@ func checkRows(t *testing.T, expect, actual LazyCharts, ranges [][2]int) {
 	}
 }
 
-func sets(titles []Title, nRand int) [][]Title {
-	sets := [][]Title{titles}
+func sets(titles []charts.Title, nRand int) [][]charts.Title {
+	sets := [][]charts.Title{titles}
 
 	for i := 0; i < nRand; i++ {
-		set := []Title{}
+		set := []charts.Title{}
 		set = append(set, titles...)
 
 		rand.Shuffle(len(set), func(i, j int) {
@@ -327,7 +325,7 @@ func sets(titles []Title, nRand int) [][]Title {
 	return sets
 }
 
-func checkCols(t *testing.T, expect, actual LazyCharts, sets [][]Title) {
+func checkCols(t *testing.T, expect, actual charts.LazyCharts, sets [][]charts.Title) {
 
 	for _, set := range sets {
 		for i := 0; i < expect.Len(); i++ {
@@ -353,8 +351,8 @@ func checkCols(t *testing.T, expect, actual LazyCharts, sets [][]Title) {
 	}
 }
 
-func checkData(t *testing.T, expect, actual LazyCharts,
-	ranges [][2]int, sets [][]Title) {
+func checkData(t *testing.T, expect, actual charts.LazyCharts,
+	ranges [][2]int, sets [][]charts.Title) {
 
 	for i := range sets {
 		set := sets[i]
@@ -390,7 +388,7 @@ func checkData(t *testing.T, expect, actual LazyCharts,
 	}
 }
 
-func checkLazyCharts(t *testing.T, expect, actual LazyCharts, nRand int) {
+func checkLazyCharts(t *testing.T, expect, actual charts.LazyCharts, nRand int) {
 	checkMeta(t, expect, actual)
 	checkRows(t, expect, actual, ranges(expect.Len(), nRand))
 	checkCols(t, expect, actual, sets(expect.Titles(), nRand))
@@ -399,96 +397,72 @@ func checkLazyCharts(t *testing.T, expect, actual LazyCharts, nRand int) {
 }
 
 func TestLazyCharts(t *testing.T) {
-	root := &charts{
-		values: map[string][]float64{
-			"A": {0, 0, 0, 1, 0},
-			"B": {0, 1, 0, 1, 0},
-		},
-		titles: []Title{KeyTitle("A"), KeyTitle("B")},
-	}
+	root := charts.FromMap(map[string][]float64{
+		"A": {0, 0, 0, 1, 0},
+		"B": {0, 1, 0, 1, 0},
+	})
 
 	f := 1 / math.Sqrt(2*math.Pi)
 	m := []float64{f * math.Exp(0), f * math.Exp(-.5), f * math.Exp(-2)}
 
 	cs := []struct {
 		name   string
-		actual LazyCharts
-		expect LazyCharts
+		actual charts.LazyCharts
+		expect charts.LazyCharts
 	}{
 		{
 			"Gaussian mirror none",
-			Gaussian(root, 1, 2, false, false),
-			&charts{
-				values: map[string][]float64{
-					"A": {0, m[2], m[1], m[0], m[1]},
-					"B": {m[1], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1]},
-				},
-				titles: []Title{KeyTitle("A"), KeyTitle("B")},
-			},
+			charts.Gaussian(root, 1, 2, false, false),
+			charts.FromMap(map[string][]float64{
+				"A": {0, m[2], m[1], m[0], m[1]},
+				"B": {m[1], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1]},
+			}),
 		},
 		{
 			"Gaussian mirror begin",
-			Gaussian(root, 1, 2, true, false),
-			&charts{
-				values: map[string][]float64{
-					"A": {0, m[2], m[1], m[0], m[1]},
-					"B": {m[1] + m[2], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1]},
-				},
-				titles: []Title{KeyTitle("A"), KeyTitle("B")},
-			},
+			charts.Gaussian(root, 1, 2, true, false),
+			charts.FromMap(map[string][]float64{
+				"A": {0, m[2], m[1], m[0], m[1]},
+				"B": {m[1] + m[2], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1]},
+			}),
 		},
 		{
 			"Gaussian mirror both",
-			Gaussian(root, 1, 2, true, true),
-			&charts{
-				values: map[string][]float64{
-					"A": {0, m[2], m[1], m[0], m[1] + m[2]},
-					"B": {m[1] + m[2], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1] + m[2]},
-				},
-				titles: []Title{KeyTitle("A"), KeyTitle("B")},
-			},
+			charts.Gaussian(root, 1, 2, true, true),
+			charts.FromMap(map[string][]float64{
+				"A": {0, m[2], m[1], m[0], m[1] + m[2]},
+				"B": {m[1] + m[2], m[2] + m[0], 2 * m[1], m[2] + m[0], m[1] + m[2]},
+			}),
 		},
 		{
 			"ColumnSum",
-			ColumnSum(&charts{
-				values: map[string][]float64{
-					"A": {0, 1, 2, 3, 4},
-					"B": {2, 2, 2, -1, -1},
-					"":  {0, 0, 0, 0, 0},
-				},
-				titles: []Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("")},
+			charts.ColumnSum(charts.FromMap(map[string][]float64{
+				"A": {0, 1, 2, 3, 4},
+				"B": {2, 2, 2, -1, -1},
+				"":  {0, 0, 0, 0, 0},
+			})),
+			charts.FromMap(map[string][]float64{
+				"total": {2, 3, 4, 2, 3},
 			}),
-			&charts{
-				values: map[string][]float64{
-					"total": {2, 3, 4, 2, 3},
-				},
-				titles: []Title{StringTitle("total")},
-			},
 		},
 		{
 			"cached Gaussian",
-			Gaussian(root, 1, 2, false, false),
-			Cache(Gaussian(root, 1, 2, false, false)),
+			charts.Gaussian(root, 1, 2, false, false),
+			charts.Cache(charts.Gaussian(root, 1, 2, false, false)),
 		},
 		{
 			"Interval",
-			Interval(&charts{
-				values: map[string][]float64{
-					"A": {0, 1, 2, 3, 4},
-				},
-				titles: []Title{KeyTitle("A")},
-			},
-				Range{
+			charts.Interval(charts.FromMap(map[string][]float64{
+				"A": {0, 1, 2, 3, 4},
+			}),
+				charts.Range{
 					Begin:      rsrc.ParseDay("2020-01-01"),
 					End:        rsrc.ParseDay("2020-01-03"),
 					Registered: rsrc.ParseDay("2019-12-31")},
 			),
-			&charts{
-				values: map[string][]float64{
-					"A": {1, 2},
-				},
-				titles: []Title{KeyTitle("A")},
-			},
+			charts.FromMap(map[string][]float64{
+				"A": {1, 2},
+			}),
 		},
 	}
 
@@ -500,17 +474,14 @@ func TestLazyCharts(t *testing.T) {
 }
 
 func TestCacheIncremental(t *testing.T) {
-	expect := &charts{
-		values: map[string][]float64{
-			"A": {1, 2, 3, 4, 5},
-			"B": {11, 13, 12, 15, 14},
-		},
-		titles: []Title{KeyTitle("A"), KeyTitle("B")},
-	}
+	expect := charts.FromMap(map[string][]float64{
+		"A": {1, 2, 3, 4, 5},
+		"B": {11, 13, 12, 15, 14},
+	})
 
 	// Row
 	{
-		actual := Cache(expect)
+		actual := charts.Cache(expect)
 		ranges := [][2]int{
 			{2, 2}, {1, 2}, {3, 4}, {0, 5}, {0, 5},
 		}
@@ -520,9 +491,9 @@ func TestCacheIncremental(t *testing.T) {
 
 	// Column
 	{
-		actual := Cache(expect)
-		sets := [][]Title{
-			{}, {KeyTitle("A")}, {KeyTitle("B")}, {KeyTitle("A"), KeyTitle("B")},
+		actual := charts.Cache(expect)
+		sets := [][]charts.Title{
+			{}, {charts.KeyTitle("A")}, {charts.KeyTitle("B")}, {charts.KeyTitle("A"), charts.KeyTitle("B")},
 		}
 
 		checkCols(t, expect, actual, sets)
@@ -530,12 +501,12 @@ func TestCacheIncremental(t *testing.T) {
 
 	// Data
 	{
-		actual := Cache(expect)
+		actual := charts.Cache(expect)
 		ranges := [][2]int{
 			{1, 2}, {3, 4}, {0, 5}, {0, 5},
 		}
-		sets := [][]Title{
-			{}, {KeyTitle("A")}, {KeyTitle("B")}, {KeyTitle("A"), KeyTitle("B")},
+		sets := [][]charts.Title{
+			{}, {charts.KeyTitle("A")}, {charts.KeyTitle("B")}, {charts.KeyTitle("A"), charts.KeyTitle("B")},
 		}
 
 		checkData(t, expect, actual, ranges, sets)
@@ -545,15 +516,15 @@ func TestCacheIncremental(t *testing.T) {
 func TestTop(t *testing.T) {
 	for _, c := range []struct {
 		name   string
-		charts LazyCharts
+		charts charts.LazyCharts
 		n      int
-		titles []Title
+		titles []charts.Title
 	}{
 		// {
 		// 	"empty",
 		// 	FromMap(map[string][]float64{}),
 		// 	2,
-		// 	[]Title{},
+		// 	[]charts.Title{},
 		// },
 		// {
 		// 	"2 out of 3",
@@ -563,7 +534,7 @@ func TestTop(t *testing.T) {
 		// 		"C": {0, 2},
 		// 	}),
 		// 	2,
-		// 	[]Title{KeyTitle("A"), KeyTitle("C")},
+		// 	[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")},
 		// },
 		// {
 		// 	"n > len",
@@ -573,11 +544,11 @@ func TestTop(t *testing.T) {
 		// 		"C": {0, 2},
 		// 	}),
 		// 	4,
-		// 	[]Title{KeyTitle("A"), KeyTitle("C"), KeyTitle("B")},
+		// 	[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C"), charts.KeyTitle("B")},
 		// },
 		{
 			"many",
-			FromMap(map[string][]float64{
+			charts.FromMap(map[string][]float64{
 				"A": {1, 3},
 				"B": {1, 1},
 				"C": {0, 6},
@@ -589,11 +560,11 @@ func TestTop(t *testing.T) {
 				"I": {0, 99},
 			}),
 			3,
-			[]Title{KeyTitle("I"), KeyTitle("F"), KeyTitle("E")},
+			[]charts.Title{charts.KeyTitle("I"), charts.KeyTitle("F"), charts.KeyTitle("E")},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			titles := Top(c.charts, c.n)
+			titles := charts.Top(c.charts, c.n)
 			if !areTitlesSame(c.titles, titles) {
 				t.Errorf("expect: %v\nactual: %v", c.titles, titles)
 			}

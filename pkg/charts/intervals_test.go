@@ -1,8 +1,9 @@
-package charts
+package charts_test
 
 import (
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -11,14 +12,14 @@ func TestParseRange(t *testing.T) {
 		name   string
 		str    string
 		l      int
-		result Range
+		result charts.Range
 		ok     bool
 	}{
 		{
 			"year",
 			"2022",
 			5 * 365,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-01-01"),
 				rsrc.ParseDay("2023-01-01"),
 				rsrc.ParseDay("2019-01-01"),
@@ -29,7 +30,7 @@ func TestParseRange(t *testing.T) {
 			"month",
 			"2022-02",
 			5 * 365,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-02-01"),
 				rsrc.ParseDay("2022-03-01"),
 				rsrc.ParseDay("2019-01-01"),
@@ -40,7 +41,7 @@ func TestParseRange(t *testing.T) {
 			"day",
 			"2022-02-28",
 			5 * 365,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-02-28"),
 				rsrc.ParseDay("2022-03-01"),
 				rsrc.ParseDay("2019-01-01"),
@@ -51,7 +52,7 @@ func TestParseRange(t *testing.T) {
 			"registered in the middle of the year",
 			"2022",
 			5 * 365,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-07-01"),
 				rsrc.ParseDay("2023-01-01"),
 				rsrc.ParseDay("2022-07-01"),
@@ -62,7 +63,7 @@ func TestParseRange(t *testing.T) {
 			"len shorter than year",
 			"2022",
 			31,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-01-01"),
 				rsrc.ParseDay("2022-02-01"),
 				rsrc.ParseDay("2022-01-01"),
@@ -73,7 +74,7 @@ func TestParseRange(t *testing.T) {
 			"string bs",
 			"202",
 			31,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-01-01"),
 				rsrc.ParseDay("2022-02-01"),
 				rsrc.ParseDay("2022-01-01"),
@@ -84,7 +85,7 @@ func TestParseRange(t *testing.T) {
 			"string bs 2",
 			"20x2",
 			31,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-01-01"),
 				rsrc.ParseDay("2022-02-01"),
 				rsrc.ParseDay("2022-01-01"),
@@ -95,7 +96,7 @@ func TestParseRange(t *testing.T) {
 			"begin after end of data",
 			"2024",
 			31,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2024-01-01"),
 				rsrc.ParseDay("2024-02-01"),
 				rsrc.ParseDay("2022-01-01"),
@@ -106,7 +107,7 @@ func TestParseRange(t *testing.T) {
 			"end before registered",
 			"2022",
 			31,
-			Range{
+			charts.Range{
 				rsrc.ParseDay("2022-01-01"),
 				rsrc.ParseDay("2022-02-01"),
 				rsrc.ParseDay("2023-01-01"),
@@ -115,7 +116,7 @@ func TestParseRange(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			r, err := ParseRange(c.str, c.result.Registered, c.l)
+			r, err := charts.ParseRange(c.str, c.result.Registered, c.l)
 			if (err == nil) != c.ok {
 				t.Fatalf("error: %v, ok status expected: %v",
 					err, c.ok)
@@ -145,14 +146,14 @@ func TestParseRanges(t *testing.T) {
 		name   string
 		str    string
 		l      int
-		result Ranges
+		result charts.Ranges
 		ok     bool
 	}{
 		{
 			"years",
 			"1y",
 			2*365 + 1,
-			Ranges{
+			charts.Ranges{
 				[]rsrc.Day{
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2020-01-01"),
@@ -166,7 +167,7 @@ func TestParseRanges(t *testing.T) {
 			"years with not registered on new year's",
 			"1y",
 			2*365 + 20,
-			Ranges{
+			charts.Ranges{
 				[]rsrc.Day{
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2020-01-01"),
@@ -180,7 +181,7 @@ func TestParseRanges(t *testing.T) {
 			"2 years",
 			"2y",
 			3*365 + 1,
-			Ranges{
+			charts.Ranges{
 				[]rsrc.Day{
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2021-01-01"),
@@ -193,7 +194,7 @@ func TestParseRanges(t *testing.T) {
 			"months",
 			"1M",
 			70,
-			Ranges{
+			charts.Ranges{
 				[]rsrc.Day{
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2019-02-01"),
@@ -207,7 +208,7 @@ func TestParseRanges(t *testing.T) {
 			"months with registered in the middle of the month",
 			"1M",
 			83,
-			Ranges{
+			charts.Ranges{
 				[]rsrc.Day{
 					rsrc.ParseDay("2019-02-01"),
 					rsrc.ParseDay("2019-03-01"),
@@ -221,7 +222,7 @@ func TestParseRanges(t *testing.T) {
 			"days",
 			"3d",
 			14,
-			Ranges{
+			charts.Ranges{
 				[]rsrc.Day{
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2019-01-04"),
@@ -235,7 +236,7 @@ func TestParseRanges(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			rs, err := ParseRanges(c.str, c.result.Registered, c.l)
+			rs, err := charts.ParseRanges(c.str, c.result.Registered, c.l)
 			if (err == nil) != c.ok {
 				t.Fatalf("error: %v, ok status expected: %v",
 					err, c.ok)

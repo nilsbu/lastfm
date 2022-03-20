@@ -1,94 +1,95 @@
-package charts
+package charts_test
 
 import (
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type titlePartition struct {
-	title, partition Title
+	title, partition charts.Title
 }
 
 type partitionTitles struct {
-	partition Title
-	titles    []Title
+	partition charts.Title
+	titles    []charts.Title
 }
 
 func TestPartiton(t *testing.T) {
 	for _, c := range []struct {
 		name            string
-		partition       Partition
+		partition       charts.Partition
 		titlePartitions []titlePartition
 		partitionTitles []partitionTitles
-		partitions      []Title
+		partitions      []charts.Title
 	}{
 		{
 			"empty key partition",
-			KeyPartition([][2]Title{}),
+			charts.KeyPartition([][2]charts.Title{}),
 			[]titlePartition{
-				{KeyTitle("a"), KeyTitle("")},
+				{charts.KeyTitle("a"), charts.KeyTitle("")},
 			},
 			[]partitionTitles{
-				{KeyTitle("x"), []Title{}},
+				{charts.KeyTitle("x"), []charts.Title{}},
 			},
-			[]Title{},
+			[]charts.Title{},
 		},
 		{
 			"key partition",
-			KeyPartition([][2]Title{
-				{KeyTitle("a"), KeyTitle("l")},
-				{KeyTitle("A"), KeyTitle("u")},
-				{KeyTitle("b"), KeyTitle("l")},
-				{KeyTitle("C"), KeyTitle("u")},
+			charts.KeyPartition([][2]charts.Title{
+				{charts.KeyTitle("a"), charts.KeyTitle("l")},
+				{charts.KeyTitle("A"), charts.KeyTitle("u")},
+				{charts.KeyTitle("b"), charts.KeyTitle("l")},
+				{charts.KeyTitle("C"), charts.KeyTitle("u")},
 			}),
 			[]titlePartition{
-				{KeyTitle("a"), KeyTitle("l")},
-				{KeyTitle("A"), KeyTitle("u")},
-				{KeyTitle("b"), KeyTitle("l")},
-				{KeyTitle("C"), KeyTitle("u")},
-				{KeyTitle("B"), KeyTitle("")},
+				{charts.KeyTitle("a"), charts.KeyTitle("l")},
+				{charts.KeyTitle("A"), charts.KeyTitle("u")},
+				{charts.KeyTitle("b"), charts.KeyTitle("l")},
+				{charts.KeyTitle("C"), charts.KeyTitle("u")},
+				{charts.KeyTitle("B"), charts.KeyTitle("")},
 			},
 			[]partitionTitles{
-				{KeyTitle("l"), []Title{KeyTitle("a"), KeyTitle("b")}},
-				{KeyTitle("u"), []Title{KeyTitle("A"), KeyTitle("C")}},
-				{KeyTitle("x"), []Title{}},
+				{charts.KeyTitle("l"), []charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}},
+				{charts.KeyTitle("u"), []charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")}},
+				{charts.KeyTitle("x"), []charts.Title{}},
 			},
-			[]Title{KeyTitle("l"), KeyTitle("u")},
+			[]charts.Title{charts.KeyTitle("l"), charts.KeyTitle("u")},
 		},
 		{
 			"totalPartition",
-			TotalPartition([]Title{KeyTitle("a"), KeyTitle("b")}),
+			charts.TotalPartition([]charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}),
 			[]titlePartition{
-				{KeyTitle("a"), StringTitle("total")},
-				{KeyTitle("b"), StringTitle("total")},
-				{KeyTitle("B"), KeyTitle("")},
+				{charts.KeyTitle("a"), charts.StringTitle("total")},
+				{charts.KeyTitle("b"), charts.StringTitle("total")},
+				{charts.KeyTitle("B"), charts.KeyTitle("")},
 			},
 			[]partitionTitles{
-				{StringTitle("total"), []Title{KeyTitle("a"), KeyTitle("b")}},
-				{KeyTitle("n"), []Title{}},
+				{charts.StringTitle("total"), []charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}},
+				{charts.KeyTitle("n"), []charts.Title{}},
 			},
-			[]Title{StringTitle("total")},
+			[]charts.Title{charts.StringTitle("total")},
 		},
 		{
 			"empty first key partition",
-			FirstTagPartition(
-				map[string][]Tag{},
+			charts.FirstTagPartition(
+				map[string][]charts.Tag{},
 				map[string]string{},
 				nil,
 			),
 			[]titlePartition{
-				{KeyTitle("a"), KeyTitle("")},
+				{charts.KeyTitle("a"), charts.KeyTitle("")},
 			},
 			[]partitionTitles{
-				{KeyTitle("x"), []Title{}},
+				{charts.KeyTitle("x"), []charts.Title{}},
 			},
-			[]Title{},
+			[]charts.Title{},
 		},
 		{
 			"first key partition without correction",
-			FirstTagPartition(
-				map[string][]Tag{
+			charts.FirstTagPartition(
+				map[string][]charts.Tag{
 					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
 					"B": {{Name: "b", Weight: 25}, {Name: "c", Weight: 100}}, // Ignore Weight
 					"C": {{Name: "-", Weight: 100}, {Name: "c", Weight: 50}},
@@ -99,21 +100,21 @@ func TestPartiton(t *testing.T) {
 				nil,
 			),
 			[]titlePartition{
-				{ArtistTitle("A"), KeyTitle("vowel")},
-				{ArtistTitle("B"), KeyTitle("consonant")},
-				{ArtistTitle("C"), KeyTitle("consonant")},
-				{ArtistTitle("X"), KeyTitle("")},
+				{charts.ArtistTitle("A"), charts.KeyTitle("vowel")},
+				{charts.ArtistTitle("B"), charts.KeyTitle("consonant")},
+				{charts.ArtistTitle("C"), charts.KeyTitle("consonant")},
+				{charts.ArtistTitle("X"), charts.KeyTitle("")},
 			},
 			[]partitionTitles{
-				{KeyTitle("consonant"), []Title{ArtistTitle("B"), ArtistTitle("C")}},
-				{KeyTitle("vowel"), []Title{ArtistTitle("A")}},
+				{charts.KeyTitle("consonant"), []charts.Title{charts.ArtistTitle("B"), charts.ArtistTitle("C")}},
+				{charts.KeyTitle("vowel"), []charts.Title{charts.ArtistTitle("A")}},
 			},
-			[]Title{KeyTitle("vowel"), KeyTitle("consonant")},
+			[]charts.Title{charts.KeyTitle("vowel"), charts.KeyTitle("consonant")},
 		},
 		{
 			"first key partition with correction",
-			FirstTagPartition(
-				map[string][]Tag{
+			charts.FirstTagPartition(
+				map[string][]charts.Tag{
 					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
 					"Y": {{Name: "b", Weight: 25}, {Name: "y", Weight: 100}}, // Ignore Weight
 					"Ü": {{Name: "-", Weight: 100}, {Name: "ü", Weight: 50}},
@@ -126,45 +127,45 @@ func TestPartiton(t *testing.T) {
 				},
 			),
 			[]titlePartition{
-				{ArtistTitle("A"), KeyTitle("vowel")},
-				{ArtistTitle("Y"), KeyTitle("vowel")},
-				{ArtistTitle("Ü"), KeyTitle("umlaut")},
-				{ArtistTitle("X"), KeyTitle("")},
+				{charts.ArtistTitle("A"), charts.KeyTitle("vowel")},
+				{charts.ArtistTitle("Y"), charts.KeyTitle("vowel")},
+				{charts.ArtistTitle("Ü"), charts.KeyTitle("umlaut")},
+				{charts.ArtistTitle("X"), charts.KeyTitle("")},
 			},
 			[]partitionTitles{
-				{KeyTitle("consonant"), []Title{}},
-				{KeyTitle("vowel"), []Title{ArtistTitle("A"), ArtistTitle("Y")}},
-				{KeyTitle("umlaut"), []Title{ArtistTitle("Ü")}},
+				{charts.KeyTitle("consonant"), []charts.Title{}},
+				{charts.KeyTitle("vowel"), []charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("Y")}},
+				{charts.KeyTitle("umlaut"), []charts.Title{charts.ArtistTitle("Ü")}},
 			},
-			[]Title{KeyTitle("vowel"), KeyTitle("umlaut")},
+			[]charts.Title{charts.KeyTitle("vowel"), charts.KeyTitle("umlaut")},
 		},
 		{
 			"year partition with no eligible artists",
-			YearPartition(
-				FromMap(map[string][]float64{"not": {0, 1}}),
-				FromMap(map[string][]float64{"not": {0, 1}}),
+			charts.YearPartition(
+				charts.FromMap(map[string][]float64{"not": {0, 1}}),
+				charts.FromMap(map[string][]float64{"not": {0, 1}}),
 				rsrc.ParseDay("2019-12-31"),
 			),
 			[]titlePartition{
-				{ArtistTitle("not"), KeyTitle("")},
+				{charts.ArtistTitle("not"), charts.KeyTitle("")},
 			},
 			[]partitionTitles{
-				{KeyTitle("2019"), []Title{}},
-				{KeyTitle("2020"), []Title{}},
+				{charts.KeyTitle("2019"), []charts.Title{}},
+				{charts.KeyTitle("2020"), []charts.Title{}},
 			},
-			[]Title{KeyTitle("2019"), KeyTitle("2020")},
+			[]charts.Title{charts.KeyTitle("2019"), charts.KeyTitle("2020")},
 		},
 		{
 			"year partition with values",
-			YearPartition(
-				FromMap(map[string][]float64{
+			charts.YearPartition(
+				charts.FromMap(map[string][]float64{
 					"not":    {0, 0, 1, 0},
 					"first":  {0, 4, 10, 0}, // higher value irrelevant since 4 is reached in 2019
 					"first2": {0, 2, 1, 0},
 					"last":   {0, 2, 1, 0},
 					"last2":  {0, 1, 2, 0},
 				}),
-				FromMap(map[string][]float64{
+				charts.FromMap(map[string][]float64{
 					"not":    {0, 0, 1, 1},
 					"first":  {0, 4, 4, 4},
 					"first2": {0, 3, 4, 4},
@@ -174,17 +175,17 @@ func TestPartiton(t *testing.T) {
 				rsrc.ParseDay("2019-12-30"),
 			),
 			[]titlePartition{
-				{ArtistTitle("not"), KeyTitle("")},
-				{ArtistTitle("first"), KeyTitle("2019")},
-				{ArtistTitle("first2"), KeyTitle("2019")},
-				{ArtistTitle("last"), KeyTitle("2020")},
-				{ArtistTitle("last2"), KeyTitle("2020")},
+				{charts.ArtistTitle("not"), charts.KeyTitle("")},
+				{charts.ArtistTitle("first"), charts.KeyTitle("2019")},
+				{charts.ArtistTitle("first2"), charts.KeyTitle("2019")},
+				{charts.ArtistTitle("last"), charts.KeyTitle("2020")},
+				{charts.ArtistTitle("last2"), charts.KeyTitle("2020")},
 			},
 			[]partitionTitles{
-				{KeyTitle("2019"), []Title{KeyTitle("first"), KeyTitle("first2")}},
-				{KeyTitle("2020"), []Title{KeyTitle("last"), KeyTitle("last2")}},
+				{charts.KeyTitle("2019"), []charts.Title{charts.KeyTitle("first"), charts.KeyTitle("first2")}},
+				{charts.KeyTitle("2020"), []charts.Title{charts.KeyTitle("last"), charts.KeyTitle("last2")}},
 			},
-			[]Title{KeyTitle("2019"), KeyTitle("2020")},
+			[]charts.Title{charts.KeyTitle("2019"), charts.KeyTitle("2020")},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

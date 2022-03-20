@@ -1,31 +1,35 @@
-package charts
+package charts_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/charts"
+)
 
 func TestTitles(t *testing.T) {
 	for _, c := range []struct {
 		name                      string
-		title                     Title
+		title                     charts.Title
 		string, key, artist, song string
 	}{
 		{
 			"key title",
-			KeyTitle("a"),
+			charts.KeyTitle("a"),
 			"a", "a", "", "",
 		},
 		{
 			"artist title",
-			ArtistTitle("x"),
+			charts.ArtistTitle("x"),
 			"x", "x", "x", "",
 		},
 		{
 			"song title",
-			SongTitle(Song{Artist: "x", Title: "y"}),
+			charts.SongTitle(charts.Song{Artist: "x", Title: "y"}),
 			"x - y", "x\ny", "x", "y",
 		},
 		{
 			"string title",
-			StringTitle("a"),
+			charts.StringTitle("a"),
 			"a", "a", "", "",
 		},
 	} {

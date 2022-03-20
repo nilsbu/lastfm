@@ -1,9 +1,10 @@
-package charts
+package charts_test
 
 import (
 	"reflect"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -12,57 +13,57 @@ func TestCharts(t *testing.T) {
 	// API is tested in TestLazyCharts in greater detail.
 	for _, c := range []struct {
 		name   string
-		charts LazyCharts
-		titles []Title
+		charts charts.LazyCharts
+		titles []charts.Title
 		lines  [][]float64
 	}{
 		{
 			"Artists",
-			Artists([][]Song{
-				{Song{Artist: "A", Duration: 1},
-					Song{Artist: "B", Duration: 2},
+			charts.Artists([][]charts.Song{
+				{charts.Song{Artist: "A", Duration: 1},
+					charts.Song{Artist: "B", Duration: 2},
 				},
-				{Song{Artist: "C", Duration: 1},
-					Song{Artist: "A", Duration: 1},
+				{charts.Song{Artist: "C", Duration: 1},
+					charts.Song{Artist: "A", Duration: 1},
 				},
 			}),
-			[]Title{ArtistTitle("A"), ArtistTitle("B"), ArtistTitle("C")},
+			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
 			[][]float64{
 				{1, 1}, {1, 0}, {0, 1},
 			},
 		},
 		{
 			"ArtistsDuration",
-			ArtistsDuration([][]Song{
-				{Song{Artist: "A", Duration: 1},
-					Song{Artist: "B", Duration: 2},
+			charts.ArtistsDuration([][]charts.Song{
+				{charts.Song{Artist: "A", Duration: 1},
+					charts.Song{Artist: "B", Duration: 2},
 				},
-				{Song{Artist: "C", Duration: 1},
-					Song{Artist: "A", Duration: 1},
+				{charts.Song{Artist: "C", Duration: 1},
+					charts.Song{Artist: "A", Duration: 1},
 				},
 			}),
-			[]Title{ArtistTitle("A"), ArtistTitle("B"), ArtistTitle("C")},
+			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
 			[][]float64{
 				{1, 1}, {2, 0}, {0, 1},
 			},
 		},
 		{
 			"Songs",
-			Songs([][]Song{
+			charts.Songs([][]charts.Song{
 				{
-					Song{Artist: "A", Title: "b", Duration: 1},
-					Song{Artist: "B", Title: "b", Duration: 2},
-					Song{Artist: "A", Title: "a", Duration: 1},
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
+					charts.Song{Artist: "B", Title: "b", Duration: 2},
+					charts.Song{Artist: "A", Title: "a", Duration: 1},
 				},
 				{
-					Song{Artist: "C", Title: "b", Duration: 1},
-					Song{Artist: "A", Title: "b", Duration: 1},
+					charts.Song{Artist: "C", Title: "b", Duration: 1},
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
 				},
 			}),
-			[]Title{
-				SongTitle(Song{Artist: "A", Title: "a"}), SongTitle(Song{Artist: "A", Title: "b"}),
-				SongTitle(Song{Artist: "B", Title: "b"}),
-				SongTitle(Song{Artist: "C", Title: "b"}),
+			[]charts.Title{
+				charts.SongTitle(charts.Song{Artist: "A", Title: "a"}), charts.SongTitle(charts.Song{Artist: "A", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "B", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "C", Title: "b"}),
 			},
 			[][]float64{
 				{1, 0}, {1, 1},
@@ -72,21 +73,21 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"SongsDuration",
-			SongsDuration([][]Song{
+			charts.SongsDuration([][]charts.Song{
 				{
-					Song{Artist: "A", Title: "b", Duration: 1},
-					Song{Artist: "B", Title: "b", Duration: 2},
-					Song{Artist: "A", Title: "a", Duration: 1},
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
+					charts.Song{Artist: "B", Title: "b", Duration: 2},
+					charts.Song{Artist: "A", Title: "a", Duration: 1},
 				},
 				{
-					Song{Artist: "C", Title: "b", Duration: 1},
-					Song{Artist: "A", Title: "b", Duration: 1},
+					charts.Song{Artist: "C", Title: "b", Duration: 1},
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
 				},
 			}),
-			[]Title{
-				SongTitle(Song{Artist: "A", Title: "a"}), SongTitle(Song{Artist: "A", Title: "b"}),
-				SongTitle(Song{Artist: "B", Title: "b"}),
-				SongTitle(Song{Artist: "C", Title: "b"}),
+			[]charts.Title{
+				charts.SongTitle(charts.Song{Artist: "A", Title: "a"}), charts.SongTitle(charts.Song{Artist: "A", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "B", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "C", Title: "b"}),
 			},
 			[][]float64{
 				{1, 0}, {1, 1},
@@ -96,62 +97,62 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"single column normalizer",
-			NormalizeColumn(Artists([][]Song{
+			charts.NormalizeColumn(charts.Artists([][]charts.Song{
 				{
-					Song{Artist: "A"}, Song{Artist: "A"},
-					Song{Artist: "B"},
-					Song{Artist: "C"},
+					charts.Song{Artist: "A"}, charts.Song{Artist: "A"},
+					charts.Song{Artist: "B"},
+					charts.Song{Artist: "C"},
 				},
 				{
-					Song{Artist: "B"}, Song{Artist: "B"}, Song{Artist: "B"},
-					Song{Artist: "C"}, Song{Artist: "C"}, Song{Artist: "C"},
+					charts.Song{Artist: "B"}, charts.Song{Artist: "B"}, charts.Song{Artist: "B"},
+					charts.Song{Artist: "C"}, charts.Song{Artist: "C"}, charts.Song{Artist: "C"},
 				},
 				{},
 			})),
-			[]Title{ArtistTitle("A"), ArtistTitle("B"), ArtistTitle("C")},
+			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
 			[][]float64{
 				{.5, 0, 0}, {.25, .5, 0}, {.25, .5, 0},
 			},
 		},
 		{
 			"charts.FromMap",
-			FromMap(map[string][]float64{
+			charts.FromMap(map[string][]float64{
 				"A": {1, 1},
 				"B": {1, 0},
 				"C": {0, 1},
 			}),
-			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")},
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")},
 			[][]float64{
 				{1, 1}, {1, 0}, {0, 1},
 			},
 		},
 		{
 			"Only",
-			Only(FromMap(map[string][]float64{
+			charts.Only(charts.FromMap(map[string][]float64{
 				"A": {1, 1},
 				"B": {1, 0},
 				"C": {0, 1},
-			}), []Title{KeyTitle("A"), KeyTitle("C")}),
-			[]Title{KeyTitle("A"), KeyTitle("C")},
+			}), []charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")}),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")},
 			[][]float64{
 				{1, 1}, {0, 1},
 			},
 		},
 		{
 			"Intervals with Sum",
-			Intervals(FromMap(map[string][]float64{
+			charts.Intervals(charts.FromMap(map[string][]float64{
 				"A": {1, 1, 0, 1, 3, 3, 2, 0},
 				"B": {1, 0, 1, 0, 0, 0, 0, 5},
 				"C": {0, 1, 0, 9, 0, 2, 0, 0},
-			}), Ranges{
+			}), charts.Ranges{
 				Delims: []rsrc.Day{
 					rsrc.ParseDay("2022-01-01"),
 					rsrc.ParseDay("2022-01-03"),
 					rsrc.ParseDay("2022-01-05"),
 					rsrc.ParseDay("2022-01-08")},
 				Registered: rsrc.ParseDay("2022-01-01"),
-			}, Sum),
-			[]Title{KeyTitle("A"), KeyTitle("B"), KeyTitle("C")},
+			}, charts.Sum),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")},
 			[][]float64{
 				{2, 1, 8}, {1, 1, 0}, {1, 9, 2},
 			},
@@ -165,7 +166,7 @@ func TestCharts(t *testing.T) {
 
 			data := c.charts.Data(c.titles, 0, c.charts.Len())
 			for i, title := range c.titles {
-				row := c.charts.Data([]Title{title}, 0, c.charts.Len())[0]
+				row := c.charts.Data([]charts.Title{title}, 0, c.charts.Len())[0]
 				if !reflect.DeepEqual(c.lines[i], row) {
 					t.Errorf("row, '%v': %v != %v", title, c.lines[i], row)
 				}

@@ -1,28 +1,27 @@
-package charts
+package charts_test
 
 import (
 	"math"
 	"sort"
 	"testing"
+
+	"github.com/nilsbu/lastfm/pkg/charts"
 )
 
 // TODO create helper file
-func mapCharts(data map[string][]float64) LazyCharts {
+func mapCharts(data map[string][]float64) charts.LazyCharts {
 	keys := []string{}
 	for k := range data {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	titles := make([]Title, len(keys))
+	titles := make([]charts.Title, len(keys))
 	for i, k := range keys {
-		titles[i] = KeyTitle(k)
+		titles[i] = charts.KeyTitle(k)
 	}
 
-	return &charts{
-		titles: titles,
-		values: data,
-	}
+	return charts.FromMap(data)
 }
 
 func TestNormalizer(t *testing.T) {
@@ -31,11 +30,11 @@ func TestNormalizer(t *testing.T) {
 
 	for _, c := range []struct {
 		name           string
-		actual, expect LazyCharts
+		actual, expect charts.LazyCharts
 	}{
 		{
 			"NormalizeColumn",
-			NormalizeColumn(mapCharts(map[string][]float64{
+			charts.NormalizeColumn(mapCharts(map[string][]float64{
 				"A": {1, 2, 1, 0, 0, 1},
 				"B": {1, 0, 14, 1, 0, 1},
 				"C": {2, 2, 1, 1, 0, 0},
@@ -48,7 +47,7 @@ func TestNormalizer(t *testing.T) {
 		},
 		{
 			"NormalizeGaussian",
-			NormalizeGaussian(mapCharts(map[string][]float64{
+			charts.NormalizeGaussian(mapCharts(map[string][]float64{
 				"A": {0, 0, 1, 0, 0, 1},
 				"B": {1, 0, 0, 2, 0, 0},
 			}), 1, 2, true, true),
