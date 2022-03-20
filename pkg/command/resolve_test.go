@@ -271,14 +271,14 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"},
 			tablePeriods{printCharts: printCharts{by: "all", name: "", n: 10}, period: "1y"}, true,
 		},
-		{
-			[]string{"lastfm", "timeline", "-before=2008-01-23", "-from=2000-11-03"},
-			&unpack.SessionInfo{User: "user"},
-			printTimeline{
-				from:   time.Date(2000, time.Month(11), 03, 0, 0, 0, 0, time.UTC),
-				before: time.Date(2008, time.Month(1), 23, 0, 0, 0, 0, time.UTC),
-			}, true,
-		},
+		// {
+		// 	[]string{"lastfm", "timeline", "-before=2008-01-23", "-from=2000-11-03"},
+		// 	&unpack.SessionInfo{User: "user"},
+		// 	printTimeline{
+		// 		from:   time.Date(2000, time.Month(11), 03, 0, 0, 0, 0, time.UTC),
+		// 		before: time.Date(2008, time.Month(1), 23, 0, 0, 0, 0, time.UTC),
+		// 	}, true,
+		// },
 		{
 			[]string{"lastfm-csv", "table", "fade", "10"},
 			&unpack.SessionInfo{User: "user"},

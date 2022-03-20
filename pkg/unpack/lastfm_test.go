@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
@@ -143,7 +142,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 			[]byte(`{"recenttracks":{"track":[` + song1 + `,` + song2 + `], "@attr":{"totalPages":"1"}}}`),
 			"user", rsrc.ToDay(86400), 1,
 			&HistoryDayPage{
-				[]charts.Song{
+				[]charts2.Song{
 					{
 						Artist: "ASDF",
 						Title:  "x",
@@ -161,7 +160,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 			[]byte(`{"recenttracks":{"@attr":{"page":"1","total":"0","user":"NBooN","perPage":"200","totalPages":"0"},"track":{"artist":{"mbid":"846e89f6-6257-4371-a26d-de960a60bec5","#text":"The Coup"},"@attr":{"nowplaying":"true"},"mbid":"293b4bc9-95c3-3032-a59f-53d6dfba5263","album":{"mbid":"e2f0f87f-763a-498e-9823-decef2cf62b3","#text":"Pick A Bigger Weapon"},"streamable":"0","url":"https:\/\/www.last.fm\/music\/The+Coup\/_\/My+Favorite+Mutiny","name":"My Favorite Mutiny"}}}`),
 			"user", rsrc.ToDay(86400), 1,
 			&HistoryDayPage{
-				[]charts.Song{}, 0},
+				[]charts2.Song{}, 0},
 			true,
 		},
 	}

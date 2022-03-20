@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/nilsbu/lastfm/config"
-	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
@@ -55,7 +54,7 @@ func getOutCharts(
 	}
 
 	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
-	plays := make([][]charts.Song, days+1)
+	plays := make([][]charts2.Song, days+1)
 	for i := 0; i < days+1; i++ {
 		day := user.Registered.AddDate(0, 0, i)
 		if songs, err := unpack.LoadDayHistory(session.User, day, r); err == nil {

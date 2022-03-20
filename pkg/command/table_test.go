@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
@@ -20,7 +19,7 @@ func TestTable(t *testing.T) {
 	cases := []struct {
 		descr          string
 		user           *unpack.User
-		charts         charts.Charts
+		history        [][]charts2.Song
 		hasCharts      bool
 		correctionsRaw []byte
 		cmd            command
@@ -30,12 +29,11 @@ func TestTable(t *testing.T) {
 		{
 			"no user",
 			nil,
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"X": 1},
-					{"X": 0},
-					{"X": 1},
-				}, rsrc.ParseDay("2018-01-01")), true,
+			[][]charts2.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+			}, true,
 			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
@@ -47,7 +45,7 @@ func TestTable(t *testing.T) {
 		{
 			"no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			charts.Charts{}, false,
+			[][]charts2.Song{}, false,
 			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
@@ -59,12 +57,11 @@ func TestTable(t *testing.T) {
 		{
 			"no corrections",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"X": 1},
-					{"X": 0},
-					{"X": 1},
-				}, rsrc.ParseDay("2018-01-01")), true,
+			[][]charts2.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+			}, true,
 			nil,
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
@@ -83,12 +80,11 @@ func TestTable(t *testing.T) {
 		{
 			"ok", // TODO
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"X": 1},
-					{"X": 0},
-					{"X": 1},
-				}, rsrc.ParseDay("2018-01-01")), true,
+			[][]charts2.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+			}, true,
 			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
@@ -107,12 +103,11 @@ func TestTable(t *testing.T) {
 		{
 			"ok, different values", // TODO
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"X": 1},
-					{"X": 0},
-					{"X": 1},
-				}, rsrc.ParseDay("2018-01-01")), true,
+			[][]charts2.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+			}, true,
 			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 3},
@@ -176,13 +171,12 @@ func TestTable(t *testing.T) {
 		{
 			"table period; false period",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"X": 1},
-					{"X": 0},
-					{"X": 1},
-					{"X": 5},
-				}, rsrc.ParseDay("2017-12-30")), true,
+			[][]charts2.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+				{{Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}},
+			}, true,
 			[]byte("{}"),
 			tablePeriods{
 				printCharts: printCharts{by: "all", n: 10},
@@ -201,7 +195,7 @@ func TestTable(t *testing.T) {
 				rsrc.UserInfo(user):          nil}
 
 			if c.user != nil && c.hasCharts {
-				for i := 0; i < c.charts.Len(); i++ {
+				for i := 0; i < len(c.history); i++ {
 					expectedFiles[rsrc.DayHistory(user, c.user.Registered.AddDate(0, 0, i))] = nil
 				}
 			}
@@ -212,10 +206,9 @@ func TestTable(t *testing.T) {
 			d := mock.NewDisplay()
 
 			if c.hasCharts && c.user != nil {
-				history := c.charts.UnravelSongs()
-				unpack.WriteBookmark(c.user.Registered.AddDate(0, 0, len(history)-1), user, s)
+				unpack.WriteBookmark(c.user.Registered.AddDate(0, 0, len(c.history)-1), user, s)
 
-				for i, day := range history {
+				for i, day := range c.history {
 					err := unpack.WriteDayHistory(day, user, c.user.Registered.AddDate(0, 0, i), s)
 					if err != nil {
 						t.Fatalf("unexpected error: %v", err)

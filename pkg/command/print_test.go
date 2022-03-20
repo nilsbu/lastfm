@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
@@ -39,16 +38,16 @@ func repeat(x float64, n int) []float64 {
 	return nums
 }
 
-func repeatSongs(songs []charts.Song, n int) [][]charts.Song {
-	days := make([][]charts.Song, n)
+func repeatSongs(songs []charts2.Song, n int) [][]charts2.Song {
+	days := make([][]charts2.Song, n)
 	for i := range days {
 		days[i] = songs
 	}
 	return days
 }
 
-func times(song charts.Song, n int) []charts.Song {
-	songs := make([]charts.Song, n)
+func times(song charts2.Song, n int) []charts2.Song {
+	songs := make([]charts2.Song, n)
 	for i := range songs {
 		songs[i] = song
 	}
@@ -82,7 +81,7 @@ func TestPrint(t *testing.T) {
 	cases := []struct {
 		descr     string
 		user      *unpack.User
-		history   [][]charts.Song
+		history   [][]charts2.Song
 		cmd       command
 		formatter format.Formatter
 		ok        bool
@@ -90,7 +89,7 @@ func TestPrint(t *testing.T) {
 		{
 			"no user",
 			nil,
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -111,7 +110,7 @@ func TestPrint(t *testing.T) {
 		{
 			"no user (year)",
 			nil,
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -149,7 +148,7 @@ func TestPrint(t *testing.T) {
 		{
 			"no corrections",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -179,7 +178,7 @@ func TestPrint(t *testing.T) {
 		{
 			"by super",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{{Artist: "Y", Title: "y"}},
 				{{Artist: "X", Title: "x"}},
@@ -210,7 +209,7 @@ func TestPrint(t *testing.T) {
 		{
 			"rock bucket",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}, {Artist: "Y", Title: "y"}},
 				{{Artist: "Y", Title: "y"}},
 				{{Artist: "X", Title: "x"}},
@@ -240,7 +239,7 @@ func TestPrint(t *testing.T) {
 		{
 			"by country",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{{Artist: "Y", Title: "y"}},
 				{{Artist: "X", Title: "x"}},
@@ -272,7 +271,7 @@ func TestPrint(t *testing.T) {
 		{
 			"'all' with name invalid",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -289,7 +288,7 @@ func TestPrint(t *testing.T) {
 		{
 			"by invalid with name empty",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -306,7 +305,7 @@ func TestPrint(t *testing.T) {
 		{
 			"by invalid with name non-empty",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -323,7 +322,7 @@ func TestPrint(t *testing.T) {
 		{
 			"by super with name invalid",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -341,8 +340,8 @@ func TestPrint(t *testing.T) {
 			"by year",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-11-01")},
 			append(
-				repeatSongs([]charts.Song{{Artist: "X", Title: "x"}}, 30+31+31),
-				repeatSongs([]charts.Song{{Artist: "Y", Title: "y"}}, 30+28)...),
+				repeatSongs([]charts2.Song{{Artist: "X", Title: "x"}}, 30+31+31),
+				repeatSongs([]charts2.Song{{Artist: "Y", Title: "y"}}, 30+28)...),
 			printTotal{
 				printCharts: printCharts{
 					by:         "year",
@@ -369,9 +368,9 @@ func TestPrint(t *testing.T) {
 			"by year 2017",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-01")},
 			append(append(
-				[][]charts.Song{{{Artist: "X", Title: "x"}, {Artist: "Y", Title: "y"}}},
-				repeatSongs([]charts.Song{{Artist: "X", Title: "x"}}, 30)...),
-				repeatSongs([]charts.Song{}, 30)...),
+				[][]charts2.Song{{{Artist: "X", Title: "x"}, {Artist: "Y", Title: "y"}}},
+				repeatSongs([]charts2.Song{{Artist: "X", Title: "x"}}, 30)...),
+				repeatSongs([]charts2.Song{}, 30)...),
 			printTotal{
 				printCharts: printCharts{
 					by:         "year",
@@ -396,7 +395,7 @@ func TestPrint(t *testing.T) {
 		{
 			"super withno tags",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "Z", Title: "z"}},
 			},
 			printTotal{
@@ -414,7 +413,7 @@ func TestPrint(t *testing.T) {
 		{
 			"country with no tags",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "Z", Title: "z"}},
 			},
 			printTotal{
@@ -432,7 +431,7 @@ func TestPrint(t *testing.T) {
 		{
 			"all regular",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -462,7 +461,7 @@ func TestPrint(t *testing.T) {
 		{
 			"total total",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{{Artist: "X", Title: "x"}},
 				{{Artist: "X", Title: "x"}},
@@ -493,7 +492,7 @@ func TestPrint(t *testing.T) {
 		{
 			"fade regular",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -524,7 +523,7 @@ func TestPrint(t *testing.T) {
 		{
 			"fade fail",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -546,7 +545,7 @@ func TestPrint(t *testing.T) {
 		{
 			"fade false user",
 			&unpack.User{Name: "no user", Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "X", Title: "x"}},
 				{},
 				{{Artist: "X", Title: "x"}},
@@ -568,10 +567,10 @@ func TestPrint(t *testing.T) {
 		{
 			"period functional",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
 			},
 			printPeriod{
 				printCharts: printCharts{
@@ -596,10 +595,10 @@ func TestPrint(t *testing.T) {
 		{
 			"period; no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
 			},
 			printPeriod{
 				printCharts: printCharts{by: "xx", n: 10},
@@ -610,10 +609,10 @@ func TestPrint(t *testing.T) {
 		{
 			"period; user",
 			&unpack.User{Name: "nop", Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
 			},
 			printPeriod{
 				printCharts: printCharts{by: "all", n: 10},
@@ -624,10 +623,10 @@ func TestPrint(t *testing.T) {
 		{
 			"period; broken period",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
 			},
 			printPeriod{
 				printCharts: printCharts{by: "all", n: 10},
@@ -638,10 +637,10 @@ func TestPrint(t *testing.T) {
 		{
 			"period; percentage",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
 			},
 			printPeriod{
 				printCharts: printCharts{
@@ -666,11 +665,11 @@ func TestPrint(t *testing.T) {
 		{
 			"interval; basic",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
-				times(charts.Song{Artist: "X", Title: "x"}, 99),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
+				times(charts2.Song{Artist: "X", Title: "x"}, 99),
 			},
 			printInterval{
 				printCharts: printCharts{
@@ -696,11 +695,11 @@ func TestPrint(t *testing.T) {
 		{
 			"interval; no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
-				times(charts.Song{Artist: "X", Title: "x"}, 99),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
+				times(charts2.Song{Artist: "X", Title: "x"}, 99),
 			},
 			printInterval{
 				printCharts: printCharts{
@@ -718,11 +717,11 @@ func TestPrint(t *testing.T) {
 		{
 			"interval; no user",
 			&unpack.User{Name: "", Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
-				times(charts.Song{Artist: "X", Title: "x"}, 99),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
+				times(charts2.Song{Artist: "X", Title: "x"}, 99),
 			},
 			printInterval{
 				printCharts: printCharts{
@@ -740,11 +739,11 @@ func TestPrint(t *testing.T) {
 		{
 			"interval; percentage",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
-				times(charts.Song{Artist: "X", Title: "x"}, 7),
-				times(charts.Song{Artist: "X", Title: "x"}, 1),
-				times(charts.Song{Artist: "X", Title: "x"}, 8),
-				times(charts.Song{Artist: "X", Title: "x"}, 99),
+			[][]charts2.Song{
+				times(charts2.Song{Artist: "X", Title: "x"}, 7),
+				times(charts2.Song{Artist: "X", Title: "x"}, 1),
+				times(charts2.Song{Artist: "X", Title: "x"}, 8),
+				times(charts2.Song{Artist: "X", Title: "x"}, 99),
 			},
 			printInterval{
 				printCharts: printCharts{
@@ -770,7 +769,7 @@ func TestPrint(t *testing.T) {
 		{
 			"songs",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-			[][]charts.Song{
+			[][]charts2.Song{
 				{{Artist: "A", Title: "d"}, {Artist: "A", Title: "d"}, {Artist: "B", Title: "c"}},
 				{{Artist: "A", Title: "d"}, {Artist: "B", Title: "c"}},
 			},
@@ -799,7 +798,7 @@ func TestPrint(t *testing.T) {
 		// { //TODO song and super don't work in conjunction
 		// 	"songs by super",
 		// 	&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
-		// 	[][]charts.Song{
+		// 	[][]charts2.Song{
 		// 		{{Artist: "X", Title: "d"}, {Artist: "X", Title: "d"}, {Artist: "Y", Title: "c"}},
 		// 		{{Artist: "X", Title: "d"}, {Artist: "Y", Title: "c"}},
 		// 	},

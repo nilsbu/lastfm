@@ -3,7 +3,6 @@ package unpack
 import (
 	"fmt"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -89,7 +88,7 @@ func (o *obUserInfo) raw(obj interface{}) interface{} {
 
 // HistoryDayPage is a single page of a day of a user's played tracks.
 type HistoryDayPage struct {
-	Plays []charts.Song
+	Plays []charts2.Song
 	Pages int
 }
 
@@ -133,12 +132,12 @@ func (o *obHistory) interpret(raw interface{}) (interface{}, error) {
 		data.RecentTracks.Attr.TotalPages}, nil
 }
 
-func countPlays(urt *jsonUserRecentTracks) []charts.Song {
-	plays := []charts.Song{}
+func countPlays(urt *jsonUserRecentTracks) []charts2.Song {
+	plays := []charts2.Song{}
 	for _, track := range urt.RecentTracks.Track {
 		if !track.Attr.NowPlaying {
 
-			plays = append(plays, charts.Song{
+			plays = append(plays, charts2.Song{
 				Artist: track.Artist.Str,
 				Title:  track.Name,
 				Album:  track.Album.Str,

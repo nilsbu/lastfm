@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/charts2"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -109,21 +109,21 @@ type obDayHistory struct {
 }
 
 // LoadDayHistory loads the pre-processed history of a user for a single day, called history.
-func LoadDayHistory(user string, day rsrc.Day, r rsrc.Reader) ([]charts.Song, error) {
+func LoadDayHistory(user string, day rsrc.Day, r rsrc.Reader) ([]charts2.Song, error) {
 	data, err := obtain(obDayHistory{user, day}, r)
 	if err != nil {
 		return nil, err
 	}
 
 	inSongs := data.([][]string)
-	outSongs := make([]charts.Song, len(inSongs))
+	outSongs := make([]charts2.Song, len(inSongs))
 
 	for i, song := range inSongs {
 		duration, err := strconv.ParseFloat(song[3], 64)
 		if err != nil {
 			return nil, err
 		}
-		outSongs[i] = charts.Song{
+		outSongs[i] = charts2.Song{
 			Artist:   song[0],
 			Title:    song[1],
 			Album:    song[2],
@@ -135,7 +135,7 @@ func LoadDayHistory(user string, day rsrc.Day, r rsrc.Reader) ([]charts.Song, er
 }
 
 // WritDayHistory write the pre-processed history of a user for a single day.
-func WriteDayHistory(songs []charts.Song, user string, day rsrc.Day, w rsrc.Writer) error {
+func WriteDayHistory(songs []charts2.Song, user string, day rsrc.Day, w rsrc.Writer) error {
 	outSongs := make([][]string, len(songs))
 	for i, song := range songs {
 		outSongs[i] = []string{song.Artist, song.Title, song.Album, fmt.Sprintf("%f", song.Duration)}
