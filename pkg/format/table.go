@@ -10,7 +10,7 @@ import (
 )
 
 type Table struct {
-	Charts charts.Charts
+	Charts charts.LazyCharts
 	First  rsrc.Day
 	Step   int
 	Count  int
@@ -66,28 +66,20 @@ func (f *Table) formatBody(
 		pattern = "%v%v"
 	}
 
-	// f.Charts is asserted to non-empty without check
-	col, _ := f.Charts.Column(-1)
+	titles := charts.Top(f.Charts, f.Count)
+	data := f.Charts.Data(titles, 0, f.Charts.Len())
 
-	for _, x := range col.Top(f.Count) {
+	for t, x := range titles {
 		io.WriteString(w, start)
 
-		var line []float64
-		for i, key := range f.Charts.Keys {
-			if key.String() == x.Name {
-				line = f.Charts.Values[i]
-				break
-			}
-		}
+		fmt.Fprintf(w, pattern, x.String(), delim0)
 
-		fmt.Fprintf(w, pattern, x.Name, delim0)
-
-		for i := 0; i < len(line); i += f.Step {
+		for i := 0; i < len(data[t]); i += f.Step {
 			if i > 0 {
 				io.WriteString(w, delim)
 			}
 
-			s := fmt.Sprintf("%.08g", line[i])
+			s := fmt.Sprintf("%.08g", data[t][i])
 			if decimal != "." {
 				s = strings.Replace(s, ".", decimal, 1)
 			}

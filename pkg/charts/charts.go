@@ -1,219 +1,136 @@
 package charts
 
-import (
-	"fmt"
+import "sort"
 
-	"github.com/nilsbu/lastfm/pkg/rsrc"
-)
+type LazyCharts interface {
+	Column(titles []Title, index int) []float64
+	Data(titles []Title, begin, end int) [][]float64
 
-type Key interface {
-	fmt.Stringer
-	ArtistName() string
-	FullTitle() string
+	Titles() []Title
+	Len() int
 }
 
-type simpleKey string
-
-func (s simpleKey) String() string {
-	return string(s)
+type charts struct {
+	titles []Title
+	values map[string][]float64
 }
 
-func (s simpleKey) ArtistName() string {
-	return string(s)
+// Artists compiles LazyCharts in which all songs by an artist are grouped.
+func Artists(songs [][]Song) LazyCharts {
+	return compileCharts(
+		songs,
+		func(s Song) Title { return ArtistTitle(s.Artist) },
+		func(s Song) float64 { return 1.0 },
+	)
 }
 
-func (s simpleKey) FullTitle() string {
-	return string(s)
+// ArtistsDuration compiles LazyCharts in which all songs by an artist are
+// grouped. The songs are weighted by duration before they are summed up.
+func ArtistsDuration(songs [][]Song) LazyCharts {
+	return compileCharts(
+		songs,
+		func(s Song) Title { return ArtistTitle(s.Artist) },
+		func(s Song) float64 { return s.Duration },
+	)
 }
 
-type tagKey string
-
-func (s tagKey) String() string {
-	return string(s)
+// Songs compiles LazyCharts in which all songs are listed separately.
+func Songs(songs [][]Song) LazyCharts {
+	return compileCharts(
+		songs,
+		func(s Song) Title { return SongTitle(s) },
+		func(s Song) float64 { return 1.0 },
+	)
 }
 
-func (s tagKey) ArtistName() string {
-	return ""
+// SongsDuration compiles LazyCharts in which all songs are listed separately.
+// The songs are weighted by duration.
+func SongsDuration(songs [][]Song) LazyCharts {
+	return compileCharts(
+		songs,
+		func(s Song) Title { return SongTitle(s) },
+		func(s Song) float64 { return s.Duration },
+	)
 }
 
-func (s tagKey) FullTitle() string {
-	return string(s)
-}
-
-type Song struct {
-	Artist   string
-	Title    string
-	Album    string
-	Duration float64
-}
-
-func (s Song) String() string {
-	return s.Artist + " - " + s.Title
-}
-
-func (s Song) ArtistName() string {
-	return s.Artist
-}
-
-func (s Song) FullTitle() string {
-	return s.Artist + " - " + s.Title
-}
-
-type Charts struct {
-	Headers Intervals
-	Keys    []Key
-	Values  [][]float64
-}
-
-func CompileArtists(
-	days []map[string]float64,
-	registered rsrc.Day) Charts {
-	return compile(days, registered, func(s string) Key { return simpleKey(s) })
-}
-
-func CompileTags(
-	days []map[string]float64,
-	registered rsrc.Day) Charts {
-	return compile(days, registered, func(s string) Key { return tagKey(s) })
-}
-
-func compile(
-	days []map[string]float64,
-	registered rsrc.Day,
-	toKey func(string) Key) Charts {
-	size := len(days)
-
-	keys := []Key{}
-	values := [][]float64{}
-
-	charts := make(map[string]int)
-	for i, day := range days {
-		for name, plays := range day {
-			if _, ok := charts[name]; !ok {
-				charts[name] = len(values)
-				keys = append(keys, toKey(name))
-				values = append(values, make([]float64, size))
-			}
-			values[charts[name]][i] = plays
-		}
+func compileCharts(
+	songs [][]Song,
+	key func(Song) Title,
+	value func(Song) float64) *charts {
+	charts := &charts{
+		values: map[string][]float64{},
+		titles: []Title{},
 	}
 
-	return Charts{
-		Headers: Days(registered, registered.AddDate(0, 0, size)),
-		Keys:    keys,
-		Values:  values,
-	}
-}
-
-// CompileSongs creates charts of individual songs from songs split by days.
-func CompileSongs(
-	days [][]Song,
-	registered rsrc.Day) Charts {
-	return chartsFromSongs(
-		days,
-		registered,
-		func(s Song) Key { return s })
-}
-
-// ArtistsFromSongs creates artist charts from songs split by days.
-func ArtistsFromSongs(
-	days [][]Song,
-	registered rsrc.Day,
-) Charts {
-	return chartsFromSongs(
-		days,
-		registered,
-		func(s Song) Key { return simpleKey(s.Artist) })
-}
-
-func chartsFromSongs(
-	days [][]Song,
-	registered rsrc.Day,
-	getKey func(s Song) Key,
-) Charts {
-	size := len(days)
-
-	keys := []Key{}
-	values := [][]float64{}
-
-	charts := make(map[string]int)
-	for i, day := range days {
+	for d, day := range songs {
 		for _, song := range day {
-			k := getKey(song)
-			key := k.String()
-			if _, ok := charts[key]; !ok {
-				charts[key] = len(values)
-				keys = append(keys, k)
-				values = append(values, make([]float64, size))
-				values[len(values)-1][i] = 1
+			k := key(song)
+			if line, ok := charts.values[k.Key()]; ok {
+				line[d] += value(song)
 			} else {
-				values[charts[key]][i]++
+				charts.titles = append(charts.titles, k)
+				charts.values[k.Key()] = make([]float64, len(songs))
+				charts.values[k.Key()][d] = value(song)
 			}
 		}
 	}
 
-	return Charts{
-		Headers: Days(registered, registered.AddDate(0, 0, size)),
-		Keys:    keys,
-		Values:  values,
-	}
+	return charts
 }
 
-// UnravelDays takes Charts and disassembles it into single day plays. It acts
-// as an inverse to CompileArtists().
-func (c Charts) UnravelDays() []map[string]float64 {
-	days := []map[string]float64{}
-	for i := 0; i < c.Len(); i++ {
-		day := map[string]float64{}
+func FromMap(data map[string][]float64) LazyCharts {
+	titles := make([]Title, len(data))
+	i := 0
+	for t := range data {
+		titles[i] = KeyTitle(t)
+		i++
+	}
+	sort.Slice(titles, func(i, j int) bool { return titles[i].Key() < titles[j].Key() })
 
-		for j, line := range c.Values {
-			if line[i] != 0 {
-				day[c.Keys[j].String()] = line[i]
-			}
-		}
-
-		days = append(days, day)
+	charts := &charts{
+		values: data,
+		titles: titles,
 	}
 
-	return days
+	return charts
 }
 
-// UnravelSongs takes Charts and disassembles it into songs. It acts as an
-// inverse to CompileSongs().
-func (c Charts) UnravelSongs() [][]Song {
-	songs := make([][]Song, c.Len())
-	for d := range songs {
-		day := []Song{}
-		for k, key := range c.Keys {
-			for n := 0; n < int(c.Values[k][d]); n++ {
-				if song, ok := key.(Song); ok {
-					day = append(day, song)
-				} else {
-					day = append(day, Song{
-						Artist: key.ArtistName(),
-						Title:  "",
-						Album:  ""})
-				}
-			}
-		}
-		songs[d] = day
+func (l *charts) Column(titles []Title, index int) []float64 {
+	col := make([]float64, len(titles))
+	for i, t := range titles {
+		col[i] = l.values[t.Key()][index]
 	}
-	return songs
+	return col
 }
 
-func (c Charts) Len() int {
-	if len(c.Values) == 0 {
-		return 0
+func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
+	for i, t := range titles {
+		data[i] = l.values[t.Key()][begin:end]
 	}
-
-	return len(c.Values[0])
+	return data
 }
 
-// GetKeys returns the keys of the charts.
-func (c Charts) GetKeys() []string {
-	keys := []string{}
-	for _, key := range c.Keys {
-		keys = append(keys, key.String())
+func (l *charts) Titles() []Title {
+	// assumption: noone touches the return value
+	return l.titles
+}
+
+func (l *charts) Len() int {
+	for _, line := range l.values {
+		return len(line)
 	}
-	return keys
+	return -1
+}
+
+type chartsNode struct {
+	parent LazyCharts
+}
+
+func (l chartsNode) Titles() []Title {
+	return l.parent.Titles()
+}
+
+func (l chartsNode) Len() int {
+	return l.parent.Len()
 }

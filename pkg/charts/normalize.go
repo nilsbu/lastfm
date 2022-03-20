@@ -1,142 +1,95 @@
 package charts
 
 import (
-	"math"
+	"runtime"
 )
 
-// Normalizer contains a function that normalizes charts by some method.
-type Normalizer interface {
-	Normalize(charts Charts) Charts
+type normalizer struct {
+	chartsNode
+	totals   LazyCharts
+	lineChan chan normalizerJob
 }
 
-type SimpleNormalizer struct{}
-
-func (SimpleNormalizer) Normalize(charts Charts) Charts {
-	return charts.devideBy(charts.Total())
+type normalizerJob struct {
+	in, out    []float64
+	begin, end int
+	back       chan bool
 }
 
-func (charts Charts) devideBy(total []float64) Charts {
-	return charts.mapLine(func(in []float64, out []float64) {
-		for i, x := range in {
-			if total[i] > 0 {
-				out[i] = x / total[i]
+func newNormalizer(parent LazyCharts, totals LazyCharts) *normalizer {
+	n := &normalizer{
+		chartsNode: chartsNode{parent: parent},
+		totals:     Cache(totals),
+		lineChan:   make(chan normalizerJob),
+	}
+
+	f := func(in, out, totals []float64, begin, end int) {
+		for i, v := range in {
+			if totals[i+begin] > 0 {
+				out[i] = v / totals[i+begin]
 			} else {
 				out[i] = 0
 			}
 		}
-	})
-}
-
-type GaussianNormalizer struct {
-	Sigma      float64
-	MirrorBack bool
-}
-
-func (n GaussianNormalizer) Normalize(charts Charts) Charts {
-	wing := int(2 * n.Sigma)
-	kernel := getGaussianKernel(n.Sigma, 2*wing+1)
-
-	total := Charts{
-		Headers: charts.Headers,
-		Keys:    []Key{simpleKey("total")},
-		Values:  [][]float64{charts.Total()},
 	}
 
-	// TODO figure out a way to only normalize once
-
-	blurredTotal := total.mapLine(func(in, out []float64) {
-		n2 := n
-		n2.MirrorBack = n.MirrorBack
-		n2.normalize(in, out, wing, kernel)
-	})
-
-	blurred := charts.mapLine(func(in, out []float64) {
-		n.normalize(in, out, wing, kernel)
-	})
-
-	return blurred.devideBy(blurredTotal.Values[0])
-}
-
-func (n GaussianNormalizer) normalize(
-	in, out []float64,
-	wing int,
-	kernel []float64) {
-	for i := range out {
-		for j := range kernel {
-			jj := i + j - wing
-			if jj >= len(in) && !n.MirrorBack {
-				continue
+	workers := runtime.NumCPU()
+	for i := 0; i < workers; i++ {
+		go func() {
+			// TODO is there a way to not query the entire length of the totals?
+			totals := n.totals.Data([]Title{StringTitle("total")}, 0, parent.Len())[0]
+			for job := range n.lineChan {
+				f(job.in, job.out, totals, job.begin, job.end)
+				job.back <- true
 			}
 
-			for {
-				if jj < 0 {
-					jj = -jj - 1
-				} else if jj >= len(in) {
-					jj = 2*len(in) - jj - 1
-				} else {
-					break
-				}
-			}
-
-			out[i] += in[jj] * kernel[j]
-		}
+		}()
 	}
+
+	return n
 }
 
-func getGaussianKernel(sigma float64, width int) []float64 {
-	kernel := make([]float64, width)
-
-	var sum float64
-	for i := range kernel {
-		dx := float64(i - width/2)
-		val := 1 / math.Sqrt(2*math.Pi*sigma*sigma) * math.Exp(-0.5*dx*dx/sigma/sigma)
-		kernel[i] = val
-		sum += val
-	}
-
-	for i := range kernel {
-		kernel[i] /= sum
-	}
-
-	return kernel
+func NormalizeColumn(c LazyCharts) LazyCharts {
+	return newNormalizer(c, ColumnSum(c))
 }
 
-// SongDurations is a Normalizer that multiplies by song length.
-// If a length is not known and duration for duration[""][""] is included then
-// it will be used by default.
-type SongDurations map[string]map[string]float64
+func NormalizeGaussian(
+	c LazyCharts,
+	sigma float64,
+	width int,
+	mirrorBegin, mirrorEnd bool) LazyCharts {
 
-func (sd SongDurations) Normalize(charts Charts) Charts {
-	out := Charts{}
+	smooth := Cache(Gaussian(c, sigma, width, mirrorBegin, mirrorEnd))
+	return newNormalizer(smooth, ColumnSum(smooth))
+}
 
-	out.Headers = charts.Headers
-	out.Keys = charts.Keys
-
-	for i, key := range out.Keys {
-		values := make([]float64, len(charts.Values[i]))
-
-		f := 1.0
-		found := false
-		if song, ok := key.(Song); ok {
-			if t, ok := sd[song.Artist]; ok {
-				if duration, ok := t[song.Title]; ok {
-					f = duration
-					found = true
-				}
-			}
-		}
-		if !found {
-			if t, ok := sd[""]; ok {
-				if duration, ok := t[""]; ok {
-					f = duration
-				}
-			}
-		}
-
-		for j, v := range charts.Values[i] {
-			values[j] = f * v
-		}
-		out.Values = append(out.Values, values)
+func (c *normalizer) Column(titles []Title, index int) []float64 {
+	data := c.Data(titles, index, index+1)
+	tvm := make([]float64, len(titles))
+	for i := range titles {
+		tvm[i] = data[i][0]
 	}
-	return out
+	return tvm
+}
+
+func (c *normalizer) Data(titles []Title, begin, end int) [][]float64 {
+	data := make([][]float64, len(titles))
+	back := make(chan bool, len(titles))
+
+	for i, title := range titles {
+		out := make([]float64, end-begin)
+		data[i] = out
+		c.lineChan <- normalizerJob{
+			in:    c.parent.Data([]Title{title}, begin, end)[0],
+			out:   out,
+			begin: begin,
+			end:   end,
+			back:  back,
+		}
+	}
+	for range titles {
+		<-back
+	}
+	close(back)
+	return data
 }

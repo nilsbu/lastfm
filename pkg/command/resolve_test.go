@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -239,16 +238,11 @@ func TestResolve(t *testing.T) {
 				begin:       time.Date(2007, time.January, 1, 0, 0, 0, 0, time.UTC),
 				before:      time.Date(2018, time.December, 24, 0, 0, 0, 0, time.UTC)}, true,
 		},
-		{
-			[]string{"lastfm", "print", "fademax", "66"},
-			&unpack.SessionInfo{User: "user"},
-			printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
-		},
-		{
-			[]string{"lastfm", "print", "day", "2016-01-05"},
-			&unpack.SessionInfo{User: "user"},
-			printDay{printTotal{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, date: rsrc.ParseDay("2016-01-05").Time()}}, true,
-		},
+		// {
+		// 	[]string{"lastfm", "print", "fademax", "66"},
+		// 	&unpack.SessionInfo{User: "user"},
+		// 	printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
+		// },
 		{
 			[]string{"lastfm", "print", "tags", "Add"},
 			&unpack.SessionInfo{User: "user"}, printTags{"Add"}, true,
@@ -277,14 +271,14 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"},
 			tablePeriods{printCharts: printCharts{by: "all", name: "", n: 10}, period: "1y"}, true,
 		},
-		{
-			[]string{"lastfm", "timeline", "-before=2008-01-23", "-from=2000-11-03"},
-			&unpack.SessionInfo{User: "user"},
-			printTimeline{
-				from:   time.Date(2000, time.Month(11), 03, 0, 0, 0, 0, time.UTC),
-				before: time.Date(2008, time.Month(1), 23, 0, 0, 0, 0, time.UTC),
-			}, true,
-		},
+		// {
+		// 	[]string{"lastfm", "timeline", "-before=2008-01-23", "-from=2000-11-03"},
+		// 	&unpack.SessionInfo{User: "user"},
+		// 	printTimeline{
+		// 		from:   time.Date(2000, time.Month(11), 03, 0, 0, 0, 0, time.UTC),
+		// 		before: time.Date(2008, time.Month(1), 23, 0, 0, 0, 0, time.UTC),
+		// 	}, true,
+		// },
 		{
 			[]string{"lastfm-csv", "table", "fade", "10"},
 			&unpack.SessionInfo{User: "user"},

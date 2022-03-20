@@ -1,365 +1,190 @@
-package charts
+package charts_test
 
 import (
 	"reflect"
-	"sort"
 	"testing"
 
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-func TestCompileArtist(t *testing.T) {
-	cases := []struct {
-		days       []map[string]float64
-		registered rsrc.Day
-		charts     Charts
-	}{
-		{
-			[]map[string]float64{},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-01")),
-				Keys:    []Key{},
-				Values:  [][]float64{}},
-		},
-		{
-			[]map[string]float64{{}},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-02")),
-				Keys:    []Key{},
-				Values:  [][]float64{}},
-		},
-		{
-			[]map[string]float64{
-				{"ASD": 2},
-				{"WASD": 1},
-				{"ASD": 13, "WASD": 4},
-			},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-04")),
-				Keys:    []Key{simpleKey("ASD"), simpleKey("WASD")},
-				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}}},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			charts := CompileArtists(c.days, c.registered)
-
-			if !c.charts.Equal(charts) {
-				t.Error("charts are wrong")
-			}
-		})
-	}
-}
-
-func TestCompileTags(t *testing.T) {
-	cases := []struct {
-		days       []map[string]float64
-		registered rsrc.Day
-		charts     Charts
-	}{
-		{
-			[]map[string]float64{
-				{"ASD": 2},
-				{"WASD": 1},
-				{"ASD": 13, "WASD": 4},
-			},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-04")),
-				Keys:    []Key{tagKey("ASD"), tagKey("WASD")},
-				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}}},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			charts := CompileTags(c.days, c.registered)
-
-			if err := c.charts.AssertEqual(charts); err != nil {
-				t.Error(err)
-			}
-		})
-	}
-}
-
-func TestCompileSongs(t *testing.T) {
-	cases := []struct {
-		days       [][]Song
-		registered rsrc.Day
-		charts     Charts
-	}{
-		{
-			[][]Song{},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-01")),
-				Keys:    []Key{},
-				Values:  [][]float64{}},
-		},
-		{
-			[][]Song{{}},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-02")),
-				Keys:    []Key{},
-				Values:  [][]float64{}},
-		},
-		{
-			[][]Song{
-				{
-					{Artist: "A", Title: "s", Album: "x"},
-					{Artist: "A", Title: "s", Album: "x"},
-					{Artist: "A", Title: "t", Album: "x"},
-					{Artist: "B", Title: "s", Album: "x"},
-				},
-				{
-					{Artist: "A", Title: "t", Album: "x"},
-					{Artist: "C", Title: "w", Album: "x"},
-				},
-			},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-03")),
-				Keys: []Key{
-					Song{Artist: "A", Title: "s", Album: "x"},
-					Song{Artist: "A", Title: "t", Album: "x"},
-					Song{Artist: "B", Title: "s", Album: "x"},
-					Song{Artist: "C", Title: "w", Album: "x"},
-				},
-				Values: [][]float64{
-					{2, 0}, {1, 1}, {1, 0}, {0, 1}}},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			charts := CompileSongs(c.days, c.registered)
-
-			if err := c.charts.AssertEqual(charts); err != nil {
-				t.Error(err)
-			}
-		})
-	}
-}
-
-func TestArtistsFromSongs(t *testing.T) {
+func TestCharts(t *testing.T) {
+	// The purpose here is to ensure the content of the charts is correct, the
+	// API is tested in TestLazyCharts in greater detail.
 	for _, c := range []struct {
-		descr      string
-		days       [][]Song
-		registered rsrc.Day
-		charts     Charts
+		name   string
+		charts charts.LazyCharts
+		titles []charts.Title
+		lines  [][]float64
 	}{
 		{
-			"no songs",
-			[][]Song{},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-01")),
-				Keys:    []Key{},
-				Values:  [][]float64{}},
-		},
-		{
-			"one empty day",
-			[][]Song{{}},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-02")),
-				Keys:    []Key{},
-				Values:  [][]float64{}},
-		},
-		{
-			"multiple days",
-			[][]Song{
-				{
-					{Artist: "A", Title: "s", Album: "x"},
-					{Artist: "A", Title: "s", Album: "x"},
-					{Artist: "A", Title: "t", Album: "x"},
-					{Artist: "B", Title: "s", Album: "x"},
+			"Artists",
+			charts.Artists([][]charts.Song{
+				{charts.Song{Artist: "A", Duration: 1},
+					charts.Song{Artist: "B", Duration: 2},
 				},
-				{
-					{Artist: "A", Title: "t", Album: "x"},
-					{Artist: "C", Title: "w", Album: "x"},
+				{charts.Song{Artist: "C", Duration: 1},
+					charts.Song{Artist: "A", Duration: 1},
 				},
+			}),
+			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
+			[][]float64{
+				{1, 1}, {1, 0}, {0, 1},
 			},
-			rsrc.ParseDay("2008-01-01"),
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-03")),
-				Keys:    []Key{simpleKey("A"), simpleKey("B"), simpleKey("C")},
-				Values:  [][]float64{{3, 1}, {1, 0}, {0, 1}}}},
+		},
+		{
+			"ArtistsDuration",
+			charts.ArtistsDuration([][]charts.Song{
+				{charts.Song{Artist: "A", Duration: 1},
+					charts.Song{Artist: "B", Duration: 2},
+				},
+				{charts.Song{Artist: "C", Duration: 1},
+					charts.Song{Artist: "A", Duration: 1},
+				},
+			}),
+			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
+			[][]float64{
+				{1, 1}, {2, 0}, {0, 1},
+			},
+		},
+		{
+			"Songs",
+			charts.Songs([][]charts.Song{
+				{
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
+					charts.Song{Artist: "B", Title: "b", Duration: 2},
+					charts.Song{Artist: "A", Title: "a", Duration: 1},
+				},
+				{
+					charts.Song{Artist: "C", Title: "b", Duration: 1},
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
+				},
+			}),
+			[]charts.Title{
+				charts.SongTitle(charts.Song{Artist: "A", Title: "a"}), charts.SongTitle(charts.Song{Artist: "A", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "B", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "C", Title: "b"}),
+			},
+			[][]float64{
+				{1, 0}, {1, 1},
+				{1, 0},
+				{0, 1},
+			},
+		},
+		{
+			"SongsDuration",
+			charts.SongsDuration([][]charts.Song{
+				{
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
+					charts.Song{Artist: "B", Title: "b", Duration: 2},
+					charts.Song{Artist: "A", Title: "a", Duration: 1},
+				},
+				{
+					charts.Song{Artist: "C", Title: "b", Duration: 1},
+					charts.Song{Artist: "A", Title: "b", Duration: 1},
+				},
+			}),
+			[]charts.Title{
+				charts.SongTitle(charts.Song{Artist: "A", Title: "a"}), charts.SongTitle(charts.Song{Artist: "A", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "B", Title: "b"}),
+				charts.SongTitle(charts.Song{Artist: "C", Title: "b"}),
+			},
+			[][]float64{
+				{1, 0}, {1, 1},
+				{2, 0},
+				{0, 1},
+			},
+		},
+		{
+			"single column normalizer",
+			charts.NormalizeColumn(charts.Artists([][]charts.Song{
+				{
+					charts.Song{Artist: "A"}, charts.Song{Artist: "A"},
+					charts.Song{Artist: "B"},
+					charts.Song{Artist: "C"},
+				},
+				{
+					charts.Song{Artist: "B"}, charts.Song{Artist: "B"}, charts.Song{Artist: "B"},
+					charts.Song{Artist: "C"}, charts.Song{Artist: "C"}, charts.Song{Artist: "C"},
+				},
+				{},
+			})),
+			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
+			[][]float64{
+				{.5, 0, 0}, {.25, .5, 0}, {.25, .5, 0},
+			},
+		},
+		{
+			"charts.FromMap",
+			charts.FromMap(map[string][]float64{
+				"A": {1, 1},
+				"B": {1, 0},
+				"C": {0, 1},
+			}),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")},
+			[][]float64{
+				{1, 1}, {1, 0}, {0, 1},
+			},
+		},
+		{
+			"Only",
+			charts.Only(charts.FromMap(map[string][]float64{
+				"A": {1, 1},
+				"B": {1, 0},
+				"C": {0, 1},
+			}), []charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")}),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")},
+			[][]float64{
+				{1, 1}, {0, 1},
+			},
+		},
+		{
+			"Intervals with Sum",
+			charts.Intervals(charts.FromMap(map[string][]float64{
+				"A": {1, 1, 0, 1, 3, 3, 2, 0},
+				"B": {1, 0, 1, 0, 0, 0, 0, 5},
+				"C": {0, 1, 0, 9, 0, 2, 0, 0},
+			}), charts.Ranges{
+				Delims: []rsrc.Day{
+					rsrc.ParseDay("2022-01-01"),
+					rsrc.ParseDay("2022-01-03"),
+					rsrc.ParseDay("2022-01-05"),
+					rsrc.ParseDay("2022-01-08")},
+				Registered: rsrc.ParseDay("2022-01-01"),
+			}, charts.Sum),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")},
+			[][]float64{
+				{2, 1, 8}, {1, 1, 0}, {1, 9, 2},
+			},
+		},
 	} {
-		t.Run(c.descr, func(t *testing.T) {
-			charts := ArtistsFromSongs(c.days, c.registered)
-
-			if err := c.charts.AssertEqual(charts); err != nil {
-				t.Error(err)
+		t.Run(c.name, func(t *testing.T) {
+			if !areTitlesSame(c.titles, c.charts.Titles()) {
+				t.Fatalf("titles are not equal: %v != %v",
+					c.titles, c.charts.Titles())
 			}
-		})
-	}
-}
 
-func TestChartsUnravelDays(t *testing.T) {
-	cases := []struct {
-		charts Charts
-		days   []map[string]float64
-	}{
-		{
-			Charts{},
-			[]map[string]float64{},
-		},
-		{
-			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
-				Keys:    []Key{simpleKey("A")},
-				Values:  [][]float64{{}},
-			},
-			[]map[string]float64{},
-		},
-		{
-			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-04")),
-				Keys:    []Key{simpleKey("ASD"), simpleKey("WASD")},
-				Values:  [][]float64{{2, 0, 13}, {0, 1, 4}},
-			},
-			[]map[string]float64{
-				{"ASD": 2},
-				{"WASD": 1},
-				{"ASD": 13, "WASD": 4},
-			},
-		},
-	}
+			data := c.charts.Data(c.titles, 0, c.charts.Len())
+			for i, title := range c.titles {
+				row := c.charts.Data([]charts.Title{title}, 0, c.charts.Len())[0]
+				if !reflect.DeepEqual(c.lines[i], row) {
+					t.Errorf("row, '%v': %v != %v", title, c.lines[i], row)
+				}
 
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			days := c.charts.UnravelDays()
-
-			if !reflect.DeepEqual(days, c.days) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v", days, c.days)
+				if !reflect.DeepEqual(c.lines[i], data[i]) {
+					t.Errorf("data, '%v': %v != %v", title, c.lines[i], data[i])
+				}
 			}
-		})
-	}
-}
 
-func TestChartsUnravelSongs(t *testing.T) {
-	cases := []struct {
-		charts Charts
-		songs  [][]Song
-	}{
-		{
-			Charts{},
-			[][]Song{},
-		},
-		{
-			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
-				Keys:    []Key{simpleKey("A")},
-				Values:  [][]float64{{}},
-			},
-			[][]Song{},
-		},
-		{
-			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-02")),
-				Keys:    []Key{simpleKey("A")},
-				Values:  [][]float64{{2}},
-			},
-			[][]Song{
-				{{Artist: "A"}, {Artist: "A"}}},
-		},
-		{
-			Charts{
-				Headers: Days(rsrc.ParseDay("2008-01-01"), rsrc.ParseDay("2008-01-03")),
-				Keys: []Key{
-					Song{Artist: "A", Title: "s", Album: "x"},
-					Song{Artist: "A", Title: "t", Album: "x"},
-					Song{Artist: "B", Title: "s", Album: "x"},
-					Song{Artist: "C", Title: "w", Album: "x"},
-				},
-				Values: [][]float64{
-					{2, 0}, {1, 1}, {1, 0}, {0, 1}}},
-			[][]Song{
-				{
-					{Artist: "A", Title: "s", Album: "x"},
-					{Artist: "A", Title: "s", Album: "x"},
-					{Artist: "A", Title: "t", Album: "x"},
-					{Artist: "B", Title: "s", Album: "x"},
-				},
-				{
-					{Artist: "A", Title: "t", Album: "x"},
-					{Artist: "C", Title: "w", Album: "x"},
-				},
-			},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			songs := c.charts.UnravelSongs()
-
-			if !reflect.DeepEqual(songs, c.songs) {
-				t.Errorf("wrong data:\nhas:  %v\nwant: %v", songs, c.songs)
-			}
-		})
-	}
-}
-
-func TestCompileSongsAndBack(t *testing.T) {
-	songs := [][]Song{
-		{
-			{Artist: "A", Title: "s", Album: "x"},
-			{Artist: "A", Title: "s", Album: "x"},
-			{Artist: "A", Title: "t", Album: "x"},
-			{Artist: "B", Title: "s", Album: "x"},
-		},
-		{
-			{Artist: "A", Title: "t", Album: "x"},
-			{Artist: "C", Title: "w", Album: "x"},
-		},
-	}
-
-	charts := CompileSongs(songs, rsrc.ParseDay("2000-01-01"))
-
-	outSongs := charts.UnravelSongs()
-
-	if !reflect.DeepEqual(outSongs, songs) {
-		t.Errorf("wrong data:\nhas:  %v\nwant: %v", outSongs, songs)
-	}
-}
-
-func TestChartsGetKeys(t *testing.T) {
-	cases := []struct {
-		charts Charts
-		keys   []string
-	}{
-		{
-			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-01")),
-				Keys:    []Key{},
-				Values:  [][]float64{{}},
-			},
-			[]string{},
-		},
-		{
-			Charts{
-				Headers: Days(rsrc.ParseDay("2000-01-01"), rsrc.ParseDay("2000-01-03")),
-				Keys:    []Key{simpleKey("xx"), simpleKey("yy")},
-				Values:  [][]float64{{32, 45}, {32, 45}}},
-			[]string{"xx", "yy"},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			keys := c.charts.GetKeys()
-
-			sort.Strings(keys)
-			sort.Strings(c.keys)
-			if !reflect.DeepEqual(keys, c.keys) {
-				t.Errorf("wrong data (sorted):\nhas:  %v\nwant: %v",
-					keys, c.keys)
+			for i := 0; i < c.charts.Len(); i++ {
+				col := c.charts.Column(c.titles, i)
+				for j, title := range c.titles {
+					if c.lines[j][i] != col[j] {
+						t.Errorf("col %v, %v: %v != %v",
+							title, i,
+							c.lines[j][i], col[j])
+					}
+				}
 			}
 		})
 	}

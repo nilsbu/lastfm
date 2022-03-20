@@ -51,12 +51,12 @@ var cmdRoot = node{
 var cmdLastfm = node{
 	cmd: exeHelp,
 	nodes: map[string]node{
-		"help":     cmdHelp,
-		"print":    cmdPrint,
-		"session":  cmdSession,
-		"table":    cmdTable,
-		"timeline": node{cmd: exeTimeline},
-		"update":   cmdUpdate,
+		"help":    cmdHelp,
+		"print":   cmdPrint,
+		"session": cmdSession,
+		"table":   cmdTable,
+		// "timeline": {cmd: exeTimeline},
+		"update": cmdUpdate,
 	},
 }
 
@@ -66,13 +66,12 @@ var cmdHelp = node{
 
 var cmdPrint = node{
 	nodes: nodes{
-		"day":      node{cmd: exePrintDay},
 		"fade":     node{cmd: exePrintFade},
 		"period":   node{cmd: exePrintPeriod},
 		"interval": node{cmd: exePrintInterval},
-		"fademax":  node{cmd: exePrintFadeMax},
-		"tags":     node{cmd: exePrintTags},
-		"total":    node{cmd: exePrintTotal},
+		// "fademax":  node{cmd: exePrintFadeMax},
+		"tags":  node{cmd: exePrintTags},
+		"total": node{cmd: exePrintTotal},
 	},
 }
 
@@ -215,68 +214,35 @@ var exePrintInterval = &cmd{
 	session: true,
 }
 
-var exePrintDay = &cmd{
-	descr: "prints a user's top artists on a given day",
-	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printDay{printTotal{printCharts: printCharts{
-			keys:       opts["keys"].(string),
-			by:         opts["by"].(string),
-			name:       opts["name"].(string),
-			n:          opts["n"].(int),
-			percentage: opts["%"].(bool),
-			normalized: opts["normalized"].(bool),
-			duration:   opts["duration"].(bool),
-			entry:      opts["entry"].(float64),
-		},
-			date: params[0].(time.Time),
-		}}
-	},
-	params: params{&param{
-		"date",
-		"", // TODO
-		"time",
-	}},
-	options: options{
-		"keys":       optChartsKeys,
-		"by":         optChartType,
-		"name":       optGenericName,
-		"n":          optArtistCount,
-		"%":          optChartsPercentage,
-		"normalized": optChartsNormalized,
-		"duration":   optChartsDuration,
-		"entry":      optChartsEntry,
-	},
-	session: true,
-}
-
-var exePrintFadeMax = &cmd{
-	descr: "", // TODO
-	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printFadeMax{printCharts: printCharts{
-			keys:       opts["keys"].(string),
-			by:         opts["by"].(string),
-			name:       opts["name"].(string),
-			n:          opts["n"].(int),
-			percentage: false, // Disabled since it makes no sense here
-			normalized: opts["normalized"].(bool),
-			duration:   opts["duration"].(bool),
-			entry:      opts["entry"].(float64),
-		},
-			hl: params[0].(float64),
-		}
-	},
-	params: params{parHL},
-	options: options{
-		"keys":       optChartsKeys,
-		"by":         optChartType,
-		"name":       optGenericName,
-		"n":          optArtistCount,
-		"normalized": optChartsNormalized,
-		"duration":   optChartsDuration,
-		"entry":      optChartsEntry,
-	},
-	session: true,
-}
+// TODO add again
+// var exePrintFadeMax = &cmd{
+// 	descr: "", // TODO
+// 	get: func(params []interface{}, opts map[string]interface{}) command {
+// 		return printFadeMax{printCharts: printCharts{
+// 			keys:       opts["keys"].(string),
+// 			by:         opts["by"].(string),
+// 			name:       opts["name"].(string),
+// 			n:          opts["n"].(int),
+// 			percentage: false, // Disabled since it makes no sense here
+// 			normalized: opts["normalized"].(bool),
+// 			duration:   opts["duration"].(bool),
+// 			entry:      opts["entry"].(float64),
+// 		},
+// 			hl: params[0].(float64),
+// 		}
+// 	},
+// 	params: params{parHL},
+// 	options: options{
+// 		"keys":       optChartsKeys,
+// 		"by":         optChartType,
+// 		"name":       optGenericName,
+// 		"n":          optArtistCount,
+// 		"normalized": optChartsNormalized,
+// 		"duration":   optChartsDuration,
+// 		"entry":      optChartsEntry,
+// 	},
+// 	session: true,
+// }
 
 var exePrintTags = &cmd{
 	descr: "prints the top tags of an artist",
@@ -316,20 +282,20 @@ var exePrintTotal = &cmd{
 	session: true,
 }
 
-var exeTimeline = &cmd{
-	descr: "timeline of events",
-	get: func(params []interface{}, opts map[string]interface{}) command {
-		return printTimeline{
-			from:   opts["from"].(time.Time),
-			before: opts["before"].(time.Time),
-		}
-	},
-	options: options{
-		"from":   optDate,
-		"before": optDate,
-	},
-	session: true,
-}
+// var exeTimeline = &cmd{
+// 	descr: "timeline of events",
+// 	get: func(params []interface{}, opts map[string]interface{}) command {
+// 		return printTimeline{
+// 			from:   opts["from"].(time.Time),
+// 			before: opts["before"].(time.Time),
+// 		}
+// 	},
+// 	options: options{
+// 		"from":   optDate,
+// 		"before": optDate,
+// 	},
+// 	session: true,
+// }
 
 var exeTableFade = &cmd{
 	descr: "tables a user's top artists in fading charts",

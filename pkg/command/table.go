@@ -4,7 +4,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/pkg/errors"
@@ -15,8 +14,8 @@ type tableTotal struct {
 	step int
 }
 
-func (cmd tableTotal) Accumulate(c charts.Charts) charts.Charts {
-	return c.Sum()
+func (cmd tableTotal) Accumulate(c charts.LazyCharts) charts.LazyCharts {
+	return charts.Sum(c)
 }
 
 func (cmd tableTotal) Execute(
@@ -52,8 +51,8 @@ type tableFade struct {
 	hl   float64
 }
 
-func (cmd tableFade) Accumulate(c charts.Charts) charts.Charts {
-	return c.Fade(cmd.hl)
+func (cmd tableFade) Accumulate(c charts.LazyCharts) charts.LazyCharts {
+	return charts.Fade(c, cmd.hl)
 }
 
 func (cmd tableFade) Execute(
@@ -88,8 +87,8 @@ type tablePeriods struct {
 	period string
 }
 
-func (cmd tablePeriods) Accumulate(c charts.Charts) charts.Charts {
-	return c.Sum()
+func (cmd tablePeriods) Accumulate(c charts.LazyCharts) charts.LazyCharts {
+	return charts.Sum(c)
 }
 
 func (cmd tablePeriods) Execute(
@@ -104,17 +103,15 @@ func (cmd tablePeriods) Execute(
 		return errors.Wrap(err, "failed to load user info")
 	}
 
-	end := rsrc.ToDay(user.Registered.Midnight() + int64(86400*out.Len()))
-	intervals, err := charts.ToIntervals(cmd.period, user.Registered, end)
-	if err != nil || intervals.Len() == 0 {
-		return err
+	ranges, err := charts.ParseRanges(cmd.period, user.Registered, out.Len())
+	if err != nil {
+		return errors.Wrap(err, "failed to parse interval")
 	}
-
-	out = out.Intervals(intervals)
+	out = charts.Intervals(out, ranges, charts.Id)
 
 	f := &format.Table{
 		Charts: out,
-		First:  intervals.At(0).Begin,
+		First:  ranges.Delims[0],
 		Step:   1,
 		Count:  cmd.n,
 	}

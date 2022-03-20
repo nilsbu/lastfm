@@ -44,8 +44,8 @@ func TestLoadArtistTags(t *testing.T) {
 			},
 			[]string{"asdf", "basd"},
 			map[string][]charts.Tag{
-				"asdf": []charts.Tag{charts.Tag{Name: "t0", Total: 1024, Reach: 42, Weight: 100}},
-				"basd": []charts.Tag{charts.Tag{Name: "t0", Total: 1024, Reach: 42, Weight: 20}},
+				"asdf": {{Name: "t0", Total: 1024, Reach: 42, Weight: 100}},
+				"basd": {{Name: "t0", Total: 1024, Reach: 42, Weight: 20}},
 			},
 			false, false,
 		},
@@ -63,7 +63,7 @@ func TestLoadArtistTags(t *testing.T) {
 			},
 			[]string{"asdf"},
 			map[string][]charts.Tag{
-				"asdf": []charts.Tag{charts.Tag{Name: "upper", Total: 1024, Reach: 42, Weight: 100}},
+				"asdf": {{Name: "upper", Total: 1024, Reach: 42, Weight: 100}},
 			},
 			false, false,
 		},
@@ -76,7 +76,7 @@ func TestLoadArtistTags(t *testing.T) {
 			[]string{"err", "asdf"},
 			map[string][]charts.Tag{
 				"err":  nil,
-				"asdf": []charts.Tag{charts.Tag{Name: "upper", Total: 1024, Reach: 42, Weight: 100}},
+				"asdf": {{Name: "upper", Total: 1024, Reach: 42, Weight: 100}},
 			},
 			true, false,
 		},

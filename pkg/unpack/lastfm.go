@@ -243,7 +243,7 @@ func (o *obArtistTags) interpret(raw interface{}) (interface{}, error) {
 
 	tags := make([]TagCount, len)
 	for i, tag := range at.TopTags.Tags {
-		tags[i] = TagCount{Name: tag.Name, Count: tag.Count}
+		tags[i] = TagCount(tag)
 	}
 	return tags, nil
 }
@@ -252,7 +252,7 @@ func (o *obArtistTags) raw(obj interface{}) interface{} {
 	tags := obj.([]TagCount)
 	jsTags := []jsonTag{}
 	for _, tag := range tags {
-		jsTags = append(jsTags, jsonTag{Name: tag.Name, Count: tag.Count})
+		jsTags = append(jsTags, jsonTag(tag))
 	}
 
 	js := jsonArtistTags{TopTags: jsonTopTags{

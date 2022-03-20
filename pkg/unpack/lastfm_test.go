@@ -10,8 +10,7 @@ import (
 )
 
 func TestLastfmError(t *testing.T) {
-	var err error
-	err = &LastfmError{
+	err := &LastfmError{
 		Code:    3,
 		Message: "some error",
 	}
@@ -268,7 +267,7 @@ func TestLoadArtistTags(t *testing.T) {
 		{
 			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"toptags":{"tag":[{"name":"bui", "count":100},{"count":12,"name":"asdf"}],"@attr":{"artist":"xy"}}}`)},
 			"xy",
-			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
+			[]TagCount{{"bui", 100}, {"asdf", 12}},
 			true,
 		},
 	}
@@ -305,7 +304,7 @@ func TestWriteLoadArtistTags(t *testing.T) {
 	}{
 		{
 			"xy",
-			[]TagCount{TagCount{"bui", 100}, TagCount{"asdf", 12}},
+			[]TagCount{{"bui", 100}, {"asdf", 12}},
 		},
 	}
 
@@ -345,31 +344,31 @@ func TestLoadTagInfo(t *testing.T) {
 	}{
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): nil},
-			[][]string{[]string{"african"}},
+			[][]string{{"african"}},
 			[]*charts.Tag{nil},
 			false,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
-			[][]string{[]string{"african"}},
-			[]*charts.Tag{&charts.Tag{}},
+			[][]string{{"african"}},
+			[]*charts.Tag{{}},
 			true, // no error is thrown, therefore this is acceppted
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
-			[][]string{[]string{"african", "african"}},
+			[][]string{{"african", "african"}},
 			[]*charts.Tag{
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+				{Name: "african", Total: 55266, Reach: 10493},
+				{Name: "african", Total: 55266, Reach: 10493},
 			},
 			true,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
-			[][]string{[]string{"african"}, []string{"african"}},
+			[][]string{{"african"}, {"african"}},
 			[]*charts.Tag{
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
-				&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
+				{Name: "african", Total: 55266, Reach: 10493},
+				{Name: "african", Total: 55266, Reach: 10493},
 			},
 			true,
 		},

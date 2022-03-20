@@ -10,7 +10,7 @@ import (
 
 func TestTableCSV(t *testing.T) {
 	cases := []struct {
-		charts  charts.Charts
+		charts  charts.LazyCharts
 		date    rsrc.Day
 		step    int
 		count   int
@@ -19,33 +19,24 @@ func TestTableCSV(t *testing.T) {
 		str     string
 	}{
 		{
-			charts.CompileArtists(
-				[]map[string]float64{}, rsrc.ParseDay("2012-01-01")),
+			charts.FromMap(map[string][]float64{}),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, ",", true,
-			"",
+			"\"name\";\n",
 		},
 		{
-			charts.CompileArtists(
-				[]map[string]float64{
-					map[string]float64{"ABC": 1.25, "X": 2},
-					map[string]float64{"ABC": 2, "X": 3},
-				}, rsrc.ParseDay("2012-01-01")),
+			charts.FromMap(map[string][]float64{
+				"ABC": {1.25, 2},
+				"X":   {2, 3},
+			}),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, ",", true,
 			"\"name\";2012-01-01;2012-01-02\n\"X\";2;3\n\"ABC\";1,25;2\n",
 		},
 		{
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"A": 1},
-					{"A": 2},
-					{"A": 3},
-					{"A": 4},
-					{"A": 5},
-					{"A": 6},
-					{"A": 7},
-				}, rsrc.ParseDay("2012-01-01")),
+			charts.FromMap(map[string][]float64{
+				"A": {1, 2, 3, 4, 5, 6, 7},
+			}),
 			rsrc.ParseDay("2012-01-01"),
 			3, 1, ".", true,
 			"\"name\";2012-01-01;2012-01-04;2012-01-07\n\"A\";1;4;7\n",
@@ -80,7 +71,7 @@ func TestTableCSV(t *testing.T) {
 
 func TestTablePlain(t *testing.T) {
 	cases := []struct {
-		charts charts.Charts
+		charts charts.LazyCharts
 		date   rsrc.Day
 		step   int
 		count  int
@@ -88,22 +79,15 @@ func TestTablePlain(t *testing.T) {
 		str    string
 	}{
 		{
-			charts.Charts{},
+			charts.FromMap(map[string][]float64{}),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, true,
 			"",
 		},
 		{
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"A": 1.33},
-					{"A": 2},
-					{"A": 3},
-					{"A": 4},
-					{"A": 5},
-					{"A": 6},
-					{"A": 7},
-				}, rsrc.ParseDay("2012-01-01")),
+			charts.FromMap(map[string][]float64{
+				"A": {1.33, 2, 3, 4, 5, 6, 7},
+			}),
 			rsrc.ParseDay("2012-01-01"),
 			3, 1, true,
 			"A: 1.33, 4, 7\n",
@@ -138,7 +122,7 @@ func TestTablePlain(t *testing.T) {
 
 func TestTableHTML(t *testing.T) {
 	cases := []struct {
-		charts charts.Charts
+		charts charts.LazyCharts
 		date   rsrc.Day
 		step   int
 		count  int
@@ -146,22 +130,15 @@ func TestTableHTML(t *testing.T) {
 		str    string
 	}{
 		{
-			charts.Charts{},
+			charts.FromMap(map[string][]float64{}),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, true,
-			"",
+			"<table></table>",
 		},
 		{
-			charts.CompileArtists(
-				[]map[string]float64{
-					{"A": 1.33},
-					{"A": 2},
-					{"A": 3},
-					{"A": 4},
-					{"A": 5},
-					{"A": 6},
-					{"A": 7},
-				}, rsrc.ParseDay("2012-01-01")),
+			charts.FromMap(map[string][]float64{
+				"A": {1.33, 2, 3, 4, 5, 6, 7},
+			}),
 			rsrc.ParseDay("2012-01-01"),
 			3, 1, true,
 			"<table><tr><td>A</td><td>1.33</td><td>4</td><td>7</td></tr></table>",
