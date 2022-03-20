@@ -79,23 +79,20 @@ func getOutCharts(
 		return nil, err
 	}
 
-	var base, gaussian, normalized charts.LazyCharts
+	var base charts.LazyCharts
 	switch {
 	case cmd.keys == "song" && cmd.duration:
 		base = charts.SongsDuration(plays)
-		gaussian = charts.ArtistsDuration(plays)
 	case cmd.keys == "song" && !cmd.duration:
 		base = charts.Songs(plays)
-		gaussian = charts.ArtistsDuration(plays)
 	case cmd.duration:
 		base = charts.ArtistsDuration(plays)
-		gaussian = base
 	default:
 		base = charts.Artists(plays)
-		gaussian = charts.ArtistsDuration(plays)
 	}
 
-	normalized = charts.NormalizeGaussian(base, 7, 2*7+1, true, false)
+	gaussian := charts.Gaussian(base, 7, 2*7+1, true, false)
+	normalized := charts.NormalizeColumn(gaussian)
 
 	if cmd.normalized {
 		base = normalized

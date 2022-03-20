@@ -53,16 +53,6 @@ func NormalizeColumn(c LazyCharts) LazyCharts {
 	return newNormalizer(c, ColumnSum(c))
 }
 
-func NormalizeGaussian(
-	c LazyCharts,
-	sigma float64,
-	width int,
-	mirrorBegin, mirrorEnd bool) LazyCharts {
-
-	smooth := Cache(Gaussian(c, sigma, width, mirrorBegin, mirrorEnd))
-	return newNormalizer(smooth, ColumnSum(smooth))
-}
-
 func (c *normalizer) Column(titles []Title, index int) []float64 {
 	data := c.Data(titles, index, index+1)
 	tvm := make([]float64, len(titles))

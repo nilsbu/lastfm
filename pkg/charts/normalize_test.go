@@ -1,7 +1,6 @@
 package charts_test
 
 import (
-	"math"
 	"sort"
 	"testing"
 
@@ -25,9 +24,6 @@ func mapCharts(data map[string][]float64) charts.LazyCharts {
 }
 
 func TestNormalizer(t *testing.T) {
-	f := 1 / math.Sqrt(2*math.Pi)
-	m := []float64{f * math.Exp(0), f * math.Exp(-.5), f * math.Exp(-2)}
-
 	for _, c := range []struct {
 		name           string
 		actual, expect charts.LazyCharts
@@ -43,32 +39,6 @@ func TestNormalizer(t *testing.T) {
 				"A": {.25, .5, .0625, 0, 0, .5},
 				"B": {.25, 0, .875, .5, 0, .5},
 				"C": {.5, .5, .0625, .5, 0, 0},
-			}),
-		},
-		{
-			"NormalizeGaussian",
-			charts.NormalizeGaussian(mapCharts(map[string][]float64{
-				"A": {0, 0, 1, 0, 0, 1},
-				"B": {1, 0, 0, 2, 0, 0},
-			}), 1, 2, true, true),
-			mapCharts(map[string][]float64{
-				"A": {
-					(0*m[0] + 0*m[1] + 1*m[2]) / (1*m[0] + 1*m[1] + 1*m[2]),
-					(0*m[0] + 1*m[1] + 0*m[2]) / (0*m[0] + 2*m[1] + 3*m[2]),
-					(1*m[0] + 0*m[1] + 0*m[2]) / (1*m[0] + 2*m[1] + 1*m[2]),
-					(0*m[0] + 1*m[1] + 1*m[2]) / (2*m[0] + 1*m[1] + 1*m[2]),
-					(0*m[0] + 1*m[1] + 2*m[2]) / (0*m[0] + 3*m[1] + 2*m[2]),
-					(1*m[0] + 1*m[1] + 0*m[2]) / (1*m[0] + 1*m[1] + 2*m[2]),
-				},
-				"B": {
-					(1*m[0] + 1*m[1] + 0*m[2]) / (1*m[0] + 1*m[1] + 1*m[2]),
-					(0*m[0] + 1*m[1] + 3*m[2]) / (0*m[0] + 2*m[1] + 3*m[2]),
-					(0*m[0] + 2*m[1] + 1*m[2]) / (1*m[0] + 2*m[1] + 1*m[2]),
-					(2*m[0] + 0*m[1] + 0*m[2]) / (2*m[0] + 1*m[1] + 1*m[2]),
-					(0*m[0] + 2*m[1] + 0*m[2]) / (0*m[0] + 3*m[1] + 2*m[2]),
-					(0*m[0] + 0*m[1] + 2*m[2]) / (1*m[0] + 1*m[1] + 2*m[2]),
-					// 1,
-				},
 			}),
 		},
 	} {
