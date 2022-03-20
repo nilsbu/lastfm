@@ -11,27 +11,28 @@ type LazyCharts interface {
 }
 
 type charts struct {
-	titles []Title
-	values map[string][]float64
+	songs   [][]Song
+	key     func(Song) Title
+	value   func(Song) float64
+	jobChan chan compileJob
+	titles  []Title
+	values  map[string][]float64
 }
+type compileJob chan<- interface{}
 
 // Artists compiles LazyCharts in which all songs by an artist are grouped.
 func Artists(songs [][]Song) LazyCharts {
-	return compileCharts(
-		songs,
+	return new(songs,
 		func(s Song) Title { return ArtistTitle(s.Artist) },
-		func(s Song) float64 { return 1.0 },
-	)
+		func(s Song) float64 { return 1.0 })
 }
 
 // ArtistsDuration compiles LazyCharts in which all songs by an artist are
 // grouped. The songs are weighted by duration before they are summed up.
 func ArtistsDuration(songs [][]Song) LazyCharts {
-	return compileCharts(
-		songs,
+	return new(songs,
 		func(s Song) Title { return ArtistTitle(s.Artist) },
-		fDuration,
-	)
+		fDuration)
 }
 
 func fDuration(s Song) float64 {
@@ -44,46 +45,68 @@ func fDuration(s Song) float64 {
 
 // Songs compiles LazyCharts in which all songs are listed separately.
 func Songs(songs [][]Song) LazyCharts {
-	return compileCharts(
-		songs,
+	return new(songs,
 		func(s Song) Title { return SongTitle(s) },
-		func(s Song) float64 { return 1.0 },
-	)
+		func(s Song) float64 { return 1.0 })
 }
 
 // SongsDuration compiles LazyCharts in which all songs are listed separately.
 // The songs are weighted by duration.
 func SongsDuration(songs [][]Song) LazyCharts {
-	return compileCharts(
-		songs,
+	return new(songs,
 		func(s Song) Title { return SongTitle(s) },
-		fDuration,
-	)
+		fDuration)
 }
 
-func compileCharts(
-	songs [][]Song,
-	key func(Song) Title,
-	value func(Song) float64) *charts {
-	charts := &charts{
-		values: map[string][]float64{},
-		titles: []Title{},
+func new(songs [][]Song, key func(Song) Title, value func(Song) float64) *charts {
+	job := make(chan compileJob)
+	c := &charts{
+		songs:   songs,
+		key:     key,
+		value:   value,
+		jobChan: job,
 	}
+	go c.compileWorker()
+	return c
+}
 
-	for d, day := range songs {
+func (c *charts) compileWorker() {
+	for {
+		select {
+		case back := <-c.jobChan:
+			if c.songs != nil {
+				c.compile()
+			}
+			back <- nil
+		}
+	}
+}
+
+func (c *charts) compile() {
+	c.values = map[string][]float64{}
+	c.titles = []Title{}
+
+	// TODO can this be parallelized?
+	for d, day := range c.songs {
 		for _, song := range day {
-			k := key(song)
-			if line, ok := charts.values[k.Key()]; ok {
-				line[d] += value(song)
+			k := c.key(song)
+			if line, ok := c.values[k.Key()]; ok {
+				line[d] += c.value(song)
 			} else {
-				charts.titles = append(charts.titles, k)
-				charts.values[k.Key()] = make([]float64, len(songs))
-				charts.values[k.Key()][d] = value(song)
+				c.titles = append(c.titles, k)
+				c.values[k.Key()] = make([]float64, len(c.songs))
+				c.values[k.Key()][d] = c.value(song)
 			}
 		}
 	}
 
-	return charts
+	c.songs = nil
+}
+
+func (c *charts) await() {
+	back := make(chan interface{})
+	c.jobChan <- back
+	<-back
 }
 
 func FromMap(data map[string][]float64) LazyCharts {
@@ -104,6 +127,10 @@ func FromMap(data map[string][]float64) LazyCharts {
 }
 
 func (l *charts) Column(titles []Title, index int) []float64 {
+	if l.songs != nil {
+		l.await()
+	}
+
 	col := make([]float64, len(titles))
 	for i, t := range titles {
 		col[i] = l.values[t.Key()][index]
@@ -112,6 +139,10 @@ func (l *charts) Column(titles []Title, index int) []float64 {
 }
 
 func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
+	if l.songs != nil {
+		l.await()
+	}
+
 	data := make([][]float64, len(titles))
 	for i, t := range titles {
 		data[i] = l.values[t.Key()][begin:end]
@@ -120,11 +151,19 @@ func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
 }
 
 func (l *charts) Titles() []Title {
+	if l.songs != nil {
+		l.await()
+	}
+
 	// assumption: noone touches the return value
 	return l.titles
 }
 
 func (l *charts) Len() int {
+	if l.songs != nil {
+		l.await()
+	}
+
 	for _, line := range l.values {
 		return len(line)
 	}
