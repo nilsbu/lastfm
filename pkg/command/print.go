@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/config"
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
@@ -53,15 +54,29 @@ func getOutCharts(
 		return nil, err
 	}
 
+	corrections, err := unpack.LoadArtistCorrections(session.User, r)
+	if err != nil {
+		return nil, err
+	}
+
 	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
 	plays := make([][]charts.Song, days+1)
-	for i := 0; i < days+1; i++ {
+	err = async.Pie(days+1, func(i int) error {
 		day := user.Registered.AddDate(0, 0, i)
 		if songs, err := unpack.LoadDayHistory(session.User, day, r); err == nil {
+			for j, song := range songs {
+				if c, ok := corrections[song.Artist]; ok {
+					songs[j].Artist = c
+				}
+			}
 			plays[i] = songs
+			return nil
 		} else {
-			return nil, err
+			return err
 		}
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	var base, gaussian, normalized charts.LazyCharts
@@ -167,7 +182,7 @@ func loadArtistTags(
 
 	tags, err := organize.LoadArtistTags(keys, r)
 	if err != nil {
-		for _, e := range err.(*organize.MultiError).Errs {
+		for _, e := range err.(*async.MultiError).Errs {
 			switch e := e.(type) {
 			case *unpack.LastfmError:
 				// TODO can this be tested?

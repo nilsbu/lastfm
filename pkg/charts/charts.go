@@ -30,8 +30,16 @@ func ArtistsDuration(songs [][]Song) LazyCharts {
 	return compileCharts(
 		songs,
 		func(s Song) Title { return ArtistTitle(s.Artist) },
-		func(s Song) float64 { return s.Duration },
+		fDuration,
 	)
+}
+
+func fDuration(s Song) float64 {
+	if s.Duration == 0 {
+		return 4
+	} else {
+		return s.Duration
+	}
 }
 
 // Songs compiles LazyCharts in which all songs are listed separately.
@@ -49,7 +57,7 @@ func SongsDuration(songs [][]Song) LazyCharts {
 	return compileCharts(
 		songs,
 		func(s Song) Title { return SongTitle(s) },
-		func(s Song) float64 { return s.Duration },
+		fDuration,
 	)
 }
 

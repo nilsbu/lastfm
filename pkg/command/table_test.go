@@ -17,14 +17,13 @@ func TestTable(t *testing.T) {
 	user := "TestUser"
 
 	cases := []struct {
-		descr          string
-		user           *unpack.User
-		history        [][]charts.Song
-		hasCharts      bool
-		correctionsRaw []byte
-		cmd            command
-		table          *format.Table
-		ok             bool
+		descr     string
+		user      *unpack.User
+		history   [][]charts.Song
+		hasCharts bool
+		cmd       command
+		table     *format.Table
+		ok        bool
 	}{
 		{
 			"no user",
@@ -34,7 +33,6 @@ func TestTable(t *testing.T) {
 				{},
 				{{Artist: "X"}},
 			}, true,
-			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
 				step:        1,
@@ -46,7 +44,6 @@ func TestTable(t *testing.T) {
 			"no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			[][]charts.Song{}, false,
-			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
 				step:        1,
@@ -62,7 +59,6 @@ func TestTable(t *testing.T) {
 				{},
 				{{Artist: "X"}},
 			}, true,
-			nil,
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
 				step:        1,
@@ -85,7 +81,6 @@ func TestTable(t *testing.T) {
 				{},
 				{{Artist: "X"}},
 			}, true,
-			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
 				step:        1,
@@ -108,7 +103,6 @@ func TestTable(t *testing.T) {
 				{},
 				{{Artist: "X"}},
 			}, true,
-			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 3},
 				step:        2,
@@ -131,7 +125,6 @@ func TestTable(t *testing.T) {
 		// 			{"X": 1}, {"X": 0}, {"X": 1}, {"X": 5},
 		// 		}, rsrc.ParseDay("2017-12-30")), true,
 		// 	// &charts.Charts{"X": []float64{1, 0, 1, 5}},
-		// 	[]byte("{}"),
 		// 	tablePeriods{
 		// 		printCharts: printCharts{by: "all", n: 10},
 		// 		period:      "y",
@@ -150,7 +143,6 @@ func TestTable(t *testing.T) {
 		// 	"table period; charts broken",
 		// 	&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
 		// 	&charts.Charts{"X": []float64{1, 0, 1, 5}},
-		// 	[]byte("{}"),
 		// 	tablePeriods{
 		// 		printCharts: printCharts{by: "allxxx", n: 10},
 		// 		period:      "y",
@@ -161,7 +153,6 @@ func TestTable(t *testing.T) {
 		// 	"table period; no user",
 		// 	&unpack.User{Name: "no one", Registered: rsrc.ParseDay("2017-12-30")},
 		// 	&charts.Charts{"X": []float64{1, 0, 1, 5}},
-		// 	[]byte("{}"),
 		// 	tablePeriods{
 		// 		printCharts: printCharts{by: "all", n: 10},
 		// 		period:      "y",
@@ -177,7 +168,6 @@ func TestTable(t *testing.T) {
 				{{Artist: "X"}},
 				{{Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}},
 			}, true,
-			[]byte("{}"),
 			tablePeriods{
 				printCharts: printCharts{by: "all", n: 10},
 				period:      "invalid",
@@ -191,7 +181,7 @@ func TestTable(t *testing.T) {
 			expectedFiles := map[rsrc.Locator][]byte{
 				rsrc.SongHistory(user):       nil,
 				rsrc.Bookmark(user):          nil,
-				rsrc.ArtistCorrections(user): c.correctionsRaw,
+				rsrc.ArtistCorrections(user): []byte(`{"corrections": {}}`),
 				rsrc.UserInfo(user):          nil}
 
 			if c.user != nil && c.hasCharts {

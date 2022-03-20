@@ -833,7 +833,7 @@ func TestPrint(t *testing.T) {
 				map[rsrc.Locator][]byte{
 					rsrc.SongHistory(user):       nil,
 					rsrc.Bookmark(user):          nil,
-					rsrc.ArtistCorrections(user): nil,
+					rsrc.ArtistCorrections(user): []byte(`{"corrections": {}}`),
 					rsrc.UserInfo(user):          nil,
 					rsrc.ArtistTags("X"):         nil,
 					rsrc.ArtistTags("Y"):         nil,
