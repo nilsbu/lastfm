@@ -64,34 +64,20 @@ func getOutCharts(
 		}
 	}
 
-	plays2 := make([][]charts.Song, len(plays))
-	for i, day := range plays {
-		day2 := make([]charts.Song, len(day))
-		for j, play := range day {
-			day2[j] = charts.Song{
-				Artist:   play.Artist,
-				Album:    play.Album,
-				Title:    play.Title,
-				Duration: play.Duration,
-			}
-		}
-		plays2[i] = day2
-	}
-
 	var base, gaussian, normalized charts.LazyCharts
 	switch {
 	case cmd.keys == "song" && cmd.duration:
-		base = charts.SongsDuration(plays2)
-		gaussian = charts.ArtistsDuration(plays2)
+		base = charts.SongsDuration(plays)
+		gaussian = charts.ArtistsDuration(plays)
 	case cmd.keys == "song" && !cmd.duration:
-		base = charts.Songs(plays2)
-		gaussian = charts.ArtistsDuration(plays2)
+		base = charts.Songs(plays)
+		gaussian = charts.ArtistsDuration(plays)
 	case cmd.duration:
-		base = charts.ArtistsDuration(plays2)
+		base = charts.ArtistsDuration(plays)
 		gaussian = base
 	default:
-		base = charts.Artists(plays2)
-		gaussian = charts.ArtistsDuration(plays2)
+		base = charts.Artists(plays)
+		gaussian = charts.ArtistsDuration(plays)
 	}
 
 	normalized = charts.NormalizeGaussian(base, 7, 2*7+1, true, false)
