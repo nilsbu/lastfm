@@ -49,7 +49,7 @@ func newNormalizer(parent LazyCharts, totals LazyCharts) *normalizer {
 	return n
 }
 
-func NormalizeColumn(c LazyCharts) LazyCharts {
+func Normalize(c LazyCharts) LazyCharts {
 	return newNormalizer(c, ColumnSum(c))
 }
 

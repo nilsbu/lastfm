@@ -97,7 +97,7 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"single column normalizer",
-			charts.NormalizeColumn(charts.Artists([][]charts.Song{
+			charts.Normalize(charts.Artists([][]charts.Song{
 				{
 					charts.Song{Artist: "A"}, charts.Song{Artist: "A"},
 					charts.Song{Artist: "B"},

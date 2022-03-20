@@ -92,7 +92,7 @@ func getOutCharts(
 	}
 
 	gaussian := charts.Gaussian(base, 7, 2*7+1, true, false)
-	normalized := charts.NormalizeColumn(gaussian)
+	normalized := charts.Normalize(gaussian)
 
 	if cmd.normalized {
 		base = normalized

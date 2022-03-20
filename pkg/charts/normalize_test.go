@@ -30,7 +30,7 @@ func TestNormalizer(t *testing.T) {
 	}{
 		{
 			"NormalizeColumn",
-			charts.NormalizeColumn(mapCharts(map[string][]float64{
+			charts.Normalize(mapCharts(map[string][]float64{
 				"A": {1, 2, 1, 0, 0, 1},
 				"B": {1, 0, 14, 1, 0, 1},
 				"C": {2, 2, 1, 1, 0, 0},
