@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 )
 
 func TestChartsCSV(t *testing.T) {
 	cases := []struct {
 		name       string
-		charts     charts2.LazyCharts
+		charts     charts.LazyCharts
 		col        int
 		n          int
 		numbered   bool
@@ -21,13 +21,13 @@ func TestChartsCSV(t *testing.T) {
 	}{
 		{
 			"empty charts",
-			charts2.FromMap(map[string][]float64{}),
+			charts.FromMap(map[string][]float64{}),
 			-1, 3, false, 0, false, ".",
 			"\"Name\";\"Value\"\n",
 		},
 		{
 			"1",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"ABC": {123.4},
 					"X":   {1.238},
@@ -37,7 +37,7 @@ func TestChartsCSV(t *testing.T) {
 		},
 		{
 			"percentage with no total",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"a": {12},
 					"b": {4},
@@ -47,7 +47,7 @@ func TestChartsCSV(t *testing.T) {
 		},
 		{
 			"comma for decimals",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"a": {12.1},
 					"b": {4},
@@ -81,7 +81,7 @@ func TestChartsCSV(t *testing.T) {
 func TestChartsPlain(t *testing.T) {
 	cases := []struct {
 		name       string
-		charts     charts2.LazyCharts
+		charts     charts.LazyCharts
 		col        int
 		n          int
 		numbered   bool
@@ -91,13 +91,13 @@ func TestChartsPlain(t *testing.T) {
 	}{
 		{
 			"empty charts",
-			charts2.FromMap(map[string][]float64{}),
+			charts.FromMap(map[string][]float64{}),
 			-1, 3, false, 0, false,
 			"",
 		},
 		{
 			"simple one-liner",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"ABC": {1, 2, 3},
 				}),
@@ -106,7 +106,7 @@ func TestChartsPlain(t *testing.T) {
 		},
 		{
 			"alignment correct",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"AKSLJDHLJKH": {1},
 					"AB":          {3},
@@ -117,7 +117,7 @@ func TestChartsPlain(t *testing.T) {
 		},
 		{
 			"correct precision",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"ABC": {123.4},
 					"X":   {1.238},
@@ -127,7 +127,7 @@ func TestChartsPlain(t *testing.T) {
 		},
 		{
 			"numbered",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"A": {10}, "B": {9}, "C": {8},
 					"D": {7}, "E": {6}, "F": {5},
@@ -139,7 +139,7 @@ func TestChartsPlain(t *testing.T) {
 		},
 		{
 			"percentage with sum total",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"AKSLJDHLJKH": {1},
 					"AB":          {3},
@@ -150,7 +150,7 @@ func TestChartsPlain(t *testing.T) {
 		},
 		{
 			"zero percentage",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"AB": {0},
 				}),
@@ -183,7 +183,7 @@ func TestChartsPlain(t *testing.T) {
 func TestChartsHTML(t *testing.T) {
 	cases := []struct {
 		name       string
-		charts     charts2.LazyCharts
+		charts     charts.LazyCharts
 		col        int
 		n          int
 		numbered   bool
@@ -193,7 +193,7 @@ func TestChartsHTML(t *testing.T) {
 	}{
 		{
 			"alignment correct",
-			charts2.FromMap(
+			charts.FromMap(
 				map[string][]float64{
 					"AKSLJDHLJKH": {1},
 					"AB":          {3},

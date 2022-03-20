@@ -5,12 +5,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type Table struct {
-	Charts charts2.LazyCharts
+	Charts charts.LazyCharts
 	First  rsrc.Day
 	Step   int
 	Count  int
@@ -66,7 +66,7 @@ func (f *Table) formatBody(
 		pattern = "%v%v"
 	}
 
-	titles := charts2.Top(f.Charts, f.Count)
+	titles := charts.Top(f.Charts, f.Count)
 	data := f.Charts.Data(titles, 0, f.Charts.Len())
 
 	for t, x := range titles {

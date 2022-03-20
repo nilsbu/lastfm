@@ -3,7 +3,7 @@ package unpack
 import (
 	"fmt"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -88,7 +88,7 @@ func (o *obUserInfo) raw(obj interface{}) interface{} {
 
 // HistoryDayPage is a single page of a day of a user's played tracks.
 type HistoryDayPage struct {
-	Plays []charts2.Song
+	Plays []charts.Song
 	Pages int
 }
 
@@ -132,12 +132,12 @@ func (o *obHistory) interpret(raw interface{}) (interface{}, error) {
 		data.RecentTracks.Attr.TotalPages}, nil
 }
 
-func countPlays(urt *jsonUserRecentTracks) []charts2.Song {
-	plays := []charts2.Song{}
+func countPlays(urt *jsonUserRecentTracks) []charts.Song {
+	plays := []charts.Song{}
 	for _, track := range urt.RecentTracks.Track {
 		if !track.Attr.NowPlaying {
 
-			plays = append(plays, charts2.Song{
+			plays = append(plays, charts.Song{
 				Artist: track.Artist.Str,
 				Title:  track.Name,
 				Album:  track.Album.Str,
@@ -267,16 +267,16 @@ type obTagInfo struct {
 }
 
 // LoadTagInfo loads tag information.
-func LoadTagInfo(tag string, l Loader) (*charts2.Tag, error) {
+func LoadTagInfo(tag string, l Loader) (*charts.Tag, error) {
 	data, err := l.load(&obTagInfo{tag})
 	if err != nil {
 		return nil, err
 	}
-	return data.(*charts2.Tag), nil
+	return data.(*charts.Tag), nil
 }
 
 // WriteTagInfo writes tag infos.
-func WriteTagInfo(tag *charts2.Tag, w rsrc.Writer) error {
+func WriteTagInfo(tag *charts.Tag, w rsrc.Writer) error {
 	return deposit(tag, &obTagInfo{name: tag.Name}, w)
 }
 
@@ -291,14 +291,14 @@ func (o *obTagInfo) deserializer() interface{} {
 func (o *obTagInfo) interpret(raw interface{}) (interface{}, error) {
 	tag := raw.(*jsonTagInfo)
 
-	return &charts2.Tag{
+	return &charts.Tag{
 		Name:  tag.Tag.Name,
 		Total: tag.Tag.Total,
 		Reach: tag.Tag.Reach}, nil
 }
 
 func (o *obTagInfo) raw(obj interface{}) interface{} {
-	tag := obj.(*charts2.Tag)
+	tag := obj.(*charts.Tag)
 	js := jsonTagInfo{Tag: jsonTagTag{
 		Name:  tag.Name,
 		Total: tag.Total,

@@ -4,7 +4,7 @@ package command
 // 	"fmt"
 // 	"time"
 
-// 	"github.com/nilsbu/lastfm/pkg/charts2"
+// 	"github.com/nilsbu/lastfm/pkg/charts
 // 	"github.com/nilsbu/lastfm/pkg/display"
 // 	"github.com/nilsbu/lastfm/pkg/format"
 // 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -33,7 +33,7 @@ package command
 // 	}
 
 // 	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
-// 	plays := make([][]charts2.Song, days+1)
+// 	plays := make([][]charts.Song, days+1)
 // 	for i := 0; i < days+1; i++ {
 // 		day := user.Registered.AddDate(0, 0, i)
 // 		if songs, err := unpack.LoadDayHistory(session.User, day, s); err == nil {
@@ -44,7 +44,7 @@ package command
 // 	}
 
 // 	// cha := charts.ArtistsFromSongs(plays, user.Registered)
-// 	cha := charts2.ArtistsDuration(plays)
+// 	cha := chartsArtistsDuration(plays)
 
 // 	// replace, err := unpack.LoadArtistCorrections(session.User, s)
 // 	// if err == nil {

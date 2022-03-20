@@ -1,4 +1,4 @@
-package charts2
+package charts
 
 func fromBeginRange(size, begin, end int) (b, e int) {
 	return 0, end

@@ -1,4 +1,4 @@
-package charts2
+package charts
 
 import "math"
 

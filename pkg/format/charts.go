@@ -8,11 +8,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 )
 
 type Charts struct {
-	Charts     charts2.LazyCharts
+	Charts     charts.LazyCharts
 	Column     int
 	Count      int
 	Numbered   bool
@@ -45,10 +45,10 @@ func (f *Charts) HTML(w io.Writer) error {
 }
 
 func (f *Charts) column() *Column {
-	col := charts2.Column(f.Charts, -1)
-	cache := charts2.Cache(col)
+	col := charts.Column(f.Charts, -1)
+	cache := charts.Cache(col)
 	sumTotal := 0.
-	if totals := charts2.ColumnSum(cache).Data([]charts2.Title{charts2.KeyTitle("total")}, 0, 1)[0]; len(totals) > 0 {
+	if totals := charts.ColumnSum(cache).Data([]charts.Title{charts.KeyTitle("total")}, 0, 1)[0]; len(totals) > 0 {
 		sumTotal = totals[0]
 	}
 
@@ -56,7 +56,7 @@ func (f *Charts) column() *Column {
 	if n == 0 {
 		n = 10
 	}
-	top := charts2.Only(cache, charts2.Top(cache, n))
+	top := charts.Only(cache, charts.Top(cache, n))
 
 	return &Column{
 		Column:     top,
@@ -68,7 +68,7 @@ func (f *Charts) column() *Column {
 }
 
 type Column struct {
-	Column     charts2.LazyCharts
+	Column     charts.LazyCharts
 	Numbered   bool
 	Precision  int
 	Percentage bool
@@ -104,7 +104,7 @@ func (f *Column) format(
 
 	io.WriteString(w, header)
 
-	var outCol charts2.LazyCharts
+	var outCol charts.LazyCharts
 	if f.Percentage {
 		outCol = f.getPercentageColumn()
 	} else {
@@ -184,7 +184,7 @@ func (f *Column) getScorePattern() (pattern string) {
 	return pattern
 }
 
-func (f *Column) getPercentageColumn() charts2.LazyCharts {
+func (f *Column) getPercentageColumn() charts.LazyCharts {
 	sum := f.SumTotal
 
 	result := map[string][]float64{}
@@ -199,7 +199,7 @@ func (f *Column) getPercentageColumn() charts2.LazyCharts {
 		}
 	}
 
-	return charts2.FromMap(result)
+	return charts.FromMap(result)
 }
 
 func (f *Column) getMaxNameLen() int {

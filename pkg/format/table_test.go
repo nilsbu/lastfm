@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func TestTableCSV(t *testing.T) {
 	cases := []struct {
-		charts  charts2.LazyCharts
+		charts  charts.LazyCharts
 		date    rsrc.Day
 		step    int
 		count   int
@@ -19,13 +19,13 @@ func TestTableCSV(t *testing.T) {
 		str     string
 	}{
 		{
-			charts2.FromMap(map[string][]float64{}),
+			charts.FromMap(map[string][]float64{}),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, ",", true,
 			"\"name\";\n",
 		},
 		{
-			charts2.FromMap(map[string][]float64{
+			charts.FromMap(map[string][]float64{
 				"ABC": {1.25, 2},
 				"X":   {2, 3},
 			}),
@@ -34,7 +34,7 @@ func TestTableCSV(t *testing.T) {
 			"\"name\";2012-01-01;2012-01-02\n\"X\";2;3\n\"ABC\";1,25;2\n",
 		},
 		{
-			charts2.FromMap(map[string][]float64{
+			charts.FromMap(map[string][]float64{
 				"A": {1, 2, 3, 4, 5, 6, 7},
 			}),
 			rsrc.ParseDay("2012-01-01"),
@@ -71,7 +71,7 @@ func TestTableCSV(t *testing.T) {
 
 func TestTablePlain(t *testing.T) {
 	cases := []struct {
-		charts charts2.LazyCharts
+		charts charts.LazyCharts
 		date   rsrc.Day
 		step   int
 		count  int
@@ -79,13 +79,13 @@ func TestTablePlain(t *testing.T) {
 		str    string
 	}{
 		{
-			charts2.FromMap(map[string][]float64{}),
+			charts.FromMap(map[string][]float64{}),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, true,
 			"",
 		},
 		{
-			charts2.FromMap(map[string][]float64{
+			charts.FromMap(map[string][]float64{
 				"A": {1.33, 2, 3, 4, 5, 6, 7},
 			}),
 			rsrc.ParseDay("2012-01-01"),
@@ -122,7 +122,7 @@ func TestTablePlain(t *testing.T) {
 
 func TestTableHTML(t *testing.T) {
 	cases := []struct {
-		charts charts2.LazyCharts
+		charts charts.LazyCharts
 		date   rsrc.Day
 		step   int
 		count  int
@@ -130,13 +130,13 @@ func TestTableHTML(t *testing.T) {
 		str    string
 	}{
 		{
-			charts2.FromMap(map[string][]float64{}),
+			charts.FromMap(map[string][]float64{}),
 			rsrc.ParseDay("2012-01-01"),
 			1, 2, true,
 			"<table></table>",
 		},
 		{
-			charts2.FromMap(map[string][]float64{
+			charts.FromMap(map[string][]float64{
 				"A": {1.33, 2, 3, 4, 5, 6, 7},
 			}),
 			rsrc.ParseDay("2012-01-01"),

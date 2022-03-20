@@ -1,4 +1,4 @@
-package charts2
+package charts
 
 import (
 	"reflect"
@@ -114,7 +114,7 @@ func TestCharts(t *testing.T) {
 			},
 		},
 		{
-			"chartsFromMap",
+			"charts.FromMap",
 			FromMap(map[string][]float64{
 				"A": {1, 1},
 				"B": {1, 0},

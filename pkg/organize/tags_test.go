@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 	"github.com/pkg/errors"
@@ -26,7 +26,7 @@ func TestLoadArtistTags(t *testing.T) {
 	cases := []struct {
 		files    map[rsrc.Locator][]byte
 		artists  []string
-		tags     map[string][]charts2.Tag
+		tags     map[string][]charts.Tag
 		hasError bool
 		hasFatal bool
 	}{
@@ -43,7 +43,7 @@ func TestLoadArtistTags(t *testing.T) {
 				rsrc.TagInfo("t0"):      []byte(`{"tag":{"name":"t0","total":1024,"reach":42}}`),
 			},
 			[]string{"asdf", "basd"},
-			map[string][]charts2.Tag{
+			map[string][]charts.Tag{
 				"asdf": {{Name: "t0", Total: 1024, Reach: 42, Weight: 100}},
 				"basd": {{Name: "t0", Total: 1024, Reach: 42, Weight: 20}},
 			},
@@ -62,7 +62,7 @@ func TestLoadArtistTags(t *testing.T) {
 				rsrc.TagInfo("UPPER"):   []byte(`{"tag":{"name":"UPPER","total":1024,"reach":42}}`),
 			},
 			[]string{"asdf"},
-			map[string][]charts2.Tag{
+			map[string][]charts.Tag{
 				"asdf": {{Name: "upper", Total: 1024, Reach: 42, Weight: 100}},
 			},
 			false, false,
@@ -74,7 +74,7 @@ func TestLoadArtistTags(t *testing.T) {
 				rsrc.TagInfo("UPPER"):   []byte(`{"tag":{"name":"UPPER","total":1024,"reach":42}}`),
 			},
 			[]string{"err", "asdf"},
-			map[string][]charts2.Tag{
+			map[string][]charts.Tag{
 				"err":  nil,
 				"asdf": {{Name: "upper", Total: 1024, Reach: 42, Weight: 100}},
 			},

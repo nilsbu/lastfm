@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -19,7 +19,7 @@ func TestTable(t *testing.T) {
 	cases := []struct {
 		descr          string
 		user           *unpack.User
-		history        [][]charts2.Song
+		history        [][]charts.Song
 		hasCharts      bool
 		correctionsRaw []byte
 		cmd            command
@@ -29,7 +29,7 @@ func TestTable(t *testing.T) {
 		{
 			"no user",
 			nil,
-			[][]charts2.Song{
+			[][]charts.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -45,7 +45,7 @@ func TestTable(t *testing.T) {
 		{
 			"no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts2.Song{}, false,
+			[][]charts.Song{}, false,
 			[]byte("{}"),
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
@@ -57,7 +57,7 @@ func TestTable(t *testing.T) {
 		{
 			"no corrections",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts2.Song{
+			[][]charts.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -68,7 +68,7 @@ func TestTable(t *testing.T) {
 				step:        1,
 			},
 			&format.Table{
-				Charts: charts2.FromMap(map[string][]float64{
+				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
 				First: rsrc.ParseDay("2018-01-01"),
@@ -80,7 +80,7 @@ func TestTable(t *testing.T) {
 		{
 			"ok", // TODO
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts2.Song{
+			[][]charts.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -91,7 +91,7 @@ func TestTable(t *testing.T) {
 				step:        1,
 			},
 			&format.Table{
-				Charts: charts2.FromMap(map[string][]float64{
+				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
 				First: rsrc.ParseDay("2018-01-01"),
@@ -103,7 +103,7 @@ func TestTable(t *testing.T) {
 		{
 			"ok, different values", // TODO
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts2.Song{
+			[][]charts.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -114,7 +114,7 @@ func TestTable(t *testing.T) {
 				step:        2,
 			},
 			&format.Table{
-				Charts: charts2.FromMap(map[string][]float64{
+				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
 				First: rsrc.ParseDay("2018-01-01"),
@@ -171,7 +171,7 @@ func TestTable(t *testing.T) {
 		{
 			"table period; false period",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-			[][]charts2.Song{
+			[][]charts.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},

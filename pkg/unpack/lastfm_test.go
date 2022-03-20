@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -142,7 +142,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 			[]byte(`{"recenttracks":{"track":[` + song1 + `,` + song2 + `], "@attr":{"totalPages":"1"}}}`),
 			"user", rsrc.ToDay(86400), 1,
 			&HistoryDayPage{
-				[]charts2.Song{
+				[]charts.Song{
 					{
 						Artist: "ASDF",
 						Title:  "x",
@@ -160,7 +160,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 			[]byte(`{"recenttracks":{"@attr":{"page":"1","total":"0","user":"NBooN","perPage":"200","totalPages":"0"},"track":{"artist":{"mbid":"846e89f6-6257-4371-a26d-de960a60bec5","#text":"The Coup"},"@attr":{"nowplaying":"true"},"mbid":"293b4bc9-95c3-3032-a59f-53d6dfba5263","album":{"mbid":"e2f0f87f-763a-498e-9823-decef2cf62b3","#text":"Pick A Bigger Weapon"},"streamable":"0","url":"https:\/\/www.last.fm\/music\/The+Coup\/_\/My+Favorite+Mutiny","name":"My Favorite Mutiny"}}}`),
 			"user", rsrc.ToDay(86400), 1,
 			&HistoryDayPage{
-				[]charts2.Song{}, 0},
+				[]charts.Song{}, 0},
 			true,
 		},
 	}
@@ -339,25 +339,25 @@ func TestLoadTagInfo(t *testing.T) {
 	cases := []struct {
 		files map[rsrc.Locator][]byte
 		names [][]string
-		tags  []*charts2.Tag
+		tags  []*charts.Tag
 		ok    bool
 	}{
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): nil},
 			[][]string{{"african"}},
-			[]*charts2.Tag{nil},
+			[]*charts.Tag{nil},
 			false,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
 			[][]string{{"african"}},
-			[]*charts2.Tag{{}},
+			[]*charts.Tag{{}},
 			true, // no error is thrown, therefore this is acceppted
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
 			[][]string{{"african", "african"}},
-			[]*charts2.Tag{
+			[]*charts.Tag{
 				{Name: "african", Total: 55266, Reach: 10493},
 				{Name: "african", Total: 55266, Reach: 10493},
 			},
@@ -366,7 +366,7 @@ func TestLoadTagInfo(t *testing.T) {
 		{
 			map[rsrc.Locator][]byte{rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`)},
 			[][]string{{"african"}, {"african"}},
-			[]*charts2.Tag{
+			[]*charts.Tag{
 				{Name: "african", Total: 55266, Reach: 10493},
 				{Name: "african", Total: 55266, Reach: 10493},
 			},
@@ -378,7 +378,7 @@ func TestLoadTagInfo(t *testing.T) {
 				rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
 			},
 			[][]string{{"error"}, {"african"}},
-			[]*charts2.Tag{},
+			[]*charts.Tag{},
 			false,
 		},
 		{
@@ -387,7 +387,7 @@ func TestLoadTagInfo(t *testing.T) {
 				rsrc.TagInfo("african"): []byte(`{"tag":{"name":"african","total":55266,"reach":10493}}`),
 			},
 			[][]string{{"error"}, {"african"}},
-			[]*charts2.Tag{
+			[]*charts.Tag{
 				nil,
 				{Name: "african", Total: 55266, Reach: 10493}},
 			false,
@@ -408,7 +408,7 @@ func TestLoadTagInfo(t *testing.T) {
 				n += len(names)
 			}
 
-			tags := make([]*charts2.Tag, n)
+			tags := make([]*charts.Tag, n)
 			feedback := make(chan error)
 			errs := []error{}
 
@@ -453,10 +453,10 @@ func TestLoadTagInfo(t *testing.T) {
 func TestWriteLoadTagInfo(t *testing.T) {
 	// WriteTagInfo only tested in combination with loading for simplicity.
 	cases := []struct {
-		tag *charts2.Tag
+		tag *charts.Tag
 	}{
 		{
-			&charts2.Tag{Name: "african", Total: 55266, Reach: 10493},
+			&charts.Tag{Name: "african", Total: 55266, Reach: 10493},
 		},
 	}
 

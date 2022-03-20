@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts2"
+	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -115,21 +115,21 @@ func TestAllDayPlays(t *testing.T) {
 
 func TestDayHistory(t *testing.T) {
 	cases := []struct {
-		plays  []charts2.Song
+		plays  []charts.Song
 		write  bool
 		readOK bool
 	}{
 		{
-			[]charts2.Song{},
+			[]charts.Song{},
 			true, true,
 		},
 		{
-			[]charts2.Song{
+			[]charts.Song{
 				{Artist: "ABC", Title: "a", Album: "y", Duration: 1.3}},
 			false, false,
 		},
 		{
-			[]charts2.Song{
+			[]charts.Song{
 				{Artist: "ABC", Title: "|xöü#ß", Album: "", Duration: 1.3},
 				{Artist: "<<><", Title: "22", Album: "y", Duration: 4.2},
 			},

@@ -14,7 +14,7 @@ package timeline
 // }
 
 // func CompileEvents(
-// 	c charts2.LazyCharts,
+// 	c chartsLazyCharts,
 // 	registered, from, before rsrc.Day, // TODO remove registered, rename from & before
 // ) (events []Event) {
 
@@ -38,7 +38,7 @@ package timeline
 // 	events = append(events,
 // 		CompileNumberOne(
 // 			// c.Fade(365),
-// 			charts2.Fade(c, 365),
+// 			chartsFade(c, 365),
 // 			charts.Interval{Begin: from, Before: before})...)
 
 // 	sort.Sort(eventsT(events))

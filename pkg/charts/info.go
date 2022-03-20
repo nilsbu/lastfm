@@ -1,4 +1,4 @@
-package charts2
+package charts
 
 // Song contains basic information about a song.
 type Song struct {
