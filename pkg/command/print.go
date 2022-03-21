@@ -8,6 +8,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/pipeline"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -77,13 +78,6 @@ type printTotal struct {
 	date time.Time
 }
 
-type vars struct {
-	user        *unpack.User
-	bookmark    rsrc.Day
-	corrections map[string]string
-	plays       [][]charts.Song
-}
-
 func (cmd printTotal) Execute(
 	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 
@@ -100,7 +94,7 @@ func (cmd printTotal) Execute(
 	}
 	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
@@ -141,7 +135,7 @@ func (cmd printFade) Execute(
 	}
 	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
@@ -173,7 +167,7 @@ func (cmd printPeriod) Execute(
 
 	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum", fmt.Sprintf("top %v", cmd.n))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
@@ -208,7 +202,7 @@ func (cmd printInterval) Execute(
 
 	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", fmt.Sprintf("top %v", cmd.n))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
@@ -247,7 +241,7 @@ func (cmd printFadeMax) Execute(
 	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
 	steps = append(steps, "max", fmt.Sprintf("top %v", cmd.n))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err

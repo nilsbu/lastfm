@@ -1,4 +1,4 @@
-package command
+package pipeline
 
 import (
 	"fmt"
@@ -15,13 +15,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO test and move
-type Web interface {
+type Pipeline interface {
 	Execute(steps []string) (charts.Charts, error)
 	Registered() rsrc.Day
 }
 
-type web struct {
+type pipeline struct {
 	charts   map[string]charts.Charts
 	baseType string
 	vars     vars
@@ -29,18 +28,25 @@ type web struct {
 	store    io.Store
 }
 
-func newWeb(session *unpack.SessionInfo, s io.Store) Web {
-	return &web{
+type vars struct {
+	user        *unpack.User
+	bookmark    rsrc.Day
+	corrections map[string]string
+	plays       [][]charts.Song
+}
+
+func New(session *unpack.SessionInfo, s io.Store) Pipeline {
+	return &pipeline{
 		session: session,
 		store:   s,
 	}
 }
 
-func (w *web) Registered() rsrc.Day {
+func (w *pipeline) Registered() rsrc.Day {
 	return w.vars.user.Registered
 }
 
-func (w *web) Execute(steps []string) (charts.Charts, error) {
+func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
 	if w.baseType == "" {
 		if err := w.load(); err != nil {
 			return nil, err
@@ -62,7 +68,7 @@ func (w *web) Execute(steps []string) (charts.Charts, error) {
 	return parent, nil
 }
 
-func (w *web) load() error {
+func (w *pipeline) load() error {
 	err := async.Pe([]func() error{
 		func() error {
 			var err error
@@ -102,7 +108,7 @@ func (w *web) load() error {
 	})
 }
 
-func (w *web) calcDaily(s string) {
+func (w *pipeline) calcDaily(s string) {
 	w.charts = map[string]charts.Charts{}
 	switch {
 	case strings.Contains(s, "songs duration"):
@@ -125,7 +131,7 @@ func (w *web) calcDaily(s string) {
 	}
 }
 
-func (w *web) step(step string, parent charts.Charts) (charts.Charts, error) {
+func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error) {
 	split := strings.Split(step, " ")
 	switch split[0] {
 	case "id":
@@ -227,7 +233,7 @@ func partitionCongains(partition charts.Partition, name string) bool {
 	return found
 }
 
-func (w *web) getPartition(
+func (w *pipeline) getPartition(
 	step string,
 	gaussian, parent charts.Charts,
 ) (charts.Partition, error) {

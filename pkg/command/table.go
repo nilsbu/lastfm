@@ -7,6 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/pipeline"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -29,7 +30,7 @@ func (cmd tableTotal) Execute(
 	steps = setStep(steps, "sum")
 	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
@@ -73,7 +74,7 @@ func (cmd tableFade) Execute(
 		fmt.Sprintf("top %v", cmd.n),
 		fmt.Sprintf("step %vd", cmd.step))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
@@ -112,7 +113,7 @@ func (cmd tablePeriods) Execute(
 	steps = setStep(steps, "id")
 	steps = append(steps, fmt.Sprintf("periods %v", cmd.period), fmt.Sprintf("top %v", cmd.n))
 
-	w := newWeb(session, s)
+	w := pipeline.New(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
