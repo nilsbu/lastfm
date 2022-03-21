@@ -12,12 +12,6 @@ import (
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
-// TODO replace trustRanges with trusted function from charts
-func trustRanges(s string, registered rsrc.Day, l int) charts.Ranges {
-	ranges, _ := charts.ParseRanges(s, registered, l)
-	return ranges
-}
-
 func TestTable(t *testing.T) {
 	user := "TestUser"
 
@@ -72,7 +66,7 @@ func TestTable(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
-				Ranges: trustRanges("1d", rsrc.ParseDay("2018-01-01"), 3),
+				Ranges: charts.ParseRangesTrusted("1d", rsrc.ParseDay("2018-01-01"), 3),
 			},
 			true,
 		},
@@ -92,7 +86,7 @@ func TestTable(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
-				Ranges: trustRanges("1d", rsrc.ParseDay("2018-01-01"), 3),
+				Ranges: charts.ParseRangesTrusted("1d", rsrc.ParseDay("2018-01-01"), 3),
 			},
 			true,
 		},
@@ -111,7 +105,7 @@ func TestTable(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 2},
 				}),
-				Ranges: trustRanges("2d", rsrc.ParseDay("2018-01-01"), 3),
+				Ranges: charts.ParseRangesTrusted("2d", rsrc.ParseDay("2018-01-01"), 3),
 			},
 			true,
 		},
@@ -132,7 +126,7 @@ func TestTable(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 6},
 				}),
-				Ranges: trustRanges("1d", rsrc.ParseDay("2017-01-01"), 3),
+				Ranges: charts.ParseRangesTrusted("1d", rsrc.ParseDay("2017-01-01"), 3),
 			},
 			true,
 		},

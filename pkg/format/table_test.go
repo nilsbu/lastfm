@@ -8,11 +8,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-func trustRanges(s string, registered rsrc.Day, l int) charts.Ranges {
-	ranges, _ := charts.ParseRanges(s, registered, l)
-	return ranges
-}
-
 func TestTableCSV(t *testing.T) {
 	cases := []struct {
 		charts  charts.Charts
@@ -23,7 +18,7 @@ func TestTableCSV(t *testing.T) {
 	}{
 		{
 			charts.FromMap(map[string][]float64{}),
-			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			charts.ParseRangesTrusted("1d", rsrc.ParseDay("2012-01-01"), 1),
 			",", true,
 			"\"name\";\n",
 		},
@@ -32,7 +27,7 @@ func TestTableCSV(t *testing.T) {
 				{Title: charts.StringTitle("X"), Values: []float64{2, 3}},
 				{Title: charts.StringTitle("ABC"), Values: []float64{1.25, 2}},
 			}),
-			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			charts.ParseRangesTrusted("1d", rsrc.ParseDay("2012-01-01"), 1),
 			",", true,
 			"\"name\";2012-01-01;2012-01-02\n\"X\";2;3\n\"ABC\";1,25;2\n",
 		},
@@ -40,7 +35,7 @@ func TestTableCSV(t *testing.T) {
 			charts.FromMap(map[string][]float64{
 				"A": {1, 4, 7},
 			}),
-			trustRanges("3d", rsrc.ParseDay("2012-01-01"), 8),
+			charts.ParseRangesTrusted("3d", rsrc.ParseDay("2012-01-01"), 8),
 			".", true,
 			"\"name\";2012-01-01;2012-01-04;2012-01-07\n\"A\";1;4;7\n",
 		},
@@ -79,7 +74,7 @@ func TestTablePlain(t *testing.T) {
 	}{
 		{
 			charts.FromMap(map[string][]float64{}),
-			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			charts.ParseRangesTrusted("1d", rsrc.ParseDay("2012-01-01"), 1),
 			true,
 			"",
 		},
@@ -87,7 +82,7 @@ func TestTablePlain(t *testing.T) {
 			charts.FromMap(map[string][]float64{
 				"A": {1.33, 4, 7},
 			}),
-			trustRanges("3d", rsrc.ParseDay("2012-01-01"), 8),
+			charts.ParseRangesTrusted("3d", rsrc.ParseDay("2012-01-01"), 8),
 			true,
 			"A: 1.33, 4, 7\n",
 		},
@@ -126,7 +121,7 @@ func TestTableHTML(t *testing.T) {
 	}{
 		{
 			charts.FromMap(map[string][]float64{}),
-			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			charts.ParseRangesTrusted("1d", rsrc.ParseDay("2012-01-01"), 1),
 			true,
 			"<table></table>",
 		},
@@ -134,7 +129,7 @@ func TestTableHTML(t *testing.T) {
 			charts.FromMap(map[string][]float64{
 				"A": {1.33, 4, 7},
 			}),
-			trustRanges("3d", rsrc.ParseDay("2012-01-01"), 8),
+			charts.ParseRangesTrusted("3d", rsrc.ParseDay("2012-01-01"), 8),
 			true,
 			"<table><tr><td>A</td><td>1.33</td><td>4</td><td>7</td></tr></table>",
 		},

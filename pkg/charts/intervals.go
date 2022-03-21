@@ -17,6 +17,9 @@ type Range struct {
 	Begin, End, Registered rsrc.Day
 }
 
+// ParseRange creates a Range object for charts of l days.
+// string describes the range, e.g.: "2012" for the year, 2012-04 for April 2012
+// and 2012-04-01 for a single day.
 func ParseRange(str string, registered rsrc.Day, l int) (Range, error) {
 	if r, err := parseRange(str, registered); err != nil {
 		return r, err
@@ -156,9 +159,10 @@ type Ranges struct {
 	Registered rsrc.Day
 }
 
-func ParseRanges(
-	descr string, registered rsrc.Day, l int,
-) (Ranges, error) {
+// ParseRanges creates a Ranges object for charts of length l beginning on day registered.
+// descr describes a the step size, e.g.: "1d" for 1 day, "3M" for 3 months (1st of the month)
+// or "1y" for yearly (January 1st of each year)
+func ParseRanges(descr string, registered rsrc.Day, l int) (Ranges, error) {
 
 	re := regexp.MustCompile(`^\d*[yMd]$`)
 	if !re.MatchString(descr) {
@@ -206,6 +210,11 @@ func ParseRanges(
 		Delims:     dates,
 		Registered: registered,
 	}, nil
+}
+
+func ParseRangesTrusted(descr string, registered rsrc.Day, l int) Ranges {
+	ranges, _ := ParseRanges(descr, registered, l)
+	return ranges
 }
 
 type intervals struct {
