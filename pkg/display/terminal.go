@@ -8,20 +8,20 @@ import (
 	"github.com/nilsbu/lastfm/pkg/format"
 )
 
-type Terminal struct {
-	Writer io.Writer
+type terminal struct {
+	writer io.Writer
 }
 
-func NewTerminal() *Terminal {
-	return &Terminal{Writer: os.Stdout}
+func NewTerminal() Display {
+	return &terminal{writer: os.Stdout}
 }
 
-func (d *Terminal) Display(f format.Formatter) error {
-	return f.Plain(d.Writer)
+func (d *terminal) Display(f format.Formatter) error {
+	return f.Plain(d.writer)
 }
 
-type TimedTerminal struct {
-	Terminal
+type timedTerminal struct {
+	terminal
 	timedF <-chan format.Formatter
 	fCache format.Formatter
 	fChan  chan format.Formatter
@@ -31,9 +31,9 @@ type TimedTerminal struct {
 func NewTimedTerminal(
 	timedF <-chan format.Formatter,
 	period time.Duration,
-) *TimedTerminal {
-	d := &TimedTerminal{
-		Terminal: Terminal{Writer: os.Stdout},
+) Display {
+	d := &timedTerminal{
+		terminal: terminal{writer: os.Stdout},
 		timedF:   timedF,
 		fChan:    make(chan format.Formatter),
 		eChan:    make(chan error),
@@ -49,7 +49,7 @@ func NewTimedTerminal(
 				now := time.Now()
 				if now.Sub(lastT) >= period {
 					if d.fCache != nil {
-						if d.Terminal.Display(d.fCache) != nil {
+						if d.terminal.Display(d.fCache) != nil {
 							return
 						}
 						d.fCache = nil
@@ -57,7 +57,7 @@ func NewTimedTerminal(
 					lastT = now
 				}
 			case f := <-d.fChan:
-				err := d.Terminal.Display(f)
+				err := d.terminal.Display(f)
 				d.eChan <- err
 
 			}
@@ -68,7 +68,7 @@ func NewTimedTerminal(
 	return d
 }
 
-func (d *TimedTerminal) Display(f format.Formatter) error {
+func (d *timedTerminal) Display(f format.Formatter) error {
 	d.fChan <- f
 	return <-d.eChan
 }

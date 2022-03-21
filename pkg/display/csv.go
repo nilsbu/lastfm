@@ -6,16 +6,16 @@ import (
 	"github.com/nilsbu/lastfm/pkg/format"
 )
 
-type CSV struct {
+type csv struct {
 	path    string
 	decimal string
 }
 
-func NewCSV(path, decimal string) *CSV {
-	return &CSV{path: path, decimal: decimal}
+func NewCSV(path, decimal string) Display {
+	return &csv{path: path, decimal: decimal}
 }
 
-func (d *CSV) Display(f format.Formatter) error {
+func (d *csv) Display(f format.Formatter) error {
 	file, err := os.Create(d.path)
 	if err != nil {
 		return err

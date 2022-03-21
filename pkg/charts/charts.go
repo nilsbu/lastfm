@@ -3,6 +3,7 @@ package charts
 import "sort"
 
 type Charts interface {
+	// TODO can Charts.Column() be removed?
 	Column(titles []Title, index int) []float64
 	Data(titles []Title, begin, end int) [][]float64
 

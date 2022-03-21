@@ -52,7 +52,7 @@ func createStore(webObserver chan<- format.Formatter) (store.Store, error) {
 	return st, nil
 }
 
-func helloHandler(
+func handleRequest(
 	session *unpack.SessionInfo,
 	s store.Store,
 	w http.ResponseWriter,
@@ -97,8 +97,9 @@ func main() {
 		return
 	}
 
+	// TODO Reuse early stages of the charts
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		helloHandler(session, s, rw, r)
+		handleRequest(session, s, rw, r)
 	})
 
 	if err := http.ListenAndServe(":3000", nil); err != nil {
