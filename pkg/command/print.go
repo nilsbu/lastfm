@@ -98,6 +98,7 @@ func (cmd printTotal) Execute(
 	if cmd.date != null {
 		steps = append(steps, fmt.Sprintf("day %v", rsrc.DayFromTime(cmd.date)))
 	}
+	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -111,7 +112,6 @@ func (cmd printTotal) Execute(
 	}
 	f := &format.Charts{
 		Charts:     cha,
-		Count:      cmd.n,
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -139,6 +139,7 @@ func (cmd printFade) Execute(
 	if cmd.date != null {
 		steps = append(steps, fmt.Sprintf("day %v", rsrc.DayFromTime(cmd.date)))
 	}
+	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -150,7 +151,6 @@ func (cmd printFade) Execute(
 
 	f := &format.Charts{
 		Charts:     cha,
-		Count:      cmd.n,
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -171,7 +171,7 @@ func (cmd printPeriod) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum")
+	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum", fmt.Sprintf("top %v", cmd.n))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -185,7 +185,6 @@ func (cmd printPeriod) Execute(
 	}
 	f := &format.Charts{
 		Charts:     cha,
-		Count:      cmd.n,
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -207,7 +206,7 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum")
+	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", fmt.Sprintf("top %v", cmd.n))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -221,7 +220,6 @@ func (cmd printInterval) Execute(
 	}
 	f := &format.Charts{
 		Charts:     cha,
-		Count:      cmd.n,
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -247,7 +245,7 @@ func (cmd printFadeMax) Execute(
 	}
 
 	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
-	steps = append(steps, "max")
+	steps = append(steps, "max", fmt.Sprintf("top %v", cmd.n))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -259,7 +257,6 @@ func (cmd printFadeMax) Execute(
 
 	f := &format.Charts{
 		Charts:     cha,
-		Count:      cmd.n,
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -285,8 +282,8 @@ func (cmd printTags) Execute(
 		col[tag.Name] = []float64{float64(tag.Count)}
 	}
 
-	f := &format.Column{
-		Column:     charts.FromMap(col),
+	f := &format.Charts{
+		Charts:     charts.FromMap(col),
 		Numbered:   true,
 		Precision:  0,
 		Percentage: false,

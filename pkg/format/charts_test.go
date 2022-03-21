@@ -61,7 +61,6 @@ func TestChartsCSV(t *testing.T) {
 			buf := new(bytes.Buffer)
 			formatter := &Charts{
 				Charts:     c.charts,
-				Count:      c.n,
 				Numbered:   c.numbered,
 				Precision:  c.precision,
 				Percentage: c.percentage,
@@ -104,12 +103,10 @@ func TestChartsPlain(t *testing.T) {
 		},
 		{
 			"alignment correct",
-			charts.FromMap(
-				map[string][]float64{
-					"AKSLJDHLJKH": {1},
-					"AB":          {3},
-					"Týrs":        {12}},
-			),
+			charts.InOrder([]charts.Pair{
+				{Title: charts.ArtistTitle("Týrs"), Values: []float64{12}},
+				{Title: charts.ArtistTitle("AB"), Values: []float64{3}},
+			}),
 			0, 2, false, 0, false,
 			"Týrs - 12\nAB   -  3\n",
 		},
@@ -137,14 +134,12 @@ func TestChartsPlain(t *testing.T) {
 		},
 		{
 			"percentage with sum total",
-			charts.FromMap(
-				map[string][]float64{
-					"AKSLJDHLJKH": {.125},
-					"AB":          {.375},
-					"Týrs":        {.5},
-				}),
+			charts.InOrder([]charts.Pair{
+				{Title: charts.ArtistTitle("Týrs"), Values: []float64{.6}},
+				{Title: charts.ArtistTitle("AB"), Values: []float64{.4}},
+			}),
 			0, 2, false, 1, true,
-			"Týrs - 50.0%\nAB   - 37.5%\n",
+			"Týrs - 60.0%\nAB   - 40.0%\n",
 		},
 		{
 			"zero percentage",
@@ -162,7 +157,6 @@ func TestChartsPlain(t *testing.T) {
 			buf := new(bytes.Buffer)
 			formatter := &Charts{
 				Charts:     c.charts,
-				Count:      c.n,
 				Numbered:   c.numbered,
 				Precision:  c.precision,
 				Percentage: c.percentage,
@@ -189,12 +183,10 @@ func TestChartsHTML(t *testing.T) {
 	}{
 		{
 			"alignment correct",
-			charts.FromMap(
-				map[string][]float64{
-					"AKSLJDHLJKH": {1},
-					"AB":          {3},
-					"Týrs":        {12},
-				}),
+			charts.InOrder([]charts.Pair{
+				{Title: charts.ArtistTitle("Týrs"), Values: []float64{12}},
+				{Title: charts.ArtistTitle("AB"), Values: []float64{3}},
+			}),
 			2, false, 0, false,
 			"<table><tr><td>Týrs</td><td>12</td></tr><tr><td>AB</td><td> 3</td></tr></table>", // TODO: numbers are aligned by length by don't neet to be
 		},
@@ -205,7 +197,6 @@ func TestChartsHTML(t *testing.T) {
 			buf := new(bytes.Buffer)
 			formatter := &Charts{
 				Charts:     c.charts,
-				Count:      c.n,
 				Numbered:   c.numbered,
 				Precision:  c.precision,
 				Percentage: c.percentage,

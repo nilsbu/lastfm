@@ -199,6 +199,10 @@ func (w *web) step(step string, parent charts.LazyCharts) (charts.LazyCharts, er
 			return charts.Interval(parent, rnge), nil
 		}
 
+	case "top":
+		n, _ := strconv.Atoi(split[1])
+		titles := charts.Top(parent, n)
+		return charts.Only(parent, titles), nil
 	default:
 		return nil, errors.New("step does not exist")
 	}

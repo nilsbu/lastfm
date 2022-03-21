@@ -13,62 +13,12 @@ import (
 
 type Charts struct {
 	Charts     charts.LazyCharts
-	Count      int
 	Numbered   bool
 	Precision  int
 	Percentage bool
 }
 
 func (f *Charts) CSV(w io.Writer, decimal string) error {
-	colFormatter := f.column()
-	if colFormatter == nil {
-		return nil
-	}
-	return colFormatter.CSV(w, decimal)
-}
-
-func (f *Charts) Plain(w io.Writer) error {
-	colFormatter := f.column()
-	if colFormatter == nil {
-		return nil
-	}
-	return colFormatter.Plain(w)
-}
-
-func (f *Charts) HTML(w io.Writer) error {
-	colFormatter := f.column()
-	if colFormatter == nil {
-		return nil
-	}
-	return colFormatter.HTML(w)
-}
-
-func (f *Charts) column() *Column {
-	col := charts.Column(f.Charts, -1)
-	cache := charts.Cache(col)
-
-	n := f.Count
-	if n == 0 {
-		n = 10
-	}
-	top := charts.Only(cache, charts.Top(cache, n))
-
-	return &Column{
-		Column:     top,
-		Numbered:   f.Numbered,
-		Precision:  f.Precision,
-		Percentage: f.Percentage,
-	}
-}
-
-type Column struct {
-	Column     charts.LazyCharts
-	Numbered   bool
-	Precision  int
-	Percentage bool
-}
-
-func (f *Column) CSV(w io.Writer, decimal string) error {
 	var header string
 	if f.Numbered {
 		header = "\"#\";\"Name\";\"Value\"\n"
@@ -79,19 +29,19 @@ func (f *Column) CSV(w io.Writer, decimal string) error {
 	return f.format(header, f.getCSVPattern(), decimal, w)
 }
 
-func (f *Column) Plain(w io.Writer) error {
+func (f *Charts) Plain(w io.Writer) error {
 	return f.format("", f.getPlainPattern(), ".", w)
 }
 
-func (f *Column) HTML(w io.Writer) error {
+func (f *Charts) HTML(w io.Writer) error {
 	io.WriteString(w, "<table>")
 	defer io.WriteString(w, "</table>")
 	return f.format("", f.getHTMLPattern(), ".", w)
 }
 
-func (f *Column) format(
+func (f *Charts) format(
 	header, pattern, decimal string, w io.Writer) error {
-	if f.Column.Len() == 0 {
+	if f.Charts.Len() == 0 {
 		return nil
 	}
 
@@ -104,9 +54,12 @@ func (f *Column) format(
 		multi = 1
 	}
 
-	data := f.Column.Data(f.Column.Titles(), 0, f.Column.Len())
-	for i, title := range f.Column.Titles() {
-		sscore := fmt.Sprintf(f.getScorePattern(), multi*data[i][0])
+	f.Charts = charts.Cache(charts.Column(f.Charts, -1))
+	data := f.Charts.Column(f.Charts.Titles(), 0)
+	scorepattern := f.getScorePattern()
+
+	for i, title := range f.Charts.Titles() {
+		sscore := fmt.Sprintf(scorepattern, multi*data[i])
 		if decimal != "." {
 			sscore = strings.Replace(sscore, ".", decimal, 1)
 		}
@@ -122,7 +75,7 @@ func (f *Column) format(
 	return nil
 }
 
-func (f *Column) getCSVPattern() (pattern string) {
+func (f *Charts) getCSVPattern() (pattern string) {
 	if f.Numbered {
 		pattern = "%d;"
 	}
@@ -132,9 +85,9 @@ func (f *Column) getCSVPattern() (pattern string) {
 	return pattern
 }
 
-func (f *Column) getPlainPattern() (pattern string) {
+func (f *Charts) getPlainPattern() (pattern string) {
 	if f.Numbered {
-		width := int(math.Log10(float64(len(f.Column.Titles())))) + 1
+		width := int(math.Log10(float64(len(f.Charts.Titles())))) + 1
 		pattern = "%" + strconv.Itoa(width) + "d: "
 	}
 
@@ -144,7 +97,7 @@ func (f *Column) getPlainPattern() (pattern string) {
 	return pattern
 }
 
-func (f *Column) getHTMLPattern() (pattern string) {
+func (f *Charts) getHTMLPattern() (pattern string) {
 
 	pattern = "<tr>"
 	if f.Numbered {
@@ -156,12 +109,18 @@ func (f *Column) getHTMLPattern() (pattern string) {
 	return pattern
 }
 
-func (f *Column) getScorePattern() (pattern string) {
+func (f *Charts) getScorePattern() (pattern string) {
+	titles := f.Charts.Titles()
+	var topValue float64
+	if len(titles) > 0 {
+		topValue = f.Charts.Column(titles[:1], 0)[0]
+	}
+
 	var maxValueLen int
-	if len(f.Column.Titles()) == 0 || f.Column.Data(f.Column.Titles()[:1], 0, 1)[0][0] == 0 {
+	if len(f.Charts.Titles()) == 0 || topValue == 0 {
 		maxValueLen = 1
 	} else {
-		maxValueLen = int(math.Log10(f.Column.Data(f.Column.Titles()[:1], 0, 1)[0][0])) + 1
+		maxValueLen = int(math.Log10(topValue)) + 1
 	}
 	if f.Precision > 0 {
 		maxValueLen += 1 + f.Precision
@@ -177,9 +136,9 @@ func (f *Column) getScorePattern() (pattern string) {
 	return pattern
 }
 
-func (f *Column) getMaxNameLen() int {
+func (f *Charts) getMaxNameLen() int {
 	maxLen := 0
-	for _, title := range f.Column.Titles() {
+	for _, title := range f.Charts.Titles() {
 		runeCnt := utf8.RuneCountInString(title.String())
 		if maxLen < runeCnt {
 			maxLen = runeCnt

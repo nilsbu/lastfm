@@ -126,6 +126,29 @@ func FromMap(data map[string][]float64) LazyCharts {
 	return charts
 }
 
+// Pair contains a Title and a line of values.
+type Pair struct {
+	Title  Title
+	Values []float64
+}
+
+// TODO doc & test
+func InOrder(data []Pair) LazyCharts {
+	titles := make([]Title, len(data))
+	values := make(map[string][]float64, len(data))
+	for i, pair := range data {
+		titles[i] = pair.Title
+		values[pair.Title.Key()] = pair.Values
+	}
+
+	charts := &charts{
+		titles: titles,
+		values: values,
+	}
+
+	return charts
+}
+
 func (l *charts) Column(titles []Title, index int) []float64 {
 	if l.songs != nil {
 		l.await()
