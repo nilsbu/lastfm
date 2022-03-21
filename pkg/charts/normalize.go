@@ -6,7 +6,7 @@ import (
 
 type normalizer struct {
 	chartsNode
-	totals   LazyCharts
+	totals   Charts
 	lineChan chan normalizerJob
 }
 
@@ -16,7 +16,7 @@ type normalizerJob struct {
 	back       chan bool
 }
 
-func newNormalizer(parent LazyCharts, totals LazyCharts) *normalizer {
+func newNormalizer(parent Charts, totals Charts) *normalizer {
 	n := &normalizer{
 		chartsNode: chartsNode{parent: parent},
 		totals:     Cache(totals),
@@ -49,7 +49,7 @@ func newNormalizer(parent LazyCharts, totals LazyCharts) *normalizer {
 	return n
 }
 
-func Normalize(c LazyCharts) LazyCharts {
+func Normalize(c Charts) Charts {
 	return newNormalizer(c, ColumnSum(c))
 }
 

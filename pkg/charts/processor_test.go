@@ -38,7 +38,7 @@ func TestLazyChartsPartial(t *testing.T) {
 
 	cs := []struct {
 		name     string
-		lc       charts.LazyCharts
+		lc       charts.Charts
 		titles   []charts.Title
 		len      int
 		rowA04   []float64
@@ -249,7 +249,7 @@ func checkTitle(t *testing.T, x, a charts.Title) {
 	}
 }
 
-func checkMeta(t *testing.T, expect, actual charts.LazyCharts) {
+func checkMeta(t *testing.T, expect, actual charts.Charts) {
 
 	if expect.Len() != actual.Len() {
 		t.Fatalf("len differs: expect=%v, actual %v", expect.Len(), actual.Len())
@@ -276,7 +276,7 @@ func ranges(size, nRand int) [][2]int {
 	return ranges
 }
 
-func checkRows(t *testing.T, expect, actual charts.LazyCharts, ranges [][2]int) {
+func checkRows(t *testing.T, expect, actual charts.Charts, ranges [][2]int) {
 	// Since Rows() doesn't exist anymore, this is just another Data() test
 	for _, be := range ranges {
 		for _, title := range expect.Titles() {
@@ -325,7 +325,7 @@ func sets(titles []charts.Title, nRand int) [][]charts.Title {
 	return sets
 }
 
-func checkCols(t *testing.T, expect, actual charts.LazyCharts, sets [][]charts.Title) {
+func checkCols(t *testing.T, expect, actual charts.Charts, sets [][]charts.Title) {
 
 	for _, set := range sets {
 		for i := 0; i < expect.Len(); i++ {
@@ -351,7 +351,7 @@ func checkCols(t *testing.T, expect, actual charts.LazyCharts, sets [][]charts.T
 	}
 }
 
-func checkData(t *testing.T, expect, actual charts.LazyCharts,
+func checkData(t *testing.T, expect, actual charts.Charts,
 	ranges [][2]int, sets [][]charts.Title) {
 
 	for i := range sets {
@@ -388,7 +388,7 @@ func checkData(t *testing.T, expect, actual charts.LazyCharts,
 	}
 }
 
-func checkLazyCharts(t *testing.T, expect, actual charts.LazyCharts, nRand int) {
+func checkLazyCharts(t *testing.T, expect, actual charts.Charts, nRand int) {
 	checkMeta(t, expect, actual)
 	checkRows(t, expect, actual, ranges(expect.Len(), nRand))
 	checkCols(t, expect, actual, sets(expect.Titles(), nRand))
@@ -407,8 +407,8 @@ func TestLazyCharts(t *testing.T) {
 
 	cs := []struct {
 		name   string
-		actual charts.LazyCharts
-		expect charts.LazyCharts
+		actual charts.Charts
+		expect charts.Charts
 	}{
 		{
 			"Gaussian mirror none",
@@ -516,7 +516,7 @@ func TestCacheIncremental(t *testing.T) {
 func TestTop(t *testing.T) {
 	for _, c := range []struct {
 		name   string
-		charts charts.LazyCharts
+		charts charts.Charts
 		n      int
 		titles []charts.Title
 	}{

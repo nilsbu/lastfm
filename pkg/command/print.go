@@ -233,7 +233,7 @@ type printFadeMax struct {
 	hl float64
 }
 
-func (cmd printFadeMax) Accumulate(c charts.LazyCharts) charts.LazyCharts {
+func (cmd printFadeMax) Accumulate(c charts.Charts) charts.Charts {
 	return charts.Fade(c, cmd.hl)
 }
 

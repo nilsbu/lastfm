@@ -10,7 +10,7 @@ import (
 func TestChartsCSV(t *testing.T) {
 	cases := []struct {
 		name       string
-		charts     charts.LazyCharts
+		charts     charts.Charts
 		n          int
 		numbered   bool
 		precision  int
@@ -78,7 +78,7 @@ func TestChartsCSV(t *testing.T) {
 func TestChartsPlain(t *testing.T) {
 	cases := []struct {
 		name       string
-		charts     charts.LazyCharts
+		charts     charts.Charts
 		col        int
 		n          int
 		numbered   bool
@@ -174,7 +174,7 @@ func TestChartsPlain(t *testing.T) {
 func TestChartsHTML(t *testing.T) {
 	cases := []struct {
 		name       string
-		charts     charts.LazyCharts
+		charts     charts.Charts
 		n          int
 		numbered   bool
 		precision  int

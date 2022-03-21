@@ -138,7 +138,7 @@ func FirstTagPartition(
 // YearPartition creates a partition based on when artists have passsed a threshold.
 // gaussian is a the charts normalized by a gaussian.
 // sums is a normalized sum of the charts.
-func YearPartition(gaussian, sums LazyCharts, registered rsrc.Day) Partition {
+func YearPartition(gaussian, sums Charts, registered rsrc.Day) Partition {
 	first := registered.Time().Year()
 	last := registered.AddDate(0, 0, sums.Len()).Time().Year()
 

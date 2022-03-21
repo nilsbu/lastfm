@@ -11,9 +11,9 @@ type partitionSum struct {
 
 // Group is a LazyCharts that combines the subsets of the partition from the parent.
 func Group(
-	parent LazyCharts,
+	parent Charts,
 	partition Partition,
-) LazyCharts {
+) Charts {
 	return &partitionSum{
 		chartsNode: chartsNode{parent: parent},
 		partition:  partition,
@@ -82,16 +82,16 @@ func (l *partitionSum) Titles() []Title {
 
 // Subset is a LazyCharts that picks a single subset of the partition from the parent.
 func Subset(
-	parent LazyCharts,
+	parent Charts,
 	partition Partition,
 	title Title,
-) LazyCharts {
+) Charts {
 	return Only(parent, partition.Titles(title))
 }
 
 // ColumnSum is a LazyCharts that sums up all columns.
 // TODO can be optmized by bypassing partitions
-func ColumnSum(parent LazyCharts) LazyCharts {
+func ColumnSum(parent Charts) Charts {
 	return Group(parent, TotalPartition(parent.Titles()))
 }
 
@@ -118,7 +118,7 @@ type cacheRowAnswer []float64
 // continuous block per row. Non-requested parts in between are filled.
 // E.g. if Data({"A"}, 0, 4) and Column({"A"}, 16) are called, row "A" will store
 // range [0, 17).
-func Cache(parent LazyCharts) LazyCharts {
+func Cache(parent Charts) Charts {
 	rows := make(map[string]*cacheRow)
 	for _, k := range parent.Titles() {
 		row := &cacheRow{
@@ -128,7 +128,7 @@ func Cache(parent LazyCharts) LazyCharts {
 		}
 		rows[k.Key()] = row
 
-		go func(title Title, row *cacheRow, parent LazyCharts) {
+		go func(title Title, row *cacheRow, parent Charts) {
 			for request := range row.channel {
 
 				if row.begin > -1 {
@@ -217,7 +217,7 @@ type only struct {
 }
 
 // Only keeps only a subset of titles from the parent
-func Only(parent LazyCharts, titles []Title) LazyCharts {
+func Only(parent Charts, titles []Title) Charts {
 	return &only{
 		chartsNode: chartsNode{parent: parent},
 		titles:     titles,
@@ -236,7 +236,7 @@ func (c *only) Data(titles []Title, begin, end int) [][]float64 {
 	return c.parent.Data(titles, begin, end)
 }
 
-func Top(c LazyCharts, n int) []Title {
+func Top(c Charts, n int) []Title {
 	fullTitles := c.Titles()
 	col := c.Column(fullTitles, c.Len()-1)
 	m := n + 1
@@ -270,6 +270,6 @@ func Top(c LazyCharts, n int) []Title {
 }
 
 // Id returns the parent
-func Id(parent LazyCharts) LazyCharts {
+func Id(parent Charts) Charts {
 	return parent
 }

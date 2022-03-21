@@ -10,7 +10,7 @@ import (
 )
 
 type Table struct {
-	Charts charts.LazyCharts
+	Charts charts.Charts
 	First  rsrc.Day
 	Step   int
 	Count  int

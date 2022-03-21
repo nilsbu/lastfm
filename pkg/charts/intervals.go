@@ -92,14 +92,14 @@ type interval struct {
 }
 
 // Interval crops the charts to a certain Range.
-func Interval(parent LazyCharts, r Range) LazyCharts {
+func Interval(parent Charts, r Range) Charts {
 	begin := int(r.Begin.Time().Sub(r.Registered.Time()).Hours()) / 24
 	end := int(r.End.Time().Sub(r.Registered.Time()).Hours()) / 24
 
 	return Crop(parent, begin, end)
 }
 
-func Crop(parent LazyCharts, begin, end int) LazyCharts {
+func Crop(parent Charts, begin, end int) Charts {
 	return interval{
 		chartsNode: chartsNode{parent: parent},
 		begin:      begin,
@@ -107,7 +107,7 @@ func Crop(parent LazyCharts, begin, end int) LazyCharts {
 	}
 }
 
-func Column(parent LazyCharts, col int) LazyCharts {
+func Column(parent Charts, col int) Charts {
 	if col < 0 {
 		col += parent.Len()
 	}
@@ -212,11 +212,11 @@ func ParseRanges(
 type intervals struct {
 	chartsNode
 	delims []int
-	f      func(LazyCharts) LazyCharts
+	f      func(Charts) Charts
 }
 
 // Intervals
-func Intervals(parent LazyCharts, rs Ranges, f func(LazyCharts) LazyCharts) LazyCharts {
+func Intervals(parent Charts, rs Ranges, f func(Charts) Charts) Charts {
 	delims := make([]int, len(rs.Delims))
 	for i, r := range rs.Delims {
 		delims[i] = int(r.Time().Sub(rs.Registered.Time()).Hours()) / 24
@@ -225,7 +225,7 @@ func Intervals(parent LazyCharts, rs Ranges, f func(LazyCharts) LazyCharts) Lazy
 	return crops(parent, delims, f)
 }
 
-func crops(parent LazyCharts, delims []int, f func(LazyCharts) LazyCharts) LazyCharts {
+func crops(parent Charts, delims []int, f func(Charts) Charts) Charts {
 	return intervals{
 		chartsNode: chartsNode{parent: parent},
 		delims:     delims,

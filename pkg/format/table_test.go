@@ -10,7 +10,7 @@ import (
 
 func TestTableCSV(t *testing.T) {
 	cases := []struct {
-		charts  charts.LazyCharts
+		charts  charts.Charts
 		date    rsrc.Day
 		step    int
 		count   int
@@ -71,7 +71,7 @@ func TestTableCSV(t *testing.T) {
 
 func TestTablePlain(t *testing.T) {
 	cases := []struct {
-		charts charts.LazyCharts
+		charts charts.Charts
 		date   rsrc.Day
 		step   int
 		count  int
@@ -122,7 +122,7 @@ func TestTablePlain(t *testing.T) {
 
 func TestTableHTML(t *testing.T) {
 	cases := []struct {
-		charts charts.LazyCharts
+		charts charts.Charts
 		date   rsrc.Day
 		step   int
 		count  int

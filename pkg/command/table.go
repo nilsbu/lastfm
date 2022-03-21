@@ -15,7 +15,7 @@ type tableTotal struct {
 	step int
 }
 
-func (cmd tableTotal) Accumulate(c charts.LazyCharts) charts.LazyCharts {
+func (cmd tableTotal) Accumulate(c charts.Charts) charts.Charts {
 	return charts.Sum(c)
 }
 
@@ -55,7 +55,7 @@ type tableFade struct {
 	hl   float64
 }
 
-func (cmd tableFade) Accumulate(c charts.LazyCharts) charts.LazyCharts {
+func (cmd tableFade) Accumulate(c charts.Charts) charts.Charts {
 	return charts.Fade(c, cmd.hl)
 }
 
@@ -94,7 +94,7 @@ type tablePeriods struct {
 	period string
 }
 
-func (cmd tablePeriods) Accumulate(c charts.LazyCharts) charts.LazyCharts {
+func (cmd tablePeriods) Accumulate(c charts.Charts) charts.Charts {
 	return charts.Sum(c)
 }
 

@@ -8,7 +8,7 @@ import (
 )
 
 // TODO create helper file
-func mapCharts(data map[string][]float64) charts.LazyCharts {
+func mapCharts(data map[string][]float64) charts.Charts {
 	keys := []string{}
 	for k := range data {
 		keys = append(keys, k)
@@ -26,7 +26,7 @@ func mapCharts(data map[string][]float64) charts.LazyCharts {
 func TestNormalizer(t *testing.T) {
 	for _, c := range []struct {
 		name           string
-		actual, expect charts.LazyCharts
+		actual, expect charts.Charts
 	}{
 		{
 			"NormalizeColumn",

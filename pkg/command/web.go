@@ -17,12 +17,12 @@ import (
 
 // TODO test and move
 type Web interface {
-	Execute(steps []string) (charts.LazyCharts, error)
+	Execute(steps []string) (charts.Charts, error)
 	Registered() rsrc.Day
 }
 
 type web struct {
-	charts   map[string]charts.LazyCharts
+	charts   map[string]charts.Charts
 	baseType string
 	vars     vars
 	session  *unpack.SessionInfo
@@ -40,7 +40,7 @@ func (w *web) Registered() rsrc.Day {
 	return w.vars.user.Registered
 }
 
-func (w *web) Execute(steps []string) (charts.LazyCharts, error) {
+func (w *web) Execute(steps []string) (charts.Charts, error) {
 	if w.baseType == "" {
 		if err := w.load(); err != nil {
 			return nil, err
@@ -103,7 +103,7 @@ func (w *web) load() error {
 }
 
 func (w *web) calcDaily(s string) {
-	w.charts = map[string]charts.LazyCharts{}
+	w.charts = map[string]charts.Charts{}
 	switch {
 	case strings.Contains(s, "songs duration"):
 		w.charts["base"] = charts.SongsDuration(w.vars.plays)
@@ -125,7 +125,7 @@ func (w *web) calcDaily(s string) {
 	}
 }
 
-func (w *web) step(step string, parent charts.LazyCharts) (charts.LazyCharts, error) {
+func (w *web) step(step string, parent charts.Charts) (charts.Charts, error) {
 	split := strings.Split(step, " ")
 	switch split[0] {
 	case "id":
@@ -221,7 +221,7 @@ func partitionCongains(partition charts.Partition, name string) bool {
 
 func (w *web) getPartition(
 	step string,
-	gaussian, parent charts.LazyCharts,
+	gaussian, parent charts.Charts,
 ) (charts.Partition, error) {
 	switch step {
 	case "all":
@@ -254,7 +254,7 @@ func (w *web) getPartition(
 }
 
 func loadArtistTags(
-	cha charts.LazyCharts,
+	cha charts.Charts,
 	r rsrc.Reader,
 ) (map[string][]charts.Tag, error) {
 	keys := []string{}

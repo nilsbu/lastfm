@@ -13,7 +13,7 @@ type valueProc func(i int, line []float64) float64
 type lineProc func(line []float64) []float64
 type rangeSpec func(size, begin, end int) (b, e int)
 
-func Sum(parent LazyCharts) LazyCharts {
+func Sum(parent Charts) Charts {
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
 		mapF: func(in []float64) []float64 {
@@ -36,7 +36,7 @@ func Sum(parent LazyCharts) LazyCharts {
 	}
 }
 
-func Fade(parent LazyCharts, hl float64) LazyCharts {
+func Fade(parent Charts, hl float64) Charts {
 	fac := math.Pow(0.5, 1.0/hl)
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
@@ -63,7 +63,7 @@ func Fade(parent LazyCharts, hl float64) LazyCharts {
 }
 
 // Max calculates the maximum of the parent charts.
-func Max(parent LazyCharts) LazyCharts {
+func Max(parent Charts) Charts {
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
 		mapF: func(in []float64) []float64 {
@@ -88,10 +88,10 @@ func Max(parent LazyCharts) LazyCharts {
 
 // Gaussian blurs the data with a Gaussian kernel.
 func Gaussian(
-	parent LazyCharts,
+	parent Charts,
 	sigma float64,
 	width int,
-	mirrorBegin, mirrorEnd bool) LazyCharts {
+	mirrorBegin, mirrorEnd bool) Charts {
 
 	gaussian := make([]float64, width+1)
 	fac := 1 / (sigma * math.Sqrt(2*math.Pi))
@@ -161,7 +161,7 @@ func Gaussian(
 
 // Multiply multiplies the charts by a factor
 // TODO test
-func Multiply(parent LazyCharts, s float64) LazyCharts {
+func Multiply(parent Charts, s float64) Charts {
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},
 		mapF: func(in []float64) []float64 {

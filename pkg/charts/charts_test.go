@@ -13,7 +13,7 @@ func TestCharts(t *testing.T) {
 	// API is tested in TestLazyCharts in greater detail.
 	for _, c := range []struct {
 		name   string
-		charts charts.LazyCharts
+		charts charts.Charts
 		titles []charts.Title
 		lines  [][]float64
 	}{

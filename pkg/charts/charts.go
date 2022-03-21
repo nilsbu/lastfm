@@ -2,8 +2,7 @@ package charts
 
 import "sort"
 
-// TODO rename LazyCharts
-type LazyCharts interface {
+type Charts interface {
 	Column(titles []Title, index int) []float64
 	Data(titles []Title, begin, end int) [][]float64
 
@@ -22,7 +21,7 @@ type charts struct {
 type compileJob chan<- interface{}
 
 // Artists compiles LazyCharts in which all songs by an artist are grouped.
-func Artists(songs [][]Song) LazyCharts {
+func Artists(songs [][]Song) Charts {
 	return new(songs,
 		func(s Song) Title { return ArtistTitle(s.Artist) },
 		func(s Song) float64 { return 1.0 })
@@ -30,7 +29,7 @@ func Artists(songs [][]Song) LazyCharts {
 
 // ArtistsDuration compiles LazyCharts in which all songs by an artist are
 // grouped. The songs are weighted by duration before they are summed up.
-func ArtistsDuration(songs [][]Song) LazyCharts {
+func ArtistsDuration(songs [][]Song) Charts {
 	return new(songs,
 		func(s Song) Title { return ArtistTitle(s.Artist) },
 		fDuration)
@@ -45,7 +44,7 @@ func fDuration(s Song) float64 {
 }
 
 // Songs compiles LazyCharts in which all songs are listed separately.
-func Songs(songs [][]Song) LazyCharts {
+func Songs(songs [][]Song) Charts {
 	return new(songs,
 		func(s Song) Title { return SongTitle(s) },
 		func(s Song) float64 { return 1.0 })
@@ -53,7 +52,7 @@ func Songs(songs [][]Song) LazyCharts {
 
 // SongsDuration compiles LazyCharts in which all songs are listed separately.
 // The songs are weighted by duration.
-func SongsDuration(songs [][]Song) LazyCharts {
+func SongsDuration(songs [][]Song) Charts {
 	return new(songs,
 		func(s Song) Title { return SongTitle(s) },
 		fDuration)
@@ -110,7 +109,7 @@ func (c *charts) await() {
 	<-back
 }
 
-func FromMap(data map[string][]float64) LazyCharts {
+func FromMap(data map[string][]float64) Charts {
 	titles := make([]Title, len(data))
 	i := 0
 	for t := range data {
@@ -134,7 +133,7 @@ type Pair struct {
 }
 
 // TODO doc & test
-func InOrder(data []Pair) LazyCharts {
+func InOrder(data []Pair) Charts {
 	titles := make([]Title, len(data))
 	values := make(map[string][]float64, len(data))
 	for i, pair := range data {
@@ -195,7 +194,7 @@ func (l *charts) Len() int {
 }
 
 type chartsNode struct {
-	parent LazyCharts
+	parent Charts
 }
 
 func (l chartsNode) Titles() []Title {

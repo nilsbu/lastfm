@@ -12,7 +12,7 @@ import (
 )
 
 type Charts struct {
-	Charts     charts.LazyCharts
+	Charts     charts.Charts
 	Numbered   bool
 	Precision  int
 	Percentage bool
