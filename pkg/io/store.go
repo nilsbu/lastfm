@@ -1,4 +1,4 @@
-package store
+package io
 
 import (
 	"errors"
@@ -57,7 +57,7 @@ func new(
 
 	pools := make([]pool, len(ios))
 	for i := range ios {
-		ob := NewObserver(obChans[i])
+		ob := newObserver(obChans[i])
 		pool, err := newPool(ios[i], ob)
 		if err != nil {
 			return nil, err

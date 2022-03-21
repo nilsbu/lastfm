@@ -3,13 +3,13 @@ package command
 import (
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
-	"github.com/nilsbu/lastfm/pkg/store"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 type help struct{}
 
-func (help) Execute(session *unpack.SessionInfo, s store.Store, d display.Display) error {
+func (help) Execute(session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	for _, str := range listCommands() {
 		d.Display(&format.Message{Msg: str})
 	}

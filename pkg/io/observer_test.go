@@ -1,4 +1,4 @@
-package store
+package io
 
 import (
 	"reflect"
@@ -66,7 +66,7 @@ func TestObserver(t *testing.T) {
 				quit <- true
 			}(d)
 
-			o := NewObserver(fChan)
+			o := newObserver(fChan)
 			for _, e := range c.events {
 				switch e.t {
 				case 'r':

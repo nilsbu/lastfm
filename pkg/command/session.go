@@ -6,15 +6,15 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 type sessionInfo struct{}
 
 func (cmd sessionInfo) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	if session == nil {
 		d.Display(&format.Message{Msg: "no session is running"})
 	} else {
@@ -30,7 +30,7 @@ type sessionStart struct {
 }
 
 func (cmd sessionStart) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	if session != nil {
 		return fmt.Errorf("a session is already running for '%v'", session.User)
 	}
@@ -41,7 +41,7 @@ func (cmd sessionStart) Execute(
 type sessionStop struct{}
 
 func (cmd sessionStop) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	if session == nil {
 		return errors.New("no session is running")
 	}

@@ -8,11 +8,10 @@ import (
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-func createStore() (store.Store, error) {
+func createStore() (io.Store, error) {
 	key, err := unpack.LoadAPIKey(io.FileIO{})
 	if err != nil {
 		return nil, err
@@ -28,7 +27,7 @@ func createStore() (store.Store, error) {
 		fileIOs = append(fileIOs, io.FileIO{})
 	}
 
-	st, err := store.New([][]rsrc.IO{webIOs, fileIOs})
+	st, err := io.New([][]rsrc.IO{webIOs, fileIOs})
 	if err != nil {
 		return nil, err
 	}

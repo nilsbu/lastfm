@@ -11,7 +11,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -25,7 +24,7 @@ func dumpChan() chan<- format.Formatter {
 	return obChan
 }
 
-func createStore(webObserver chan<- format.Formatter) (store.Store, error) {
+func createStore(webObserver chan<- format.Formatter) (io.Store, error) {
 	key, err := unpack.LoadAPIKey(io.FileIO{})
 	if err != nil {
 		return nil, err
@@ -41,7 +40,7 @@ func createStore(webObserver chan<- format.Formatter) (store.Store, error) {
 		fileIOs = append(fileIOs, io.FileIO{})
 	}
 
-	st, err := store.NewObserved(
+	st, err := io.NewObserved(
 		[][]rsrc.IO{webIOs, fileIOs},
 		[]chan<- format.Formatter{webObserver, dumpChan()},
 	)
@@ -54,7 +53,7 @@ func createStore(webObserver chan<- format.Formatter) (store.Store, error) {
 
 func handleRequest(
 	session *unpack.SessionInfo,
-	s store.Store,
+	s io.Store,
 	w http.ResponseWriter,
 	r *http.Request) {
 

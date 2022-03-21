@@ -21,7 +21,7 @@ package command
 // }
 
 // func (cmd printTimeline) Execute(
-// 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+// 	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 
 // 	bookmark, err := unpack.LoadBookmark(session.User, s)
 // 	if err != nil {

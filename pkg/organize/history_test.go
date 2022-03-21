@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -405,7 +405,7 @@ func TestUpdateHistory(t *testing.T) {
 
 			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
 
-			store, _ := store.New([][]rsrc.IO{{io0}, {io1}})
+			store, _ := io.New([][]rsrc.IO{{io0}, {io1}})
 
 			plays, err := UpdateHistory(&tc.user, tc.until, store)
 			if err != nil && tc.ok {

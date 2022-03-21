@@ -1,4 +1,4 @@
-package store
+package io
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ type obEvent struct {
 	receive bool
 }
 
-func NewObserver(fChan chan<- format.Formatter) observer {
+func newObserver(fChan chan<- format.Formatter) observer {
 	o := &counter{
 		fChan: fChan,
 		count: make(map[rune][2]int),

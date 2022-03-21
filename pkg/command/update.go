@@ -6,16 +6,16 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/nilsbu/lastfm/pkg/display"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 type updateHistory struct{}
 
 func (cmd updateHistory) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	user, err := unpack.LoadUserInfo(session.User, unpack.NewCacheless(s))
 	if err != nil {
 		return errors.Wrap(err, "failed to load user info")

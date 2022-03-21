@@ -8,9 +8,9 @@ import (
 	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/config"
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/pkg/errors"
 )
@@ -26,10 +26,10 @@ type web struct {
 	baseType string
 	vars     vars
 	session  *unpack.SessionInfo
-	store    store.Store
+	store    io.Store
 }
 
-func newWeb(session *unpack.SessionInfo, s store.Store) Web {
+func newWeb(session *unpack.SessionInfo, s io.Store) Web {
 	return &web{
 		session: session,
 		store:   s,

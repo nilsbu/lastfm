@@ -6,7 +6,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
-	"github.com/nilsbu/lastfm/pkg/store"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -20,7 +20,7 @@ func (cmd tableTotal) Accumulate(c charts.Charts) charts.Charts {
 }
 
 func (cmd tableTotal) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (cmd tableFade) Accumulate(c charts.Charts) charts.Charts {
 
 // TODO Test table fade
 func (cmd tableFade) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -103,7 +103,7 @@ func (cmd tablePeriods) Accumulate(c charts.Charts) charts.Charts {
 }
 
 func (cmd tablePeriods) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err

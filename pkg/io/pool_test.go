@@ -1,4 +1,4 @@
-package store
+package io
 
 import (
 	"testing"
@@ -78,7 +78,7 @@ func TestPool(t *testing.T) {
 				ios = append(ios, io)
 			}
 
-			p, err := newPool(ios, NewObserver(dumpChan()))
+			p, err := newPool(ios, newObserver(dumpChan()))
 			if err != nil {
 				if c.ctorOK {
 					t.Error("unexpected error in constructor:", err)

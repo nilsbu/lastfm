@@ -6,8 +6,8 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/format"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
@@ -192,7 +192,7 @@ func TestTable(t *testing.T) {
 			}
 
 			files, _ := mock.IO(expectedFiles, mock.Path)
-			s, _ := store.New([][]rsrc.IO{{files}})
+			s, _ := io.New([][]rsrc.IO{{files}})
 
 			d := mock.NewDisplay()
 

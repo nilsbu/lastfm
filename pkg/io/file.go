@@ -9,6 +9,8 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
+// TODO Hide all types in io.
+
 // FileReader is a Reader to read from the local file system.
 type FileReader struct{}
 

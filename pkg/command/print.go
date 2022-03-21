@@ -7,8 +7,8 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
-	"github.com/nilsbu/lastfm/pkg/store"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -85,7 +85,7 @@ type vars struct {
 }
 
 func (cmd printTotal) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 
 	steps, err := cmd.getSteps()
 	if err != nil {
@@ -127,7 +127,7 @@ type printFade struct {
 }
 
 func (cmd printFade) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -165,7 +165,7 @@ type printPeriod struct {
 }
 
 func (cmd printPeriod) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ type printInterval struct {
 }
 
 func (cmd printInterval) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -238,7 +238,7 @@ func (cmd printFadeMax) Accumulate(c charts.Charts) charts.Charts {
 }
 
 func (cmd printFadeMax) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -270,7 +270,7 @@ type printTags struct {
 }
 
 func (cmd printTags) Execute(
-	session *unpack.SessionInfo, s store.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, d display.Display) error {
 
 	tags, err := unpack.LoadArtistTags(cmd.artist, unpack.NewCacheless(s))
 	if err != nil {
