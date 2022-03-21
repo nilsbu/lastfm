@@ -11,7 +11,6 @@ func TestChartsCSV(t *testing.T) {
 	cases := []struct {
 		name       string
 		charts     charts.Charts
-		n          int
 		numbered   bool
 		precision  int
 		percentage bool
@@ -21,7 +20,7 @@ func TestChartsCSV(t *testing.T) {
 		{
 			"empty charts",
 			charts.FromMap(map[string][]float64{}),
-			3, false, 0, false, ".",
+			false, 0, false, ".",
 			"\"Name\";\"Value\"\n",
 		},
 		{
@@ -31,7 +30,7 @@ func TestChartsCSV(t *testing.T) {
 					"ABC": {123.4},
 					"X":   {1.238},
 				}),
-			2, false, 2, false, ",",
+			false, 2, false, ",",
 			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";  1,24\n",
 		},
 		{
@@ -41,7 +40,7 @@ func TestChartsCSV(t *testing.T) {
 					"a": {.75},
 					"b": {.25},
 				}),
-			2, false, 0, true, ".",
+			false, 0, true, ".",
 			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
 		},
 		{
@@ -51,7 +50,7 @@ func TestChartsCSV(t *testing.T) {
 					"a": {12.1},
 					"b": {4},
 				}),
-			2, true, 1, false, ",",
+			true, 1, false, ",",
 			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\"; 4,0\n",
 		},
 	}
@@ -79,8 +78,6 @@ func TestChartsPlain(t *testing.T) {
 	cases := []struct {
 		name       string
 		charts     charts.Charts
-		col        int
-		n          int
 		numbered   bool
 		precision  int
 		percentage bool
@@ -89,7 +86,7 @@ func TestChartsPlain(t *testing.T) {
 		{
 			"empty charts",
 			charts.FromMap(map[string][]float64{}),
-			-1, 3, false, 0, false,
+			false, 0, false,
 			"",
 		},
 		{
@@ -98,7 +95,7 @@ func TestChartsPlain(t *testing.T) {
 				map[string][]float64{
 					"ABC": {1, 2, 3},
 				}),
-			-1, 3, false, 0, false,
+			false, 0, false,
 			"ABC - 3\n",
 		},
 		{
@@ -107,7 +104,7 @@ func TestChartsPlain(t *testing.T) {
 				{Title: charts.ArtistTitle("Týrs"), Values: []float64{12}},
 				{Title: charts.ArtistTitle("AB"), Values: []float64{3}},
 			}),
-			0, 2, false, 0, false,
+			false, 0, false,
 			"Týrs - 12\nAB   -  3\n",
 		},
 		{
@@ -117,7 +114,7 @@ func TestChartsPlain(t *testing.T) {
 					"ABC": {123.4},
 					"X":   {1.238},
 				}),
-			-1, 2, false, 2, false,
+			false, 2, false,
 			"ABC - 123.40\nX   -   1.24\n",
 		},
 		{
@@ -129,7 +126,7 @@ func TestChartsPlain(t *testing.T) {
 					"G": {4}, "H": {3}, "I": {2},
 					"J": {1},
 				}),
-			-1, 0, true, 0, false,
+			true, 0, false,
 			" 1: A - 10\n 2: B -  9\n 3: C -  8\n 4: D -  7\n 5: E -  6\n 6: F -  5\n 7: G -  4\n 8: H -  3\n 9: I -  2\n10: J -  1\n",
 		},
 		{
@@ -138,7 +135,7 @@ func TestChartsPlain(t *testing.T) {
 				{Title: charts.ArtistTitle("Týrs"), Values: []float64{.6}},
 				{Title: charts.ArtistTitle("AB"), Values: []float64{.4}},
 			}),
-			0, 2, false, 1, true,
+			false, 1, true,
 			"Týrs - 60.0%\nAB   - 40.0%\n",
 		},
 		{
@@ -147,7 +144,7 @@ func TestChartsPlain(t *testing.T) {
 				map[string][]float64{
 					"AB": {0},
 				}),
-			0, 2, true, 0, true,
+			true, 0, true,
 			"1: AB - 0%\n",
 		},
 	}

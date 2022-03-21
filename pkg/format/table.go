@@ -6,14 +6,11 @@ import (
 	"strings"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
-	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type Table struct {
 	Charts charts.Charts
-	First  rsrc.Day
-	Step   int // TODO remove step from format table
-	Count  int // TODO remove count from format table
+	Ranges charts.Ranges
 }
 
 func (f *Table) CSV(w io.Writer, decimal string) error {
@@ -23,13 +20,12 @@ func (f *Table) CSV(w io.Writer, decimal string) error {
 
 	io.WriteString(w, "\"name\";")
 
-	for i := 0; i < f.Charts.Len(); i += f.Step {
+	for i := 0; i < f.Charts.Len(); i++ {
 		if i > 0 {
 			io.WriteString(w, ";")
 		}
 
-		t := f.First.AddDate(0, 0, i).Time()
-		fmt.Fprintf(w, "%04d-%02d-%02d", t.Year(), t.Month(), t.Day())
+		io.WriteString(w, f.Ranges.Delims[i].String())
 	}
 	io.WriteString(w, "\n")
 
@@ -66,7 +62,7 @@ func (f *Table) formatBody(
 		pattern = "%v%v"
 	}
 
-	titles := charts.Top(f.Charts, f.Count)
+	titles := f.Charts.Titles()
 	data := f.Charts.Data(titles, 0, f.Charts.Len())
 
 	for t, x := range titles {
@@ -74,7 +70,7 @@ func (f *Table) formatBody(
 
 		fmt.Fprintf(w, pattern, x.String(), delim0)
 
-		for i := 0; i < len(data[t]); i += f.Step {
+		for i := 0; i < len(data[t]); i++ {
 			if i > 0 {
 				io.WriteString(w, delim)
 			}

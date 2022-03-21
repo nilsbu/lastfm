@@ -8,37 +8,40 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
+func trustRanges(s string, registered rsrc.Day, l int) charts.Ranges {
+	ranges, _ := charts.ParseRanges(s, registered, l)
+	return ranges
+}
+
 func TestTableCSV(t *testing.T) {
 	cases := []struct {
 		charts  charts.Charts
-		date    rsrc.Day
-		step    int
-		count   int
+		ranges  charts.Ranges
 		decimal string
 		ok      bool
 		str     string
 	}{
 		{
 			charts.FromMap(map[string][]float64{}),
-			rsrc.ParseDay("2012-01-01"),
-			1, 2, ",", true,
+			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			",", true,
 			"\"name\";\n",
 		},
 		{
-			charts.FromMap(map[string][]float64{
-				"ABC": {1.25, 2},
-				"X":   {2, 3},
+			charts.InOrder([]charts.Pair{
+				{Title: charts.StringTitle("X"), Values: []float64{2, 3}},
+				{Title: charts.StringTitle("ABC"), Values: []float64{1.25, 2}},
 			}),
-			rsrc.ParseDay("2012-01-01"),
-			1, 2, ",", true,
+			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			",", true,
 			"\"name\";2012-01-01;2012-01-02\n\"X\";2;3\n\"ABC\";1,25;2\n",
 		},
 		{
 			charts.FromMap(map[string][]float64{
-				"A": {1, 2, 3, 4, 5, 6, 7},
+				"A": {1, 4, 7},
 			}),
-			rsrc.ParseDay("2012-01-01"),
-			3, 1, ".", true,
+			trustRanges("3d", rsrc.ParseDay("2012-01-01"), 8),
+			".", true,
 			"\"name\";2012-01-01;2012-01-04;2012-01-07\n\"A\";1;4;7\n",
 		},
 	}
@@ -48,9 +51,7 @@ func TestTableCSV(t *testing.T) {
 			buf := new(bytes.Buffer)
 			f := &Table{
 				Charts: c.charts,
-				First:  c.date,
-				Step:   c.step,
-				Count:  c.count,
+				Ranges: c.ranges,
 			}
 			err := f.CSV(buf, c.decimal)
 			if err != nil && c.ok {
@@ -72,24 +73,22 @@ func TestTableCSV(t *testing.T) {
 func TestTablePlain(t *testing.T) {
 	cases := []struct {
 		charts charts.Charts
-		date   rsrc.Day
-		step   int
-		count  int
+		ranges charts.Ranges
 		ok     bool
 		str    string
 	}{
 		{
 			charts.FromMap(map[string][]float64{}),
-			rsrc.ParseDay("2012-01-01"),
-			1, 2, true,
+			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			true,
 			"",
 		},
 		{
 			charts.FromMap(map[string][]float64{
-				"A": {1.33, 2, 3, 4, 5, 6, 7},
+				"A": {1.33, 4, 7},
 			}),
-			rsrc.ParseDay("2012-01-01"),
-			3, 1, true,
+			trustRanges("3d", rsrc.ParseDay("2012-01-01"), 8),
+			true,
 			"A: 1.33, 4, 7\n",
 		},
 	}
@@ -99,9 +98,7 @@ func TestTablePlain(t *testing.T) {
 			buf := new(bytes.Buffer)
 			f := &Table{
 				Charts: c.charts,
-				First:  c.date,
-				Step:   c.step,
-				Count:  c.count,
+				Ranges: c.ranges,
 			}
 			err := f.Plain(buf)
 			if err != nil && c.ok {
@@ -123,24 +120,22 @@ func TestTablePlain(t *testing.T) {
 func TestTableHTML(t *testing.T) {
 	cases := []struct {
 		charts charts.Charts
-		date   rsrc.Day
-		step   int
-		count  int
+		ranges charts.Ranges
 		ok     bool
 		str    string
 	}{
 		{
 			charts.FromMap(map[string][]float64{}),
-			rsrc.ParseDay("2012-01-01"),
-			1, 2, true,
+			trustRanges("1d", rsrc.ParseDay("2012-01-01"), 1),
+			true,
 			"<table></table>",
 		},
-		{
+		{ // TODO tables HTML needs headers with dates
 			charts.FromMap(map[string][]float64{
-				"A": {1.33, 2, 3, 4, 5, 6, 7},
+				"A": {1.33, 4, 7},
 			}),
-			rsrc.ParseDay("2012-01-01"),
-			3, 1, true,
+			trustRanges("3d", rsrc.ParseDay("2012-01-01"), 8),
+			true,
 			"<table><tr><td>A</td><td>1.33</td><td>4</td><td>7</td></tr></table>",
 		},
 	}
@@ -150,9 +145,7 @@ func TestTableHTML(t *testing.T) {
 			buf := new(bytes.Buffer)
 			f := &Table{
 				Charts: c.charts,
-				First:  c.date,
-				Step:   c.step,
-				Count:  c.count,
+				Ranges: c.ranges,
 			}
 			err := f.HTML(buf)
 			if err != nil && c.ok {

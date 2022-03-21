@@ -188,6 +188,14 @@ func (w *web) step(step string, parent charts.Charts) (charts.Charts, error) {
 			return charts.Intervals(parent, rnge, charts.Sum), nil
 		}
 
+	case "step":
+		rnge, err := charts.ParseRanges(split[1], w.vars.user.Registered, parent.Len())
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid range")
+		} else {
+			return charts.Intervals(parent, rnge, charts.Id), nil
+		}
+
 	case "interval":
 		rnge, err := charts.CroppedRange(
 			rsrc.ParseDay(split[1]),

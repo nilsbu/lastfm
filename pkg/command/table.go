@@ -27,6 +27,7 @@ func (cmd tableTotal) Execute(
 	}
 
 	steps = setStep(steps, "sum")
+	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
@@ -34,11 +35,11 @@ func (cmd tableTotal) Execute(
 		return err
 	}
 
+	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), w.Registered(), cha.Len())
+
 	f := &format.Table{
 		Charts: cha,
-		First:  w.Registered(),
-		Step:   cmd.step,
-		Count:  cmd.n,
+		Ranges: ranges,
 	}
 
 	err = d.Display(f)
@@ -59,6 +60,7 @@ func (cmd tableFade) Accumulate(c charts.Charts) charts.Charts {
 	return charts.Fade(c, cmd.hl)
 }
 
+// TODO Test table fade
 func (cmd tableFade) Execute(
 	session *unpack.SessionInfo, s store.Store, d display.Display) error {
 	steps, err := cmd.getSteps()
@@ -66,19 +68,21 @@ func (cmd tableFade) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
+	steps = setStep(steps,
+		fmt.Sprintf("fade %v", cmd.hl),
+		fmt.Sprintf("top %v", cmd.n),
+		fmt.Sprintf("step %vd", cmd.step))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
 	}
+	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), w.Registered(), cha.Len())
 
 	f := &format.Table{
 		Charts: cha,
-		First:  w.Registered(),
-		Step:   cmd.step,
-		Count:  cmd.n,
+		Ranges: ranges,
 	}
 
 	err = d.Display(f)
@@ -106,19 +110,18 @@ func (cmd tablePeriods) Execute(
 	}
 
 	steps = setStep(steps, "id")
-	steps = append(steps, fmt.Sprintf("periods %v", cmd.period))
+	steps = append(steps, fmt.Sprintf("periods %v", cmd.period), fmt.Sprintf("top %v", cmd.n))
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
 	if err != nil {
 		return err
 	}
+	ranges, _ := charts.ParseRanges(cmd.period, w.Registered(), cha.Len())
 
 	f := &format.Table{
 		Charts: cha,
-		// First:  ranges.Delims[0], // TODO FIX Table headers are off
-		Step:  1,
-		Count: cmd.n,
+		Ranges: ranges,
 	}
 
 	return d.Display(f)

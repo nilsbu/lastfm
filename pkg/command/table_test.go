@@ -12,6 +12,12 @@ import (
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
+// TODO replace trustRanges with trusted function from charts
+func trustRanges(s string, registered rsrc.Day, l int) charts.Ranges {
+	ranges, _ := charts.ParseRanges(s, registered, l)
+	return ranges
+}
+
 func TestTable(t *testing.T) {
 	user := "TestUser"
 
@@ -66,9 +72,7 @@ func TestTable(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
-				First: rsrc.ParseDay("2018-01-01"),
-				Step:  1,
-				Count: 10,
+				Ranges: trustRanges("1d", rsrc.ParseDay("2018-01-01"), 3),
 			},
 			true,
 		},
@@ -88,18 +92,15 @@ func TestTable(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
 				}),
-				First: rsrc.ParseDay("2018-01-01"),
-				Step:  1,
-				Count: 10,
+				Ranges: trustRanges("1d", rsrc.ParseDay("2018-01-01"), 3),
 			},
 			true,
 		},
 		{
-			"ok, different values", // TODO
+			"ok, every other day",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
 			[][]charts.Song{
 				{{Artist: "X"}},
-				{},
 				{{Artist: "X"}},
 			}, true,
 			tableTotal{
@@ -108,11 +109,9 @@ func TestTable(t *testing.T) {
 			},
 			&format.Table{
 				Charts: charts.FromMap(map[string][]float64{
-					"X": {1, 1, 2},
+					"X": {1, 2},
 				}),
-				First: rsrc.ParseDay("2018-01-01"),
-				Step:  2,
-				Count: 3,
+				Ranges: trustRanges("2d", rsrc.ParseDay("2018-01-01"), 3),
 			},
 			true,
 		},
@@ -133,9 +132,7 @@ func TestTable(t *testing.T) {
 				Charts: charts.FromMap(map[string][]float64{
 					"X": {1, 6},
 				}),
-				First: rsrc.ParseDay("2017-01-01"),
-				Step:  1,
-				Count: 10,
+				Ranges: trustRanges("1d", rsrc.ParseDay("2017-01-01"), 3),
 			},
 			true,
 		},
