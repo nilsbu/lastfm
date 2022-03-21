@@ -2,6 +2,7 @@ package charts
 
 import "sort"
 
+// TODO rename LazyCharts
 type LazyCharts interface {
 	Column(titles []Title, index int) []float64
 	Data(titles []Title, begin, end int) [][]float64
