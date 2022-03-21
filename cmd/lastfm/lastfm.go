@@ -39,7 +39,7 @@ func createStore(webObserver chan<- format.Formatter) (io.Store, error) {
 		fileIOs = append(fileIOs, io.FileIO{})
 	}
 
-	st, err := io.NewObserved(
+	st, err := io.NewObservedStore(
 		[][]rsrc.IO{webIOs, fileIOs},
 		[]chan<- format.Formatter{webObserver, dumpChan()},
 	)

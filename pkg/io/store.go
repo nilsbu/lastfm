@@ -86,23 +86,23 @@ func dumpChans(n int) []chan<- format.Formatter {
 	return chans
 }
 
-// New creates a store. The layers are described by ios. They are ordered from
+// NewStore creates a store. The layers are described by ios. They are ordered from
 // distant to close. Each layer must have at least one IO.
 //
 // TODO is it thread-safe?
-func New(
+func NewStore(
 	ios [][]rsrc.IO,
 ) (Store, error) {
 	return new(ios, dumpChans(len(ios)))
 }
 
-// NewObserved creates a store. The layers are described by ios. They are
+// NewObservedStore creates a store. The layers are described by ios. They are
 // ordered from distant to close. Each layer must have at least one IO.
 //
 // Progress updates for each layer are sent to the obChans.
 //
 // TODO is it thread-safe?
-func NewObserved(
+func NewObservedStore(
 	ios [][]rsrc.IO,
 	obChans []chan<- format.Formatter,
 ) (Store, error) {

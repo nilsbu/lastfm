@@ -405,7 +405,7 @@ func TestUpdateHistory(t *testing.T) {
 
 			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
 
-			store, _ := io.New([][]rsrc.IO{{io0}, {io1}})
+			store, _ := io.NewStore([][]rsrc.IO{{io0}, {io1}})
 
 			plays, err := UpdateHistory(&tc.user, tc.until, store)
 			if err != nil && tc.ok {

@@ -22,12 +22,12 @@ func TestFresh(t *testing.T) {
 		t.Fatal("setup error:", err)
 	}
 
-	store, err := New([][]rsrc.IO{{l0}, {l1}})
+	store, err := NewStore([][]rsrc.IO{{l0}, {l1}})
 	if err != nil {
 		t.Fatal("unexpected ctor error:", err)
 	}
 
-	fresh := Fresh(store)
+	fresh := FreshStore(store)
 
 	data, err := fresh.Read(rsrc.APIKey())
 	if err != nil {

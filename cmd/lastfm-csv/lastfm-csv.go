@@ -27,7 +27,7 @@ func createStore() (io.Store, error) {
 		fileIOs = append(fileIOs, io.FileIO{})
 	}
 
-	st, err := io.New([][]rsrc.IO{webIOs, fileIOs})
+	st, err := io.NewStore([][]rsrc.IO{webIOs, fileIOs})
 	if err != nil {
 		return nil, err
 	}

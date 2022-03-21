@@ -61,7 +61,7 @@ func TestSessionStart(t *testing.T) {
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
 			files, _ := mock.IO(map[rsrc.Locator][]byte{rsrc.SessionInfo(): []byte("")}, mock.Path)
-			s, _ := io.New([][]rsrc.IO{{files}})
+			s, _ := io.NewStore([][]rsrc.IO{{files}})
 			d := mock.NewDisplay()
 			cmd := sessionStart{user: c.user}
 
@@ -96,7 +96,7 @@ func TestSessionStop(t *testing.T) {
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
 			files, _ := mock.IO(map[rsrc.Locator][]byte{rsrc.SessionInfo(): []byte("a")}, mock.Path)
-			s, _ := io.New([][]rsrc.IO{{files}})
+			s, _ := io.NewStore([][]rsrc.IO{{files}})
 			d := mock.NewDisplay()
 			cmd := sessionStop{}
 

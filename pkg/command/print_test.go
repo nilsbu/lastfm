@@ -854,7 +854,7 @@ func TestPrint(t *testing.T) {
 
 			files, _ := mock.IO(expectedFiles,
 				mock.Path)
-			s, _ := io.New([][]rsrc.IO{{files}})
+			s, _ := io.NewStore([][]rsrc.IO{{files}})
 			d := mock.NewDisplay()
 
 			unpack.WriteArtistTags("X", tagsX, s)
@@ -946,7 +946,7 @@ func TestPrintTags(t *testing.T) {
 				map[rsrc.Locator][]byte{
 					rsrc.ArtistTags(artist): nil},
 				mock.Path)
-			s, _ := io.New([][]rsrc.IO{{files}})
+			s, _ := io.NewStore([][]rsrc.IO{{files}})
 			d := mock.NewDisplay()
 
 			unpack.WriteArtistTags(artist, c.tags, s)

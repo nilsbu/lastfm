@@ -53,7 +53,7 @@ func UpdateHistory(
 
 	newPlays, err := loadHistory(
 		unpack.User{Name: user.Name, Registered: endCached},
-		until, io.Fresh(s), cache) // TODO make fresh optional
+		until, io.FreshStore(s), cache) // TODO make fresh optional
 
 	for _, plays := range newPlays {
 		err = attachDuration(plays, cache)

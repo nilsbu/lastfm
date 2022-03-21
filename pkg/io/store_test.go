@@ -44,7 +44,7 @@ func TestStoreNew(t *testing.T) {
 				ios[i] = x
 			}
 
-			s, err := New(ios)
+			s, err := NewStore(ios)
 			if err != nil && c.ok {
 				t.Fatal("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -123,7 +123,7 @@ func TestStoreRead(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(ios)
+			s, err := NewStore(ios)
 			if err != nil {
 				t.Fatal("unexpected error in constructor:", err)
 			}
@@ -249,7 +249,7 @@ func TestStoreUpdate(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(ios)
+			s, err := NewStore(ios)
 			if err != nil {
 				t.Fatal("unexpected error in constructor:", err)
 			}
@@ -339,7 +339,7 @@ func TestStoreWrite(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(ios)
+			s, err := NewStore(ios)
 			if err != nil {
 				t.Fatal("unexpected error in constructor:", err)
 			}
@@ -406,7 +406,7 @@ func TestStoreRemove(t *testing.T) {
 				ios = append(ios, []rsrc.IO{io})
 			}
 
-			s, err := New(ios)
+			s, err := NewStore(ios)
 			if err != nil {
 				t.Fatal("unexpected error in constructor:", err)
 			}
@@ -485,7 +485,7 @@ func TestStoreObserver(t *testing.T) {
 				fChansOut = append(fChansOut, fChan)
 				quits = append(quits, quit)
 			}
-			s, err := NewObserved(ios, fChansOut)
+			s, err := NewObservedStore(ios, fChansOut)
 			if err != nil {
 				t.Error("unexpected error in constructor")
 			}
@@ -520,7 +520,7 @@ func TestStoreWrongObserverCount(t *testing.T) {
 	}
 	ios = append(ios, []rsrc.IO{io})
 
-	_, err = NewObserved(ios, dumpChans(len(ios)+2))
+	_, err = NewObservedStore(ios, dumpChans(len(ios)+2))
 	if err == nil {
 		t.Fatal("expected error in constructor")
 	}
