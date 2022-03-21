@@ -116,48 +116,59 @@ func TestTable(t *testing.T) {
 			},
 			true,
 		},
-		// {
-		// 	"table period; years",
-		// 	&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-		// 	charts.CompileArtists(
-		// 		[]map[string]float64{
-		// 			{"X": 1}, {"X": 0}, {"X": 1}, {"X": 5},
-		// 		}, rsrc.ParseDay("2017-12-30")), true,
-		// 	// &charts.Charts{"X": []float64{1, 0, 1, 5}},
-		// 	tablePeriods{
-		// 		printCharts: printCharts{by: "all", n: 10},
-		// 		period:      "y",
-		// 	},
-		// 	&format.Table{
-		// 		Charts: charts.CompileArtists(
-		// 			[]map[string]float64{{"X": 1}, {"X": 6}},
-		// 			rsrc.ParseDay("2018-01-01")),
-		// 		First: rsrc.ParseDay("2017-01-01"),
-		// 		Step:  1,
-		// 		Count: 10,
-		// 	},
-		// 	true,
-		// },
-		// {
-		// 	"table period; charts broken",
-		// 	&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-		// 	&charts.Charts{"X": []float64{1, 0, 1, 5}},
-		// 	tablePeriods{
-		// 		printCharts: printCharts{by: "allxxx", n: 10},
-		// 		period:      "y",
-		// 	},
-		// 	nil, false,
-		// },
-		// {
-		// 	"table period; no user",
-		// 	&unpack.User{Name: "no one", Registered: rsrc.ParseDay("2017-12-30")},
-		// 	&charts.Charts{"X": []float64{1, 0, 1, 5}},
-		// 	tablePeriods{
-		// 		printCharts: printCharts{by: "all", n: 10},
-		// 		period:      "y",
-		// 	},
-		// 	nil, false,
-		// },
+		{
+			"table period; years",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
+			[][]charts.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+				{{Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}},
+			}, true,
+			tablePeriods{
+				printCharts: printCharts{by: "all", n: 10},
+				period:      "1y",
+			},
+			&format.Table{
+				Charts: charts.FromMap(map[string][]float64{
+					"X": {1, 6},
+				}),
+				First: rsrc.ParseDay("2017-01-01"),
+				Step:  1,
+				Count: 10,
+			},
+			true,
+		},
+		{
+			"table period; charts broken",
+			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
+			[][]charts.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+				{{Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}},
+			}, true,
+			tablePeriods{
+				printCharts: printCharts{by: "allxxx", n: 10},
+				period:      "y",
+			},
+			nil, false,
+		},
+		{
+			"table period; no user",
+			&unpack.User{Name: "no one", Registered: rsrc.ParseDay("2017-12-30")},
+			[][]charts.Song{
+				{{Artist: "X"}},
+				{},
+				{{Artist: "X"}},
+				{{Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}, {Artist: "X"}},
+			}, true,
+			tablePeriods{
+				printCharts: printCharts{by: "all", n: 10},
+				period:      "y",
+			},
+			nil, false,
+		},
 		{
 			"table period; false period",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
@@ -230,7 +241,7 @@ func TestTable(t *testing.T) {
 					var sb1 strings.Builder
 					d.Msgs[0].Plain(&sb1)
 					if sb0.String() != sb1.String() {
-						t.Errorf("formatter does not match expected: %v != %v", c.table, d.Msgs[0])
+						t.Errorf("actual does not match expected:\n%v----------\n%v", sb1.String(), sb0.String())
 					}
 				}
 			}

@@ -169,9 +169,11 @@ func TestParseRanges(t *testing.T) {
 			2*365 + 20,
 			charts.Ranges{
 				[]rsrc.Day{
+					rsrc.ParseDay("2018-12-25"),
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2020-01-01"),
 					rsrc.ParseDay("2021-01-01"),
+					rsrc.ParseDay("2021-01-13"),
 				},
 				rsrc.ParseDay("2018-12-25"),
 			},
@@ -185,6 +187,7 @@ func TestParseRanges(t *testing.T) {
 				[]rsrc.Day{
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2021-01-01"),
+					rsrc.ParseDay("2022-01-01"),
 				},
 				rsrc.ParseDay("2019-01-01"),
 			},
@@ -199,6 +202,7 @@ func TestParseRanges(t *testing.T) {
 					rsrc.ParseDay("2019-01-01"),
 					rsrc.ParseDay("2019-02-01"),
 					rsrc.ParseDay("2019-03-01"),
+					rsrc.ParseDay("2019-03-12"),
 				},
 				rsrc.ParseDay("2019-01-01"),
 			},
@@ -210,9 +214,11 @@ func TestParseRanges(t *testing.T) {
 			83,
 			charts.Ranges{
 				[]rsrc.Day{
+					rsrc.ParseDay("2019-01-10"),
 					rsrc.ParseDay("2019-02-01"),
 					rsrc.ParseDay("2019-03-01"),
 					rsrc.ParseDay("2019-04-01"),
+					rsrc.ParseDay("2019-04-03"),
 				},
 				rsrc.ParseDay("2019-01-10"),
 			},
@@ -229,6 +235,7 @@ func TestParseRanges(t *testing.T) {
 					rsrc.ParseDay("2019-01-07"),
 					rsrc.ParseDay("2019-01-10"),
 					rsrc.ParseDay("2019-01-13"),
+					rsrc.ParseDay("2019-01-15"),
 				},
 				rsrc.ParseDay("2019-01-01"),
 			},

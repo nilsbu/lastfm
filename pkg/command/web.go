@@ -185,7 +185,7 @@ func (w *web) step(step string, parent charts.Charts) (charts.Charts, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid range")
 		} else {
-			return charts.Intervals(parent, rnge, charts.Id), nil
+			return charts.Intervals(parent, rnge, charts.Sum), nil
 		}
 
 	case "interval":

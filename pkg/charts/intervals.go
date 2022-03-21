@@ -165,6 +165,8 @@ func ParseRanges(
 		return Ranges{}, fmt.Errorf("ranges descriptor '%v' invalid", descr)
 	}
 
+	dates := []rsrc.Day{registered}
+
 	t := registered.Time()
 	y, M := t.Year(), t.Month()
 	var date rsrc.Day
@@ -172,14 +174,8 @@ func ParseRanges(
 	switch k {
 	case 'y':
 		date = rsrc.DayFromTime(time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC))
-		if date.Midnight() < registered.Midnight() {
-			date = date.AddDate(1, 0, 0)
-		}
 	case 'M':
 		date = rsrc.DayFromTime(time.Date(y, M, 1, 0, 0, 0, 0, time.UTC))
-		if date.Midnight() < registered.Midnight() {
-			date = date.AddDate(0, 1, 0)
-		}
 	default:
 		date = registered
 	}
@@ -189,10 +185,8 @@ func ParseRanges(
 		n = 1
 	}
 
-	dates := []rsrc.Day{}
-	end := registered.AddDate(0, 0, l).Midnight()
-	for date.Midnight() <= end {
-		dates = append(dates, date)
+	end := registered.AddDate(0, 0, l)
+	for {
 		switch k {
 		case 'y':
 			date = date.AddDate(n, 0, 0)
@@ -201,7 +195,12 @@ func ParseRanges(
 		default:
 			date = date.AddDate(0, 0, n)
 		}
+		if date.Midnight() >= end.Midnight() {
+			break
+		}
+		dates = append(dates, date)
 	}
+	dates = append(dates, end)
 
 	return Ranges{
 		Delims:     dates,

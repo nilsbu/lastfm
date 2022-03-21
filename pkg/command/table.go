@@ -107,7 +107,6 @@ func (cmd tablePeriods) Execute(
 
 	steps = setStep(steps, "id")
 	steps = append(steps, fmt.Sprintf("periods %v", cmd.period))
-	// TODO FIX table periods errors are wrong
 
 	w := newWeb(session, s)
 	cha, err := w.Execute(steps)
