@@ -12,8 +12,8 @@ import (
 type Table struct {
 	Charts charts.Charts
 	First  rsrc.Day
-	Step   int
-	Count  int
+	Step   int // TODO remove step from format table
+	Count  int // TODO remove count from format table
 }
 
 func (f *Table) CSV(w io.Writer, decimal string) error {

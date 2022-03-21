@@ -72,6 +72,7 @@ var cmdPrint = node{
 		"fademax":  node{cmd: exePrintFadeMax},
 		"tags":     node{cmd: exePrintTags},
 		"total":    node{cmd: exePrintTotal},
+		// TODO Add command for raw execution
 	},
 }
 
