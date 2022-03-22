@@ -38,6 +38,8 @@ func (d *once) Exec() (interface{}, error) {
 	return d.result, d.err
 }
 
+// TODO test Pipeline
+// TODO cleanup Pipeline
 type Pipeline interface {
 	Execute(steps []string) (charts.Charts, error)
 	Registered() rsrc.Day

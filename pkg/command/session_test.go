@@ -48,27 +48,59 @@ func TestSessionInfo(t *testing.T) {
 	}
 }
 
-func TestSessionStart(t *testing.T) {
+func TestSession(t *testing.T) {
 	cases := []struct {
+		name        string
 		sessionPre  *unpack.SessionInfo
-		user        string
+		cmd         command
 		ok          bool
 		sessionPost *unpack.SessionInfo
 	}{
-		{&unpack.SessionInfo{User: "U"}, "A", false, &unpack.SessionInfo{User: "U"}},
-		{&unpack.SessionInfo{User: "U"}, "U", false, &unpack.SessionInfo{User: "U"}},
-		{nil, "A", true, &unpack.SessionInfo{User: "A"}},
+		{
+			"start: session with other user running",
+			&unpack.SessionInfo{User: "U"},
+			sessionStart{user: "A"},
+			false,
+			&unpack.SessionInfo{User: "U"},
+		},
+		{
+			"start: session with same user running",
+			&unpack.SessionInfo{User: "U"},
+			sessionStart{user: "U"},
+			false,
+			&unpack.SessionInfo{User: "U"},
+		},
+		{
+			"start: successful",
+			nil,
+			sessionStart{user: "A"},
+			true,
+			&unpack.SessionInfo{User: "A"},
+		},
+		{
+			"stop: successful",
+			&unpack.SessionInfo{User: "U"},
+			sessionStop{},
+			true,
+			nil,
+		},
+		{
+			"stop: no session running",
+			nil,
+			sessionStop{},
+			false,
+			nil,
+		},
 	}
 
 	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
+		t.Run(c.name, func(t *testing.T) {
 			files, _ := mock.IO(map[rsrc.Locator][]byte{rsrc.SessionInfo(): []byte("")}, mock.Path)
 			s, _ := io.NewStore([][]rsrc.IO{{files}})
 			d := mock.NewDisplay()
-			cmd := sessionStart{user: c.user}
 
 			pl := pipeline.New(c.sessionPre, s)
-			err := cmd.Execute(c.sessionPre, s, pl, d)
+			err := c.cmd.Execute(c.sessionPre, s, pl, d)
 			if err != nil && c.ok {
 				t.Fatalf("unexpected error: %v", err)
 			} else if err == nil && !c.ok {
@@ -76,44 +108,11 @@ func TestSessionStart(t *testing.T) {
 			}
 			if err == nil {
 				session, err := unpack.LoadSessionInfo(s)
-				if err != nil {
+				if c.sessionPost != nil && err != nil {
 					t.Fatalf("unexpected error: %v", err)
 				}
 				if !reflect.DeepEqual(session, c.sessionPost) {
 					t.Errorf("wrong session was stored: %v != %v", session, c.sessionPost)
-				}
-			}
-		})
-	}
-}
-
-func TestSessionStop(t *testing.T) {
-	cases := []struct {
-		sessionPre *unpack.SessionInfo
-		ok         bool
-	}{
-		{&unpack.SessionInfo{User: "U"}, true},
-		{nil, false},
-	}
-
-	for _, c := range cases {
-		t.Run("", func(t *testing.T) {
-			files, _ := mock.IO(map[rsrc.Locator][]byte{rsrc.SessionInfo(): []byte("a")}, mock.Path)
-			s, _ := io.NewStore([][]rsrc.IO{{files}})
-			d := mock.NewDisplay()
-			cmd := sessionStop{}
-
-			pl := pipeline.New(c.sessionPre, s)
-			err := cmd.Execute(c.sessionPre, s, pl, d)
-			if err != nil && c.ok {
-				t.Fatalf("unexpected error: %v", err)
-			} else if err == nil && !c.ok {
-				t.Fatalf("expected error but none occurred")
-			}
-			if err == nil {
-				session, _ := unpack.LoadSessionInfo(s)
-				if session != nil {
-					t.Errorf("session was not deleted: %v", session)
 				}
 			}
 		})
