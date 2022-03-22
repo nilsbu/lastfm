@@ -28,6 +28,9 @@ func newGraph(limit int) *graph {
 func (c *graph) get(steps []string) charts.Charts {
 	c.counter++
 	n := c.find(steps, c.counter)
+
+	c.prune()
+
 	if n != nil {
 		return n.charts
 	} else {
@@ -36,8 +39,7 @@ func (c *graph) get(steps []string) charts.Charts {
 }
 
 func (c *graph) set(steps []string, charts charts.Charts) charts.Charts {
-	c.counter++ // TODO don't set counter on set()
-	n := c.find(steps[:len(steps)-1], c.counter)
+	n := c.find(steps[:len(steps)-1], -1)
 	if n != nil {
 		for i := 0; i < len(c.caches); {
 			if isPredecessor(steps, c.caches[i]) && len(steps) < len(c.caches[i]) {
@@ -49,12 +51,11 @@ func (c *graph) set(steps []string, charts charts.Charts) charts.Charts {
 		n.children[steps[len(steps)-1]] = &node{
 			map[string]*node{},
 			charts,
-			c.counter,
+			0,
 		}
 
 		if len(steps) == 1 || steps[len(steps)-1] == "cache" {
 			c.caches = append(c.caches, steps)
-			c.prune()
 		}
 
 		return charts

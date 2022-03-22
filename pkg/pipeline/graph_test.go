@@ -107,7 +107,15 @@ func TestCache(t *testing.T) {
 				[]string{"sum"},
 				cs[0],
 			}, {
+				"get",
+				[]string{"sum"},
+				cs[0],
+			}, {
 				"set",
+				[]string{"id"},
+				cs[1],
+			}, {
+				"get",
 				[]string{"id"},
 				cs[1],
 			}, {
@@ -116,8 +124,41 @@ func TestCache(t *testing.T) {
 				cs[2],
 			}, {
 				"get",
+				[]string{"id", "cache"},
+				cs[2],
+			}, {
+				"get",
 				[]string{"sum"},
 				nil,
+			}},
+		},
+		{
+			"read is saved from pruning",
+			2,
+			[]setget{{
+				"set",
+				[]string{"sum"},
+				cs[0],
+			}, {
+				"get",
+				[]string{"sum"},
+				cs[0],
+			}, {
+				"set",
+				[]string{"id"},
+				cs[1],
+			}, {
+				"get",
+				[]string{"id"},
+				cs[1],
+			}, {
+				"get",
+				[]string{"sum"},
+				cs[0],
+			}, {
+				"set",
+				[]string{"id", "cache"},
+				cs[2],
 			}, {
 				"get",
 				[]string{"id", "cache"},
@@ -221,7 +262,7 @@ func TestCache(t *testing.T) {
 						t.Fatalf("expected result of step %v (%v %v) to be nil but wasn't",
 							i, cmd.method, cmd.steps)
 					} else if result == nil {
-						t.Fatalf("expected result of step %v (%v %v) to not be nil but wasn't",
+						t.Fatalf("expected result of step %v (%v %v) to not be nil but was",
 							i, cmd.method, cmd.steps)
 					} else {
 						t.Fatalf("result of step %v (%v %v) is wrong but not nil",
