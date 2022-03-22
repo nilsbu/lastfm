@@ -154,7 +154,6 @@ func (w *pipeline) runSteps(steps []string) (charts.Charts, error) {
 		p := w.graph.get(steps[:i+1])
 		if p != nil {
 			parent = p
-			fmt.Println(steps[:i+1], "found")
 		} else {
 			if i == 0 {
 				parent, err = w.root(steps[0])
@@ -164,7 +163,6 @@ func (w *pipeline) runSteps(steps []string) (charts.Charts, error) {
 			if err != nil {
 				return nil, errors.Wrapf(err, "during step '%v'", step)
 			}
-			fmt.Println(steps[:i+1], "created")
 			w.graph.set(steps[:i+1], parent)
 		}
 	}
