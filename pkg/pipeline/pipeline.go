@@ -15,6 +15,29 @@ import (
 	"github.com/pkg/errors"
 )
 
+type dynamic interface {
+	Exec() (interface{}, error)
+}
+
+type once struct {
+	f      func() (interface{}, error)
+	ran    bool
+	result interface{}
+	err    error
+}
+
+func newDynamic(f func() (interface{}, error)) dynamic {
+	return &once{f: f}
+}
+
+func (d *once) Exec() (interface{}, error) {
+	if !d.ran {
+		d.result, d.err = d.f()
+		d.ran = true
+	}
+	return d.result, d.err
+}
+
 type Pipeline interface {
 	Execute(steps []string) (charts.Charts, error)
 	Registered() rsrc.Day
@@ -22,11 +45,12 @@ type Pipeline interface {
 }
 
 type pipeline struct {
-	charts   map[string]charts.Charts
-	baseType string
-	vars     vars
-	session  *unpack.SessionInfo
-	store    io.Store
+	graph     graph
+	bookmarks map[string][]string
+	baseType  string
+	vars      dynamic
+	session   *unpack.SessionInfo
+	store     io.Store
 }
 
 type vars struct {
@@ -37,14 +61,26 @@ type vars struct {
 }
 
 func New(session *unpack.SessionInfo, s io.Store) Pipeline {
-	return &pipeline{
-		session: session,
-		store:   s,
+	pl := &pipeline{
+		graph:     *newGraph(10),
+		bookmarks: map[string][]string{},
+		session:   session,
+		store:     s,
 	}
+
+	pl.vars = newDynamic(func() (interface{}, error) {
+		return pl.load()
+	})
+	return pl
 }
 
 func (w *pipeline) Registered() rsrc.Day {
-	return w.vars.user.Registered
+	v, err := w.vars.Exec()
+	if err != nil {
+		return nil
+	} else {
+		return v.(*vars).user.Registered
+	}
 }
 
 func (w *pipeline) Session() *unpack.SessionInfo {
@@ -56,96 +92,165 @@ func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
 		return nil, fmt.Errorf("no user name given, session might not be properly initialized")
 	}
 
-	if w.baseType == "" {
-		if err := w.load(); err != nil {
-			return nil, err
-		}
-	}
-	if w.baseType != steps[0] {
-		w.calcDaily(steps[0])
+	init := breakup(steps[0])
+	w.runSteps(init)
+
+	// trust idx without check here
+	idx := findSubsteps(init, []string{"gaussian", "cache"})
+	w.bookmarks["gaussian"] = init[:idx+1]
+
+	var fullSteps []string
+	if strings.Contains(steps[0], "normalized") {
+		fullSteps = append(fullSteps, init...)
+		fullSteps = append(fullSteps, steps[1:]...)
+	} else {
+		fullSteps = append(fullSteps, init[0])
+		fullSteps = append(fullSteps, steps[1:]...)
 	}
 
-	var err error
-	parent := w.charts["daily"]
-	for _, step := range steps[1:] {
-		parent, err = w.step(step, parent)
-		if err != nil {
-			return nil, errors.Wrapf(err, "during step '%v'", step)
-		}
-	}
-	return parent, nil
+	return w.runSteps(fullSteps)
 }
 
-func (w *pipeline) load() error {
+func breakup(s string) []string {
+	steps := make([]string, 0)
+	switch {
+	case strings.Contains(s, "song duration"):
+		steps = append(steps, "songsduration")
+	case strings.Contains(s, "song"):
+		steps = append(steps, "songs")
+	case strings.Contains(s, "artist duration"):
+		steps = append(steps, "artistsduration")
+	default:
+		steps = append(steps, "artists")
+	}
+
+	steps = append(steps, "gaussian")
+	steps = append(steps, "cache")
+	steps = append(steps, "normalize")
+	return steps
+}
+
+// findSubsteps searches a subset within steps and return the index of the LAST element, if found.
+// -1 is returned if nothing is found
+func findSubsteps(steps, sub []string) int {
+	j := 0
+	for i, step := range steps {
+		if step == sub[j] {
+			j++
+			if j == len(sub) {
+				return i
+			}
+		} else {
+			j = 0
+		}
+	}
+	return -1
+}
+
+func (w *pipeline) runSteps(steps []string) (charts.Charts, error) {
+	var parent charts.Charts
+	var err error
+	for i, step := range steps {
+		p := w.graph.get(steps[:i+1])
+		if p != nil {
+			parent = p
+			fmt.Println(steps[:i+1], "found")
+		} else {
+			if i == 0 {
+				parent, err = w.root(steps[0])
+			} else {
+				parent, err = w.step(step, parent)
+			}
+			if err != nil {
+				return nil, errors.Wrapf(err, "during step '%v'", step)
+			}
+			fmt.Println(steps[:i+1], "created")
+			w.graph.set(steps[:i+1], parent)
+		}
+	}
+
+	return parent, err
+}
+
+func (w *pipeline) load() (*vars, error) {
+	v := &vars{}
+
 	err := async.Pe([]func() error{
 		func() error {
 			var err error
-			w.vars.user, err = unpack.LoadUserInfo(w.session.User, unpack.NewCacheless(w.store))
+			v.user, err = unpack.LoadUserInfo(w.session.User, unpack.NewCacheless(w.store))
 			return errors.Wrap(err, "failed to load user info")
 		},
 		func() error {
 			var err error
-			w.vars.corrections, err = unpack.LoadArtistCorrections(w.session.User, w.store)
+			v.corrections, err = unpack.LoadArtistCorrections(w.session.User, w.store)
 			return err
 		},
 		func() error {
 			var err error
-			w.vars.bookmark, err = unpack.LoadBookmark(w.session.User, w.store)
+			v.bookmark, err = unpack.LoadBookmark(w.session.User, w.store)
 			return err
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	days := int((w.vars.bookmark.Midnight() - w.vars.user.Registered.Midnight()) / 86400)
-	w.vars.plays = make([][]charts.Song, days+1)
-	return async.Pie(days+1, func(i int) error {
-		day := w.vars.user.Registered.AddDate(0, 0, i)
-		if songs, err := unpack.LoadDayHistory(w.vars.user.Name, day, w.store); err == nil {
+	days := int((v.bookmark.Midnight() - v.user.Registered.Midnight()) / 86400)
+	v.plays = make([][]charts.Song, days+1)
+	err = async.Pie(days+1, func(i int) error {
+		day := v.user.Registered.AddDate(0, 0, i)
+		if songs, err := unpack.LoadDayHistory(v.user.Name, day, w.store); err == nil {
 			for j, song := range songs {
-				if c, ok := w.vars.corrections[song.Artist]; ok {
+				if c, ok := v.corrections[song.Artist]; ok {
 					songs[j].Artist = c
 				}
 			}
-			w.vars.plays[i] = songs
+			v.plays[i] = songs
 			return nil
 		} else {
 			return err
 		}
 	})
+	return v, err
 }
 
-func (w *pipeline) calcDaily(s string) {
-	w.charts = map[string]charts.Charts{}
-	switch {
-	case strings.Contains(s, "songs duration"):
-		w.charts["base"] = charts.SongsDuration(w.vars.plays)
-	case strings.Contains(s, "song"):
-		w.charts["base"] = charts.Songs(w.vars.plays)
-	case strings.Contains(s, "artist duration"):
-		w.charts["base"] = charts.ArtistsDuration(w.vars.plays)
+func (w *pipeline) root(s string) (charts.Charts, error) {
+	vv, err := w.vars.Exec()
+	if err != nil {
+		return nil, err
+	}
+	v := vv.(*vars)
+
+	var c charts.Charts
+	switch s {
+	case "songsduration":
+		c = charts.SongsDuration(v.plays)
+	case "songs":
+		c = charts.Songs(v.plays)
+	case "artistsduration":
+		c = charts.ArtistsDuration(v.plays)
 	default:
-		w.charts["base"] = charts.Artists(w.vars.plays)
+		c = charts.Artists(v.plays)
 	}
-
-	w.charts["gaussian"] = charts.Cache(charts.Gaussian(w.charts["base"], 7, 2*7+1, true, false))
-	w.charts["normalized"] = charts.Normalize(w.charts["gaussian"])
-
-	if strings.Contains(s, "normalized") {
-		w.charts["daily"] = charts.Id(w.charts["normalized"])
-	} else {
-		w.charts["daily"] = charts.Id(w.charts["base"])
-	}
-
-	w.baseType = s
+	return w.graph.set([]string{s}, c), nil
 }
 
 func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error) {
+	// TODO w.vars isn't always needed here
+	vv, err := w.vars.Exec()
+	if err != nil {
+		return nil, err
+	}
+	v := vv.(*vars)
+
 	split := strings.Split(step, " ")
 	switch split[0] {
 	case "id":
 		return charts.Id(parent), nil
+
+	case "cache":
+		return charts.Cache(parent), nil
 
 	case "sum":
 		return charts.Sum(parent), nil
@@ -156,6 +261,8 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 	case "normalize":
 		return charts.Normalize(parent), nil
 
+	case "gaussian":
+		return charts.Gaussian(parent, 7, 2*7+1, true, false), nil
 	case "fade":
 		hl, _ := strconv.ParseFloat(split[1], 64)
 		return charts.Fade(parent, hl), nil
@@ -165,7 +272,8 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		return charts.Multiply(parent, s), nil
 
 	case "group":
-		partition, err := w.getPartition(split[1], w.charts["gaussian"], parent)
+		gaussian, _ := w.runSteps(w.bookmarks["gaussian"])
+		partition, err := w.getPartition(split[1], gaussian, parent)
 		if err != nil {
 			return nil, err
 		} else {
@@ -173,7 +281,8 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		}
 
 	case "split":
-		partition, err := w.getPartition(split[1], w.charts["gaussian"], parent)
+		gaussian, _ := w.runSteps(w.bookmarks["gaussian"])
+		partition, err := w.getPartition(split[1], gaussian, parent)
 		if err != nil {
 			return nil, err
 		} else {
@@ -185,11 +294,11 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		}
 
 	case "day":
-		col := int((rsrc.ParseDay(split[1]).Midnight() - w.vars.user.Registered.Midnight()) / 86400)
+		col := int((rsrc.ParseDay(split[1]).Midnight() - v.user.Registered.Midnight()) / 86400)
 		return charts.Column(parent, col), nil
 
 	case "period":
-		rnge, err := charts.ParseRange(split[1], w.vars.user.Registered, parent.Len())
+		rnge, err := charts.ParseRange(split[1], v.user.Registered, parent.Len())
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid range")
 		} else {
@@ -197,7 +306,7 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		}
 
 	case "periods":
-		rnge, err := charts.ParseRanges(split[1], w.vars.user.Registered, parent.Len())
+		rnge, err := charts.ParseRanges(split[1], v.user.Registered, parent.Len())
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid range")
 		} else {
@@ -205,7 +314,7 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		}
 
 	case "step":
-		rnge, err := charts.ParseRanges(split[1], w.vars.user.Registered, parent.Len())
+		rnge, err := charts.ParseRanges(split[1], v.user.Registered, parent.Len())
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid range")
 		} else {
@@ -216,7 +325,7 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		rnge, err := charts.CroppedRange(
 			rsrc.ParseDay(split[1]),
 			rsrc.ParseDay(split[2]),
-			w.vars.user.Registered, parent.Len())
+			v.user.Registered, parent.Len())
 		if err != nil {
 			return nil, errors.Wrap(err, "invalid range")
 		} else {
@@ -251,7 +360,12 @@ func (w *pipeline) getPartition(
 	case "all":
 		return nil, nil
 	case "year":
-		return charts.YearPartition(gaussian, parent, w.vars.user.Registered), nil
+		vv, err := w.vars.Exec()
+		if err != nil {
+			return nil, err
+		}
+
+		return charts.YearPartition(gaussian, parent, vv.(*vars).user.Registered), nil
 	case "total":
 		return charts.TotalPartition(parent.Titles()), nil
 	case "super":

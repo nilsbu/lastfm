@@ -36,7 +36,7 @@ func (c *graph) get(steps []string) charts.Charts {
 }
 
 func (c *graph) set(steps []string, charts charts.Charts) charts.Charts {
-	c.counter++
+	c.counter++ // TODO don't set counter on set()
 	n := c.find(steps[:len(steps)-1], c.counter)
 	if n != nil {
 		for i := 0; i < len(c.caches); {
