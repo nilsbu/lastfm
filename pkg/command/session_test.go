@@ -6,6 +6,7 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/pipeline"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
@@ -25,7 +26,8 @@ func TestSessionInfo(t *testing.T) {
 			d := mock.NewDisplay()
 			cmd := sessionInfo{}
 
-			err := cmd.Execute(c.session, nil, d)
+			pl := pipeline.New(c.session, nil)
+			err := cmd.Execute(c.session, nil, pl, d)
 			if err != nil && c.ok {
 				t.Fatalf("unexpected error: %v", err)
 			} else if err == nil && !c.ok {
@@ -65,7 +67,8 @@ func TestSessionStart(t *testing.T) {
 			d := mock.NewDisplay()
 			cmd := sessionStart{user: c.user}
 
-			err := cmd.Execute(c.sessionPre, s, d)
+			pl := pipeline.New(c.sessionPre, s)
+			err := cmd.Execute(c.sessionPre, s, pl, d)
 			if err != nil && c.ok {
 				t.Fatalf("unexpected error: %v", err)
 			} else if err == nil && !c.ok {
@@ -100,7 +103,8 @@ func TestSessionStop(t *testing.T) {
 			d := mock.NewDisplay()
 			cmd := sessionStop{}
 
-			err := cmd.Execute(c.sessionPre, s, d)
+			pl := pipeline.New(c.sessionPre, s)
+			err := cmd.Execute(c.sessionPre, s, pl, d)
 			if err != nil && c.ok {
 				t.Fatalf("unexpected error: %v", err)
 			} else if err == nil && !c.ok {

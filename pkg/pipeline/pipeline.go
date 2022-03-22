@@ -18,6 +18,7 @@ import (
 type Pipeline interface {
 	Execute(steps []string) (charts.Charts, error)
 	Registered() rsrc.Day
+	Session() *unpack.SessionInfo
 }
 
 type pipeline struct {
@@ -46,7 +47,15 @@ func (w *pipeline) Registered() rsrc.Day {
 	return w.vars.user.Registered
 }
 
+func (w *pipeline) Session() *unpack.SessionInfo {
+	return w.session
+}
+
 func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
+	if w.session.User == "" {
+		return nil, fmt.Errorf("no user name given, session might not be properly initialized")
+	}
+
 	if w.baseType == "" {
 		if err := w.load(); err != nil {
 			return nil, err
@@ -64,7 +73,6 @@ func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
 			return nil, errors.Wrapf(err, "during step '%v'", step)
 		}
 	}
-
 	return parent, nil
 }
 
@@ -129,6 +137,8 @@ func (w *pipeline) calcDaily(s string) {
 	} else {
 		w.charts["daily"] = charts.Id(w.charts["base"])
 	}
+
+	w.baseType = s
 }
 
 func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error) {

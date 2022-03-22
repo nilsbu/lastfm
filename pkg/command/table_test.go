@@ -7,6 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/pipeline"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
@@ -214,7 +215,9 @@ func TestTable(t *testing.T) {
 				}
 			}
 
-			err := c.cmd.Execute(&unpack.SessionInfo{User: user}, s, d)
+			session := &unpack.SessionInfo{User: user}
+			pl := pipeline.New(session, s)
+			err := c.cmd.Execute(session, s, pl, d)
 			if err != nil && c.ok {
 				t.Fatalf("unexpected error: %v", err)
 			} else if err == nil && !c.ok {

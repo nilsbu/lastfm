@@ -7,6 +7,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/command"
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/pipeline"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -44,9 +45,10 @@ func main() {
 	}
 
 	session, _ := unpack.LoadSessionInfo(s)
+	pl := pipeline.New(session, s)
 	d := display.NewCSV("total.csv", ",") // TODO file name as param
 
-	err = command.Execute(os.Args, session, s, d)
+	err = command.Execute(os.Args, session, s, pl, d)
 	if err != nil {
 		fmt.Println(err)
 	}

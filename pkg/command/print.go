@@ -79,7 +79,7 @@ type printTotal struct {
 }
 
 func (cmd printTotal) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 
 	steps, err := cmd.getSteps()
 	if err != nil {
@@ -94,8 +94,7 @@ func (cmd printTotal) Execute(
 	}
 	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
@@ -121,7 +120,7 @@ type printFade struct {
 }
 
 func (cmd printFade) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -135,8 +134,7 @@ func (cmd printFade) Execute(
 	}
 	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
@@ -159,7 +157,7 @@ type printPeriod struct {
 }
 
 func (cmd printPeriod) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -167,8 +165,7 @@ func (cmd printPeriod) Execute(
 
 	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum", fmt.Sprintf("top %v", cmd.n))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
@@ -194,7 +191,7 @@ type printInterval struct {
 }
 
 func (cmd printInterval) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -202,8 +199,7 @@ func (cmd printInterval) Execute(
 
 	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", fmt.Sprintf("top %v", cmd.n))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
@@ -232,7 +228,7 @@ func (cmd printFadeMax) Accumulate(c charts.Charts) charts.Charts {
 }
 
 func (cmd printFadeMax) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -241,8 +237,7 @@ func (cmd printFadeMax) Execute(
 	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl))
 	steps = append(steps, "max", fmt.Sprintf("top %v", cmd.n))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
@@ -264,7 +259,7 @@ type printTags struct {
 }
 
 func (cmd printTags) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 
 	tags, err := unpack.LoadArtistTags(cmd.artist, unpack.NewCacheless(s))
 	if err != nil {

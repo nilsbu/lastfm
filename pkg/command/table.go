@@ -16,12 +16,8 @@ type tableTotal struct {
 	step int
 }
 
-func (cmd tableTotal) Accumulate(c charts.Charts) charts.Charts {
-	return charts.Sum(c)
-}
-
 func (cmd tableTotal) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -30,13 +26,12 @@ func (cmd tableTotal) Execute(
 	steps = setStep(steps, "sum")
 	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
 
-	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), w.Registered(), cha.Len())
+	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), pl.Registered(), cha.Len())
 
 	f := &format.Table{
 		Charts: cha,
@@ -57,13 +52,9 @@ type tableFade struct {
 	hl   float64
 }
 
-func (cmd tableFade) Accumulate(c charts.Charts) charts.Charts {
-	return charts.Fade(c, cmd.hl)
-}
-
 // TODO Test table fade
 func (cmd tableFade) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -74,12 +65,11 @@ func (cmd tableFade) Execute(
 		fmt.Sprintf("top %v", cmd.n),
 		fmt.Sprintf("step %vd", cmd.step))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
-	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), w.Registered(), cha.Len())
+	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), pl.Registered(), cha.Len())
 
 	f := &format.Table{
 		Charts: cha,
@@ -99,12 +89,8 @@ type tablePeriods struct {
 	period string
 }
 
-func (cmd tablePeriods) Accumulate(c charts.Charts) charts.Charts {
-	return charts.Sum(c)
-}
-
 func (cmd tablePeriods) Execute(
-	session *unpack.SessionInfo, s io.Store, d display.Display) error {
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
 	steps, err := cmd.getSteps()
 	if err != nil {
 		return err
@@ -113,12 +99,11 @@ func (cmd tablePeriods) Execute(
 	steps = setStep(steps, "id")
 	steps = append(steps, fmt.Sprintf("periods %v", cmd.period), fmt.Sprintf("top %v", cmd.n))
 
-	w := pipeline.New(session, s)
-	cha, err := w.Execute(steps)
+	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
-	ranges, _ := charts.ParseRanges(cmd.period, w.Registered(), cha.Len())
+	ranges, _ := charts.ParseRanges(cmd.period, pl.Registered(), cha.Len())
 
 	f := &format.Table{
 		Charts: cha,

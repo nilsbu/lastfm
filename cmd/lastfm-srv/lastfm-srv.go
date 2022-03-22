@@ -10,6 +10,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/display"
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/pipeline"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -54,6 +55,7 @@ func createStore(webObserver chan<- format.Formatter) (io.Store, error) {
 func handleRequest(
 	session *unpack.SessionInfo,
 	s io.Store,
+	pl pipeline.Pipeline,
 	w http.ResponseWriter,
 	r *http.Request) {
 
@@ -74,7 +76,7 @@ func handleRequest(
 		args = append(args, fmt.Sprintf("-%v=%v", k, vs[0]))
 	}
 
-	err := command.Execute(args, session, s, display.NewWeb(w))
+	err := command.Execute(args, session, s, pl, display.NewWeb(w))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -96,9 +98,11 @@ func main() {
 		return
 	}
 
+	pl := pipeline.New(session, s)
+
 	// TODO Reuse early stages of the charts
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		handleRequest(session, s, rw, r)
+		handleRequest(session, s, pl, rw, r)
 	})
 
 	if err := http.ListenAndServe(":3000", nil); err != nil {
