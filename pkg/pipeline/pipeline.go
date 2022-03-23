@@ -114,6 +114,7 @@ func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
 }
 
 func breakup(s string) []string {
+	// TODO the first steps should be moved to command
 	steps := make([]string, 0)
 	switch {
 	case strings.Contains(s, "song duration"):
