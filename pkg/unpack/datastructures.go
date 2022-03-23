@@ -130,7 +130,13 @@ type jsonAPIKey struct {
 }
 
 type jsonSessionInfo struct {
-	User string `json:"user"`
+	User    string              `json:"user"`
+	Options []jsonSessionOption `json:"options"`
+}
+
+type jsonSessionOption struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type jsonCorrections struct {

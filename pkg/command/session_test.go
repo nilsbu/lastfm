@@ -58,28 +58,28 @@ func TestSession(t *testing.T) {
 	}{
 		{
 			"start: session with other user running",
-			&unpack.SessionInfo{User: "U"},
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
 			sessionStart{user: "A"},
 			false,
-			&unpack.SessionInfo{User: "U"},
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
 		},
 		{
 			"start: session with same user running",
-			&unpack.SessionInfo{User: "U"},
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
 			sessionStart{user: "U"},
 			false,
-			&unpack.SessionInfo{User: "U"},
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
 		},
 		{
 			"start: successful",
 			nil,
 			sessionStart{user: "A"},
 			true,
-			&unpack.SessionInfo{User: "A"},
+			&unpack.SessionInfo{User: "A", Options: map[string]string{}},
 		},
 		{
 			"stop: successful",
-			&unpack.SessionInfo{User: "U"},
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
 			sessionStop{},
 			true,
 			nil,
@@ -90,6 +90,41 @@ func TestSession(t *testing.T) {
 			sessionStop{},
 			false,
 			nil,
+		},
+		{
+			"config: add normalized",
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
+			sessionConfig{"normalized", "true"},
+			true,
+			&unpack.SessionInfo{User: "U", Options: map[string]string{"normalized": "true"}},
+		},
+		{
+			"config: add second option",
+			&unpack.SessionInfo{User: "U", Options: map[string]string{"normalized": "true"}},
+			sessionConfig{"n", "50"},
+			true,
+			&unpack.SessionInfo{User: "U", Options: map[string]string{"normalized": "true", "n": "50"}},
+		},
+		{
+			"config: change existing option",
+			&unpack.SessionInfo{User: "U", Options: map[string]string{"normalized": "true"}},
+			sessionConfig{"normalized", "false"},
+			true,
+			&unpack.SessionInfo{User: "U", Options: map[string]string{"normalized": "false"}},
+		},
+		{
+			"config: option doesn't exist",
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
+			sessionConfig{"sdfsdf", "true"},
+			false,
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
+		},
+		{
+			"config: value invalid",
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
+			sessionConfig{"normalized", "69"}, // needs to be boolean
+			false,
+			&unpack.SessionInfo{User: "U", Options: map[string]string{}},
 		},
 	}
 

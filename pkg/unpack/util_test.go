@@ -54,7 +54,11 @@ func TestLoadSessionInfo(t *testing.T) {
 		{[]byte(""), nil, false},
 		{[]byte(`{`), nil, false},
 		{[]byte(`{}`), nil, false},
-		{[]byte(`{"user":"somename"}`), &SessionInfo{"somename"}, true},
+		{[]byte(`{"user":"somename"}`), &SessionInfo{User: "somename", Options: map[string]string{}}, true},
+		{
+			[]byte(`{"user":"somename","options":[{"name":"k","value":"v"},{"name":"k2","value":"v2"}]}`),
+			&SessionInfo{User: "somename", Options: map[string]string{"k": "v", "k2": "v2"}}, true,
+		},
 	}
 
 	for _, c := range cases {
@@ -87,7 +91,11 @@ func TestWriteSessionInfo(t *testing.T) {
 		session *SessionInfo
 		ok      bool
 	}{
-		{[]byte(`{"user":"somename"}`), &SessionInfo{"somename"}, true},
+		{[]byte(`{"user":"somename","options":[]}`), &SessionInfo{User: "somename"}, true},
+		{
+			[]byte(`{"user":"somename","options":[{"name":"k","value":"v"},{"name":"k2","value":"v2"}]}`),
+			&SessionInfo{User: "somename", Options: map[string]string{"k": "v", "k2": "v2"}}, true,
+		},
 	}
 
 	for _, c := range cases {

@@ -87,9 +87,10 @@ var cmdTable = node{
 var cmdSession = node{
 	cmd: exeSessionInfo,
 	nodes: nodes{
-		"info":  node{cmd: exeSessionInfo},
-		"start": node{cmd: exeSessionStart},
-		"stop":  node{cmd: exeSessionStop},
+		"info":   node{cmd: exeSessionInfo},
+		"start":  node{cmd: exeSessionStart},
+		"stop":   node{cmd: exeSessionStop},
+		"config": node{cmd: exeSessionConfig},
 	},
 }
 
@@ -409,6 +410,29 @@ var exeSessionStop = &cmd{
 	},
 }
 
+var exeSessionConfig = &cmd{
+	descr: "set an option that will overwrite the defauls in future commands",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return sessionConfig{
+			option: params[0].(string),
+			value:  params[1].(string),
+		}
+	},
+	params: params{parOptionName, parOptionValue},
+}
+
+var parOptionName = &param{
+	"option name",
+	"a name of an option",
+	"string",
+}
+
+var parOptionValue = &param{
+	"user value",
+	"a value of an option as a string",
+	"string",
+}
+
 var parUserName = &param{
 	"user name",
 	"a Last.fm user name",
@@ -427,8 +451,9 @@ var parHL = &param{
 	"float",
 }
 
+// TODO name any key (see above) of option are duplicate
 var optChartType = &option{
-	param{"chart type",
+	param{"by",
 		"'all' or 'super'",
 		"string"}, // TODO make something like an enum
 	"all",
@@ -442,7 +467,7 @@ var optGenericName = &option{
 }
 
 var optArtistCount = &option{
-	param{"count",
+	param{"n",
 		"number of artists",
 		"int"},
 	"10",
@@ -456,7 +481,7 @@ var optChartsDuration = &option{
 }
 
 var optChartsPercentage = &option{
-	param{"percentage",
+	param{"%",
 		"if charts are in percentage",
 		"bool"},
 	"false",
@@ -497,6 +522,19 @@ var optStep = &option{
 	"1",
 }
 
+var storableOptions = []*option{
+	optChartType,
+	optGenericName,
+	optArtistCount,
+	optChartsDuration,
+	optChartsPercentage,
+	optChartsKeys,
+	optChartsNormalized,
+	optChartsEntry,
+	optDate,
+	optStep,
+}
+
 func resolve(args []string, session *unpack.SessionInfo) (cmd command, err error) {
 	return resolveTree(args, session, cmdRoot)
 }
@@ -521,7 +559,11 @@ func resolveTree(
 		return nil, errors.New("command can only be executed when a session is running")
 	}
 
-	params, opts, err := parseArguments(args, tree.cmd)
+	sessionOptions := map[string]string{}
+	if session != nil && session.Options != nil {
+		sessionOptions = session.Options
+	}
+	params, opts, err := parseArguments(args, tree.cmd, sessionOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -530,7 +572,7 @@ func resolveTree(
 
 }
 
-func parseArguments(args []string, cmd *cmd,
+func parseArguments(args []string, cmd *cmd, sessionOptions map[string]string,
 ) (params []interface{},
 	opts map[string]interface{},
 	err error) {
@@ -581,7 +623,11 @@ func parseArguments(args []string, cmd *cmd,
 	}
 
 	for key, opt := range cmd.options {
-		if _, ok := rawOpts[key]; !ok {
+		// fill missing options from session defaults
+		if value, ok := sessionOptions[key]; ok {
+			rawOpts[key] = value
+		} else if _, ok := rawOpts[key]; !ok {
+			// or from option defauls
 			rawOpts[key] = opt.value
 		}
 	}

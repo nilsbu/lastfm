@@ -21,6 +21,7 @@ func (cmd sessionInfo) Execute(
 	} else {
 		d.Display(&format.Message{
 			Msg: fmt.Sprintf("a session is running for user '%v'", session.User)})
+		// TODO print params in session info
 	}
 
 	return nil
@@ -48,4 +49,36 @@ func (cmd sessionStop) Execute(
 	}
 
 	return s.Remove(rsrc.SessionInfo())
+}
+
+type sessionConfig struct {
+	option, value string
+}
+
+func (cmd sessionConfig) Execute(
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
+	if session == nil {
+		return errors.New("no session is running")
+	}
+
+	found := false
+	for _, opt := range storableOptions {
+		if opt.name == cmd.option {
+			if _, err := parseArgument(cmd.value, opt.kind); err != nil {
+				return err
+			}
+			found = true
+		}
+	}
+	if !found {
+		return fmt.Errorf("option '%v' doesn't exist", cmd.option)
+	}
+
+	params := make(map[string]string)
+	for k, v := range session.Options {
+		params[k] = v
+	}
+	params[cmd.option] = cmd.value
+
+	return unpack.WriteSessionInfo(&unpack.SessionInfo{User: session.User, Options: params}, s)
 }

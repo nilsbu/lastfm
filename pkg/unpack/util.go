@@ -1,6 +1,8 @@
 package unpack
 
 import (
+	"sort"
+
 	"github.com/pkg/errors"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -38,7 +40,8 @@ func (o obAPIKey) interpret(raw interface{}) (interface{}, error) {
 
 // SessionInfo contains information about a running session.
 type SessionInfo struct {
-	User string
+	User    string
+	Options map[string]string
 }
 
 type obSessionInfo struct{}
@@ -72,10 +75,25 @@ func (o obSessionInfo) interpret(raw interface{}) (interface{}, error) {
 		return "", errors.New("could not read session")
 	}
 
-	return &SessionInfo{session.User}, nil
+	options := make(map[string]string)
+	for _, opt := range session.Options {
+		options[opt.Name] = opt.Value
+	}
+
+	return &SessionInfo{User: session.User, Options: options}, nil
 }
 
 func (o obSessionInfo) raw(obj interface{}) interface{} {
 	session := obj.(*SessionInfo)
-	return &jsonSessionInfo{session.User}
+
+	options := []jsonSessionOption{}
+	if session.Options != nil {
+		for k, v := range session.Options {
+			options = append(options, jsonSessionOption{Name: k, Value: v})
+		}
+	}
+	// sort mainly for test stability
+	sort.Slice(options, func(i, j int) bool { return options[i].Name < options[j].Name })
+
+	return &jsonSessionInfo{User: session.User, Options: options}
 }

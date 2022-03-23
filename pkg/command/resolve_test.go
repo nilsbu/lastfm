@@ -75,6 +75,21 @@ func TestResolve(t *testing.T) {
 			nil, nil, false,
 		},
 		{
+			[]string{"lastfm", "session", "config", "n", "42"},
+			&unpack.SessionInfo{User: "tom"},
+			sessionConfig{option: "n", value: "42"}, true,
+		},
+		{
+			[]string{"lastfm", "session", "config", "n"},
+			&unpack.SessionInfo{User: "tom"},
+			nil, false,
+		},
+		{
+			[]string{"lastfm", "session", "config", "n", "42", "n"},
+			&unpack.SessionInfo{User: "tom"},
+			nil, false,
+		},
+		{
 			[]string{"lastfm", "update"},
 			nil, nil, false,
 		},
@@ -283,6 +298,18 @@ func TestResolve(t *testing.T) {
 			[]string{"lastfm-csv", "table", "fade", "10"},
 			&unpack.SessionInfo{User: "user"},
 			tableFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 10, step: 1}, true,
+		},
+		{
+			// relevant option stored
+			[]string{"lastfm-csv", "table", "fade", "10"},
+			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
+			tableFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 10, step: 30}, true,
+		},
+		{
+			// irrelevant option stored
+			[]string{"lastfm", "print", "total"},
+			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
+			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
 		},
 	}
 
