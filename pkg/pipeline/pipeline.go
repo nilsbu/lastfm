@@ -218,22 +218,22 @@ func (w *pipeline) load() (*vars, error) {
 }
 
 func (w *pipeline) root(s string) (charts.Charts, error) {
-	vv, err := w.vars.Exec()
-	if err != nil {
-		return nil, err
-	}
-	v := vv.(*vars)
+	// vv, err := w.vars.Exec()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// v := vv.(*vars)
 
 	var c charts.Charts
 	switch s {
 	case "songsduration":
-		c = charts.SongsDuration(v.plays)
+		c = charts.LoadSongsDuration(w.session.User, w.store)
 	case "songs":
-		c = charts.Songs(v.plays)
+		c = charts.LoadSongs(w.session.User, w.store)
 	case "artistsduration":
-		c = charts.ArtistsDuration(v.plays)
+		c = charts.LoadArtistsDuration(w.session.User, w.store)
 	default:
-		c = charts.Artists(v.plays)
+		c = charts.LoadArtists(w.session.User, w.store)
 	}
 	return w.graph.set([]string{s}, c), nil
 }

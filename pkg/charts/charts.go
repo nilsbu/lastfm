@@ -14,18 +14,18 @@ type Charts interface {
 }
 
 type charts struct {
-	songs   [][]info.Song
+	songs   func() ([][]info.Song, error)
 	key     func(info.Song) Title
 	value   func(info.Song) float64
 	jobChan chan compileJob
 	titles  []Title
 	values  map[string][]float64
 }
-type compileJob chan<- interface{}
+type compileJob chan<- error
 
 // Artists compiles LazyCharts in which all songs by an artist are grouped.
 func Artists(songs [][]info.Song) Charts {
-	return new(songs,
+	return new(func() ([][]info.Song, error) { return songs, nil },
 		func(s info.Song) Title { return ArtistTitle(s.Artist) },
 		func(s info.Song) float64 { return 1.0 })
 }
@@ -33,7 +33,7 @@ func Artists(songs [][]info.Song) Charts {
 // ArtistsDuration compiles LazyCharts in which all songs by an artist are
 // grouped. The songs are weighted by duration before they are summed up.
 func ArtistsDuration(songs [][]info.Song) Charts {
-	return new(songs,
+	return new(func() ([][]info.Song, error) { return songs, nil },
 		func(s info.Song) Title { return ArtistTitle(s.Artist) },
 		fDuration)
 }
@@ -48,7 +48,7 @@ func fDuration(s info.Song) float64 {
 
 // Songs compiles LazyCharts in which all songs are listed separately.
 func Songs(songs [][]info.Song) Charts {
-	return new(songs,
+	return new(func() ([][]info.Song, error) { return songs, nil },
 		func(s info.Song) Title { return SongTitle(s) },
 		func(s info.Song) float64 { return 1.0 })
 }
@@ -56,12 +56,12 @@ func Songs(songs [][]info.Song) Charts {
 // SongsDuration compiles LazyCharts in which all songs are listed separately.
 // The songs are weighted by duration.
 func SongsDuration(songs [][]info.Song) Charts {
-	return new(songs,
+	return new(func() ([][]info.Song, error) { return songs, nil },
 		func(s info.Song) Title { return SongTitle(s) },
 		fDuration)
 }
 
-func new(songs [][]info.Song, key func(info.Song) Title, value func(info.Song) float64) *charts {
+func new(songs func() ([][]info.Song, error), key func(info.Song) Title, value func(info.Song) float64) *charts {
 	job := make(chan compileJob)
 	c := &charts{
 		songs:   songs,
@@ -78,38 +78,45 @@ func (c *charts) compileWorker() {
 		select {
 		case back := <-c.jobChan:
 			if c.songs != nil {
-				c.compile()
+				back <- c.compile()
+			} else {
+				back <- nil
 			}
-			back <- nil
 		}
 	}
 }
 
-func (c *charts) compile() {
+func (c *charts) compile() error {
 	c.values = map[string][]float64{}
 	c.titles = []Title{}
 
+	songs, err := c.songs()
+	if err != nil {
+		return err
+	}
+
 	// TODO can this be parallelized?
-	for d, day := range c.songs {
+	for d, day := range songs {
 		for _, song := range day {
 			k := c.key(song)
 			if line, ok := c.values[k.Key()]; ok {
 				line[d] += c.value(song)
 			} else {
 				c.titles = append(c.titles, k)
-				c.values[k.Key()] = make([]float64, len(c.songs))
+				c.values[k.Key()] = make([]float64, len(songs))
 				c.values[k.Key()][d] = c.value(song)
 			}
 		}
 	}
 
 	c.songs = nil
+	return nil
 }
 
-func (c *charts) await() {
-	back := make(chan interface{})
+func (c *charts) await() error {
+	back := make(chan error)
 	c.jobChan <- back
-	<-back
+	return <-back
 }
 
 func FromMap(data map[string][]float64) Charts {
@@ -154,7 +161,9 @@ func InOrder(data []Pair) Charts {
 
 func (l *charts) Data(titles []Title, begin, end int) ([][]float64, error) {
 	if l.songs != nil {
-		l.await()
+		if err := l.await(); err != nil {
+			return nil, err
+		}
 	}
 
 	data := make([][]float64, len(titles))
@@ -166,7 +175,9 @@ func (l *charts) Data(titles []Title, begin, end int) ([][]float64, error) {
 
 func (l *charts) Titles() []Title {
 	if l.songs != nil {
-		l.await()
+		if err := l.await(); err != nil {
+			return nil // TODO error gets lost
+		}
 	}
 
 	// assumption: noone touches the return value
@@ -175,7 +186,7 @@ func (l *charts) Titles() []Title {
 
 func (l *charts) Len() int {
 	if l.songs != nil {
-		l.await()
+		l.await() // TOOD error gets lost
 	}
 
 	for _, line := range l.values {

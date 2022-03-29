@@ -1,10 +1,11 @@
-package mock
+package mock_test
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/format"
+	"github.com/nilsbu/lastfm/test/mock"
 )
 
 func TestDisplay(t *testing.T) {
@@ -23,7 +24,7 @@ func TestDisplay(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			d := NewDisplay()
+			d := mock.NewDisplay()
 
 			for i, f := range c.fs {
 				err := d.Display(f)

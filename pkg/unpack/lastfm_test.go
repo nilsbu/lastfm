@@ -1,4 +1,4 @@
-package unpack
+package unpack_test
 
 import (
 	"reflect"
@@ -6,11 +6,12 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
 func TestLastfmError(t *testing.T) {
-	err := &LastfmError{
+	err := &unpack.LastfmError{
 		Code:    3,
 		Message: "some error",
 	}
@@ -25,13 +26,13 @@ func TestLoadUserInfo(t *testing.T) {
 	cases := []struct {
 		json []byte
 		name string
-		user *User
+		user *unpack.User
 		ok   bool
 	}{
 		{
 			[]byte(`{"user":{"name":"What","playcount":1928,"registered":{"unixtime":114004225884}}}`),
 			"What",
-			&User{"What", rsrc.ToDay(114004195200)},
+			&unpack.User{"What", rsrc.ToDay(114004195200)},
 			true,
 		},
 		{
@@ -57,7 +58,7 @@ func TestLoadUserInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			user, err := LoadUserInfo(c.name, NewCacheless(io))
+			user, err := unpack.LoadUserInfo(c.name, unpack.NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -79,12 +80,12 @@ func TestLoadUserInfo(t *testing.T) {
 
 func TestWriteUserInfo(t *testing.T) {
 	cases := []struct {
-		user *User
+		user *unpack.User
 		json []byte
 		ok   bool
 	}{
 		{
-			&User{"What", rsrc.ToDay(114004195200)},
+			&unpack.User{"What", rsrc.ToDay(114004195200)},
 			[]byte(`{"user":{"name":"What","playcount":0,"registered":{"unixtime":114004195200}}}`),
 			true,
 		},
@@ -99,7 +100,7 @@ func TestWriteUserInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			err = WriteUserInfo(c.user, io)
+			err = unpack.WriteUserInfo(c.user, io)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -129,7 +130,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 		user string
 		day  rsrc.Day
 		page int
-		hist *HistoryDayPage
+		hist *unpack.HistoryDayPage
 		ok   bool
 	}{
 		{
@@ -141,7 +142,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 		{
 			[]byte(`{"recenttracks":{"track":[` + song1 + `,` + song2 + `], "@attr":{"totalPages":"1"}}}`),
 			"user", rsrc.ToDay(86400), 1,
-			&HistoryDayPage{
+			&unpack.HistoryDayPage{
 				[]info.Song{
 					{
 						Artist: "ASDF",
@@ -159,7 +160,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 		{
 			[]byte(`{"recenttracks":{"@attr":{"page":"1","total":"0","user":"NBooN","perPage":"200","totalPages":"0"},"track":{"artist":{"mbid":"846e89f6-6257-4371-a26d-de960a60bec5","#text":"The Coup"},"@attr":{"nowplaying":"true"},"mbid":"293b4bc9-95c3-3032-a59f-53d6dfba5263","album":{"mbid":"e2f0f87f-763a-498e-9823-decef2cf62b3","#text":"Pick A Bigger Weapon"},"streamable":"0","url":"https:\/\/www.last.fm\/music\/The+Coup\/_\/My+Favorite+Mutiny","name":"My Favorite Mutiny"}}}`),
 			"user", rsrc.ToDay(86400), 1,
-			&HistoryDayPage{
+			&unpack.HistoryDayPage{
 				[]info.Song{}, 0},
 			true,
 		},
@@ -174,7 +175,7 @@ func TestLoadHistoryDayPage(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			hist, err := LoadHistoryDayPage(c.user, c.page, c.day, NewCacheless(io))
+			hist, err := unpack.LoadHistoryDayPage(c.user, c.page, c.day, unpack.NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -220,7 +221,7 @@ func TestLoadArtistInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			info, err := LoadArtistInfo(c.artist, NewCacheless(io))
+			info, err := unpack.LoadArtistInfo(c.artist, unpack.NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -249,25 +250,25 @@ func TestLoadArtistTags(t *testing.T) {
 	cases := []struct {
 		files  map[rsrc.Locator][]byte
 		artist string
-		tags   []TagCount
+		tags   []unpack.TagCount
 		ok     bool
 	}{
 		{
 			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): nil},
 			"xy",
-			[]TagCount{},
+			[]unpack.TagCount{},
 			false,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"user":{"name":"xy","registered":{"unixtime":86400}}}`)},
 			"xy",
-			[]TagCount{},
+			[]unpack.TagCount{},
 			true, // no error thrown, we'll have to except that wrong data is accepted
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.ArtistTags("xy"): []byte(`{"toptags":{"tag":[{"name":"bui", "count":100},{"count":12,"name":"asdf"}],"@attr":{"artist":"xy"}}}`)},
 			"xy",
-			[]TagCount{{"bui", 100}, {"asdf", 12}},
+			[]unpack.TagCount{{"bui", 100}, {"asdf", 12}},
 			true,
 		},
 	}
@@ -279,7 +280,7 @@ func TestLoadArtistTags(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			tags, err := LoadArtistTags(c.artist, NewCacheless(io))
+			tags, err := unpack.LoadArtistTags(c.artist, unpack.NewCacheless(io))
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -297,14 +298,14 @@ func TestLoadArtistTags(t *testing.T) {
 }
 
 func TestWriteLoadArtistTags(t *testing.T) {
-	// WriteArtistTags only tested in combination with loading for simplicity.
+	// unpack.WriteArtistTags only tested in combination with loading for simplicity.
 	cases := []struct {
 		artist string
-		tags   []TagCount
+		tags   []unpack.TagCount
 	}{
 		{
 			"xy",
-			[]TagCount{{"bui", 100}, {"asdf", 12}},
+			[]unpack.TagCount{{"bui", 100}, {"asdf", 12}},
 		},
 	}
 
@@ -317,12 +318,12 @@ func TestWriteLoadArtistTags(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			err = WriteArtistTags(c.artist, c.tags, io)
+			err = unpack.WriteArtistTags(c.artist, c.tags, io)
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
 
-			tags, err := LoadArtistTags(c.artist, NewCacheless(io))
+			tags, err := unpack.LoadArtistTags(c.artist, unpack.NewCacheless(io))
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
@@ -401,7 +402,7 @@ func TestLoadTagInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			buf := NewCached(io)
+			buf := unpack.NewCached(io)
 
 			n := 0
 			for _, names := range c.names {
@@ -416,7 +417,7 @@ func TestLoadTagInfo(t *testing.T) {
 			for _, names := range c.names {
 				for i := range names {
 					go func(i int) {
-						res, err := LoadTagInfo(names[i], buf)
+						res, err := unpack.LoadTagInfo(names[i], buf)
 						tags[i+n] = res
 						feedback <- err
 					}(i)
@@ -470,14 +471,14 @@ func TestWriteLoadTagInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			ctl := NewCached(io)
+			ctl := unpack.NewCached(io)
 
-			err = WriteTagInfo(c.tag, io)
+			err = unpack.WriteTagInfo(c.tag, io)
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
 
-			tag, err := LoadTagInfo(c.tag.Name, ctl)
+			tag, err := unpack.LoadTagInfo(c.tag.Name, ctl)
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
@@ -495,19 +496,19 @@ func TestLoadTrackInfo(t *testing.T) {
 		files  map[rsrc.Locator][]byte
 		artist string
 		track  string
-		info   TrackInfo
+		info   unpack.TrackInfo
 		ok     bool
 	}{
 		{
 			map[rsrc.Locator][]byte{rsrc.TrackInfo("xy", "a"): nil},
 			"xy", "a",
-			TrackInfo{},
+			unpack.TrackInfo{},
 			false,
 		},
 		{
 			map[rsrc.Locator][]byte{rsrc.TrackInfo("xy", "a"): []byte(`{"track":{"duration":"123000","listeners":"2","playcount":"3"}}`)},
 			"xy", "a",
-			TrackInfo{
+			unpack.TrackInfo{
 				Artist:    "xy",
 				Track:     "a",
 				Duration:  123,
@@ -525,9 +526,9 @@ func TestLoadTrackInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			buf := NewCached(io)
+			buf := unpack.NewCached(io)
 
-			info, err := LoadTrackInfo(c.artist, c.track, buf)
+			info, err := unpack.LoadTrackInfo(c.artist, c.track, buf)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -549,11 +550,11 @@ func TestWriteLoadTrackInfo(t *testing.T) {
 	cases := []struct {
 		artist string
 		track  string
-		info   TrackInfo
+		info   unpack.TrackInfo
 	}{
 		{
 			"xy", "a",
-			TrackInfo{
+			unpack.TrackInfo{
 				Artist:    "xy",
 				Track:     "a",
 				Duration:  123,
@@ -572,12 +573,12 @@ func TestWriteLoadTrackInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			err = WriteTrackInfo(c.artist, c.track, c.info, io)
+			err = unpack.WriteTrackInfo(c.artist, c.track, c.info, io)
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}
 
-			info, err := LoadTrackInfo(c.artist, c.track, NewCached(io))
+			info, err := unpack.LoadTrackInfo(c.artist, c.track, unpack.NewCached(io))
 			if err != nil {
 				t.Fatal("unexpected error:", err)
 			}

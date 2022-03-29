@@ -1,10 +1,11 @@
-package unpack
+package unpack_test
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
@@ -29,7 +30,7 @@ func TestLoadAPIKey(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			key, err := LoadAPIKey(io)
+			key, err := unpack.LoadAPIKey(io)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -48,16 +49,16 @@ func TestLoadAPIKey(t *testing.T) {
 func TestLoadSessionInfo(t *testing.T) {
 	cases := []struct {
 		json    []byte
-		session *SessionInfo
+		session *unpack.SessionInfo
 		ok      bool
 	}{
 		{[]byte(""), nil, false},
 		{[]byte(`{`), nil, false},
 		{[]byte(`{}`), nil, false},
-		{[]byte(`{"user":"somename"}`), &SessionInfo{User: "somename", Options: map[string]string{}}, true},
+		{[]byte(`{"user":"somename"}`), &unpack.SessionInfo{User: "somename", Options: map[string]string{}}, true},
 		{
 			[]byte(`{"user":"somename","options":[{"name":"k","value":"v"},{"name":"k2","value":"v2"}]}`),
-			&SessionInfo{User: "somename", Options: map[string]string{"k": "v", "k2": "v2"}}, true,
+			&unpack.SessionInfo{User: "somename", Options: map[string]string{"k": "v", "k2": "v2"}}, true,
 		},
 	}
 
@@ -69,7 +70,7 @@ func TestLoadSessionInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			session, err := LoadSessionInfo(io)
+			session, err := unpack.LoadSessionInfo(io)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -88,13 +89,13 @@ func TestLoadSessionInfo(t *testing.T) {
 func TestWriteSessionInfo(t *testing.T) {
 	cases := []struct {
 		json    []byte
-		session *SessionInfo
+		session *unpack.SessionInfo
 		ok      bool
 	}{
-		{[]byte(`{"user":"somename","options":[]}`), &SessionInfo{User: "somename"}, true},
+		{[]byte(`{"user":"somename","options":[]}`), &unpack.SessionInfo{User: "somename"}, true},
 		{
 			[]byte(`{"user":"somename","options":[{"name":"k","value":"v"},{"name":"k2","value":"v2"}]}`),
-			&SessionInfo{User: "somename", Options: map[string]string{"k": "v", "k2": "v2"}}, true,
+			&unpack.SessionInfo{User: "somename", Options: map[string]string{"k": "v", "k2": "v2"}}, true,
 		},
 	}
 
@@ -106,7 +107,7 @@ func TestWriteSessionInfo(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			err = WriteSessionInfo(c.session, io)
+			err = unpack.WriteSessionInfo(c.session, io)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {

@@ -1,4 +1,4 @@
-package unpack
+package unpack_test
 
 import (
 	"reflect"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
@@ -34,13 +35,13 @@ func TestBookmarks(t *testing.T) {
 			}
 
 			if c.write {
-				err = WriteBookmark(c.bookmark, "user", io)
+				err = unpack.WriteBookmark(c.bookmark, "user", io)
 				if err != nil {
 					t.Error("unexpected error during write:", err)
 				}
 			}
 
-			bookmark, err := LoadBookmark("user", io)
+			bookmark, err := unpack.LoadBookmark("user", io)
 			if err != nil && c.readOK {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.readOK {
@@ -91,13 +92,13 @@ func TestAllDayPlays(t *testing.T) {
 			}
 
 			if c.write {
-				err = WriteAllDayPlays(c.plays, "user", io)
+				err = unpack.WriteAllDayPlays(c.plays, "user", io)
 				if err != nil {
 					t.Error("unexpected error during write:", err)
 				}
 			}
 
-			plays, err := LoadAllDayPlays("user", io)
+			plays, err := unpack.LoadAllDayPlays("user", io)
 			if err != nil && c.readOK {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.readOK {
@@ -146,13 +147,13 @@ func TestDayHistory(t *testing.T) {
 			}
 
 			if c.write {
-				err = WriteDayHistory(c.plays, "user", rsrc.ParseDay("2019-12-31"), io)
+				err = unpack.WriteDayHistory(c.plays, "user", rsrc.ParseDay("2019-12-31"), io)
 				if err != nil {
 					t.Error("unexpected error during write:", err)
 				}
 			}
 
-			plays, err := LoadDayHistory("user", rsrc.ParseDay("2019-12-31"), io)
+			plays, err := unpack.LoadDayHistory("user", rsrc.ParseDay("2019-12-31"), io)
 			if err != nil && c.readOK {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.readOK {
@@ -193,7 +194,7 @@ func TestLoadArtistCorrections(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			corrections, err := LoadArtistCorrections("user", io)
+			corrections, err := unpack.LoadArtistCorrections("user", io)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -235,7 +236,7 @@ func TestLoadSupertagCorrections(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			corrections, err := LoadSupertagCorrections("user", io)
+			corrections, err := unpack.LoadSupertagCorrections("user", io)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {
@@ -277,7 +278,7 @@ func TestLoadCountryCorrections(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			corrections, err := LoadCountryCorrections("user", io)
+			corrections, err := unpack.LoadCountryCorrections("user", io)
 			if err != nil && c.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !c.ok {

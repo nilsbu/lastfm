@@ -1,9 +1,10 @@
-package unpack
+package unpack_test
 
 import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/rsrc"
+	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
 
@@ -18,14 +19,14 @@ func TestCachedLoaderShutdownOnError(t *testing.T) {
 		t.Fatal("setup error")
 	}
 
-	buf := NewCached(io)
+	buf := unpack.NewCached(io)
 
-	_, err = LoadTagInfo("error", buf)
+	_, err = unpack.LoadTagInfo("error", buf)
 	if err == nil {
 		t.Fatal("expected error but none occurred for tag 'error'")
 	}
 
-	_, err = LoadTagInfo("african", buf)
+	_, err = unpack.LoadTagInfo("african", buf)
 	if err == nil {
 		t.Fatal("expected error but none occurred for tag 'african'")
 	}
