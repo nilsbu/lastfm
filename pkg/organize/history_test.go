@@ -1,4 +1,4 @@
-package organize
+package organize_test
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
@@ -109,7 +110,7 @@ func TestLoadHistory(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			io, _ := mock.IO(tc.files, mock.Path)
 
-			dps, err := loadHistory(tc.user, tc.until, io, unpack.NewCached(io))
+			dps, err := organize.LoadHistory(tc.user, tc.until, io, unpack.NewCached(io))
 			if err != nil && tc.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !tc.ok {
@@ -407,7 +408,7 @@ func TestUpdateHistory(t *testing.T) {
 
 			store, _ := io.NewStore([][]rsrc.IO{{io0}, {io1}})
 
-			plays, err := UpdateHistory(&tc.user, tc.until, store)
+			plays, err := organize.UpdateHistory(&tc.user, tc.until, store, io.FreshStore(store))
 			if err != nil && tc.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !tc.ok {

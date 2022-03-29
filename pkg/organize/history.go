@@ -6,7 +6,6 @@ import (
 
 	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/pkg/info"
-	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -16,7 +15,7 @@ import (
 func UpdateHistory(
 	user *unpack.User,
 	until rsrc.Day, // TODO change to end/before
-	s io.Store,
+	s, f rsrc.IO,
 ) (plays [][]info.Song, err error) {
 	if user.Registered == nil {
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
@@ -51,9 +50,9 @@ func UpdateHistory(
 		return oldPlays[:days], nil
 	}
 
-	newPlays, err := loadHistory(
+	newPlays, err := LoadHistory(
 		unpack.User{Name: user.Name, Registered: endCached},
-		until, io.FreshStore(s), cache) // TODO make fresh optional
+		until, f, cache) // TODO make fresh optional
 
 	for _, plays := range newPlays {
 		err = attachDuration(plays, cache)
@@ -81,8 +80,8 @@ func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]info.Song, e
 	return plays, err
 }
 
-// loadHistory load plays from all days since the registration of the user.
-func loadHistory(
+// LoadHistory load plays from all days since the registration of the user.
+func LoadHistory(
 	user unpack.User,
 	until rsrc.Day,
 	io rsrc.IO,

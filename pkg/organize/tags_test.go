@@ -1,4 +1,4 @@
-package organize
+package organize_test
 
 import (
 	"reflect"
@@ -6,6 +6,7 @@ import (
 
 	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/pkg/info"
+	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/test/mock"
 	"github.com/pkg/errors"
@@ -90,7 +91,7 @@ func TestLoadArtistTags(t *testing.T) {
 				t.Fatal("setup error")
 			}
 
-			tags, err := LoadArtistTags(c.artists, io)
+			tags, err := organize.LoadArtistTags(c.artists, io)
 			if err != nil && !c.hasError {
 				t.Error("unexpected error:", err)
 			} else if err == nil && c.hasError {

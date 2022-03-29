@@ -23,7 +23,7 @@ func (cmd updateHistory) Execute(
 	}
 
 	today := rsrc.DayFromTime(time.Now())
-	_, err = organize.UpdateHistory(user, today, s)
+	_, err = organize.UpdateHistory(user, today, s, io.FreshStore(s))
 	if err != nil {
 		return errors.Wrap(err, "failed to update user history")
 	}
