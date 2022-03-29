@@ -25,30 +25,6 @@ type titleColumn struct {
 	col []float64
 }
 
-func (l *partitionSum) Column(titles []Title, index int) []float64 {
-	col := make([]float64, len(titles))
-	back := make(chan titleColumn)
-
-	for i, bin := range titles {
-		ts := l.partition.Titles(bin)
-		go func(titles []Title, i int) {
-			back <- titleColumn{
-				key: i,
-				col: l.parent.Column(titles, index),
-			}
-		}(ts, i)
-	}
-
-	for range titles {
-		kf := <-back
-		for _, v := range kf.col {
-			col[kf.key] += v
-		}
-	}
-
-	return col
-}
-
 func (l *partitionSum) Data(titles []Title, begin, end int) [][]float64 {
 	back := make(chan indexLine)
 
@@ -182,15 +158,6 @@ func (c *cache) row(title Title, begin, end int) []float64 {
 	return answer
 }
 
-func (c *cache) Column(titles []Title, index int) []float64 {
-	data := c.Data(titles, index, index+1)
-	tvm := make([]float64, len(titles))
-	for i := range titles {
-		tvm[i] = data[i][0]
-	}
-	return tvm
-}
-
 func (c *cache) Data(titles []Title, begin, end int) [][]float64 {
 	data := make([][]float64, len(titles))
 	back := make(chan indexLine)
@@ -228,17 +195,13 @@ func (c *only) Titles() []Title {
 	return c.titles
 }
 
-func (c *only) Column(titles []Title, index int) []float64 {
-	return c.parent.Column(titles, index)
-}
-
 func (c *only) Data(titles []Title, begin, end int) [][]float64 {
 	return c.parent.Data(titles, begin, end)
 }
 
 func Top(c Charts, n int) []Title {
 	fullTitles := c.Titles()
-	col := c.Column(fullTitles, c.Len()-1)
+	col := c.Data(fullTitles, c.Len()-1, c.Len())
 	m := n + 1
 	if len(col) < n {
 		m = len(col)
@@ -248,7 +211,7 @@ func Top(c Charts, n int) []Title {
 	ts := make([]Title, m)
 	i := 0
 	for k, tv := range col {
-		vs[i] = tv
+		vs[i] = tv[0]
 		ts[i] = fullTitles[k]
 		for j := i; j > 0; j-- {
 			if vs[j-1] < vs[j] {

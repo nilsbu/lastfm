@@ -55,11 +55,11 @@ func (f *Charts) format(
 	}
 
 	f.Charts = charts.Cache(charts.Column(f.Charts, -1))
-	data := f.Charts.Column(f.Charts.Titles(), 0)
+	data := f.Charts.Data(f.Charts.Titles(), 0, 1)
 	scorepattern := f.getScorePattern()
 
 	for i, title := range f.Charts.Titles() {
-		sscore := fmt.Sprintf(scorepattern, multi*data[i])
+		sscore := fmt.Sprintf(scorepattern, multi*data[i][0])
 		if decimal != "." {
 			sscore = strings.Replace(sscore, ".", decimal, 1)
 		}
@@ -113,7 +113,7 @@ func (f *Charts) getScorePattern() (pattern string) {
 	titles := f.Charts.Titles()
 	var topValue float64
 	if len(titles) > 0 {
-		topValue = f.Charts.Column(titles[:1], 0)[0]
+		topValue = f.Charts.Data(titles[:1], 0, 1)[0][0]
 	}
 
 	var maxValueLen int

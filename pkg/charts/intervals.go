@@ -125,15 +125,6 @@ func (c interval) Len() int {
 	return c.end - c.begin
 }
 
-func (c interval) Column(titles []Title, index int) []float64 {
-	data := c.Data(titles, index, index+1)
-	tvm := make([]float64, len(titles))
-	for i := range titles {
-		tvm[i] = data[i][0]
-	}
-	return tvm
-}
-
 func (c interval) Data(titles []Title, begin, end int) [][]float64 {
 	data := make([][]float64, len(titles))
 	back := make(chan indexLine)
@@ -245,15 +236,6 @@ func (c intervals) Len() int {
 	return len(c.delims) - 1
 }
 
-func (c intervals) Column(titles []Title, index int) []float64 {
-	data := c.Data(titles, index, index+1)
-	tvm := make([]float64, len(titles))
-	for i := range titles {
-		tvm[i] = data[i][0]
-	}
-	return tvm
-}
-
 func (c intervals) Data(titles []Title, begin, end int) [][]float64 {
 	// TODO speedup
 	// data := c.parent.Data(titles, c.delims[begin], c.delims[end])
@@ -266,9 +248,9 @@ func (c intervals) Data(titles []Title, begin, end int) [][]float64 {
 	// cha := make([]LazyCharts, end-begin)
 	for i := begin; i < end; i++ {
 		cha := c.f(Crop(c.parent, c.delims[i], c.delims[i+1]))
-		cdata := cha.Column(titles, cha.Len()-1)
+		cdata := cha.Data(titles, cha.Len()-1, cha.Len())
 		for j := range titles {
-			lines[j][i-begin] = cdata[j]
+			lines[j][i-begin] = cdata[j][0]
 		}
 	}
 

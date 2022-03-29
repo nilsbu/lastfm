@@ -7,8 +7,6 @@ import (
 )
 
 type Charts interface {
-	// TODO can Charts.Column() be removed?
-	Column(titles []Title, index int) []float64
 	Data(titles []Title, begin, end int) [][]float64
 
 	Titles() []Title
@@ -152,18 +150,6 @@ func InOrder(data []Pair) Charts {
 	}
 
 	return charts
-}
-
-func (l *charts) Column(titles []Title, index int) []float64 {
-	if l.songs != nil {
-		l.await()
-	}
-
-	col := make([]float64, len(titles))
-	for i, t := range titles {
-		col[i] = l.values[t.Key()][index]
-	}
-	return col
 }
 
 func (l *charts) Data(titles []Title, begin, end int) [][]float64 {

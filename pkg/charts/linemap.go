@@ -1,6 +1,8 @@
 package charts
 
-import "math"
+import (
+	"math"
+)
 
 type lineMapCharts struct {
 	chartsNode
@@ -178,49 +180,34 @@ func Multiply(parent Charts, s float64) Charts {
 	}
 }
 
-func (l *lineMapCharts) Column(titles []Title, index int) []float64 {
-	type iv struct {
-		i int
-		v float64
-	}
-
-	col := make([]float64, len(titles))
-	back := make(chan iv)
-	rb, re := l.rangeF(l.parent.Len(), index, index+1)
-
-	for t := range titles {
-		go func(t int) {
-			in := l.parent.Data([]Title{titles[t]}, rb, re)[0]
-			back <- iv{
-				i: t,
-				v: l.foldF(index, in),
-			}
-		}(t)
-	}
-
-	for range titles {
-		kf := <-back
-		col[kf.i] = kf.v
-	}
-	return col
-}
-
 func (l *lineMapCharts) Data(titles []Title, begin, end int) [][]float64 {
 
 	data := make([][]float64, len(titles))
 	back := make(chan indexLine)
 	rb, re := l.rangeF(l.parent.Len(), begin, end)
 
-	for k := range titles {
-		go func(k int) {
-			in := l.parent.Data([]Title{titles[k]}, rb, re)[0]
-			out := l.mapF(in)
+	if end-begin == 1 {
+		for t := range titles {
+			go func(t int) {
+				in := l.parent.Data([]Title{titles[t]}, rb, re)[0]
+				back <- indexLine{
+					i:  t,
+					vs: []float64{l.foldF(end-1, in)},
+				}
+			}(t)
+		}
+	} else {
+		for k := range titles {
+			go func(k int) {
+				in := l.parent.Data([]Title{titles[k]}, rb, re)[0]
+				out := l.mapF(in)
 
-			back <- indexLine{
-				i:  k,
-				vs: out[begin-rb : end-rb],
-			}
-		}(k)
+				back <- indexLine{
+					i:  k,
+					vs: out[begin-rb : end-rb],
+				}
+			}(k)
+		}
 	}
 
 	for range titles {

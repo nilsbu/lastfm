@@ -53,15 +53,6 @@ func Normalize(c Charts) Charts {
 	return newNormalizer(c, ColumnSum(c))
 }
 
-func (c *normalizer) Column(titles []Title, index int) []float64 {
-	data := c.Data(titles, index, index+1)
-	tvm := make([]float64, len(titles))
-	for i := range titles {
-		tvm[i] = data[i][0]
-	}
-	return tvm
-}
-
 func (c *normalizer) Data(titles []Title, begin, end int) [][]float64 {
 	data := make([][]float64, len(titles))
 	back := make(chan bool, len(titles))

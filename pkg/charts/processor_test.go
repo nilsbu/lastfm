@@ -163,13 +163,21 @@ func TestLazyChartsPartial(t *testing.T) {
 				}
 			}
 			{
-				col := c.lc.Column([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1)
+				col_ := c.lc.Data([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1, 2)
+				col := make([]float64, len(col_))
+				for i, c := range col_ {
+					col[i] = c[0]
+				}
 				if !reflect.DeepEqual(c.colAB1, col) {
 					t.Error("col A,B 1 not equal:", c.colAB1, "!=", col)
 				}
 			}
 			{
-				col := c.lc.Column([]charts.Title{charts.KeyTitle("B")}, 3)
+				col_ := c.lc.Data([]charts.Title{charts.KeyTitle("B")}, 3, 4)
+				col := make([]float64, len(col_))
+				for i, c := range col_ {
+					col[i] = c[0]
+				}
 				if !reflect.DeepEqual(c.colB3, col) {
 					t.Error("col B 3 not equal:", c.colB3, "!=", col)
 				}
@@ -330,8 +338,8 @@ func checkCols(t *testing.T, expect, actual charts.Charts, sets [][]charts.Title
 
 	for _, set := range sets {
 		for i := 0; i < expect.Len(); i++ {
-			x := expect.Column(set, i)
-			a := actual.Column(set, i)
+			x := expect.Data(set, i, i+1)
+			a := actual.Data(set, i, i+1)
 
 			if len(a) != len(set) {
 				t.Fatalf("col length: expect=%v, actual=%v",
@@ -343,7 +351,7 @@ func checkCols(t *testing.T, expect, actual charts.Charts, sets [][]charts.Title
 			}
 
 			for k := range x {
-				if math.Abs(x[k]-a[k]) > 1e-6 {
+				if math.Abs(x[k][0]-a[k][0]) > 1e-6 {
 					t.Errorf("col(%v, %v): expect=%v, actual=%v",
 						k, i, x[k], a[k])
 				}
