@@ -34,7 +34,12 @@ func (l *partitionSum) Data(titles []Title, begin, end int) ([][]float64, error)
 
 	err := async.Pie(len(titles), func(i int) error {
 		line := make([]float64, end-begin)
-		for _, key := range l.partition.Titles(titles[i]) {
+
+		titles, err := l.partition.Titles(titles[i])
+		if err != nil {
+			return nil
+		}
+		for _, key := range titles {
 			res, err := l.parent.Data([]Title{key}, begin, end)
 			if err != nil {
 				return err
@@ -55,7 +60,8 @@ func (l *partitionSum) Data(titles []Title, begin, end int) ([][]float64, error)
 }
 
 func (l *partitionSum) Titles() []Title {
-	return l.partition.Partitions()
+	ps, _ := l.partition.Partitions()
+	return ps
 }
 
 // Subset is a LazyCharts that picks a single subset of the partition from the parent.
@@ -64,7 +70,8 @@ func Subset(
 	partition Partition,
 	title Title,
 ) Charts {
-	return Only(parent, partition.Titles(title))
+	titles, _ := partition.Titles(title)
+	return Only(parent, titles)
 }
 
 // ColumnSum is a LazyCharts that sums up all columns.

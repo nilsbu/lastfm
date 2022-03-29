@@ -345,7 +345,9 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 
 func partitionCongains(partition charts.Partition, name string) bool {
 	found := false
-	for _, partition := range partition.Partitions() {
+
+	partitions, _ := partition.Partitions()
+	for _, partition := range partitions {
 		if partition.Key() == name {
 			found = true
 			break

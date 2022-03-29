@@ -14,11 +14,10 @@ import (
 // Partition(title). Conversely Titles(partition) will include all titles
 // belonging to a given partition.
 // Partitions() returns the set of partitions.
-// TODO Should key errors be handled explicitely?
 type Partition interface {
-	Partition(title Title) (partition Title)
-	Titles(partition Title) []Title
-	Partitions() []Title
+	Partition(title Title) (partition Title, err error)
+	Titles(partition Title) ([]Title, error)
+	Partitions() ([]Title, error)
 }
 
 type biMapPartition struct {
@@ -28,21 +27,21 @@ type biMapPartition struct {
 	key             func(title Title) string
 }
 
-func (p biMapPartition) Partition(title Title) Title {
+func (p biMapPartition) Partition(title Title) (Title, error) {
 	if partition, ok := p.titlePartition[p.key(title)]; ok {
-		return partition
+		return partition, nil
 	}
-	return KeyTitle("")
+	return KeyTitle(""), nil
 }
-func (p biMapPartition) Titles(partition Title) []Title {
+func (p biMapPartition) Titles(partition Title) ([]Title, error) {
 	if titles, ok := p.partitionTitles[p.key(partition)]; ok {
-		return titles
+		return titles, nil
 	}
-	return []Title{}
+	return []Title{}, nil
 }
 
-func (p biMapPartition) Partitions() []Title {
-	return p.partitions
+func (p biMapPartition) Partitions() ([]Title, error) {
+	return p.partitions, nil
 }
 
 // KeyPartition returns a Partition where Title.Key() determines a Title's

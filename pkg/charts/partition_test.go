@@ -25,6 +25,7 @@ func TestPartiton(t *testing.T) {
 		partitionTitles []partitionTitles
 		partitions      []charts.Title
 	}{
+		// TODO check errors
 		{
 			"empty key partition",
 			charts.KeyPartition([][2]charts.Title{}),
@@ -197,14 +198,14 @@ func TestPartiton(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			for _, tp := range c.titlePartitions {
-				partition := c.partition.Partition(tp.title)
+				partition, _ := c.partition.Partition(tp.title)
 				if tp.partition.Key() != partition.Key() {
 					t.Errorf("'%v': '%v' != '%v'", tp.title, tp.partition, partition)
 				}
 			}
 
 			for _, pt := range c.partitionTitles {
-				titles := c.partition.Titles(pt.partition)
+				titles, _ := c.partition.Titles(pt.partition)
 				if len(titles) != len(pt.titles) {
 					t.Fatalf("for partition '%v': %v != %v",
 						pt.partition, len(titles), len(pt.titles))
@@ -214,7 +215,7 @@ func TestPartiton(t *testing.T) {
 				}
 			}
 
-			partitions := c.partition.Partitions()
+			partitions, _ := c.partition.Partitions()
 			if !areTitlesSame(c.partitions, partitions) {
 				t.Errorf("partitions unequal: %v != %v", c.partitions, partitions)
 			}
