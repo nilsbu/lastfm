@@ -139,7 +139,7 @@ func FirstTagPartition(
 // YearPartition creates a partition based on when artists have passsed a threshold.
 // gaussian is a the charts normalized by a gaussian.
 // sums is a normalized sum of the charts.
-func YearPartition(gaussian, sums Charts, registered rsrc.Day) Partition {
+func YearPartition(gaussian, sums Charts, registered rsrc.Day) (Partition, error) {
 	first := registered.Time().Year()
 	last := registered.AddDate(0, 0, sums.Len()).Time().Year()
 
@@ -160,15 +160,24 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) Partition {
 		maxI := 0
 		for i, idx := range yearIdxs {
 			// TODO use Column if you decide to keep that method
-			v := sums.Data([]Title{title}, idx, idx+1)[0][0]
+			vs, err := sums.Data([]Title{title}, idx, idx+1)
+			if err != nil {
+				return nil, err
+			}
+			v := vs[0][0]
+
 			if v < 2 { // TODO no magic numbers
 				continue
 			}
-			m := Max(Interval(only, Range{
+			ms, err := Max(Interval(only, Range{
 				Begin:      registered.AddDate(0, 0, prev),
 				End:        registered.AddDate(0, 0, idx+1),
 				Registered: registered,
-			})).Data([]Title{title}, idx-prev, idx-prev+1)[0][0]
+			})).Data([]Title{title}, idx-prev, idx-prev+1)
+			if err != nil {
+				return nil, err
+			}
+			m := ms[0][0]
 
 			prev = idx + 1
 			if m > maxM {
@@ -189,7 +198,7 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) Partition {
 		partitionTitles: partitionTitles,
 		partitions:      partitions,
 		key:             func(t Title) string { return t.Key() },
-	}
+	}, nil
 }
 
 func getYearIdxs(registered rsrc.Day, len int) (idxs []int) {

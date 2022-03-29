@@ -151,19 +151,19 @@ func TestLazyChartsPartial(t *testing.T) {
 	for _, c := range cs {
 		t.Run(c.name, func(t *testing.T) {
 			{
-				row := c.lc.Data([]charts.Title{charts.KeyTitle("A")}, 0, 4)[0]
-				if !reflect.DeepEqual(row, c.rowA04) {
-					t.Error("row A 0-4 not equal:", row, "!=", c.rowA04)
+				row, _ := c.lc.Data([]charts.Title{charts.KeyTitle("A")}, 0, 4)
+				if !reflect.DeepEqual(row[0], c.rowA04) {
+					t.Error("row A 0-4 not equal:", row[0], "!=", c.rowA04)
 				}
 			}
 			{
-				row := c.lc.Data([]charts.Title{charts.KeyTitle("B")}, 1, 3)[0]
-				if !reflect.DeepEqual(row, c.rowB13) {
-					t.Error("row B 1-3 not equal:", row, "!=", c.rowB13)
+				row, _ := c.lc.Data([]charts.Title{charts.KeyTitle("B")}, 1, 3)
+				if !reflect.DeepEqual(row[0], c.rowB13) {
+					t.Error("row B 1-3 not equal:", row[0], "!=", c.rowB13)
 				}
 			}
 			{
-				col_ := c.lc.Data([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1, 2)
+				col_, _ := c.lc.Data([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1, 2)
 				col := make([]float64, len(col_))
 				for i, c := range col_ {
 					col[i] = c[0]
@@ -173,7 +173,7 @@ func TestLazyChartsPartial(t *testing.T) {
 				}
 			}
 			{
-				col_ := c.lc.Data([]charts.Title{charts.KeyTitle("B")}, 3, 4)
+				col_, _ := c.lc.Data([]charts.Title{charts.KeyTitle("B")}, 3, 4)
 				col := make([]float64, len(col_))
 				for i, c := range col_ {
 					col[i] = c[0]
@@ -183,7 +183,7 @@ func TestLazyChartsPartial(t *testing.T) {
 				}
 			}
 			{
-				data := c.lc.Data([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1, 4)
+				data, _ := c.lc.Data([]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B")}, 1, 4)
 				if !reflect.DeepEqual(c.dataAB14, data) {
 					t.Error("data A,B 1-4 not equal:", c.dataAB14, "!=", data)
 				}
@@ -289,8 +289,9 @@ func checkRows(t *testing.T, expect, actual charts.Charts, ranges [][2]int) {
 	// Since Rows() doesn't exist anymore, this is just another Data() test
 	for _, be := range ranges {
 		for _, title := range expect.Titles() {
-			x := expect.Data([]charts.Title{title}, be[0], be[1])[0]
-			a := actual.Data([]charts.Title{title}, be[0], be[1])[0]
+			xs, _ := expect.Data([]charts.Title{title}, be[0], be[1])
+			as, _ := actual.Data([]charts.Title{title}, be[0], be[1])
+			x, a := xs[0], as[0]
 
 			if len(a) != be[1]-be[0] {
 				t.Fatalf("row length: expect=%v-%v=%v, actual=%v",
@@ -338,8 +339,8 @@ func checkCols(t *testing.T, expect, actual charts.Charts, sets [][]charts.Title
 
 	for _, set := range sets {
 		for i := 0; i < expect.Len(); i++ {
-			x := expect.Data(set, i, i+1)
-			a := actual.Data(set, i, i+1)
+			x, _ := expect.Data(set, i, i+1)
+			a, _ := actual.Data(set, i, i+1)
 
 			if len(a) != len(set) {
 				t.Fatalf("col length: expect=%v, actual=%v",
@@ -367,8 +368,8 @@ func checkData(t *testing.T, expect, actual charts.Charts,
 		set := sets[i]
 		b, e := ranges[i][0], ranges[i][1]
 
-		x := expect.Data(set, b, e)
-		a := actual.Data(set, b, e)
+		x, _ := expect.Data(set, b, e)
+		a, _ := actual.Data(set, b, e)
 
 		for k := range x {
 			rowX := x[k]
@@ -529,6 +530,7 @@ func TestTop(t *testing.T) {
 		n      int
 		titles []charts.Title
 	}{
+		// TODO reenter these tests
 		// {
 		// 	"empty",
 		// 	FromMap(map[string][]float64{}),
@@ -573,7 +575,7 @@ func TestTop(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			titles := charts.Top(c.charts, c.n)
+			titles, _ := charts.Top(c.charts, c.n)
 			if !areTitlesSame(c.titles, titles) {
 				t.Errorf("expect: %v\nactual: %v", c.titles, titles)
 			}

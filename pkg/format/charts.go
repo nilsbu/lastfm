@@ -55,7 +55,11 @@ func (f *Charts) format(
 	}
 
 	f.Charts = charts.Cache(charts.Column(f.Charts, -1))
-	data := f.Charts.Data(f.Charts.Titles(), 0, 1)
+	data, err := f.Charts.Data(f.Charts.Titles(), 0, 1)
+	if err != nil {
+		return err
+	}
+
 	scorepattern := f.getScorePattern()
 
 	for i, title := range f.Charts.Titles() {
@@ -113,7 +117,9 @@ func (f *Charts) getScorePattern() (pattern string) {
 	titles := f.Charts.Titles()
 	var topValue float64
 	if len(titles) > 0 {
-		topValue = f.Charts.Data(titles[:1], 0, 1)[0][0]
+		// error can be ignored because data has already been requested earlier
+		data, _ := f.Charts.Data(titles[:1], 0, 1)
+		topValue = data[0][0]
 	}
 
 	var maxValueLen int

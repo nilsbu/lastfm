@@ -142,11 +142,14 @@ func TestPartiton(t *testing.T) {
 		},
 		{
 			"year partition with no eligible artists",
-			charts.YearPartition(
-				charts.FromMap(map[string][]float64{"not": {0, 1}}),
-				charts.FromMap(map[string][]float64{"not": {0, 1}}),
-				rsrc.ParseDay("2019-12-31"),
-			),
+			func() charts.Partition {
+				p, _ := charts.YearPartition(
+					charts.FromMap(map[string][]float64{"not": {0, 1}}),
+					charts.FromMap(map[string][]float64{"not": {0, 1}}),
+					rsrc.ParseDay("2019-12-31"),
+				)
+				return p
+			}(),
 			[]titlePartition{
 				{charts.ArtistTitle("not"), charts.KeyTitle("")},
 			},
@@ -158,23 +161,26 @@ func TestPartiton(t *testing.T) {
 		},
 		{
 			"year partition with values",
-			charts.YearPartition(
-				charts.FromMap(map[string][]float64{
-					"not":    {0, 0, 1, 0},
-					"first":  {0, 4, 10, 0}, // higher value irrelevant since 4 is reached in 2019
-					"first2": {0, 2, 1, 0},
-					"last":   {0, 2, 1, 0},
-					"last2":  {0, 1, 2, 0},
-				}),
-				charts.FromMap(map[string][]float64{
-					"not":    {0, 0, 1, 1},
-					"first":  {0, 4, 4, 4},
-					"first2": {0, 3, 4, 4},
-					"last":   {0, 1, 3, 3},
-					"last2":  {0, 2, 3, 3},
-				}),
-				rsrc.ParseDay("2019-12-30"),
-			),
+			func() charts.Partition {
+				p, _ := charts.YearPartition(
+					charts.FromMap(map[string][]float64{
+						"not":    {0, 0, 1, 0},
+						"first":  {0, 4, 10, 0}, // higher value irrelevant since 4 is reached in 2019
+						"first2": {0, 2, 1, 0},
+						"last":   {0, 2, 1, 0},
+						"last2":  {0, 1, 2, 0},
+					}),
+					charts.FromMap(map[string][]float64{
+						"not":    {0, 0, 1, 1},
+						"first":  {0, 4, 4, 4},
+						"first2": {0, 3, 4, 4},
+						"last":   {0, 1, 3, 3},
+						"last2":  {0, 2, 3, 3},
+					}),
+					rsrc.ParseDay("2019-12-30"),
+				)
+				return p
+			}(),
 			[]titlePartition{
 				{charts.ArtistTitle("not"), charts.KeyTitle("")},
 				{charts.ArtistTitle("first"), charts.KeyTitle("2019")},

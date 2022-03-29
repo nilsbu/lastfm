@@ -336,7 +336,7 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 
 	case "top":
 		n, _ := strconv.Atoi(split[1])
-		titles := charts.Top(parent, n)
+		titles, _ := charts.Top(parent, n)
 		return charts.Only(parent, titles), nil
 	default:
 		return nil, errors.New("step does not exist")
@@ -367,7 +367,7 @@ func (w *pipeline) getPartition(
 			return nil, err
 		}
 
-		return charts.YearPartition(gaussian, parent, vv.(*vars).user.Registered), nil
+		return charts.YearPartition(gaussian, parent, vv.(*vars).user.Registered)
 	case "total":
 		return charts.TotalPartition(parent.Titles()), nil
 	case "super":

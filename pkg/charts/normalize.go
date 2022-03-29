@@ -13,7 +13,7 @@ type normalizer struct {
 type normalizerJob struct {
 	in, out    []float64
 	begin, end int
-	back       chan bool
+	back       chan error
 }
 
 func newNormalizer(parent Charts, totals Charts) *normalizer {
@@ -37,10 +37,12 @@ func newNormalizer(parent Charts, totals Charts) *normalizer {
 	for i := 0; i < workers; i++ {
 		go func() {
 			// TODO is there a way to not query the entire length of the totals?
-			totals := n.totals.Data([]Title{StringTitle("total")}, 0, parent.Len())[0]
+			totals, err := n.totals.Data([]Title{StringTitle("total")}, 0, parent.Len())
 			for job := range n.lineChan {
-				f(job.in, job.out, totals, job.begin, job.end)
-				job.back <- true
+				if err == nil {
+					f(job.in, job.out, totals[0], job.begin, job.end)
+				}
+				job.back <- err
 			}
 
 		}()
@@ -53,15 +55,20 @@ func Normalize(c Charts) Charts {
 	return newNormalizer(c, ColumnSum(c))
 }
 
-func (c *normalizer) Data(titles []Title, begin, end int) [][]float64 {
+func (c *normalizer) Data(titles []Title, begin, end int) ([][]float64, error) {
 	data := make([][]float64, len(titles))
-	back := make(chan bool, len(titles))
+	back := make(chan error, len(titles))
 
 	for i, title := range titles {
 		out := make([]float64, end-begin)
 		data[i] = out
+		res, err := c.parent.Data([]Title{title}, begin, end)
+		if err != nil {
+			return nil, err
+		}
+
 		c.lineChan <- normalizerJob{
-			in:    c.parent.Data([]Title{title}, begin, end)[0],
+			in:    res[0],
 			out:   out,
 			begin: begin,
 			end:   end,
@@ -69,8 +76,12 @@ func (c *normalizer) Data(titles []Title, begin, end int) [][]float64 {
 		}
 	}
 	for range titles {
-		<-back
+
+		if err := <-back; err != nil {
+			return nil, err
+		}
 	}
+
 	close(back)
-	return data
+	return data, nil
 }

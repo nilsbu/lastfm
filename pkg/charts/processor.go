@@ -1,5 +1,9 @@
 package charts
 
+import (
+	"github.com/nilsbu/async"
+)
+
 func fromBeginRange(size, begin, end int) (b, e int) {
 	return 0, end
 }
@@ -25,31 +29,29 @@ type titleColumn struct {
 	col []float64
 }
 
-func (l *partitionSum) Data(titles []Title, begin, end int) [][]float64 {
-	back := make(chan indexLine)
-
-	for i, bin := range titles {
-		go func(i int, bin Title) {
-			line := make([]float64, end-begin)
-			for _, key := range l.partition.Titles(bin) {
-				for j, v := range l.parent.Data([]Title{key}, begin, end)[0] {
-					line[j] += v
-				}
-			}
-			back <- indexLine{
-				i:  i,
-				vs: line,
-			}
-		}(i, bin)
-	}
-
+func (l *partitionSum) Data(titles []Title, begin, end int) ([][]float64, error) {
 	data := make([][]float64, len(titles))
-	for i := 0; i < len(titles); i++ {
-		b := <-back
-		data[b.i] = b.vs
-	}
 
-	return data
+	err := async.Pie(len(titles), func(i int) error {
+		line := make([]float64, end-begin)
+		for _, key := range l.partition.Titles(titles[i]) {
+			res, err := l.parent.Data([]Title{key}, begin, end)
+			if err != nil {
+				return err
+			}
+			for j, v := range res[0] {
+				line[j] += v
+			}
+		}
+		data[i] = line
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	} else {
+		return data, nil
+	}
 }
 
 func (l *partitionSum) Titles() []Title {
@@ -77,9 +79,9 @@ type cache struct {
 }
 
 type cacheRow struct {
-	channel    chan cacheRowRequest
-	begin, end int
-	data       []float64
+	channel chan cacheRowRequest
+	begin   int
+	data    []float64
 }
 
 type cacheRowRequest struct {
@@ -87,7 +89,10 @@ type cacheRowRequest struct {
 	begin, end int
 }
 
-type cacheRowAnswer []float64
+type cacheRowAnswer struct {
+	data []float64
+	err  error
+}
 
 // Cache is a LazyCharts that stores data to avoid duplicating work in parent.
 // The cache is filled when the data is requested. The data is stored in one
@@ -99,8 +104,8 @@ func Cache(parent Charts) Charts {
 	for _, k := range parent.Titles() {
 		row := &cacheRow{
 			channel: make(chan cacheRowRequest),
-			begin:   -1, end: -1,
-			data: make([]float64, 0),
+			begin:   -1,
+			data:    make([]float64, 0),
 		}
 		rows[k.Key()] = row
 
@@ -108,35 +113,44 @@ func Cache(parent Charts) Charts {
 			for request := range row.channel {
 
 				if row.begin > -1 {
-					if row.begin <= request.begin && row.end >= request.end {
-
+					if row.begin <= request.begin && row.begin+len(row.data) >= request.end {
 					} else {
+						var res [][]float64
+						var err error
 
 						if request.begin < row.begin {
-							row.data = append(
-								parent.Data([]Title{title}, request.begin, row.begin)[0],
-								row.data...)
+							res, err = parent.Data([]Title{title}, request.begin, row.begin)
+							newData := []float64{}
+							newData = append(newData, res[0]...)
+							newData = append(newData, row.data...)
+							row.data = newData
 
 							row.begin = request.begin
 						}
-						if row.end < request.end {
+						if row.begin+len(row.data) < request.end {
+							res, err = parent.Data([]Title{title}, row.begin+len(row.data), request.end)
 							row.data = append(
 								row.data,
-								parent.Data([]Title{title}, row.end, request.end)[0]...)
-
-							row.end = request.end
+								res[0]...)
 						}
 
-						answer := row.data[request.begin-row.begin : request.end-row.begin]
-						request.back <- answer
+						request.back <- cacheRowAnswer{
+							data: row.data[request.begin-row.begin : request.end-row.begin],
+							err:  err,
+						}
 						continue
 					}
 				}
 
-				row.data = parent.Data([]Title{title}, request.begin, request.end)[0]
-				row.begin, row.end = request.begin, request.end
-
-				request.back <- row.data
+				data, err := parent.Data([]Title{title}, request.begin, request.end)
+				if err == nil {
+					row.data = data[0]
+					row.begin = request.begin
+				}
+				request.back <- cacheRowAnswer{
+					data: data[0],
+					err:  err,
+				}
 			}
 		}(k, row, parent)
 	}
@@ -147,7 +161,7 @@ func Cache(parent Charts) Charts {
 	}
 }
 
-func (c *cache) row(title Title, begin, end int) []float64 {
+func (c *cache) row(title Title, begin, end int) ([]float64, error) {
 	row := c.rows[title.Key()]
 
 	back := make(chan cacheRowAnswer)
@@ -155,27 +169,25 @@ func (c *cache) row(title Title, begin, end int) []float64 {
 	row.channel <- cacheRowRequest{back, begin, end}
 	answer := <-back
 	close(back)
-	return answer
+	return answer.data, answer.err
 }
 
-func (c *cache) Data(titles []Title, begin, end int) [][]float64 {
+func (c *cache) Data(titles []Title, begin, end int) ([][]float64, error) {
 	data := make([][]float64, len(titles))
-	back := make(chan indexLine)
 
-	for k := range titles {
-		go func(k int) {
-			back <- indexLine{
-				i:  k,
-				vs: c.row(titles[k], begin, end),
-			}
-		}(k)
-	}
+	err := async.Pie(len(titles), func(i int) error {
+		row, err := c.row(titles[i], begin, end)
+		if err == nil {
+			data[i] = row
+		}
+		return err
+	})
 
-	for range titles {
-		tl := <-back
-		data[tl.i] = tl.vs
+	if err != nil {
+		return nil, err
+	} else {
+		return data, nil
 	}
-	return data
 }
 
 type only struct {
@@ -195,13 +207,16 @@ func (c *only) Titles() []Title {
 	return c.titles
 }
 
-func (c *only) Data(titles []Title, begin, end int) [][]float64 {
+func (c *only) Data(titles []Title, begin, end int) ([][]float64, error) {
 	return c.parent.Data(titles, begin, end)
 }
 
-func Top(c Charts, n int) []Title {
+func Top(c Charts, n int) ([]Title, error) {
 	fullTitles := c.Titles()
-	col := c.Data(fullTitles, c.Len()-1, c.Len())
+	col, err := c.Data(fullTitles, c.Len()-1, c.Len())
+	if err != nil {
+		return nil, err
+	}
 	m := n + 1
 	if len(col) < n {
 		m = len(col)
@@ -229,7 +244,7 @@ func Top(c Charts, n int) []Title {
 		ts = ts[:n]
 	}
 
-	return ts
+	return ts, nil
 }
 
 // Id returns the parent

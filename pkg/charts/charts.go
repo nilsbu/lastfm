@@ -7,7 +7,7 @@ import (
 )
 
 type Charts interface {
-	Data(titles []Title, begin, end int) [][]float64
+	Data(titles []Title, begin, end int) ([][]float64, error)
 
 	Titles() []Title
 	Len() int
@@ -152,7 +152,7 @@ func InOrder(data []Pair) Charts {
 	return charts
 }
 
-func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
+func (l *charts) Data(titles []Title, begin, end int) ([][]float64, error) {
 	if l.songs != nil {
 		l.await()
 	}
@@ -161,7 +161,7 @@ func (l *charts) Data(titles []Title, begin, end int) [][]float64 {
 	for i, t := range titles {
 		data[i] = l.values[t.Key()][begin:end]
 	}
-	return data
+	return data, nil
 }
 
 func (l *charts) Titles() []Title {

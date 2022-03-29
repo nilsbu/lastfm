@@ -63,7 +63,10 @@ func (f *Table) formatBody(
 	}
 
 	titles := f.Charts.Titles()
-	data := f.Charts.Data(titles, 0, f.Charts.Len())
+	data, err := f.Charts.Data(titles, 0, f.Charts.Len())
+	if err != nil {
+		return err
+	}
 
 	for t, x := range titles {
 		io.WriteString(w, start)

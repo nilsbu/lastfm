@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -125,24 +126,24 @@ func (c interval) Len() int {
 	return c.end - c.begin
 }
 
-func (c interval) Data(titles []Title, begin, end int) [][]float64 {
+func (c interval) Data(titles []Title, begin, end int) ([][]float64, error) {
 	data := make([][]float64, len(titles))
-	back := make(chan indexLine)
 
-	for k := range titles {
-		go func(k int) {
-			back <- indexLine{
-				i:  k,
-				vs: c.parent.Data([]Title{titles[k]}, begin+c.begin, end+c.begin)[0],
-			}
-		}(k)
-	}
+	err := async.Pie(len(titles), func(i int) error {
+		res, err := c.parent.Data([]Title{titles[i]}, begin+c.begin, end+c.begin)
+		if err != nil {
+			return err
+		} else {
+			data[i] = res[0]
+			return nil
+		}
+	})
 
-	for range titles {
-		tl := <-back
-		data[tl.i] = tl.vs
+	if err != nil {
+		return nil, err
+	} else {
+		return data, nil
 	}
-	return data
 }
 
 type Ranges struct {
@@ -236,7 +237,7 @@ func (c intervals) Len() int {
 	return len(c.delims) - 1
 }
 
-func (c intervals) Data(titles []Title, begin, end int) [][]float64 {
+func (c intervals) Data(titles []Title, begin, end int) ([][]float64, error) {
 	// TODO speedup
 	// data := c.parent.Data(titles, c.delims[begin], c.delims[end])
 
@@ -248,11 +249,15 @@ func (c intervals) Data(titles []Title, begin, end int) [][]float64 {
 	// cha := make([]LazyCharts, end-begin)
 	for i := begin; i < end; i++ {
 		cha := c.f(Crop(c.parent, c.delims[i], c.delims[i+1]))
-		cdata := cha.Data(titles, cha.Len()-1, cha.Len())
-		for j := range titles {
-			lines[j][i-begin] = cdata[j][0]
+		cdata, err := cha.Data(titles, cha.Len()-1, cha.Len())
+		if err != nil {
+			return nil, err
+		} else {
+			for j := range titles {
+				lines[j][i-begin] = cdata[j][0]
+			}
 		}
 	}
 
-	return lines
+	return lines, nil
 }

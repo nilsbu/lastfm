@@ -2,6 +2,8 @@ package charts
 
 import (
 	"math"
+
+	"github.com/nilsbu/async"
 )
 
 type lineMapCharts struct {
@@ -180,41 +182,38 @@ func Multiply(parent Charts, s float64) Charts {
 	}
 }
 
-func (l *lineMapCharts) Data(titles []Title, begin, end int) [][]float64 {
-
+func (l *lineMapCharts) Data(titles []Title, begin, end int) ([][]float64, error) {
 	data := make([][]float64, len(titles))
-	back := make(chan indexLine)
 	rb, re := l.rangeF(l.parent.Len(), begin, end)
 
-	if end-begin == 1 {
-		for t := range titles {
-			go func(t int) {
-				in := l.parent.Data([]Title{titles[t]}, rb, re)[0]
-				back <- indexLine{
-					i:  t,
-					vs: []float64{l.foldF(end-1, in)},
-				}
-			}(t)
-		}
+	var err error
+	if end-begin == 1 && false {
+		err = async.Pie(len(titles), func(i int) error {
+			if in, err := l.parent.Data([]Title{titles[i]}, rb, re); err != nil {
+				return err
+			} else {
+				data[i] = []float64{l.foldF(end-1, in[0])}
+				return nil
+			}
+		})
 	} else {
-		for k := range titles {
-			go func(k int) {
-				in := l.parent.Data([]Title{titles[k]}, rb, re)[0]
-				out := l.mapF(in)
-
-				back <- indexLine{
-					i:  k,
-					vs: out[begin-rb : end-rb],
-				}
-			}(k)
-		}
+		err = async.Pie(len(titles), func(i int) error {
+			in, err := l.parent.Data([]Title{titles[i]}, rb, re)
+			if err != nil {
+				return err
+			} else {
+				out := l.mapF(in[0])
+				data[i] = out[begin-rb : end-rb]
+				return nil
+			}
+		})
 	}
 
-	for range titles {
-		il := <-back
-		data[il.i] = il.vs
+	if err != nil {
+		return nil, err
+	} else {
+		return data, nil
 	}
-	return data
 }
 
 type indexLine struct {

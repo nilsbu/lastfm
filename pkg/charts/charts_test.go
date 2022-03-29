@@ -165,11 +165,11 @@ func TestCharts(t *testing.T) {
 					c.titles, c.charts.Titles())
 			}
 
-			data := c.charts.Data(c.titles, 0, c.charts.Len())
+			data, _ := c.charts.Data(c.titles, 0, c.charts.Len())
 			for i, title := range c.titles {
-				row := c.charts.Data([]charts.Title{title}, 0, c.charts.Len())[0]
-				if !reflect.DeepEqual(c.lines[i], row) {
-					t.Errorf("row, '%v': %v != %v", title, c.lines[i], row)
+				row, _ := c.charts.Data([]charts.Title{title}, 0, c.charts.Len())
+				if !reflect.DeepEqual(c.lines[i], row[0]) {
+					t.Errorf("row, '%v': %v != %v", title, c.lines[i], row[0])
 				}
 
 				if !reflect.DeepEqual(c.lines[i], data[i]) {
@@ -178,7 +178,7 @@ func TestCharts(t *testing.T) {
 			}
 
 			for i := 0; i < c.charts.Len(); i++ {
-				col := c.charts.Data(c.titles, i, i+1)
+				col, _ := c.charts.Data(c.titles, i, i+1)
 				for j, title := range c.titles {
 					if c.lines[j][i] != col[j][0] {
 						t.Errorf("col %v, %v: %v != %v",
