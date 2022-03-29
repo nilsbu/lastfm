@@ -311,6 +311,12 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
 			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
 		},
+		{
+			// explicit parameter overrides stored parameter
+			[]string{"lastfm-csv", "table", "fade", "10", "-step=25"},
+			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
+			tableFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 10, step: 25}, true,
+		},
 	}
 
 	for _, c := range cases {

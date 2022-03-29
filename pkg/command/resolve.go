@@ -623,12 +623,14 @@ func parseArguments(args []string, cmd *cmd, sessionOptions map[string]string,
 	}
 
 	for key, opt := range cmd.options {
-		// fill missing options from session defaults
-		if value, ok := sessionOptions[key]; ok {
-			rawOpts[key] = value
-		} else if _, ok := rawOpts[key]; !ok {
-			// or from option defauls
-			rawOpts[key] = opt.value
+		if _, ok := rawOpts[key]; !ok {
+			// fill missing options from session defaults
+			if value, ok := sessionOptions[key]; ok {
+				rawOpts[key] = value
+			} else {
+				// or from option defauls
+				rawOpts[key] = opt.value
+			}
 		}
 	}
 
