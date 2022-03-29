@@ -1,6 +1,10 @@
 package charts
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/nilsbu/lastfm/pkg/info"
+)
 
 // Title identifies a line of charts.
 // It is a Stringer, meaning String() can be used to print a meaningful name of
@@ -65,7 +69,7 @@ type songTitle struct {
 // SongTitle returns a Title that prints the title in the format
 // "<artist> - <song>" and has a unique key for each artist-song combination
 // assuming the artist's name does not contain a line break.
-func SongTitle(s Song) Title {
+func SongTitle(s info.Song) Title {
 	return songTitle{s.Artist, s.Title}
 }
 

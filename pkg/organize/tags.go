@@ -7,23 +7,23 @@ import (
 	async "github.com/nilsbu/async"
 	"github.com/pkg/errors"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
 type tagResult struct {
 	artist string
-	tags   []charts.Tag
+	tags   []info.Tag
 	err    error
 }
 
 // LoadArtistTags loads the tags for all given artists.
 func LoadArtistTags(artists []string, r rsrc.Reader,
-) (map[string][]charts.Tag, error) {
+) (map[string][]info.Tag, error) {
 	tagLoader := unpack.NewCached(r)
 
-	artistTags := make(map[string][]charts.Tag)
+	artistTags := make(map[string][]info.Tag)
 	feedback := make(chan *tagResult)
 	for _, artist := range artists {
 		go func(artist string) {
@@ -57,7 +57,7 @@ func loadArtistTags(
 	artist string,
 	r rsrc.Reader,
 	tl unpack.Loader,
-) ([]charts.Tag, error) {
+) ([]info.Tag, error) {
 
 	tags, err := unpack.LoadArtistTags(artist, tl)
 	if err != nil {
@@ -73,7 +73,7 @@ func loadArtistTags(
 		}
 	}
 
-	wtags := make([]charts.Tag, len(tags))
+	wtags := make([]info.Tag, len(tags))
 	feedback := make(chan error)
 	for i, tag := range tags {
 		go func(i int, tag unpack.TagCount) {

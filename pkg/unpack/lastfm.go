@@ -3,7 +3,7 @@ package unpack
 import (
 	"fmt"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -88,7 +88,7 @@ func (o *obUserInfo) raw(obj interface{}) interface{} {
 
 // HistoryDayPage is a single page of a day of a user's played tracks.
 type HistoryDayPage struct {
-	Plays []charts.Song
+	Plays []info.Song
 	Pages int
 }
 
@@ -132,12 +132,12 @@ func (o *obHistory) interpret(raw interface{}) (interface{}, error) {
 		data.RecentTracks.Attr.TotalPages}, nil
 }
 
-func countPlays(urt *jsonUserRecentTracks) []charts.Song {
-	plays := []charts.Song{}
+func countPlays(urt *jsonUserRecentTracks) []info.Song {
+	plays := []info.Song{}
 	for _, track := range urt.RecentTracks.Track {
 		if !track.Attr.NowPlaying {
 
-			plays = append(plays, charts.Song{
+			plays = append(plays, info.Song{
 				Artist: track.Artist.Str,
 				Title:  track.Name,
 				Album:  track.Album.Str,
@@ -267,16 +267,16 @@ type obTagInfo struct {
 }
 
 // LoadTagInfo loads tag information.
-func LoadTagInfo(tag string, l Loader) (*charts.Tag, error) {
+func LoadTagInfo(tag string, l Loader) (*info.Tag, error) {
 	data, err := l.load(&obTagInfo{tag})
 	if err != nil {
 		return nil, err
 	}
-	return data.(*charts.Tag), nil
+	return data.(*info.Tag), nil
 }
 
 // WriteTagInfo writes tag infos.
-func WriteTagInfo(tag *charts.Tag, w rsrc.Writer) error {
+func WriteTagInfo(tag *info.Tag, w rsrc.Writer) error {
 	return deposit(tag, &obTagInfo{name: tag.Name}, w)
 }
 
@@ -291,14 +291,14 @@ func (o *obTagInfo) deserializer() interface{} {
 func (o *obTagInfo) interpret(raw interface{}) (interface{}, error) {
 	tag := raw.(*jsonTagInfo)
 
-	return &charts.Tag{
+	return &info.Tag{
 		Name:  tag.Tag.Name,
 		Total: tag.Tag.Total,
 		Reach: tag.Tag.Reach}, nil
 }
 
 func (o *obTagInfo) raw(obj interface{}) interface{} {
-	tag := obj.(*charts.Tag)
+	tag := obj.(*info.Tag)
 	js := jsonTagInfo{Tag: jsonTagTag{
 		Name:  tag.Name,
 		Total: tag.Total,

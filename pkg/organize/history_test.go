@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -29,7 +29,7 @@ func TestLoadHistory(t *testing.T) {
 		user  unpack.User
 		until rsrc.Day
 		files map[rsrc.Locator][]byte
-		dps   [][]charts.Song
+		dps   [][]info.Song
 		ok    bool
 	}{
 		{
@@ -69,7 +69,7 @@ func TestLoadHistory(t *testing.T) {
 				tASDF: []byte(`{"track":{"duration":"120000"}}`),
 				tXXX:  []byte(`{"track":{"duration":"60000"}}`),
 			},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "ASDF", Duration: 2}},
 				{{Artist: "XXX", Duration: 1}},
 			},
@@ -86,7 +86,7 @@ func TestLoadHistory(t *testing.T) {
 				tY:  []byte(`{"track":{"duration":"60000"}}`),
 				tZ:  []byte(`{"track":{"duration":"60000"}}`),
 			},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X", Duration: 1}, {Artist: "Y", Duration: 1}, {Artist: "Z", Duration: 1}, {Artist: "X", Duration: 1}},
 			},
 			true,
@@ -148,10 +148,10 @@ func TestUpdateHistory(t *testing.T) {
 		user           unpack.User
 		until          rsrc.Day
 		bookmark       rsrc.Day
-		saved          [][]charts.Song
+		saved          [][]info.Song
 		tracksFile     map[rsrc.Locator][]byte
 		tracksDownload map[rsrc.Locator][]byte
-		plays          [][]charts.Song
+		plays          [][]info.Song
 		ok             bool
 	}{
 		{
@@ -162,7 +162,7 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[][]charts.Song{},
+			[][]info.Song{},
 			false,
 		},
 		{
@@ -173,7 +173,7 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[][]charts.Song{},
+			[][]info.Song{},
 			false,
 		},
 		{
@@ -184,7 +184,7 @@ func TestUpdateHistory(t *testing.T) {
 			nil,
 			map[rsrc.Locator][]byte{},
 			map[rsrc.Locator][]byte{},
-			[][]charts.Song{},
+			[][]info.Song{},
 			false,
 		},
 		{
@@ -192,13 +192,13 @@ func TestUpdateHistory(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
 			rsrc.ParseDay("2018-01-10"),
 			rsrc.ParseDay("2018-01-10"),
-			[][]charts.Song{},
+			[][]info.Song{},
 			map[rsrc.Locator][]byte{h0: nil, bm: nil},
 			map[rsrc.Locator][]byte{
 				h0:    []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				tASDF: []byte(`{"track":{"duration":"120000"}}`),
 			},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "ASDF", Duration: 2}},
 			},
 			true,
@@ -208,7 +208,7 @@ func TestUpdateHistory(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-11")},
 			rsrc.ParseDay("2018-01-13"),
 			rsrc.ParseDay("2018-01-12"),
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{}, // will be overwritten
 			},
@@ -228,7 +228,7 @@ func TestUpdateHistory(t *testing.T) {
 				h2: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				h3: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"B"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "ASDF", Duration: 2}},
 				{{Artist: "B", Duration: 1}},
@@ -240,7 +240,7 @@ func TestUpdateHistory(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
 			rsrc.ParseDay("2018-01-12"),
 			rsrc.ParseDay("2018-01-12"),
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "XX", Duration: 1}},
@@ -259,7 +259,7 @@ func TestUpdateHistory(t *testing.T) {
 			map[rsrc.Locator][]byte{
 				h2: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
 			},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
@@ -271,7 +271,7 @@ func TestUpdateHistory(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
 			rsrc.ParseDay("2018-01-11"),
 			rsrc.ParseDay("2018-01-13"),
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "A", Duration: 4}},
 				{{Artist: "DropMe"}},
@@ -287,7 +287,7 @@ func TestUpdateHistory(t *testing.T) {
 				b3: nil,
 			},
 			map[rsrc.Locator][]byte{},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "A", Duration: 4}},
 			},
@@ -298,7 +298,7 @@ func TestUpdateHistory(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
 			rsrc.ParseDay("2018-01-13"),
 			rsrc.ParseDay("2018-01-12"),
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "ASDF", Duration: 2}},
 				{{Artist: "hui", Duration: 1}},
@@ -319,7 +319,7 @@ func TestUpdateHistory(t *testing.T) {
 				tASDF: []byte(`{"track":{"duration":"120000"}}`),
 			},
 			map[rsrc.Locator][]byte{},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "ASDF", Duration: 2}},
 				{{Artist: "hui", Duration: 1}, {Artist: "hui", Duration: 1}},
@@ -332,7 +332,7 @@ func TestUpdateHistory(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
 			rsrc.ParseDay("2018-01-13"),
 			nil,
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX"}, {Artist: "XX"}},
 				{{Artist: "A"}},
 				{{Artist: "hui"}, {Artist: "hui"}},
@@ -353,7 +353,7 @@ func TestUpdateHistory(t *testing.T) {
 				thui:  []byte(`{"track":{"duration":"60000"}}`),
 			},
 			map[rsrc.Locator][]byte{},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
 				{{Artist: "ASDF", Duration: 2}},
 				{{Artist: "hui", Duration: 1}, {Artist: "hui", Duration: 1}},
@@ -366,10 +366,10 @@ func TestUpdateHistory(t *testing.T) {
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
 			rsrc.ParseDay("2018-01-10"),
 			rsrc.ParseDay("2018-01-10"),
-			[][]charts.Song{},
+			[][]info.Song{},
 			map[rsrc.Locator][]byte{bm: nil},
 			map[rsrc.Locator][]byte{},
-			[][]charts.Song{},
+			[][]info.Song{},
 			false,
 		},
 	}
@@ -423,7 +423,7 @@ func TestUpdateHistory(t *testing.T) {
 	}
 }
 
-type printSongs [][]charts.Song
+type printSongs [][]info.Song
 
 func (s printSongs) String() string {
 	var sb strings.Builder

@@ -1,6 +1,10 @@
 package charts
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/nilsbu/lastfm/pkg/info"
+)
 
 type Charts interface {
 	// TODO can Charts.Column() be removed?
@@ -12,9 +16,9 @@ type Charts interface {
 }
 
 type charts struct {
-	songs   [][]Song
-	key     func(Song) Title
-	value   func(Song) float64
+	songs   [][]info.Song
+	key     func(info.Song) Title
+	value   func(info.Song) float64
 	jobChan chan compileJob
 	titles  []Title
 	values  map[string][]float64
@@ -22,21 +26,21 @@ type charts struct {
 type compileJob chan<- interface{}
 
 // Artists compiles LazyCharts in which all songs by an artist are grouped.
-func Artists(songs [][]Song) Charts {
+func Artists(songs [][]info.Song) Charts {
 	return new(songs,
-		func(s Song) Title { return ArtistTitle(s.Artist) },
-		func(s Song) float64 { return 1.0 })
+		func(s info.Song) Title { return ArtistTitle(s.Artist) },
+		func(s info.Song) float64 { return 1.0 })
 }
 
 // ArtistsDuration compiles LazyCharts in which all songs by an artist are
 // grouped. The songs are weighted by duration before they are summed up.
-func ArtistsDuration(songs [][]Song) Charts {
+func ArtistsDuration(songs [][]info.Song) Charts {
 	return new(songs,
-		func(s Song) Title { return ArtistTitle(s.Artist) },
+		func(s info.Song) Title { return ArtistTitle(s.Artist) },
 		fDuration)
 }
 
-func fDuration(s Song) float64 {
+func fDuration(s info.Song) float64 {
 	if s.Duration == 0 {
 		return 4
 	} else {
@@ -45,21 +49,21 @@ func fDuration(s Song) float64 {
 }
 
 // Songs compiles LazyCharts in which all songs are listed separately.
-func Songs(songs [][]Song) Charts {
+func Songs(songs [][]info.Song) Charts {
 	return new(songs,
-		func(s Song) Title { return SongTitle(s) },
-		func(s Song) float64 { return 1.0 })
+		func(s info.Song) Title { return SongTitle(s) },
+		func(s info.Song) float64 { return 1.0 })
 }
 
 // SongsDuration compiles LazyCharts in which all songs are listed separately.
 // The songs are weighted by duration.
-func SongsDuration(songs [][]Song) Charts {
+func SongsDuration(songs [][]info.Song) Charts {
 	return new(songs,
-		func(s Song) Title { return SongTitle(s) },
+		func(s info.Song) Title { return SongTitle(s) },
 		fDuration)
 }
 
-func new(songs [][]Song, key func(Song) Title, value func(Song) float64) *charts {
+func new(songs [][]info.Song, key func(info.Song) Title, value func(info.Song) float64) *charts {
 	job := make(chan compileJob)
 	c := &charts{
 		songs:   songs,

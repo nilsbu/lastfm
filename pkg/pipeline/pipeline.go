@@ -8,6 +8,7 @@ import (
 	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/config"
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -59,7 +60,7 @@ type vars struct {
 	user        *unpack.User
 	bookmark    rsrc.Day
 	corrections map[string]string
-	plays       [][]charts.Song
+	plays       [][]info.Song
 }
 
 func New(session *unpack.SessionInfo, s io.Store) Pipeline {
@@ -198,7 +199,7 @@ func (w *pipeline) load() (*vars, error) {
 	}
 
 	days := int((v.bookmark.Midnight() - v.user.Registered.Midnight()) / 86400)
-	v.plays = make([][]charts.Song, days+1)
+	v.plays = make([][]info.Song, days+1)
 	err = async.Pie(days+1, func(i int) error {
 		day := v.user.Registered.AddDate(0, 0, i)
 		if songs, err := unpack.LoadDayHistory(v.user.Name, day, w.store); err == nil {
@@ -395,7 +396,7 @@ func (w *pipeline) getPartition(
 func loadArtistTags(
 	cha charts.Charts,
 	r rsrc.Reader,
-) (map[string][]charts.Tag, error) {
+) (map[string][]info.Tag, error) {
 	keys := []string{}
 
 	for _, key := range cha.Titles() {

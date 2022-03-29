@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -74,7 +75,7 @@ func TestPartiton(t *testing.T) {
 		{
 			"empty first key partition",
 			charts.FirstTagPartition(
-				map[string][]charts.Tag{},
+				map[string][]info.Tag{},
 				map[string]string{},
 				nil,
 			),
@@ -89,7 +90,7 @@ func TestPartiton(t *testing.T) {
 		{
 			"first key partition without correction",
 			charts.FirstTagPartition(
-				map[string][]charts.Tag{
+				map[string][]info.Tag{
 					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
 					"B": {{Name: "b", Weight: 25}, {Name: "c", Weight: 100}}, // Ignore Weight
 					"C": {{Name: "-", Weight: 100}, {Name: "c", Weight: 50}},
@@ -114,7 +115,7 @@ func TestPartiton(t *testing.T) {
 		{
 			"first key partition with correction",
 			charts.FirstTagPartition(
-				map[string][]charts.Tag{
+				map[string][]info.Tag{
 					"A": {{Name: "a", Weight: 100}, {Name: "c", Weight: 25}},
 					"Y": {{Name: "b", Weight: 25}, {Name: "y", Weight: 100}}, // Ignore Weight
 					"Ü": {{Name: "-", Weight: 100}, {Name: "ü", Weight: 50}},

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -19,12 +20,12 @@ func TestCharts(t *testing.T) {
 	}{
 		{
 			"Artists",
-			charts.Artists([][]charts.Song{
-				{charts.Song{Artist: "A", Duration: 1},
-					charts.Song{Artist: "B", Duration: 2},
+			charts.Artists([][]info.Song{
+				{info.Song{Artist: "A", Duration: 1},
+					info.Song{Artist: "B", Duration: 2},
 				},
-				{charts.Song{Artist: "C", Duration: 1},
-					charts.Song{Artist: "A", Duration: 1},
+				{info.Song{Artist: "C", Duration: 1},
+					info.Song{Artist: "A", Duration: 1},
 				},
 			}),
 			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
@@ -34,12 +35,12 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"ArtistsDuration",
-			charts.ArtistsDuration([][]charts.Song{
-				{charts.Song{Artist: "A", Duration: 1},
-					charts.Song{Artist: "B", Duration: 2},
+			charts.ArtistsDuration([][]info.Song{
+				{info.Song{Artist: "A", Duration: 1},
+					info.Song{Artist: "B", Duration: 2},
 				},
-				{charts.Song{Artist: "C", Duration: 1},
-					charts.Song{Artist: "A", Duration: 1},
+				{info.Song{Artist: "C", Duration: 1},
+					info.Song{Artist: "A", Duration: 1},
 				},
 			}),
 			[]charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("B"), charts.ArtistTitle("C")},
@@ -49,21 +50,21 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"Songs",
-			charts.Songs([][]charts.Song{
+			charts.Songs([][]info.Song{
 				{
-					charts.Song{Artist: "A", Title: "b", Duration: 1},
-					charts.Song{Artist: "B", Title: "b", Duration: 2},
-					charts.Song{Artist: "A", Title: "a", Duration: 1},
+					info.Song{Artist: "A", Title: "b", Duration: 1},
+					info.Song{Artist: "B", Title: "b", Duration: 2},
+					info.Song{Artist: "A", Title: "a", Duration: 1},
 				},
 				{
-					charts.Song{Artist: "C", Title: "b", Duration: 1},
-					charts.Song{Artist: "A", Title: "b", Duration: 1},
+					info.Song{Artist: "C", Title: "b", Duration: 1},
+					info.Song{Artist: "A", Title: "b", Duration: 1},
 				},
 			}),
 			[]charts.Title{
-				charts.SongTitle(charts.Song{Artist: "A", Title: "a"}), charts.SongTitle(charts.Song{Artist: "A", Title: "b"}),
-				charts.SongTitle(charts.Song{Artist: "B", Title: "b"}),
-				charts.SongTitle(charts.Song{Artist: "C", Title: "b"}),
+				charts.SongTitle(info.Song{Artist: "A", Title: "a"}), charts.SongTitle(info.Song{Artist: "A", Title: "b"}),
+				charts.SongTitle(info.Song{Artist: "B", Title: "b"}),
+				charts.SongTitle(info.Song{Artist: "C", Title: "b"}),
 			},
 			[][]float64{
 				{1, 0}, {1, 1},
@@ -73,21 +74,21 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"SongsDuration",
-			charts.SongsDuration([][]charts.Song{
+			charts.SongsDuration([][]info.Song{
 				{
-					charts.Song{Artist: "A", Title: "b", Duration: 1},
-					charts.Song{Artist: "B", Title: "b", Duration: 2},
-					charts.Song{Artist: "A", Title: "a", Duration: 1},
+					info.Song{Artist: "A", Title: "b", Duration: 1},
+					info.Song{Artist: "B", Title: "b", Duration: 2},
+					info.Song{Artist: "A", Title: "a", Duration: 1},
 				},
 				{
-					charts.Song{Artist: "C", Title: "b", Duration: 1},
-					charts.Song{Artist: "A", Title: "b", Duration: 1},
+					info.Song{Artist: "C", Title: "b", Duration: 1},
+					info.Song{Artist: "A", Title: "b", Duration: 1},
 				},
 			}),
 			[]charts.Title{
-				charts.SongTitle(charts.Song{Artist: "A", Title: "a"}), charts.SongTitle(charts.Song{Artist: "A", Title: "b"}),
-				charts.SongTitle(charts.Song{Artist: "B", Title: "b"}),
-				charts.SongTitle(charts.Song{Artist: "C", Title: "b"}),
+				charts.SongTitle(info.Song{Artist: "A", Title: "a"}), charts.SongTitle(info.Song{Artist: "A", Title: "b"}),
+				charts.SongTitle(info.Song{Artist: "B", Title: "b"}),
+				charts.SongTitle(info.Song{Artist: "C", Title: "b"}),
 			},
 			[][]float64{
 				{1, 0}, {1, 1},
@@ -97,15 +98,15 @@ func TestCharts(t *testing.T) {
 		},
 		{
 			"single column normalizer",
-			charts.Normalize(charts.Artists([][]charts.Song{
+			charts.Normalize(charts.Artists([][]info.Song{
 				{
-					charts.Song{Artist: "A"}, charts.Song{Artist: "A"},
-					charts.Song{Artist: "B"},
-					charts.Song{Artist: "C"},
+					info.Song{Artist: "A"}, info.Song{Artist: "A"},
+					info.Song{Artist: "B"},
+					info.Song{Artist: "C"},
 				},
 				{
-					charts.Song{Artist: "B"}, charts.Song{Artist: "B"}, charts.Song{Artist: "B"},
-					charts.Song{Artist: "C"}, charts.Song{Artist: "C"}, charts.Song{Artist: "C"},
+					info.Song{Artist: "B"}, info.Song{Artist: "B"}, info.Song{Artist: "B"},
+					info.Song{Artist: "C"}, info.Song{Artist: "C"}, info.Song{Artist: "C"},
 				},
 				{},
 			})),

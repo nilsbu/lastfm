@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	async "github.com/nilsbu/async"
-	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
@@ -17,7 +17,7 @@ func UpdateHistory(
 	user *unpack.User,
 	until rsrc.Day, // TODO change to end/before
 	s io.Store,
-) (plays [][]charts.Song, err error) {
+) (plays [][]info.Song, err error) {
 	if user.Registered == nil {
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
 			user.Name)
@@ -65,9 +65,9 @@ func UpdateHistory(
 	return append(oldPlays, newPlays...), err
 }
 
-func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]charts.Song, error) {
+func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]info.Song, error) {
 	days := (end.Midnight() - begin.Midnight()) / 86400
-	plays := make([][]charts.Song, days)
+	plays := make([][]info.Song, days)
 
 	err := async.Pie(int(days), func(i int) error {
 		if songs, err := unpack.LoadDayHistory(user, begin.AddDate(0, 0, i), r); err == nil {
@@ -86,7 +86,7 @@ func loadHistory(
 	user unpack.User,
 	until rsrc.Day,
 	io rsrc.IO,
-	l unpack.Loader) ([][]charts.Song, error) {
+	l unpack.Loader) ([][]info.Song, error) {
 
 	if until == nil {
 		return nil, errors.New("parameter 'until' is no valid Day")
@@ -97,7 +97,7 @@ func loadHistory(
 	registered := user.Registered.Midnight()
 
 	days := int((until.Midnight() - registered) / 86400)
-	result := make([][]charts.Song, days+1)
+	result := make([][]info.Song, days+1)
 	feedback := make(chan error)
 	for i := range result {
 		go func(i int) {
@@ -124,7 +124,7 @@ func loadHistory(
 
 // loadDayPlaysResult is the result of loadDayPlays.
 type loadDayPlaysResult struct {
-	DayPlays []charts.Song
+	DayPlays []info.Song
 	Page     int
 	Err      error
 }
@@ -133,7 +133,7 @@ func loadDayPlays(
 	user string,
 	time rsrc.Day,
 	io rsrc.IO, cache unpack.Loader,
-) ([]charts.Song, error) {
+) ([]info.Song, error) {
 	firstPage, err := unpack.LoadHistoryDayPage(user, 1, time, unpack.NewCacheless(io))
 	if err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func loadDayPlays(
 		return firstPage.Plays, nil
 	}
 
-	pages := make([][]charts.Song, firstPage.Pages)
+	pages := make([][]info.Song, firstPage.Pages)
 	pages[0] = firstPage.Plays
 
 	back := make(chan loadDayPlaysResult)
@@ -174,7 +174,7 @@ func loadDayPlays(
 	}
 	close(back)
 
-	plays := []charts.Song{}
+	plays := []info.Song{}
 	for _, page := range pages {
 		plays = append(plays, page...)
 		unpack.WriteDayHistory(plays, user, time, io)
@@ -182,7 +182,7 @@ func loadDayPlays(
 	return plays, err
 }
 
-func attachDuration(songs []charts.Song, cache unpack.Loader) error {
+func attachDuration(songs []info.Song, cache unpack.Loader) error {
 	async.Pie(len(songs), func(i int) error {
 		if info, err := unpack.LoadTrackInfo(songs[i].Artist, songs[i].Title, cache); err == nil {
 			songs[i].Duration = float64(info.Duration) / 60.0

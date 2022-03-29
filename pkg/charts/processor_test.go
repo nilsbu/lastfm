@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
@@ -18,7 +19,7 @@ func TestLazyChartsPartial(t *testing.T) {
 		"C": {1, 1, 2, 1},
 	})
 
-	songs := [][]charts.Song{
+	songs := [][]info.Song{
 		{
 			{Artist: "A", Title: "a", Duration: 3},
 			{Artist: "A", Title: "b", Duration: 4},

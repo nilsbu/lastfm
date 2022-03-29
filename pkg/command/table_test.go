@@ -6,6 +6,7 @@ import (
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/format"
+	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/pipeline"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
@@ -19,7 +20,7 @@ func TestTable(t *testing.T) {
 	cases := []struct {
 		descr     string
 		user      *unpack.User
-		history   [][]charts.Song
+		history   [][]info.Song
 		hasCharts bool
 		cmd       command
 		table     *format.Table
@@ -28,7 +29,7 @@ func TestTable(t *testing.T) {
 		{
 			"no user",
 			nil,
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -43,7 +44,7 @@ func TestTable(t *testing.T) {
 		{
 			"no charts",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{}, false,
+			[][]info.Song{}, false,
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 10},
 				step:        1,
@@ -54,7 +55,7 @@ func TestTable(t *testing.T) {
 		{
 			"no corrections",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -74,7 +75,7 @@ func TestTable(t *testing.T) {
 		{
 			"ok", // TODO
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -94,7 +95,7 @@ func TestTable(t *testing.T) {
 		{
 			"ok, every other day",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2018-01-01")},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{{Artist: "X"}},
 			}, true,
@@ -113,7 +114,7 @@ func TestTable(t *testing.T) {
 		{
 			"table period; years",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -134,7 +135,7 @@ func TestTable(t *testing.T) {
 		{
 			"table period; charts broken",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -149,7 +150,7 @@ func TestTable(t *testing.T) {
 		{
 			"table period; no user",
 			&unpack.User{Name: "no one", Registered: rsrc.ParseDay("2017-12-30")},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},
@@ -164,7 +165,7 @@ func TestTable(t *testing.T) {
 		{
 			"table period; false period",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-30")},
-			[][]charts.Song{
+			[][]info.Song{
 				{{Artist: "X"}},
 				{},
 				{{Artist: "X"}},

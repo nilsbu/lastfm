@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/info"
 )
 
 func TestTitles(t *testing.T) {
@@ -24,7 +25,7 @@ func TestTitles(t *testing.T) {
 		},
 		{
 			"song title",
-			charts.SongTitle(charts.Song{Artist: "x", Title: "y"}),
+			charts.SongTitle(info.Song{Artist: "x", Title: "y"}),
 			"x - y", "x\ny", "x", "y",
 		},
 		{
