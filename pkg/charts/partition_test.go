@@ -19,9 +19,9 @@ type partitionTitles struct {
 
 func TestPartiton(t *testing.T) {
 	for _, c := range []struct {
-		name            string
-		partition       charts.Partition
-		titlePartitions []titlePartition
+		name      string
+		partition charts.Partition
+		// titlePartitions []titlePartition
 		partitionTitles []partitionTitles
 		partitions      []charts.Title
 	}{
@@ -29,9 +29,6 @@ func TestPartiton(t *testing.T) {
 		{
 			"empty key partition",
 			charts.KeyPartition([][2]charts.Title{}),
-			[]titlePartition{
-				{charts.KeyTitle("a"), charts.KeyTitle("")},
-			},
 			[]partitionTitles{
 				{charts.KeyTitle("x"), []charts.Title{}},
 			},
@@ -45,13 +42,6 @@ func TestPartiton(t *testing.T) {
 				{charts.KeyTitle("b"), charts.KeyTitle("l")},
 				{charts.KeyTitle("C"), charts.KeyTitle("u")},
 			}),
-			[]titlePartition{
-				{charts.KeyTitle("a"), charts.KeyTitle("l")},
-				{charts.KeyTitle("A"), charts.KeyTitle("u")},
-				{charts.KeyTitle("b"), charts.KeyTitle("l")},
-				{charts.KeyTitle("C"), charts.KeyTitle("u")},
-				{charts.KeyTitle("B"), charts.KeyTitle("")},
-			},
 			[]partitionTitles{
 				{charts.KeyTitle("l"), []charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}},
 				{charts.KeyTitle("u"), []charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")}},
@@ -62,11 +52,6 @@ func TestPartiton(t *testing.T) {
 		{
 			"totalPartition",
 			charts.TotalPartition([]charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}),
-			[]titlePartition{
-				{charts.KeyTitle("a"), charts.StringTitle("total")},
-				{charts.KeyTitle("b"), charts.StringTitle("total")},
-				{charts.KeyTitle("B"), charts.KeyTitle("")},
-			},
 			[]partitionTitles{
 				{charts.StringTitle("total"), []charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}},
 				{charts.KeyTitle("n"), []charts.Title{}},
@@ -80,9 +65,6 @@ func TestPartiton(t *testing.T) {
 				map[string]string{},
 				nil,
 			),
-			[]titlePartition{
-				{charts.KeyTitle("a"), charts.KeyTitle("")},
-			},
 			[]partitionTitles{
 				{charts.KeyTitle("x"), []charts.Title{}},
 			},
@@ -101,12 +83,6 @@ func TestPartiton(t *testing.T) {
 				},
 				nil,
 			),
-			[]titlePartition{
-				{charts.ArtistTitle("A"), charts.KeyTitle("vowel")},
-				{charts.ArtistTitle("B"), charts.KeyTitle("consonant")},
-				{charts.ArtistTitle("C"), charts.KeyTitle("consonant")},
-				{charts.ArtistTitle("X"), charts.KeyTitle("")},
-			},
 			[]partitionTitles{
 				{charts.KeyTitle("consonant"), []charts.Title{charts.ArtistTitle("B"), charts.ArtistTitle("C")}},
 				{charts.KeyTitle("vowel"), []charts.Title{charts.ArtistTitle("A")}},
@@ -128,12 +104,6 @@ func TestPartiton(t *testing.T) {
 					"Y": "vowel", "Ü": "umlaut",
 				},
 			),
-			[]titlePartition{
-				{charts.ArtistTitle("A"), charts.KeyTitle("vowel")},
-				{charts.ArtistTitle("Y"), charts.KeyTitle("vowel")},
-				{charts.ArtistTitle("Ü"), charts.KeyTitle("umlaut")},
-				{charts.ArtistTitle("X"), charts.KeyTitle("")},
-			},
 			[]partitionTitles{
 				{charts.KeyTitle("consonant"), []charts.Title{}},
 				{charts.KeyTitle("vowel"), []charts.Title{charts.ArtistTitle("A"), charts.ArtistTitle("Y")}},
@@ -151,9 +121,6 @@ func TestPartiton(t *testing.T) {
 				)
 				return p
 			}(),
-			[]titlePartition{
-				{charts.ArtistTitle("not"), charts.KeyTitle("")},
-			},
 			[]partitionTitles{
 				{charts.KeyTitle("2019"), []charts.Title{}},
 				{charts.KeyTitle("2020"), []charts.Title{}},
@@ -182,13 +149,6 @@ func TestPartiton(t *testing.T) {
 				)
 				return p
 			}(),
-			[]titlePartition{
-				{charts.ArtistTitle("not"), charts.KeyTitle("")},
-				{charts.ArtistTitle("first"), charts.KeyTitle("2019")},
-				{charts.ArtistTitle("first2"), charts.KeyTitle("2019")},
-				{charts.ArtistTitle("last"), charts.KeyTitle("2020")},
-				{charts.ArtistTitle("last2"), charts.KeyTitle("2020")},
-			},
 			[]partitionTitles{
 				{charts.KeyTitle("2019"), []charts.Title{charts.KeyTitle("first"), charts.KeyTitle("first2")}},
 				{charts.KeyTitle("2020"), []charts.Title{charts.KeyTitle("last"), charts.KeyTitle("last2")}},
@@ -197,13 +157,6 @@ func TestPartiton(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			for _, tp := range c.titlePartitions {
-				partition, _ := c.partition.Partition(tp.title)
-				if tp.partition.Key() != partition.Key() {
-					t.Errorf("'%v': '%v' != '%v'", tp.title, tp.partition, partition)
-				}
-			}
-
 			for _, pt := range c.partitionTitles {
 				titles, _ := c.partition.Titles(pt.partition)
 				if len(titles) != len(pt.titles) {

@@ -10,12 +10,10 @@ import (
 )
 
 // Partition divides titles into separate groups called partitions.
-// Each title belongs to no more than one partition which can be obtained by
-// Partition(title). Conversely Titles(partition) will include all titles
-// belonging to a given partition.
+// Each title belongs to no more than one partition.
+// Titles(partition) will include all titles belonging to a given partition.
 // Partitions() returns the set of partitions.
 type Partition interface {
-	Partition(title Title) (partition Title, err error)
 	Titles(partition Title) ([]Title, error)
 	Partitions() ([]Title, error)
 }
@@ -27,12 +25,6 @@ type biMapPartition struct {
 	key             func(title Title) string
 }
 
-func (p biMapPartition) Partition(title Title) (Title, error) {
-	if partition, ok := p.titlePartition[p.key(title)]; ok {
-		return partition, nil
-	}
-	return KeyTitle(""), nil
-}
 func (p biMapPartition) Titles(partition Title) ([]Title, error) {
 	if titles, ok := p.partitionTitles[p.key(partition)]; ok {
 		return titles, nil
