@@ -283,7 +283,6 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 			return nil, err
 		} else {
 			if !partitionContains(partition, split[2]) {
-				// TODO partitions that contain a space aren't possible
 				return nil, fmt.Errorf("name '%v' is no partition", split[2])
 			} else {
 				return charts.Subset(parent, partition, charts.KeyTitle(split[2])), nil
