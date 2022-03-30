@@ -29,15 +29,15 @@ func (cmd printCharts) getSteps() ([]string, error) {
 		cmd.keys = "artist"
 	}
 
-	s0 := cmd.keys
+	steps := []string{cmd.keys + "s"}
 	if cmd.duration {
-		s0 += ",duration"
+		steps[0] += "duration"
 	}
 	if cmd.normalized {
-		s0 += ",normalized"
+		steps = append(steps, "normalize")
 	}
 
-	steps := []string{s0, "*"}
+	steps = append(steps, "*")
 
 	if cmd.percentage {
 		steps = append(steps, "normalize")

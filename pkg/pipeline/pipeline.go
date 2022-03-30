@@ -95,60 +95,14 @@ func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
 		return nil, fmt.Errorf("no user name given, session might not be properly initialized")
 	}
 
-	init := breakup(steps[0])
-	w.runSteps(init)
-
-	// trust idx without check here
-	idx := findSubsteps(init, []string{"gaussian", "cache"})
-	w.bookmarks["gaussian"] = init[:idx+1]
-
-	var fullSteps []string
-	if strings.Contains(steps[0], "normalized") {
-		fullSteps = append(fullSteps, init...)
-		fullSteps = append(fullSteps, steps[1:]...)
-	} else {
-		fullSteps = append(fullSteps, init[0])
-		fullSteps = append(fullSteps, steps[1:]...)
+	// Ensure that gaussian exists, might be needed for year partition
+	w.bookmarks["gaussian"] = []string{steps[0], "gaussian", "cache"}
+	_, err := w.runSteps(w.bookmarks["gaussian"])
+	if err != nil {
+		return nil, err
 	}
 
-	return w.runSteps(fullSteps)
-}
-
-func breakup(s string) []string {
-	// TODO the first steps should be moved to command
-	steps := make([]string, 0)
-	switch {
-	case strings.Contains(s, "song,duration"):
-		steps = append(steps, "songsduration")
-	case strings.Contains(s, "song"):
-		steps = append(steps, "songs")
-	case strings.Contains(s, "artist,duration"):
-		steps = append(steps, "artistsduration")
-	default:
-		steps = append(steps, "artists")
-	}
-
-	steps = append(steps, "gaussian")
-	steps = append(steps, "cache")
-	steps = append(steps, "normalize")
-	return steps
-}
-
-// findSubsteps searches a subset within steps and return the index of the LAST element, if found.
-// -1 is returned if nothing is found
-func findSubsteps(steps, sub []string) int {
-	j := 0
-	for i, step := range steps {
-		if step == sub[j] {
-			j++
-			if j == len(sub) {
-				return i
-			}
-		} else {
-			j = 0
-		}
-	}
-	return -1
+	return w.runSteps(steps)
 }
 
 func (w *pipeline) runSteps(steps []string) (charts.Charts, error) {
