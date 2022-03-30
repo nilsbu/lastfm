@@ -288,7 +288,8 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		if err != nil {
 			return nil, err
 		} else {
-			if !partitionCongains(partition, split[2]) {
+			if !partitionContains(partition, split[2]) {
+				// TODO partitions that contain a space aren't possible
 				return nil, fmt.Errorf("name '%v' is no partition", split[2])
 			} else {
 				return charts.Subset(parent, partition, charts.KeyTitle(split[2])), nil
@@ -343,7 +344,7 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 	}
 }
 
-func partitionCongains(partition charts.Partition, name string) bool {
+func partitionContains(partition charts.Partition, name string) bool {
 	found := false
 
 	partitions, _ := partition.Partitions()
@@ -373,23 +374,11 @@ func (w *pipeline) getPartition(
 	case "total":
 		return charts.TotalPartition(parent.Titles()), nil
 	case "super":
-		tags, err := loadArtistTags(parent, w.store)
-		if err != nil {
-			return nil, err
-		}
-
 		corrections, _ := unpack.LoadSupertagCorrections(w.session.User, w.store)
-
-		return charts.FirstTagPartition(tags, config.Supertags, corrections), nil
+		return charts.TagPartition(parent, config.Supertags, corrections, w.store), nil
 	case "country":
-		tags, err := loadArtistTags(parent, w.store)
-		if err != nil {
-			return nil, err
-		}
-
 		corrections, _ := unpack.LoadCountryCorrections(w.session.User, w.store)
-
-		return charts.FirstTagPartition(tags, config.Countries, corrections), nil
+		return charts.TagPartition(parent, config.Countries, corrections, w.store), nil
 	default:
 		return nil, fmt.Errorf("chart type '%v' not supported", step)
 	}

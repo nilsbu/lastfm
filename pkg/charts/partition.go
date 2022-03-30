@@ -5,6 +5,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -144,7 +145,15 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) (Partition, error
 	}
 
 	yearIdxs := getYearIdxs(registered, sums.Len())
-	for _, title := range sums.Titles() {
+	titles := sums.Titles()
+	ts := make([]Title, len(titles))
+	err := async.Pie(len(titles), func(ii int) error {
+		title := titles[ii]
+		last, err := sums.Data([]Title{title}, sums.Len()-1, sums.Len())
+		if err != nil || last[0][0] < 2 {
+			return nil
+		}
+
 		prev := 0
 		only := Only(gaussian, []Title{title})
 		maxM := -math.MaxFloat64
@@ -153,7 +162,7 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) (Partition, error
 			// TODO use Column if you decide to keep that method
 			vs, err := sums.Data([]Title{title}, idx, idx+1)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			v := vs[0][0]
 
@@ -166,7 +175,7 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) (Partition, error
 				Registered: registered,
 			})).Data([]Title{title}, idx-prev, idx-prev+1)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			m := ms[0][0]
 
@@ -176,12 +185,25 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) (Partition, error
 				maxI = i
 			}
 			if v >= 4 || i == len(yearIdxs)-1 { // TODO no magic numbers
-				titlePartition[title.Key()] = partitions[maxI]
-				partitionTitles[partitions[maxI].Key()] = append(
-					partitionTitles[partitions[maxI].Key()], title)
-				break
+				ts[ii] = partitions[maxI]
+				return nil
 			}
 		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for i, t := range ts {
+		if t == nil {
+			continue
+		}
+		title := titles[i]
+		titlePartition[title.Key()] = t
+		partitionTitles[t.Key()] = append(
+			partitionTitles[t.Key()], title)
+
 	}
 
 	return biMapPartition{
