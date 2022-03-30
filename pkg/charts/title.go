@@ -88,6 +88,7 @@ func (t songTitle) Key() string {
 type stringTitle string
 
 // StringTitle is a Title which is non-empty only for String().
+// TODO remove StringTitle
 func StringTitle(s string) Title {
 	return stringTitle(s)
 }

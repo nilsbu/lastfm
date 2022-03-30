@@ -531,32 +531,42 @@ func TestTop(t *testing.T) {
 		titles []charts.Title
 	}{
 		// TODO reenter these tests
-		// {
-		// 	"empty",
-		// 	FromMap(map[string][]float64{}),
-		// 	2,
-		// 	[]charts.Title{},
-		// },
-		// {
-		// 	"2 out of 3",
-		// 	FromMap(map[string][]float64{
-		// 		"A": {1, 3},
-		// 		"B": {1, 1},
-		// 		"C": {0, 2},
-		// 	}),
-		// 	2,
-		// 	[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")},
-		// },
-		// {
-		// 	"n > len",
-		// 	FromMap(map[string][]float64{
-		// 		"A": {1, 3},
-		// 		"B": {1, 1},
-		// 		"C": {0, 2},
-		// 	}),
-		// 	4,
-		// 	[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C"), charts.KeyTitle("B")},
-		// },
+		{
+			"empty",
+			charts.FromMap(map[string][]float64{}),
+			2,
+			[]charts.Title{},
+		},
+		{
+			"2 out of 3",
+			charts.FromMap(map[string][]float64{
+				"A": {1, 3},
+				"B": {1, 1},
+				"C": {0, 2},
+			}),
+			2,
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C")},
+		},
+		{
+			"n > len",
+			charts.FromMap(map[string][]float64{
+				"A": {1, 3},
+				"B": {1, 1},
+				"C": {0, 2},
+			}),
+			4,
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("C"), charts.KeyTitle("B")},
+		},
+		{
+			"drop zero",
+			charts.FromMap(map[string][]float64{
+				"A": {2},
+				"B": {3},
+				"C": {0},
+			}),
+			4,
+			[]charts.Title{charts.KeyTitle("B"), charts.KeyTitle("A")},
+		},
 		{
 			"many",
 			charts.FromMap(map[string][]float64{

@@ -35,11 +35,11 @@ func (l *partitionSum) Data(titles []Title, begin, end int) ([][]float64, error)
 	err := async.Pie(len(titles), func(i int) error {
 		line := make([]float64, end-begin)
 
-		titles, err := l.partition.Titles(titles[i])
+		titlesX, err := l.partition.Titles(titles[i])
 		if err != nil {
-			return nil
+			return err
 		}
-		for _, key := range titles {
+		for _, key := range titlesX {
 			res, err := l.parent.Data([]Title{key}, begin, end)
 			if err != nil {
 				return err
@@ -51,6 +51,12 @@ func (l *partitionSum) Data(titles []Title, begin, end int) ([][]float64, error)
 		data[i] = line
 		return nil
 	})
+
+	for i := range data {
+		if len(data[i]) == 0 {
+			data[i] = make([]float64, end-begin)
+		}
+	}
 
 	if err != nil {
 		return nil, err
@@ -233,6 +239,9 @@ func Top(c Charts, n int) ([]Title, error) {
 	ts := make([]Title, m)
 	i := 0
 	for k, tv := range col {
+		if tv[0] == 0 {
+			continue
+		}
 		vs[i] = tv[0]
 		ts[i] = fullTitles[k]
 		for j := i; j > 0; j-- {
@@ -249,6 +258,9 @@ func Top(c Charts, n int) ([]Title, error) {
 	}
 	if len(ts) > n {
 		ts = ts[:n]
+	}
+	if len(ts) > i && ts[i] == nil {
+		ts = ts[:i]
 	}
 
 	return ts, nil

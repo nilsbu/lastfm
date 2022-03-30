@@ -407,7 +407,7 @@ func TestPrint(t *testing.T) {
 			true,
 		},
 		{
-			"super withno tags",
+			"super with no tags",
 			&unpack.User{Name: user, Registered: rsrc.ParseDay("2017-12-31")},
 			[][]info.Song{
 				{{Artist: "Z", Title: "z"}},
