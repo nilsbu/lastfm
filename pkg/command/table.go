@@ -24,7 +24,7 @@ func (cmd tableTotal) Execute(
 	}
 
 	steps = setStep(steps, "sum", "cache")
-	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
+	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
@@ -61,10 +61,10 @@ func (cmd tableFade) Execute(
 	}
 
 	steps = setStep(steps,
-		fmt.Sprintf("fade %v", cmd.hl),
+		fmt.Sprintf("fade,%v", cmd.hl),
 		"cache",
-		fmt.Sprintf("top %v", cmd.n),
-		fmt.Sprintf("step %vd", cmd.step))
+		fmt.Sprintf("top,%v", cmd.n),
+		fmt.Sprintf("step,%vd", cmd.step))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
@@ -98,7 +98,7 @@ func (cmd tablePeriods) Execute(
 	}
 
 	steps = setStep(steps, "id")
-	steps = append(steps, fmt.Sprintf("periods %v", cmd.period), "cache", fmt.Sprintf("top %v", cmd.n))
+	steps = append(steps, fmt.Sprintf("periods,%v", cmd.period), "cache", fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {

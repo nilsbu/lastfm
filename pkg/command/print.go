@@ -31,10 +31,10 @@ func (cmd printCharts) getSteps() ([]string, error) {
 
 	s0 := cmd.keys
 	if cmd.duration {
-		s0 += " duration"
+		s0 += ",duration"
 	}
 	if cmd.normalized {
-		s0 += " normalized"
+		s0 += ",normalized"
 	}
 
 	steps := []string{s0, "*"}
@@ -46,9 +46,9 @@ func (cmd printCharts) getSteps() ([]string, error) {
 	if cmd.by != "all" {
 		var s1 string
 		if cmd.name == "" {
-			s1 = "group " + cmd.by
+			s1 = "group," + cmd.by
 		} else {
-			s1 = "split " + cmd.by + " " + cmd.name
+			s1 = "split," + cmd.by + "," + cmd.name
 		}
 		steps = append(steps, s1)
 	} else {
@@ -90,9 +90,9 @@ func (cmd printTotal) Execute(
 
 	null := time.Time{}
 	if cmd.date != null {
-		steps = append(steps, fmt.Sprintf("day %v", rsrc.DayFromTime(cmd.date)))
+		steps = append(steps, fmt.Sprintf("day,%v", rsrc.DayFromTime(cmd.date)))
 	}
-	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
+	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
@@ -126,13 +126,13 @@ func (cmd printFade) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl), "cache")
+	steps = setStep(steps, fmt.Sprintf("fade,%v", cmd.hl), "cache")
 
 	null := time.Time{}
 	if cmd.date != null {
-		steps = append(steps, fmt.Sprintf("day %v", rsrc.DayFromTime(cmd.date)))
+		steps = append(steps, fmt.Sprintf("day,%v", rsrc.DayFromTime(cmd.date)))
 	}
-	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
+	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
@@ -163,8 +163,8 @@ func (cmd printPeriod) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum", "cache")
-	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
+	steps = setStep(steps, fmt.Sprintf("period,%v", cmd.period), "sum", "cache")
+	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
@@ -198,8 +198,8 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", "cache")
-	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
+	steps = setStep(steps, fmt.Sprintf("interval,%v,%v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", "cache")
+	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
@@ -236,8 +236,8 @@ func (cmd printFadeMax) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("fade %v", cmd.hl), "cache")
-	steps = append(steps, "max", fmt.Sprintf("top %v", cmd.n))
+	steps = setStep(steps, fmt.Sprintf("fade,%v", cmd.hl), "cache")
+	steps = append(steps, "max", fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {

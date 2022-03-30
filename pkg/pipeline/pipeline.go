@@ -118,11 +118,11 @@ func breakup(s string) []string {
 	// TODO the first steps should be moved to command
 	steps := make([]string, 0)
 	switch {
-	case strings.Contains(s, "song duration"):
+	case strings.Contains(s, "song,duration"):
 		steps = append(steps, "songsduration")
 	case strings.Contains(s, "song"):
 		steps = append(steps, "songs")
-	case strings.Contains(s, "artist duration"):
+	case strings.Contains(s, "artist,duration"):
 		steps = append(steps, "artistsduration")
 	default:
 		steps = append(steps, "artists")
@@ -218,12 +218,6 @@ func (w *pipeline) load() (*vars, error) {
 }
 
 func (w *pipeline) root(s string) (charts.Charts, error) {
-	// vv, err := w.vars.Exec()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// v := vv.(*vars)
-
 	var c charts.Charts
 	switch s {
 	case "songsduration":
@@ -246,7 +240,7 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 	}
 	v := vv.(*vars)
 
-	split := strings.Split(step, " ")
+	split := strings.Split(step, ",")
 	switch split[0] {
 	case "id":
 		return charts.Id(parent), nil
