@@ -163,7 +163,8 @@ func (cmd printPeriod) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum", "cache", fmt.Sprintf("top %v", cmd.n))
+	steps = setStep(steps, fmt.Sprintf("period %v", cmd.period), "sum", "cache")
+	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
@@ -197,7 +198,8 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", "cache", fmt.Sprintf("top %v", cmd.n))
+	steps = setStep(steps, fmt.Sprintf("interval %v %v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", "cache")
+	steps = append(steps, fmt.Sprintf("top %v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
