@@ -34,7 +34,7 @@ func (cmd printCharts) getSteps() ([]string, error) {
 		steps[0] += "duration"
 	}
 	if cmd.normalized {
-		steps = append(steps, "normalize")
+		steps = append(steps, "gaussian", "normalize")
 	}
 
 	steps = append(steps, "*")
