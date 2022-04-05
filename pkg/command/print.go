@@ -282,3 +282,49 @@ func (cmd printTags) Execute(
 
 	return d.Display(f)
 }
+
+type printPeriods struct {
+	printCharts
+	period string
+}
+
+func (cmd printPeriods) Execute(
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
+	steps, err := cmd.getSteps()
+	if err != nil {
+		return err
+	}
+
+	steps = setStep(steps, "id")
+	steps = append(steps, fmt.Sprintf("periods,%v", cmd.period), "cache")
+
+	cha, err := pl.Execute(steps)
+	if err != nil {
+		return err
+	}
+
+	chas := make([]charts.Charts, cha.Len())
+	for i := range chas {
+		args := []string{}
+		args = append(args, steps...)
+		args = append(args, fmt.Sprintf("column,%v", i), fmt.Sprintf("top,%v", cmd.n))
+
+		chas[i], err = pl.Execute(args)
+		if err != nil {
+			return err
+		}
+	}
+
+	prec := 0
+	if cmd.percentage || cmd.normalized {
+		prec = 2
+	}
+	f := &format.Charts{
+		Charts:     chas,
+		Numbered:   true,
+		Precision:  prec,
+		Percentage: cmd.percentage,
+	}
+
+	return d.Display(f)
+}

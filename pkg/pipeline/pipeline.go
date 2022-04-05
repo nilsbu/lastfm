@@ -10,7 +10,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/io"
-	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/pkg/errors"
@@ -50,7 +49,6 @@ type Pipeline interface {
 type pipeline struct {
 	graph     graph
 	bookmarks map[string][]string
-	baseType  string
 	vars      dynamic
 	session   *unpack.SessionInfo
 	store     io.Store
@@ -286,6 +284,10 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		n, _ := strconv.Atoi(split[1])
 		titles, _ := charts.Top(parent, n)
 		return charts.Only(parent, titles), nil
+
+	case "column":
+		i, _ := strconv.Atoi(split[1])
+		return charts.Column(parent, i), nil
 	default:
 		return nil, errors.New("step does not exist")
 	}
@@ -329,32 +331,4 @@ func (w *pipeline) getPartition(
 	default:
 		return nil, fmt.Errorf("chart type '%v' not supported", step)
 	}
-}
-
-func loadArtistTags(
-	cha charts.Charts,
-	r rsrc.Reader,
-) (map[string][]info.Tag, error) {
-	keys := []string{}
-
-	for _, key := range cha.Titles() {
-		keys = append(keys, key.Artist())
-	}
-
-	tags, err := organize.LoadArtistTags(keys, r)
-	if err != nil {
-		for _, e := range err.(*async.MultiError).Errs {
-			switch e := e.(type) {
-			case *unpack.LastfmError:
-				// TODO can this be tested?
-				if e.IsFatal() {
-					return nil, err
-				}
-			default:
-				return nil, err
-			}
-		}
-	}
-
-	return tags, nil
 }
