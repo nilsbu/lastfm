@@ -165,9 +165,9 @@ func TestPrint(t *testing.T) {
 				date: time.Time{},
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {1, 1, 2},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -193,10 +193,10 @@ func TestPrint(t *testing.T) {
 				date: time.Time{},
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"pop":  {1, 1, 2},
 					"rock": {0, 1, 1},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -219,10 +219,10 @@ func TestPrint(t *testing.T) {
 				date: rsrc.ParseDay("2018-01-02").Time(),
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {1},
 					"Y": {1},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -248,9 +248,9 @@ func TestPrint(t *testing.T) {
 				date: date("2018-01-01"),
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"Y": {.5},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  2,
 				Percentage: true,
@@ -276,10 +276,10 @@ func TestPrint(t *testing.T) {
 				date: time.Time{},
 			},
 			&format.Charts{
-				Charts: charts.InOrder([]charts.Pair{
+				Charts: []charts.Charts{charts.InOrder([]charts.Pair{
 					{Title: charts.StringTitle("France"), Values: []float64{1, 1, 2}},
 					{Title: charts.StringTitle("-"), Values: []float64{0, 1, 1}},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -370,10 +370,10 @@ func TestPrint(t *testing.T) {
 				},
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"2017": append(iotaF(1, 30+31+31), repeat(92, 30+28)...),
 					"2018": append(repeat(0, 30+31+31), iotaF(1, 30+28)...),
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -397,9 +397,9 @@ func TestPrint(t *testing.T) {
 				},
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": append(iotaF(1, 31), repeat(31, 30)...),
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -461,9 +461,9 @@ func TestPrint(t *testing.T) {
 				date: date("2018-01-01"),
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {1},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  2,
 				Percentage: true,
@@ -489,9 +489,9 @@ func TestPrint(t *testing.T) {
 				date: date("2018-01-01"),
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"total": {1},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -518,9 +518,9 @@ func TestPrint(t *testing.T) {
 				hl: 1,
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {1.25},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  2,
 				Percentage: false,
@@ -590,9 +590,9 @@ func TestPrint(t *testing.T) {
 				period: "2018",
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {9},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -660,9 +660,9 @@ func TestPrint(t *testing.T) {
 				period: "2018",
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {1},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  2,
 				Percentage: true,
@@ -690,9 +690,9 @@ func TestPrint(t *testing.T) {
 				before: date("2018-01-03"),
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {9},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -764,9 +764,9 @@ func TestPrint(t *testing.T) {
 				before: date("2018-01-03"),
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"X": {1},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  2,
 				Percentage: true,
@@ -791,10 +791,10 @@ func TestPrint(t *testing.T) {
 				},
 			},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"A - d": {3},
 					"B - c": {2},
-				}),
+				})},
 				Numbered:   true,
 				Precision:  0,
 				Percentage: false,
@@ -935,9 +935,9 @@ func TestPrintTags(t *testing.T) {
 			[]unpack.TagCount{{Name: "pop", Count: 100}},
 			printTags{artist: artist},
 			&format.Charts{
-				Charts: charts.FromMap(map[string][]float64{
+				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
 					"pop": {100},
-				}),
+				})},
 				Numbered: true,
 			},
 			true,

@@ -24,11 +24,6 @@ func Group(
 	}
 }
 
-type titleColumn struct {
-	key int
-	col []float64
-}
-
 func (l *partitionSum) Data(titles []Title, begin, end int) ([][]float64, error) {
 	data := make([][]float64, len(titles))
 

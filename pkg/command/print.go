@@ -104,7 +104,7 @@ func (cmd printTotal) Execute(
 		prec = 2
 	}
 	f := &format.Charts{
-		Charts:     cha,
+		Charts:     []charts.Charts{cha},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -142,7 +142,7 @@ func (cmd printFade) Execute(
 	prec := 2
 
 	f := &format.Charts{
-		Charts:     cha,
+		Charts:     []charts.Charts{cha},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -176,7 +176,7 @@ func (cmd printPeriod) Execute(
 		prec = 2
 	}
 	f := &format.Charts{
-		Charts:     cha,
+		Charts:     []charts.Charts{cha},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -211,7 +211,7 @@ func (cmd printInterval) Execute(
 		prec = 2
 	}
 	f := &format.Charts{
-		Charts:     cha,
+		Charts:     []charts.Charts{cha},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -247,7 +247,7 @@ func (cmd printFadeMax) Execute(
 	prec := 2
 
 	f := &format.Charts{
-		Charts:     cha,
+		Charts:     []charts.Charts{cha},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -274,7 +274,7 @@ func (cmd printTags) Execute(
 	}
 
 	f := &format.Charts{
-		Charts:     charts.FromMap(col),
+		Charts:     []charts.Charts{charts.FromMap(col)},
 		Numbered:   true,
 		Precision:  0,
 		Percentage: false,
