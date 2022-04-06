@@ -9,65 +9,83 @@ import (
 
 func TestChartsCSV(t *testing.T) {
 	cases := []struct {
-		name       string
-		charts     []charts.Charts
-		numbered   bool
-		precision  int
-		percentage bool
-		decimal    string
-		str        string
+		name      string
+		formatter *Charts
+		decimal   string
+		str       string
 	}{
 		{
 			"empty charts",
-			[]charts.Charts{charts.FromMap(map[string][]float64{})},
-			false, 0, false, ".",
+			&Charts{
+				Charts:     []charts.Charts{charts.FromMap(map[string][]float64{})},
+				Numbered:   false,
+				Precision:  0,
+				Percentage: false,
+			},
+			".",
 			"\"Name\";\"Value\"\n",
 		},
 		{
 			"1",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"ABC": {123.4},
-					"X":   {1.238},
-				})},
-			false, 2, false, ",",
+			&Charts{
+				Charts: []charts.Charts{charts.FromMap(
+					map[string][]float64{
+						"ABC": {123.4},
+						"X":   {1.238},
+					})},
+				Numbered:   false,
+				Precision:  2,
+				Percentage: false,
+			}, ",",
 			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";  1,24\n",
 		},
 		{
 			"percentage",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"a": {.75},
-					"b": {.25},
-				})},
-			false, 0, true, ".",
+			&Charts{
+				Charts: []charts.Charts{charts.FromMap(
+					map[string][]float64{
+						"a": {.75},
+						"b": {.25},
+					})},
+				Numbered:   false,
+				Precision:  0,
+				Percentage: true,
+			}, ".",
 			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
 		},
 		{
 			"comma for decimals",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"a": {12.1},
-					"b": {4},
-				})},
-			true, 1, false, ",",
+			&Charts{
+				Charts: []charts.Charts{charts.FromMap(
+					map[string][]float64{
+						"a": {12.1},
+						"b": {4},
+					})},
+				Numbered:   true,
+				Precision:  1,
+				Percentage: false,
+			}, ",",
 			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\"; 4,0\n",
 		},
 		{
 			"multiple charts",
-			[]charts.Charts{
-				charts.FromMap(
-					map[string][]float64{
-						"a": {12.1},
-						"b": {4},
-					}),
-				charts.FromMap(
-					map[string][]float64{
-						"X": {5},
-						"b": {4},
-					}),
-			},
-			true, 1, false, ".",
+			&Charts{
+				Charts: []charts.Charts{
+					charts.FromMap(
+						map[string][]float64{
+							"a": {12.1},
+							"b": {4},
+						}),
+					charts.FromMap(
+						map[string][]float64{
+							"X": {5},
+							"b": {4},
+						}),
+				},
+				Numbered:   true,
+				Precision:  1,
+				Percentage: false,
+			}, ".",
 			"\"#\";\"Name\";\"Value\";\"#\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;\"b\"; 4.0;\"b\";4.0\n",
 		},
 	}
@@ -75,13 +93,7 @@ func TestChartsCSV(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			buf := new(bytes.Buffer)
-			formatter := &Charts{
-				Charts:     c.charts,
-				Numbered:   c.numbered,
-				Precision:  c.precision,
-				Percentage: c.percentage,
-			}
-			formatter.CSV(buf, c.decimal)
+			c.formatter.CSV(buf, c.decimal)
 
 			str := buf.String()
 			if str != c.str {
