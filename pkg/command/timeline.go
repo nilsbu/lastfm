@@ -66,17 +66,17 @@ func (cmd printTimeline) Execute(
 
 	totals := map[string]*top{}
 
-	tmps := make([]*top, cmd.n)
-	for i := range tmps {
-		tmps[i] = &top{title: tops[0][i]}
+	tmps := make([]*top, 0)
+	// for i := range tops[0] {
+	// 	tmps[i] = &top{title: tops[0][i]}
 
-		err := d.Display(&format.Message{
-			Msg: fmt.Sprintf("%v: '%v' starts in the top %v", user.Registered, tops[0][i], cmd.n),
-		})
-		if err != nil {
-			return err
-		}
-	}
+	// 	err := d.Display(&format.Message{
+	// 		Msg: fmt.Sprintf("%v: '%v' starts in the top %v", user.Registered, tops[0][i], cmd.n),
+	// 	})
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 	for i, tp := range tops {
 		tmpp := []*top{}
 
@@ -111,7 +111,7 @@ func (cmd printTimeline) Execute(
 				tmpp = append(tmpp, &top{title: t, value: i})
 
 				err := d.Display(&format.Message{
-					Msg: fmt.Sprintf("%v: '%v' enters the top %vd", user.Registered.AddDate(0, 0, i), t, cmd.n),
+					Msg: fmt.Sprintf("%v: '%v' enters the top %v", user.Registered.AddDate(0, 0, i), t, cmd.n),
 				})
 				if err != nil {
 					return err
@@ -128,8 +128,8 @@ func (cmd printTimeline) Execute(
 		}
 
 		err = d.Display(&format.Message{
-			Msg: fmt.Sprintf("'%v' is %vd on top (since %v)",
-				tmp.title, cha.Len()-tmp.value, user.Registered.AddDate(0, 0, tmp.value)),
+			Msg: fmt.Sprintf("'%v' is %vd in the top %v since %v",
+				tmp.title, cha.Len()-tmp.value, cmd.n, user.Registered.AddDate(0, 0, tmp.value)),
 		})
 		if err != nil {
 			return err
