@@ -337,3 +337,59 @@ func (cmd printPeriods) Execute(
 
 	return d.Display(f)
 }
+
+type printFades struct {
+	printCharts
+	hl     float64
+	period string
+}
+
+func (cmd printFades) Execute(
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
+	steps, err := cmd.getSteps()
+	if err != nil {
+		return err
+	}
+
+	steps = setStep(steps,
+		fmt.Sprintf("fade,%v", cmd.hl),
+		"cache")
+
+	cha, err := pl.Execute(steps)
+	if err != nil {
+		return err
+	}
+	ranges, _ := charts.ParseRanges(cmd.period, pl.Registered(), cha.Len())
+
+	steps = append(steps, fmt.Sprintf("step,%v", cmd.period))
+	cha, err = pl.Execute(steps)
+	if err != nil {
+		return err
+	}
+
+	chas := make([]charts.Charts, cha.Len())
+	for i := range chas {
+		args := []string{}
+		args = append(args, steps...)
+		args = append(args, fmt.Sprintf("column,%v", i), fmt.Sprintf("top,%v", cmd.n))
+
+		chas[i], err = pl.Execute(args)
+		if err != nil {
+			return err
+		}
+	}
+
+	prec := 0
+	if cmd.percentage || cmd.normalized {
+		prec = 2
+	}
+	f := &format.Charts{
+		Charts:     chas,
+		Ranges:     ranges,
+		Numbered:   true,
+		Precision:  prec,
+		Percentage: cmd.percentage,
+	}
+
+	return d.Display(f)
+}

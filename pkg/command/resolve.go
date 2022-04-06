@@ -73,6 +73,7 @@ var cmdPrint = node{
 		"tags":     node{cmd: exePrintTags},
 		"total":    node{cmd: exePrintTotal},
 		"periods":  node{cmd: exePrintPeriods},
+		"fades":    node{cmd: exePrintFades},
 		// TODO Add command for raw execution
 	},
 }
@@ -300,6 +301,39 @@ var exePrintPeriods = &cmd{
 		}
 	},
 	params: params{&param{
+		"period",
+		"period descriptor, format: '[0-9]*[yMd]'",
+		"string",
+	}},
+	options: options{
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"duration":   optChartsDuration,
+		"entry":      optChartsEntry,
+	},
+	session: true,
+}
+
+var exePrintFades = &cmd{
+	descr: "prints a user's top artists by total number of plays in the specified periods",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printFades{printCharts: printCharts{
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			duration:   opts["duration"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			hl:     params[0].(float64),
+			period: params[1].(string),
+		}
+	},
+	params: params{parHL, &param{
 		"period",
 		"period descriptor, format: '[0-9]*[yMd]'",
 		"string",
