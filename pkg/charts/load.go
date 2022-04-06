@@ -97,7 +97,7 @@ func (w *load) load() error {
 		return err
 	}
 
-	days := int((bookmark.Midnight() - user.Registered.Midnight()) / 86400)
+	days := rsrc.Between(user.Registered, bookmark).Days()
 	w.plays = make([][]info.Song, days+1)
 	err = async.Pie(days+1, func(i int) error {
 		day := user.Registered.AddDate(0, 0, i)

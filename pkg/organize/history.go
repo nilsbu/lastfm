@@ -21,7 +21,6 @@ func UpdateHistory(
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
 			user.Name)
 	}
-	registeredDay := user.Registered.Midnight()
 	endCached := user.Registered
 
 	cache := unpack.NewCached(s)
@@ -37,7 +36,7 @@ func UpdateHistory(
 	}
 
 	if len(oldPlays) > 0 {
-		days := int((endCached.Midnight() - registeredDay) / 86400)
+		days := rsrc.Between(user.Registered, endCached).Days()
 		oldPlays = oldPlays[:days]
 	}
 
@@ -45,8 +44,8 @@ func UpdateHistory(
 		return nil, errors.New("'until' is not a valid day")
 	}
 
-	if endCached.Midnight() > until.Midnight()+86400 {
-		days := int((endCached.Midnight()-registeredDay)/86400) - 1
+	if rsrc.Between(until.AddDate(0, 0, 1), endCached).Days() > 0 {
+		days := rsrc.Between(user.Registered, endCached).Days() - 1
 		return oldPlays[:days], nil
 	}
 
@@ -65,7 +64,7 @@ func UpdateHistory(
 }
 
 func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]info.Song, error) {
-	days := (end.Midnight() - begin.Midnight()) / 86400
+	days := rsrc.Between(begin, end).Days()
 	plays := make([][]info.Song, days)
 
 	err := async.Pie(int(days), func(i int) error {
@@ -93,9 +92,7 @@ func LoadHistory(
 		return nil, errors.New("user has no valid registration date")
 	}
 
-	registered := user.Registered.Midnight()
-
-	days := int((until.Midnight() - registered) / 86400)
+	days := rsrc.Between(user.Registered, until).Days()
 	result := make([][]info.Song, days+1)
 	feedback := make(chan error)
 	for i := range result {

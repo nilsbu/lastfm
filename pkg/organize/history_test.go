@@ -391,7 +391,7 @@ func TestUpdateHistory(t *testing.T) {
 			}
 
 			if tc.bookmark != nil {
-				dt := int(tc.bookmark.Midnight()-tc.user.Registered.Midnight()) / 86400
+				dt := rsrc.Between(tc.user.Registered, tc.bookmark).Days()
 				sd := len(tc.saved)
 				if dt > sd {
 					t.Fatalf("bookmark is %vd after registered but must not be more "+

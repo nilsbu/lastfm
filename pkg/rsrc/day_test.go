@@ -1,17 +1,19 @@
-package rsrc
+package rsrc_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func TestToDay(t *testing.T) {
 	cases := []struct {
-		day      Day
+		day      rsrc.Day
 		midnight int64
 	}{
-		{ToDay(917740800), 917740800}, // same time
-		{ToDay(917741200), 917740800}, // some hours later
+		{rsrc.ToDay(917740800), 917740800}, // same time
+		{rsrc.ToDay(917741200), 917740800}, // some hours later
 	}
 
 	for _, c := range cases {
@@ -39,7 +41,7 @@ func TestParseDay(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			day := ParseDay(c.str)
+			day := rsrc.ParseDay(c.str)
 
 			if day == nil && c.ok {
 				t.Errorf("valid result was expected but 'nil' was returned")
@@ -69,7 +71,7 @@ func TestDayFromTime(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("", func(t *testing.T) {
-			day := DayFromTime(c.time)
+			day := rsrc.DayFromTime(c.time)
 
 			if day == nil {
 				t.Errorf("valid result was expected but 'nil' was returned")
@@ -87,11 +89,11 @@ func TestDayFromTime(t *testing.T) {
 
 func TestDayTime(t *testing.T) {
 	cases := []struct {
-		day  Day
+		day  rsrc.Day
 		time time.Time
 	}{
-		{ToDay(917740800), time.Unix(917740800, 0).UTC()}, // same time
-		{ToDay(917741200), time.Unix(917740800, 0).UTC()}, // some hours later
+		{rsrc.ToDay(917740800), time.Unix(917740800, 0).UTC()}, // same time
+		{rsrc.ToDay(917741200), time.Unix(917740800, 0).UTC()}, // some hours later
 	}
 
 	for _, c := range cases {
@@ -108,26 +110,26 @@ func TestDayTime(t *testing.T) {
 
 func TestDayAddDate(t *testing.T) {
 	cases := []struct {
-		base      Day
+		base      rsrc.Day
 		addYears  int
 		addMonths int
 		addDays   int
-		sum       Day
+		sum       rsrc.Day
 	}{
 		{
-			ParseDay("1992-11-12"),
+			rsrc.ParseDay("1992-11-12"),
 			0, 0, 0,
-			ParseDay("1992-11-12"),
+			rsrc.ParseDay("1992-11-12"),
 		},
 		{
-			ParseDay("1992-11-12"),
+			rsrc.ParseDay("1992-11-12"),
 			1, 2, 1,
-			ParseDay("1994-01-13"),
+			rsrc.ParseDay("1994-01-13"),
 		},
 		{
-			ParseDay("1992-11-12"),
+			rsrc.ParseDay("1992-11-12"),
 			1, -3, 0,
-			ParseDay("1993-08-12"),
+			rsrc.ParseDay("1993-08-12"),
 		},
 	}
 
@@ -146,10 +148,10 @@ func TestDayAddDate(t *testing.T) {
 
 func TestDayString(t *testing.T) {
 	cases := []struct {
-		day Day
+		day rsrc.Day
 		str string
 	}{
-		{ToDay(1491264000), "2017-04-04"},
+		{rsrc.ToDay(1491264000), "2017-04-04"},
 	}
 
 	for _, c := range cases {

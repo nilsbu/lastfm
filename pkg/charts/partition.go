@@ -224,7 +224,7 @@ func getYearIdxs(registered rsrc.Day, len int) (idxs []int) {
 	idxs = []int{}
 	iDate := pre.AddDate(1, 0, 0)
 	for iDate.Midnight() < end.Midnight() {
-		idx := int(iDate.Midnight()-registered.Midnight()) / 86400
+		idx := rsrc.Between(registered, iDate).Days()
 		idxs = append(idxs, idx)
 		iDate = iDate.AddDate(1, 0, 0)
 	}

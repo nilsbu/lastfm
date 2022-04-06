@@ -150,7 +150,7 @@ func (w *pipeline) load() (*vars, error) {
 		return nil, err
 	}
 
-	days := int((v.bookmark.Midnight() - v.user.Registered.Midnight()) / 86400)
+	days := rsrc.Between(v.user.Registered, v.bookmark).Days()
 	v.plays = make([][]info.Song, days+1)
 	err = async.Pie(days+1, func(i int) error {
 		day := v.user.Registered.AddDate(0, 0, i)
@@ -242,7 +242,7 @@ func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error
 		}
 
 	case "day":
-		col := int((rsrc.ParseDay(split[1]).Midnight() - v.user.Registered.Midnight()) / 86400)
+		col := rsrc.Between(v.user.Registered, rsrc.ParseDay(split[1])).Days()
 		return charts.Column(parent, col), nil
 
 	case "period":
