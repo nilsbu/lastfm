@@ -296,9 +296,17 @@ func (cmd printPeriods) Execute(
 	}
 
 	steps = setStep(steps, "id")
+	cha, err := pl.Execute(steps)
+	if err != nil {
+		return err
+	}
+
+	ll := cha.Len()
+	ranges, _ := charts.ParseRanges(cmd.period, pl.Registered(), ll)
+
 	steps = append(steps, fmt.Sprintf("periods,%v", cmd.period), "cache")
 
-	cha, err := pl.Execute(steps)
+	cha, err = pl.Execute(steps)
 	if err != nil {
 		return err
 	}
@@ -321,6 +329,7 @@ func (cmd printPeriods) Execute(
 	}
 	f := &format.Charts{
 		Charts:     chas,
+		Ranges:     ranges,
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,

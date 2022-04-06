@@ -199,7 +199,7 @@ type plainWriter struct {
 }
 
 func initPlainWriter(d *data, c *Charts, w io.Writer) chartsWriter {
-	header := len(c.Charts) == len(c.Ranges.Delims)
+	header := len(c.Ranges.Delims) >= len(c.Charts)
 
 	var numPattern string
 	if c.Numbered && len(d.titles) > 0 {
@@ -291,7 +291,7 @@ func initHtmlWriter(f *Charts, w io.Writer) chartsWriter {
 	return &htmlWriter{
 		w:            w,
 		ranges:       f.Ranges,
-		header:       len(f.Charts) == len(f.Ranges.Delims),
+		header:       len(f.Ranges.Delims) >= len(f.Charts),
 		valuePattern: "<td>" + numberPattern(0, f.Precision, f.Percentage, false) + "</td>",
 	}
 }
