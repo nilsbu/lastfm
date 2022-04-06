@@ -39,6 +39,38 @@ func TestDuration(t *testing.T) {
 		})
 	}
 }
+
+func TestDurationDays(t *testing.T) {
+	for _, c := range []struct {
+		name     string
+		duration rsrc.Duration
+		days     int
+	}{
+		{
+			"1d",
+			rsrc.Days(1),
+			1,
+		},
+		{
+			"7d",
+			rsrc.Days(7),
+			7,
+		},
+		{
+			"-700d",
+			rsrc.Days(-700),
+			-700,
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			days := c.duration.Days()
+			if c.days != days {
+				t.Errorf("expected %v days but got %v", c.days, days)
+			}
+		})
+	}
+}
+
 func TestDurationString(t *testing.T) {
 	for _, c := range []struct {
 		name string

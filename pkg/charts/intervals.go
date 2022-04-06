@@ -97,8 +97,8 @@ type interval struct {
 
 // Interval crops the charts to a certain Range.
 func Interval(parent Charts, r Range) Charts {
-	begin := int(r.Begin.Time().Sub(r.Registered.Time()).Hours()) / 24
-	end := int(r.End.Time().Sub(r.Registered.Time()).Hours()) / 24
+	begin := rsrc.Between(r.Registered, r.Begin).Days()
+	end := rsrc.Between(r.Registered, r.End).Days()
 
 	return Crop(parent, begin, end)
 }
@@ -219,7 +219,7 @@ type intervals struct {
 func Intervals(parent Charts, rs Ranges, f func(Charts) Charts) Charts {
 	delims := make([]int, len(rs.Delims))
 	for i, r := range rs.Delims {
-		delims[i] = int(r.Time().Sub(rs.Registered.Time()).Hours()) / 24
+		delims[i] = rsrc.Between(rs.Registered, r).Days()
 	}
 
 	return crops(parent, delims, f)

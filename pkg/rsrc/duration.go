@@ -20,6 +20,13 @@ func Between(a, b Day) Duration {
 	return &duration{a: a.Time(), b: b.Time()}
 }
 
+// Days is a Duration of d days.
+func Days(d int) Duration {
+	a := time.Unix(946681200, 0).UTC() // 2000-01-01
+	b := a.AddDate(0, 0, d)
+	return &duration{a: a, b: b}
+}
+
 // Days returns the number of days in the Duration.
 func (d *duration) Days() int {
 	return int(d.b.Sub(d.a).Hours() / 24)
