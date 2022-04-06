@@ -54,40 +54,30 @@ func (cmd printTimeline) Execute(
 		return err
 	}
 
-	tops := make([][]charts.Title, cha.Len())
-	err = async.Pie(len(tops), func(i int) error {
+	dayTops := make([][]charts.Title, cha.Len())
+	err = async.Pie(len(dayTops), func(i int) error {
 		var err error
-		tops[i], err = nTop(titles, data, cmd.n, i)
+		dayTops[i], err = nTop(titles, data, cmd.n, i)
 		return err
 	})
 	if err != nil {
 		return err
 	}
 
-	totals := map[string]*top{}
+	totalsMap := map[string]*titleValue{}
 
-	tmps := make([]*top, 0)
-	// for i := range tops[0] {
-	// 	tmps[i] = &top{title: tops[0][i]}
+	tops := make([]*titleValue, 0)
+	for i, day := range dayTops {
+		tmpTops := []*titleValue{}
 
-	// 	err := d.Display(&format.Message{
-	// 		Msg: fmt.Sprintf("%v: '%v' starts in the top %v", user.Registered, tops[0][i], cmd.n),
-	// 	})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	for i, tp := range tops {
-		tmpp := []*top{}
-
-		for _, tmp := range tmps {
-			if in(tmp.title, tp) {
-				tmpp = append(tmpp, tmp)
+		for _, tmp := range tops {
+			if in(tmp.title, day) {
+				tmpTops = append(tmpTops, tmp)
 			} else {
-				if old, ok := totals[tmp.title.Key()]; ok {
-					totals[tmp.title.Key()] = &top{title: tmp.title, value: old.value + i - tmp.value}
+				if old, ok := totalsMap[tmp.title.Key()]; ok {
+					totalsMap[tmp.title.Key()] = &titleValue{title: tmp.title, value: old.value + i - tmp.value}
 				} else {
-					totals[tmp.title.Key()] = &top{title: tmp.title, value: i - tmp.value}
+					totalsMap[tmp.title.Key()] = &titleValue{title: tmp.title, value: i - tmp.value}
 				}
 
 				err := d.Display(&format.Message{
@@ -99,16 +89,16 @@ func (cmd printTimeline) Execute(
 				}
 			}
 		}
-		for _, t := range tp {
+		for _, t := range day {
 			found := false
-			for _, tmp := range tmpp {
+			for _, tmp := range tmpTops {
 				if t.Key() == tmp.title.Key() {
 					found = true
 					break
 				}
 			}
 			if !found {
-				tmpp = append(tmpp, &top{title: t, value: i})
+				tmpTops = append(tmpTops, &titleValue{title: t, value: i})
 
 				err := d.Display(&format.Message{
 					Msg: fmt.Sprintf("%v: '%v' enters the top %v", user.Registered.AddDate(0, 0, i), t, cmd.n),
@@ -118,35 +108,35 @@ func (cmd printTimeline) Execute(
 				}
 			}
 		}
-		tmps = tmpp
+		tops = tmpTops
 	}
-	for _, tmp := range tmps {
-		if old, ok := totals[tmp.title.Key()]; ok {
-			totals[tmp.title.Key()] = &top{title: tmp.title, value: old.value + cha.Len() - tmp.value}
+	for _, top := range tops {
+		if total, ok := totalsMap[top.title.Key()]; ok {
+			totalsMap[top.title.Key()] = &titleValue{title: top.title, value: total.value + cha.Len() - top.value}
 		} else {
-			totals[tmp.title.Key()] = &top{title: tmp.title, value: cha.Len() - tmp.value}
+			totalsMap[top.title.Key()] = &titleValue{title: top.title, value: cha.Len() - top.value}
 		}
 
 		err = d.Display(&format.Message{
 			Msg: fmt.Sprintf("'%v' is %vd in the top %v since %v",
-				tmp.title, cha.Len()-tmp.value, cmd.n, user.Registered.AddDate(0, 0, tmp.value)),
+				top.title, cha.Len()-top.value, cmd.n, user.Registered.AddDate(0, 0, top.value)),
 		})
 		if err != nil {
 			return err
 		}
 	}
 
-	totalOrdered := make([]*top, len(totals))
+	totalOrdered := make([]*titleValue, len(totalsMap))
 	i := 0
-	for _, v := range totals {
+	for _, v := range totalsMap {
 		totalOrdered[i] = v
 		i++
 	}
 
 	sort.Slice(totalOrdered, func(i, j int) bool { return totalOrdered[i].value > totalOrdered[j].value })
-	for _, top := range totalOrdered {
+	for _, total := range totalOrdered {
 		err = d.Display(&format.Message{
-			Msg: fmt.Sprintf("'%v' was in the top %v for a total of %vd", top.title, cmd.n, top.value),
+			Msg: fmt.Sprintf("'%v' was in the top %v for a total of %vd", total.title, cmd.n, total.value),
 		})
 		if err != nil {
 			return err
@@ -156,7 +146,7 @@ func (cmd printTimeline) Execute(
 	return nil
 }
 
-type top struct {
+type titleValue struct {
 	title charts.Title
 	value int
 }
