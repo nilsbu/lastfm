@@ -74,14 +74,11 @@ func new(songs func() ([][]info.Song, error), key func(info.Song) Title, value f
 }
 
 func (c *charts) compileWorker() {
-	for {
-		select {
-		case back := <-c.jobChan:
-			if c.songs != nil {
-				back <- c.compile()
-			} else {
-				back <- nil
-			}
+	for back := range c.jobChan {
+		if c.songs != nil {
+			back <- c.compile()
+		} else {
+			back <- nil
 		}
 	}
 }

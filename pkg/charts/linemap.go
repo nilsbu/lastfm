@@ -215,8 +215,3 @@ func (l *lineMapCharts) Data(titles []Title, begin, end int) ([][]float64, error
 		return data, nil
 	}
 }
-
-type indexLine struct {
-	i  int
-	vs []float64
-}

@@ -52,24 +52,6 @@ func LoadSongsDuration(user string, r rsrc.Reader) Charts {
 		fDuration)
 }
 
-func (w *userLoad) span() (begin, end rsrc.Day, err error) {
-	err = async.Pe([]func() error{
-		func() error {
-			user, err := unpack.LoadUserInfo(w.user, unpack.NewCacheless(w.r))
-			if err == nil {
-				begin = user.Registered
-			}
-			return errors.Wrap(err, "failed to load user info")
-		},
-		func() error {
-			var err error
-			end, err = unpack.LoadBookmark(w.user, w.r)
-			return err
-		},
-	})
-	return
-}
-
 func (w *load) load() error {
 	var user *unpack.User
 	var bookmark rsrc.Day

@@ -8,10 +8,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
-type titlePartition struct {
-	title, partition charts.Title
-}
-
 type partitionTitles struct {
 	partition charts.Title
 	titles    []charts.Title
