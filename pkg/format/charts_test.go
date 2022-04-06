@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func TestCharts(t *testing.T) {
@@ -41,9 +42,9 @@ func TestCharts(t *testing.T) {
 				Precision:  2,
 				Percentage: false,
 			}, ",",
-			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";  1,24\n",
+			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";1,24\n",
 			"ABC - 123.40\nX   -   1.24\n",
-			"<table><tr><td>ABC</td><td>123.40</td></tr><tr><td>X</td><td>  1.24</td></tr></table>",
+			"<table><tr><td>ABC</td><td>123.40</td></tr><tr><td>X</td><td>1.24</td></tr></table>",
 		},
 		{
 			"percentage",
@@ -73,9 +74,9 @@ func TestCharts(t *testing.T) {
 				Precision:  1,
 				Percentage: false,
 			}, ",",
-			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\"; 4,0\n",
+			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\";4,0\n",
 			"1: a - 12.1\n2: b -  4.0\n",
-			"<table><tr><td>1</td><td>a</td><td>12.1</td></tr><tr><td>2</td><td>b</td><td> 4.0</td></tr></table>",
+			"<table><tr><td>1</td><td>a</td><td>12.1</td></tr><tr><td>2</td><td>b</td><td>4.0</td></tr></table>",
 		},
 		{
 			"numbered",
@@ -91,9 +92,9 @@ func TestCharts(t *testing.T) {
 				Precision:  0,
 				Percentage: false,
 			}, ".",
-			"\"#\";\"Name\";\"Value\"\n1;\"A\";10\n2;\"B\"; 9\n3;\"C\"; 8\n4;\"D\"; 7\n5;\"E\"; 6\n6;\"F\"; 5\n7;\"G\"; 4\n8;\"H\"; 3\n9;\"I\"; 2\n10;\"J\"; 1\n",
+			"\"#\";\"Name\";\"Value\"\n1;\"A\";10\n2;\"B\";9\n3;\"C\";8\n4;\"D\";7\n5;\"E\";6\n6;\"F\";5\n7;\"G\";4\n8;\"H\";3\n9;\"I\";2\n10;\"J\";1\n",
 			" 1: A - 10\n 2: B -  9\n 3: C -  8\n 4: D -  7\n 5: E -  6\n 6: F -  5\n 7: G -  4\n 8: H -  3\n 9: I -  2\n10: J -  1\n",
-			"<table><tr><td>1</td><td>A</td><td>10</td></tr><tr><td>2</td><td>B</td><td> 9</td></tr><tr><td>3</td><td>C</td><td> 8</td></tr><tr><td>4</td><td>D</td><td> 7</td></tr><tr><td>5</td><td>E</td><td> 6</td></tr><tr><td>6</td><td>F</td><td> 5</td></tr><tr><td>7</td><td>G</td><td> 4</td></tr><tr><td>8</td><td>H</td><td> 3</td></tr><tr><td>9</td><td>I</td><td> 2</td></tr><tr><td>10</td><td>J</td><td> 1</td></tr></table>",
+			"<table><tr><td>1</td><td>A</td><td>10</td></tr><tr><td>2</td><td>B</td><td>9</td></tr><tr><td>3</td><td>C</td><td>8</td></tr><tr><td>4</td><td>D</td><td>7</td></tr><tr><td>5</td><td>E</td><td>6</td></tr><tr><td>6</td><td>F</td><td>5</td></tr><tr><td>7</td><td>G</td><td>4</td></tr><tr><td>8</td><td>H</td><td>3</td></tr><tr><td>9</td><td>I</td><td>2</td></tr><tr><td>10</td><td>J</td><td>1</td></tr></table>",
 		},
 		{
 			"multiple charts",
@@ -114,9 +115,33 @@ func TestCharts(t *testing.T) {
 				Precision:  1,
 				Percentage: false,
 			}, ".",
-			"\"#\";\"Name\";\"Value\";\"#\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;\"b\"; 4.0;\"b\";4.0\n",
+			"\"#\";\"Name\";\"Value\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;\"b\";4.0;\"b\";4.0\n",
 			"1: a - 12.1\tX - 5.0\n2: b -  4.0\tb - 4.0\n",
-			"<table><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td>b</td><td> 4.0</td><td>b</td><td>4.0</td></tr></table>",
+			"<table><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td>b</td><td>4.0</td><td>b</td><td>4.0</td></tr></table>",
+		},
+		{
+			"multiple charts with range",
+			&Charts{
+				Charts: []charts.Charts{
+					charts.FromMap(
+						map[string][]float64{
+							"a": {12.1},
+							"b": {4},
+						}),
+					charts.FromMap(
+						map[string][]float64{
+							"X": {5},
+							"b": {4},
+						}),
+				},
+				Ranges:     charts.ParseRangesTrusted("1y", rsrc.ParseDay("2012-01-01"), 366),
+				Numbered:   true,
+				Precision:  1,
+				Percentage: false,
+			}, ".",
+			"\"#\";\"Name\";\"Value\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;\"b\";4.0;\"b\";4.0\n",
+			"#  2012-01-01       \t2013-01-01      \n1: a          - 12.1\tX          - 5.0\n2: b          -  4.0\tb          - 4.0\n",
+			"<table><tr><td>#</td><td>2012-01-01</td><td></td><td>2013-01-01</td><td></td></tr><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td>b</td><td>4.0</td><td>b</td><td>4.0</td></tr></table>",
 		},
 		{
 			"percentage with sum total",
