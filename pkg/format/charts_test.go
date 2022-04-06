@@ -144,6 +144,28 @@ func TestCharts(t *testing.T) {
 			"<table><tr><td>#</td><td>2012-01-01</td><td></td><td>2013-01-01</td><td></td></tr><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td>b</td><td>4.0</td><td>b</td><td>4.0</td></tr></table>",
 		},
 		{
+			"multiple charts with different number of lines",
+			&Charts{
+				Charts: []charts.Charts{
+					charts.FromMap(
+						map[string][]float64{
+							"a": {12.1},
+						}),
+					charts.FromMap(
+						map[string][]float64{
+							"X": {5},
+							"b": {4},
+						}),
+				},
+				Numbered:   true,
+				Precision:  1,
+				Percentage: false,
+			}, ".",
+			"\"#\";\"Name\";\"Value\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;;;\"b\";4.0\n",
+			"1: a - 12.1\tX - 5.0\n2:         \tb - 4.0\n",
+			"<table><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td></td><td></td><td>b</td><td>4.0</td></tr></table>",
+		},
+		{
 			"percentage with sum total",
 			&Charts{
 				Charts: []charts.Charts{charts.InOrder([]charts.Pair{

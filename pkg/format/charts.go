@@ -23,6 +23,7 @@ type Charts struct {
 type data struct {
 	titles [][]charts.Title
 	values [][][]float64
+	lines  int
 }
 
 func prep(f *Charts) (*data, error) {
@@ -40,7 +41,15 @@ func prep(f *Charts) (*data, error) {
 		}
 		return nil
 	})
-	return &data{titles: titles, values: values}, err
+
+	maxN := 0
+	for _, lines := range values {
+		if maxN < len(lines) {
+			maxN = len(lines)
+		}
+	}
+
+	return &data{titles: titles, values: values, lines: maxN}, err
 }
 
 func (f *Charts) CSV(w io.Writer, decimal string) error {
@@ -95,17 +104,20 @@ func format(d *data, f *Charts, p chartsWriter) error {
 		m = 100.0
 	}
 
-	// // first charts determines the number of lines
-	n := len(d.titles[0])
-	for l := 0; l < n; l++ {
+	for l := 0; l < d.lines; l++ {
 		p.lineStart()
 		if f.Numbered {
 			p.lineNumber(l)
 		}
 		for c, titles := range d.titles {
-			p.lineTitle(titles[l].String(), l, c)
+			if len(titles) > l {
+				p.lineTitle(titles[l].String(), l, c)
+				p.lineValue(m*d.values[c][l][0], l, c)
+			} else {
+				p.emptyTitle(c)
+				p.emptyValue(c)
+			}
 
-			p.lineValue(m*d.values[c][l][0], l, c)
 			if c+1 < len(f.Charts) {
 				p.columnBreak()
 			}
@@ -127,6 +139,8 @@ type chartsWriter interface {
 	lineNumber(l int)
 	lineTitle(title string, l, c int)
 	lineValue(value float64, l, c int)
+	emptyTitle(c int)
+	emptyValue(c int)
 }
 
 type csvWriter struct {
@@ -186,6 +200,12 @@ func (f *csvWriter) lineValue(value float64, l, c int) {
 		fmt.Fprintf(f.w, f.valuePattern, value)
 	}
 }
+func (f *csvWriter) emptyTitle(c int) {
+	fmt.Fprint(f.w, ";")
+}
+
+func (f *csvWriter) emptyValue(c int) {
+}
 
 type plainWriter struct {
 	c *Charts
@@ -227,7 +247,6 @@ func initPlainWriter(d *data, c *Charts, w io.Writer) chartsWriter {
 		}
 		valuePatterns[i] = numberPattern(m, c.Precision, c.Percentage, true)
 		valueLens[i] = maxValueLen(m, c.Precision, c.Percentage)
-		fmt.Println(valueLens[i])
 	}
 
 	p := &plainWriter{c: c, w: w,
@@ -278,6 +297,14 @@ func (f *plainWriter) lineTitle(title string, l, c int) {
 
 func (f *plainWriter) lineValue(value float64, l, c int) {
 	fmt.Fprintf(f.w, f.valuePatterns[c], value)
+}
+
+func (f *plainWriter) emptyTitle(c int) {
+	fmt.Fprint(f.w, strings.Repeat(" ", f.titleLens[c]+3))
+}
+
+func (f *plainWriter) emptyValue(c int) {
+	fmt.Fprint(f.w, strings.Repeat(" ", f.valueLens[c]))
 }
 
 type htmlWriter struct {
@@ -333,6 +360,14 @@ func (f *htmlWriter) lineTitle(title string, l, c int) {
 
 func (f *htmlWriter) lineValue(value float64, l, c int) {
 	fmt.Fprintf(f.w, f.valuePattern, value)
+}
+
+func (f *htmlWriter) emptyTitle(c int) {
+	fmt.Fprint(f.w, "<td></td>")
+}
+
+func (f *htmlWriter) emptyValue(c int) {
+	fmt.Fprint(f.w, "<td></td>")
 }
 
 ////// helpers
