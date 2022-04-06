@@ -41,6 +41,10 @@ func (f *Message) HTML(w io.Writer) error {
 
 	var html string = strings.ReplaceAll(f.Msg, "\n", "<br/>")
 	_, err := fmt.Fprintf(w, "%v", html)
+	if err != nil {
+		return err
+	}
 
+	_, err = fmt.Fprintf(w, "<br/>")
 	return err
 }
