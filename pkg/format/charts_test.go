@@ -7,12 +7,14 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 )
 
-func TestChartsCSV(t *testing.T) {
+func TestCharts(t *testing.T) {
 	cases := []struct {
 		name      string
 		formatter *Charts
 		decimal   string
-		str       string
+		csv       string
+		plain     string
+		html      string
 	}{
 		{
 			"empty charts",
@@ -24,6 +26,8 @@ func TestChartsCSV(t *testing.T) {
 			},
 			".",
 			"\"Name\";\"Value\"\n",
+			"",
+			"<table></table>",
 		},
 		{
 			"1",
@@ -38,6 +42,8 @@ func TestChartsCSV(t *testing.T) {
 				Percentage: false,
 			}, ",",
 			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";  1,24\n",
+			"ABC - 123.40\nX   -   1.24\n",
+			"<table><tr><td>ABC</td><td>123.40</td></tr><tr><td>X</td><td>  1.24</td></tr></table>",
 		},
 		{
 			"percentage",
@@ -52,6 +58,8 @@ func TestChartsCSV(t *testing.T) {
 				Percentage: true,
 			}, ".",
 			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
+			"a - 75%\nb - 25%\n",
+			"<table><tr><td>a</td><td>75%</td></tr><tr><td>b</td><td>25%</td></tr></table>",
 		},
 		{
 			"comma for decimals",
@@ -66,6 +74,26 @@ func TestChartsCSV(t *testing.T) {
 				Percentage: false,
 			}, ",",
 			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\"; 4,0\n",
+			"1: a - 12.1\n2: b -  4.0\n",
+			"<table><tr><td>1</td><td>a</td><td>12.1</td></tr><tr><td>2</td><td>b</td><td> 4.0</td></tr></table>",
+		},
+		{
+			"numbered",
+			&Charts{
+				Charts: []charts.Charts{charts.FromMap(
+					map[string][]float64{
+						"A": {10}, "B": {9}, "C": {8},
+						"D": {7}, "E": {6}, "F": {5},
+						"G": {4}, "H": {3}, "I": {2},
+						"J": {1},
+					})},
+				Numbered:   true,
+				Precision:  0,
+				Percentage: false,
+			}, ".",
+			"\"#\";\"Name\";\"Value\"\n1;\"A\";10\n2;\"B\"; 9\n3;\"C\"; 8\n4;\"D\"; 7\n5;\"E\"; 6\n6;\"F\"; 5\n7;\"G\"; 4\n8;\"H\"; 3\n9;\"I\"; 2\n10;\"J\"; 1\n",
+			" 1: A - 10\n 2: B -  9\n 3: C -  8\n 4: D -  7\n 5: E -  6\n 6: F -  5\n 7: G -  4\n 8: H -  3\n 9: I -  2\n10: J -  1\n",
+			"<table><tr><td>1</td><td>A</td><td>10</td></tr><tr><td>2</td><td>B</td><td> 9</td></tr><tr><td>3</td><td>C</td><td> 8</td></tr><tr><td>4</td><td>D</td><td> 7</td></tr><tr><td>5</td><td>E</td><td> 6</td></tr><tr><td>6</td><td>F</td><td> 5</td></tr><tr><td>7</td><td>G</td><td> 4</td></tr><tr><td>8</td><td>H</td><td> 3</td></tr><tr><td>9</td><td>I</td><td> 2</td></tr><tr><td>10</td><td>J</td><td> 1</td></tr></table>",
 		},
 		{
 			"multiple charts",
@@ -87,183 +115,68 @@ func TestChartsCSV(t *testing.T) {
 				Percentage: false,
 			}, ".",
 			"\"#\";\"Name\";\"Value\";\"#\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;\"b\"; 4.0;\"b\";4.0\n",
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			buf := new(bytes.Buffer)
-			c.formatter.CSV(buf, c.decimal)
-
-			str := buf.String()
-			if str != c.str {
-				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", str, c.str)
-			}
-		})
-	}
-}
-
-func TestChartsPlain(t *testing.T) {
-	cases := []struct {
-		name       string
-		charts     []charts.Charts
-		numbered   bool
-		precision  int
-		percentage bool
-		str        string
-	}{
-		{
-			"empty charts",
-			[]charts.Charts{charts.FromMap(map[string][]float64{})},
-			false, 0, false,
-			"",
-		},
-		{
-			"simple one-liner",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"ABC": {1, 2, 3},
-				})},
-			false, 0, false,
-			"ABC - 3\n",
-		},
-		{
-			"alignment correct",
-			[]charts.Charts{charts.InOrder([]charts.Pair{
-				{Title: charts.ArtistTitle("Týrs"), Values: []float64{12}},
-				{Title: charts.ArtistTitle("AB"), Values: []float64{3}},
-			})},
-			false, 0, false,
-			"Týrs - 12\nAB   -  3\n",
-		},
-		{
-			"correct precision",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"ABC": {123.4},
-					"X":   {1.238},
-				})},
-			false, 2, false,
-			"ABC - 123.40\nX   -   1.24\n",
-		},
-		{
-			"numbered",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"A": {10}, "B": {9}, "C": {8},
-					"D": {7}, "E": {6}, "F": {5},
-					"G": {4}, "H": {3}, "I": {2},
-					"J": {1},
-				})},
-			true, 0, false,
-			" 1: A - 10\n 2: B -  9\n 3: C -  8\n 4: D -  7\n 5: E -  6\n 6: F -  5\n 7: G -  4\n 8: H -  3\n 9: I -  2\n10: J -  1\n",
+			"1: a - 12.1\tX - 5.0\n2: b -  4.0\tb - 4.0\n",
+			"<table><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td>b</td><td> 4.0</td><td>b</td><td>4.0</td></tr></table>",
 		},
 		{
 			"percentage with sum total",
-			[]charts.Charts{charts.InOrder([]charts.Pair{
-				{Title: charts.ArtistTitle("Týrs"), Values: []float64{.6}},
-				{Title: charts.ArtistTitle("AB"), Values: []float64{.4}},
-			})},
-			false, 1, true,
+			&Charts{
+				Charts: []charts.Charts{charts.InOrder([]charts.Pair{
+					{Title: charts.ArtistTitle("Týrs"), Values: []float64{.6}},
+					{Title: charts.ArtistTitle("AB"), Values: []float64{.4}},
+				})},
+				Numbered:   false,
+				Precision:  1,
+				Percentage: true}, ",",
+			"\"Name\";\"Value\"\n\"Týrs\";60,0%\n\"AB\";40,0%\n",
 			"Týrs - 60.0%\nAB   - 40.0%\n",
+			"<table><tr><td>Týrs</td><td>60.0%</td></tr><tr><td>AB</td><td>40.0%</td></tr></table>",
 		},
 		{
 			"zero percentage",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"AB": {0},
-				})},
-			true, 0, true,
-			"1: AB - 0%\n",
-		},
-		{
-			"2 charts numbered",
-			[]charts.Charts{charts.FromMap(
-				map[string][]float64{
-					"A": {10}, "B": {9}, "C": {8},
-					"D": {7}, "E": {6}, "F": {5},
-					"G": {4}, "H": {3}, "I": {2},
-					"J": {1},
-				}),
-				charts.FromMap(
+			&Charts{
+				Charts: []charts.Charts{charts.FromMap(
 					map[string][]float64{
-						"A": {10}, "B": {9}, "C": {8},
-						"D": {7}, "E": {6}, "F": {5},
-						"G": {4}, "H": {3}, "I": {2},
-						"J": {1},
+						"AB": {0},
 					})},
-			true, 0, false,
-			" 1: A - 10\tA - 10\n 2: B -  9\tB -  9\n 3: C -  8\tC -  8\n 4: D -  7\tD -  7\n 5: E -  6\tE -  6\n 6: F -  5\tF -  5\n 7: G -  4\tG -  4\n 8: H -  3\tH -  3\n 9: I -  2\tI -  2\n10: J -  1\tJ -  1\n",
+				Numbered:   false,
+				Precision:  0,
+				Percentage: true,
+			}, ".",
+			"\"Name\";\"Value\"\n\"AB\";0%\n",
+			"AB - 0%\n",
+			"<table><tr><td>AB</td><td>0%</td></tr></table>",
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			buf := new(bytes.Buffer)
-			formatter := &Charts{
-				Charts:     c.charts,
-				Numbered:   c.numbered,
-				Precision:  c.precision,
-				Percentage: c.percentage,
+			{
+				buf := new(bytes.Buffer)
+				c.formatter.CSV(buf, c.decimal)
+
+				str := buf.String()
+				if str != c.csv {
+					t.Errorf("false CSV formatting:\nhas:\n%v\nwant:\n%v", str, c.csv)
+				}
 			}
-			formatter.Plain(buf)
+			{
+				buf := new(bytes.Buffer)
+				c.formatter.Plain(buf)
 
-			str := buf.String()
-			if str != c.str {
-				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", str, c.str)
+				str := buf.String()
+				if str != c.plain {
+					t.Errorf("false Plain formatting:\nhas:\n%v\nwant:\n%v", str, c.plain)
+				}
 			}
-		})
-	}
-}
+			{
+				buf := new(bytes.Buffer)
+				c.formatter.HTML(buf)
 
-func TestChartsHTML(t *testing.T) {
-	cases := []struct {
-		name       string
-		charts     []charts.Charts
-		n          int
-		numbered   bool
-		precision  int
-		percentage bool
-		str        string
-	}{
-		{
-			"1 charts",
-			[]charts.Charts{charts.InOrder([]charts.Pair{
-				{Title: charts.ArtistTitle("Týrs"), Values: []float64{12}},
-				{Title: charts.ArtistTitle("AB"), Values: []float64{3}},
-			})},
-			2, false, 0, false,
-			"<table><tr><td>Týrs</td><td>12</td></tr><tr><td>AB</td><td> 3</td></tr></table>", // TODO: numbers are aligned by length by don't neet to be
-		},
-		{
-			"2 charts",
-			[]charts.Charts{charts.InOrder([]charts.Pair{
-				{Title: charts.ArtistTitle("Týrs"), Values: []float64{12}},
-				{Title: charts.ArtistTitle("AB"), Values: []float64{3}},
-			}),
-				charts.InOrder([]charts.Pair{
-					{Title: charts.ArtistTitle("X"), Values: []float64{12}},
-					{Title: charts.ArtistTitle("AB"), Values: []float64{3}},
-				})},
-			2, true, 0, false,
-			"<table><tr><td>1</td><td>Týrs</td><td>12</td><td>X</td><td>12</td></tr><tr><td>2</td><td>AB</td><td> 3</td><td>AB</td><td> 3</td></tr></table>",
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			buf := new(bytes.Buffer)
-			formatter := &Charts{
-				Charts:     c.charts,
-				Numbered:   c.numbered,
-				Precision:  c.precision,
-				Percentage: c.percentage,
-			}
-			formatter.HTML(buf)
-
-			str := buf.String()
-			if str != c.str {
-				t.Errorf("false formatting:\nhas:\n%v\nwant:\n%v", str, c.str)
+				str := buf.String()
+				if str != c.html {
+					t.Errorf("false HTML formatting:\nhas:\n%v\nwant:\n%v", str, c.html)
+				}
 			}
 		})
 	}
