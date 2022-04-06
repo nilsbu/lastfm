@@ -78,7 +78,7 @@ func TestMessageHTML(t *testing.T) {
 		},
 		{
 			"some text\nnew line",
-			"some text<br/>new line",
+			"some text<br/>new line<br/>",
 		},
 	}
 
