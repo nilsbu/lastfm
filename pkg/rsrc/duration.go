@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Duration is the differene between two dates. It is measured in days.
 type Duration interface {
 	fmt.Stringer
 	Days() int
@@ -14,10 +15,12 @@ type duration struct {
 	a, b time.Time
 }
 
+// Between returns the Duration between two Days.
 func Between(a, b Day) Duration {
 	return &duration{a: a.Time(), b: b.Time()}
 }
 
+// Days returns the number of days in the Duration.
 func (d *duration) Days() int {
 	return int(d.b.Sub(d.a).Hours() / 24)
 }
