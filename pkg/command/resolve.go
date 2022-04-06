@@ -51,12 +51,12 @@ var cmdRoot = node{
 var cmdLastfm = node{
 	cmd: exeHelp,
 	nodes: map[string]node{
-		"help":    cmdHelp,
-		"print":   cmdPrint,
-		"session": cmdSession,
-		"table":   cmdTable,
-		// "timeline": {cmd: exeTimeline},
-		"update": cmdUpdate,
+		"help":     cmdHelp,
+		"print":    cmdPrint,
+		"session":  cmdSession,
+		"table":    cmdTable,
+		"timeline": {cmd: exeTimeline},
+		"update":   cmdUpdate,
 	},
 }
 
@@ -350,20 +350,16 @@ var exePrintFades = &cmd{
 	session: true,
 }
 
-// var exeTimeline = &cmd{
-// 	descr: "timeline of events",
-// 	get: func(params []interface{}, opts map[string]interface{}) command {
-// 		return printTimeline{
-// 			from:   opts["from"].(time.Time),
-// 			before: opts["before"].(time.Time),
-// 		}
-// 	},
-// 	options: options{
-// 		"from":   optDate,
-// 		"before": optDate,
-// 	},
-// 	session: true,
-// }
+var exeTimeline = &cmd{
+	descr: "timeline of events",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printTimeline{
+			n: params[0].(int),
+		}
+	},
+	params:  params{{"n", "top n artists will be evaluated each day", "int"}},
+	session: true,
+}
 
 var exeTableFade = &cmd{
 	descr: "tables a user's top artists in fading charts",
