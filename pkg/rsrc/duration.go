@@ -23,7 +23,7 @@ func (d *duration) Days() int {
 }
 
 func (d *duration) String() string {
-	inverted, years, months, days, _, _, _, _ := Elapsed(d.a, d.b)
+	inverted, years, months, days := elapsed(d.a, d.b)
 
 	if years != 0 {
 		if inverted {
@@ -47,11 +47,13 @@ func (d *duration) String() string {
 	return "0d"
 }
 
-func DaysIn(year int, month time.Month) int {
+func daysIn(year int, month time.Month) int {
 	return time.Date(year, month, 0, 0, 0, 0, 0, time.UTC).Day()
 }
 
-func Elapsed(from, to time.Time) (inverted bool, years, months, days, hours, minutes, seconds, nanoseconds int) {
+func elapsed(from, to time.Time) (inverted bool, years, months, days int) {
+	var hours, minutes, seconds, nanoseconds int
+
 	if from.Location() != to.Location() {
 		to = to.In(to.Location())
 	}
@@ -96,11 +98,11 @@ func Elapsed(from, to time.Time) (inverted bool, years, months, days, hours, min
 		days--
 	}
 	if days < 0 {
-		days += DaysIn(y2, M2-1)
+		days += daysIn(y2, M2-1)
 		months--
 	}
 	if days < 0 {
-		days += DaysIn(y2, M2)
+		days += daysIn(y2, M2)
 		months--
 	}
 	if months < 0 {
