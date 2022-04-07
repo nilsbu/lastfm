@@ -20,7 +20,6 @@ type Partition interface {
 }
 
 type biMapPartition struct {
-	titlePartition  map[string]Title
 	partitionTitles map[string][]Title
 	partitions      []Title
 	key             func(title Title) string
@@ -43,19 +42,10 @@ func (p biMapPartition) Partitions() ([]Title, error) {
 func KeyPartition(tpPairs [][2]Title) Partition {
 	f := func(t Title) string { return t.Key() }
 	return biMapPartition{
-		titlePartition:  buildTPMap(tpPairs, f),
 		partitionTitles: buildPTMap(tpPairs, f),
 		partitions:      buildPartitions(tpPairs, f),
 		key:             f,
 	}
-}
-
-func buildTPMap(tpPairs [][2]Title, key func(Title) string) map[string]Title {
-	tpMap := make(map[string]Title)
-	for _, tp := range tpPairs {
-		tpMap[key(tp[0])] = tp[1]
-	}
-	return tpMap
 }
 
 func buildPTMap(tpPairs [][2]Title, key func(Title) string) map[string][]Title {
@@ -136,7 +126,6 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) (Partition, error
 	last := registered.AddDate(0, 0, sums.Len()).Time().Year()
 
 	partitions := make([]Title, last-first+1)
-	titlePartition := make(map[string]Title)
 	partitionTitles := make(map[string][]Title)
 	for i := first; i <= last; i++ {
 		yString := fmt.Sprintf("%v", i)
@@ -200,14 +189,12 @@ func YearPartition(gaussian, sums Charts, registered rsrc.Day) (Partition, error
 			continue
 		}
 		title := titles[i]
-		titlePartition[title.Key()] = t
 		partitionTitles[t.Key()] = append(
 			partitionTitles[t.Key()], title)
 
 	}
 
 	return biMapPartition{
-		titlePartition:  titlePartition,
 		partitionTitles: partitionTitles,
 		partitions:      partitions,
 		key:             func(t Title) string { return t.Key() },
