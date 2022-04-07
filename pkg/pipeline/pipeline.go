@@ -105,6 +105,10 @@ func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
 }
 
 func (w *pipeline) runSteps(steps []string) (charts.Charts, error) {
+	if _, err := w.vars.Exec(); err != nil {
+		return nil, err
+	}
+
 	var parent charts.Charts
 	var registered rsrc.Day
 	var err error
@@ -244,7 +248,7 @@ func (w *pipeline) step(step string, parent charts.Charts, registered rsrc.Day) 
 
 	case "day":
 		col := rsrc.Between(registered, rsrc.ParseDay(split[1])).Days()
-		return charts.Column(parent, col), nil, nil
+		return charts.Column(parent, col), rsrc.ParseDay(split[1]), nil
 
 	case "period":
 		rnge, err := charts.ParseRange(split[1], registered, parent.Len())
@@ -289,6 +293,15 @@ func (w *pipeline) step(step string, parent charts.Charts, registered rsrc.Day) 
 	case "column":
 		i, _ := strconv.Atoi(split[1])
 		return charts.Column(parent, i), nil, nil
+
+	case "offset":
+		gaussian, _ := w.runSteps(w.bookmarks["gaussian"])
+		entries, err := charts.EntryDates(gaussian, parent)
+		if err != nil {
+			return nil, nil, err
+		}
+		return charts.Offset(parent, entries), nil, nil
+
 	default:
 		return nil, nil, errors.New("step does not exist")
 	}

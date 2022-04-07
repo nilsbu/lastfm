@@ -256,6 +256,38 @@ func (cmd printFadeMax) Execute(
 	return d.Display(f)
 }
 
+type printAfter struct {
+	printCharts
+	n int
+}
+
+func (cmd printAfter) Execute(
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
+	steps, err := cmd.getSteps()
+	if err != nil {
+		return err
+	}
+
+	steps = setStep(steps, "sum", "cache", "offset")
+	steps = append(steps, fmt.Sprintf("column,%d", cmd.n), fmt.Sprintf("top,%v", cmd.printCharts.n))
+
+	cha, err := pl.Execute(steps)
+	if err != nil {
+		return err
+	}
+
+	prec := 2
+
+	f := &format.Charts{
+		Charts:     []charts.Charts{cha},
+		Numbered:   true,
+		Precision:  prec,
+		Percentage: cmd.percentage,
+	}
+
+	return d.Display(f)
+}
+
 type printTags struct {
 	artist string
 }
@@ -311,8 +343,6 @@ func (cmd printPeriods) Execute(
 	steps = append(steps, fmt.Sprintf("interval,%v,%v", b, e))
 
 	ranges, _ := charts.ParseRanges(cmd.period, interval.Begin, rsrc.Between(b, e).Days())
-
-	// ranges, _ := charts.ParseRanges(cmd.period, pl.Registered(), ll)
 
 	steps = append(steps, fmt.Sprintf("periods,%v", cmd.period), "cache")
 

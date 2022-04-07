@@ -72,6 +72,7 @@ var cmdPrint = node{
 		"fademax":  node{cmd: exePrintFadeMax},
 		"tags":     node{cmd: exePrintTags},
 		"total":    node{cmd: exePrintTotal},
+		"after":    node{cmd: exePrintAfter},
 		"periods":  node{cmd: exePrintPeriods},
 		"fades":    node{cmd: exePrintFades},
 		// TODO Add command for raw execution
@@ -271,6 +272,37 @@ var exePrintTotal = &cmd{
 			date: opts["date"].(time.Time),
 		}
 	},
+	options: options{
+		"keys":       optChartsKeys,
+		"by":         optChartType,
+		"name":       optGenericName,
+		"n":          optArtistCount,
+		"%":          optChartsPercentage,
+		"normalized": optChartsNormalized,
+		"duration":   optChartsDuration,
+		"entry":      optChartsEntry,
+		"date":       optDate,
+	},
+	session: true,
+}
+
+var exePrintAfter = &cmd{
+	descr: "prints the charts n days after they enter the charts",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printAfter{printCharts: printCharts{
+			keys:       opts["keys"].(string),
+			by:         opts["by"].(string),
+			name:       opts["name"].(string),
+			n:          opts["n"].(int),
+			percentage: opts["%"].(bool),
+			normalized: opts["normalized"].(bool),
+			duration:   opts["duration"].(bool),
+			entry:      opts["entry"].(float64),
+		},
+			n: params[0].(int),
+		}
+	},
+	params: params{&param{"n", "", "int"}},
 	options: options{
 		"keys":       optChartsKeys,
 		"by":         optChartType,

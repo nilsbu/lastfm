@@ -176,6 +176,7 @@ func TestCharts(t *testing.T) {
 				"A": {1, 1, 1, 2},
 				"B": {2, 0, 1, 2},
 				"C": {0, 1, 1, 2},
+				"D": {0, 0, 0, 1},
 			}), map[string]int{"A": 0, "B": 2, "C": 1}),
 			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")},
 			[][]float64{
