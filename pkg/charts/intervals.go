@@ -111,6 +111,14 @@ func Crop(parent Charts, begin, end int) Charts {
 	}
 }
 
+func FirstColumn(parent Charts) Charts {
+	return interval{
+		chartsNode: chartsNode{parent: parent},
+		begin:      0,
+		end:        1,
+	}
+}
+
 func Column(parent Charts, col int) Charts {
 	if col < 0 {
 		col += parent.Len()

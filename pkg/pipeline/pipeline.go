@@ -267,7 +267,7 @@ func (w *pipeline) step(step string, parent charts.Charts, registered rsrc.Day) 
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "invalid range")
 		} else {
-			return charts.Intervals(parent, rnge, charts.Id), nil, nil
+			return charts.Intervals(parent, rnge, charts.FirstColumn), nil, nil
 		}
 
 	case "interval":
