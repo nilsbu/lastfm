@@ -164,7 +164,6 @@ func Gaussian(
 }
 
 // Multiply multiplies the charts by a factor
-// TODO test
 func Multiply(parent Charts, s float64) Charts {
 	return &lineMapCharts{
 		chartsNode: chartsNode{parent: parent},

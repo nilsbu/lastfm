@@ -158,6 +158,30 @@ func TestCharts(t *testing.T) {
 				{2, 1, 8}, {1, 1, 0}, {1, 9, 2},
 			},
 		},
+		{
+			"Multiply",
+			charts.Multiply(charts.FromMap(map[string][]float64{
+				"A": {1, 1},
+				"B": {2, 0},
+				"C": {0, 1},
+			}), 4),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")},
+			[][]float64{
+				{4, 4}, {8, 0}, {0, 4},
+			},
+		},
+		{
+			"Offset",
+			charts.Offset(charts.FromMap(map[string][]float64{
+				"A": {1, 1, 1, 2},
+				"B": {2, 0, 1, 2},
+				"C": {0, 1, 1, 2},
+			}), map[string]int{"A": 0, "B": 2, "C": 1}),
+			[]charts.Title{charts.KeyTitle("A"), charts.KeyTitle("B"), charts.KeyTitle("C")},
+			[][]float64{
+				{1, 1, 1, 2}, {1, 2, 2, 2}, {1, 1, 2, 2},
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if !areTitlesSame(c.titles, c.charts.Titles()) {
