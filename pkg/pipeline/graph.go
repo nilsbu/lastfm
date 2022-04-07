@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 type graph struct {
@@ -14,6 +15,7 @@ type graph struct {
 type node struct {
 	children   map[string]*node
 	charts     charts.Charts
+	registered rsrc.Day
 	lastAccess int
 }
 
@@ -25,20 +27,20 @@ func newGraph(limit int) *graph {
 	}
 }
 
-func (c *graph) get(steps []string) charts.Charts {
+func (c *graph) get(steps []string) (charts.Charts, rsrc.Day) {
 	c.counter++
 	n := c.find(steps, c.counter)
 
 	c.prune()
 
 	if n != nil {
-		return n.charts
+		return n.charts, n.registered
 	} else {
-		return nil
+		return nil, nil
 	}
 }
 
-func (c *graph) set(steps []string, charts charts.Charts) charts.Charts {
+func (c *graph) set(steps []string, charts charts.Charts, registered rsrc.Day) charts.Charts {
 	n := c.find(steps[:len(steps)-1], -1)
 	if n != nil {
 		for i := 0; i < len(c.caches); {
@@ -51,6 +53,7 @@ func (c *graph) set(steps []string, charts charts.Charts) charts.Charts {
 		n.children[steps[len(steps)-1]] = &node{
 			map[string]*node{},
 			charts,
+			registered,
 			0,
 		}
 

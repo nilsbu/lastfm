@@ -315,8 +315,8 @@ var exePrintPeriods = &cmd{
 		"normalized": optChartsNormalized,
 		"duration":   optChartsDuration,
 		"entry":      optChartsEntry,
-		"begin":      optDate,
-		"end":        optDate,
+		"begin":      optBegin,
+		"end":        optEnd,
 	},
 	session: true,
 }
@@ -352,8 +352,8 @@ var exePrintFades = &cmd{
 		"normalized": optChartsNormalized,
 		"duration":   optChartsDuration,
 		"entry":      optChartsEntry,
-		"begin":      optDate,
-		"end":        optDate,
+		"begin":      optBegin,
+		"end":        optEnd,
 	},
 	session: true,
 }
@@ -584,6 +584,20 @@ var optDate = &option{
 		"a date in the format YYYY-MM-DD",
 		"time"},
 	"",
+}
+
+var optBegin = &option{
+	param{"date",
+		"a date in the format YYYY-MM-DD",
+		"time"},
+	"0001-01-01",
+}
+
+var optEnd = &option{
+	param{"date",
+		"a date in the format YYYY-MM-DD",
+		"time"},
+	"9999-12-31",
 }
 
 var optStep = &option{

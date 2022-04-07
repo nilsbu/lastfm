@@ -106,21 +106,28 @@ func (w *pipeline) Execute(steps []string) (charts.Charts, error) {
 
 func (w *pipeline) runSteps(steps []string) (charts.Charts, error) {
 	var parent charts.Charts
+	var registered rsrc.Day
 	var err error
 	for i, step := range steps {
-		p := w.graph.get(steps[:i+1])
+		p, reg := w.graph.get(steps[:i+1])
 		if p != nil {
 			parent = p
+			registered = reg
 		} else {
 			if i == 0 {
 				parent, err = w.root(steps[0])
+				registered = w.Registered()
 			} else {
-				parent, err = w.step(step, parent)
+				var day rsrc.Day
+				parent, day, err = w.step(step, parent, registered)
+				if day != nil {
+					registered = day
+				}
 			}
 			if err != nil {
 				return nil, errors.Wrapf(err, "during step '%v'", step)
 			}
-			w.graph.set(steps[:i+1], parent)
+			w.graph.set(steps[:i+1], parent, registered)
 		}
 	}
 
@@ -182,115 +189,108 @@ func (w *pipeline) root(s string) (charts.Charts, error) {
 	default:
 		c = charts.LoadArtists(w.session.User, w.store)
 	}
-	return w.graph.set([]string{s}, c), nil
+	return w.graph.set([]string{s}, c, w.Registered()), nil
 }
 
-func (w *pipeline) step(step string, parent charts.Charts) (charts.Charts, error) {
-	// TODO w.vars isn't always needed here
-	vv, err := w.vars.Exec()
-	if err != nil {
-		return nil, err
-	}
-	v := vv.(*vars)
-
+func (w *pipeline) step(step string, parent charts.Charts, registered rsrc.Day) (charts.Charts, rsrc.Day, error) {
 	split := strings.Split(step, ",")
 	switch split[0] {
 	case "id":
-		return charts.Id(parent), nil
+		return charts.Id(parent), nil, nil
 
 	case "cache":
-		return charts.Cache(parent), nil
+		return charts.Cache(parent), nil, nil
 
 	case "sum":
-		return charts.Sum(parent), nil
+		return charts.Sum(parent), nil, nil
 
 	case "max":
-		return charts.Max(parent), nil
+		return charts.Max(parent), nil, nil
 
 	case "normalize":
-		return charts.Normalize(parent), nil
+		return charts.Normalize(parent), nil, nil
 
 	case "gaussian":
-		return charts.Gaussian(parent, 7, 2*7+1, true, false), nil
+		return charts.Gaussian(parent, 7, 2*7+1, true, false), nil, nil
 	case "fade":
 		hl, _ := strconv.ParseFloat(split[1], 64)
-		return charts.Fade(parent, hl), nil
+		return charts.Fade(parent, hl), nil, nil
 
 	case "multiply":
 		s, _ := strconv.ParseFloat(split[1], 64)
-		return charts.Multiply(parent, s), nil
+		return charts.Multiply(parent, s), nil, nil
 
 	case "group":
 		gaussian, _ := w.runSteps(w.bookmarks["gaussian"])
 		partition, err := w.getPartition(split[1], gaussian, parent)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		} else {
-			return charts.Group(parent, partition), nil
+			return charts.Group(parent, partition), nil, nil
 		}
 
 	case "split":
 		gaussian, _ := w.runSteps(w.bookmarks["gaussian"])
 		partition, err := w.getPartition(split[1], gaussian, parent)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		} else {
 			if !partitionContains(partition, split[2]) {
-				return nil, fmt.Errorf("name '%v' is no partition", split[2])
+				return nil, nil, fmt.Errorf("name '%v' is no partition", split[2])
 			} else {
-				return charts.Subset(parent, partition, charts.KeyTitle(split[2])), nil
+				return charts.Subset(parent, partition, charts.KeyTitle(split[2])), nil, nil
 			}
 		}
 
 	case "day":
-		col := rsrc.Between(v.user.Registered, rsrc.ParseDay(split[1])).Days()
-		return charts.Column(parent, col), nil
+		col := rsrc.Between(registered, rsrc.ParseDay(split[1])).Days()
+		return charts.Column(parent, col), nil, nil
 
 	case "period":
-		rnge, err := charts.ParseRange(split[1], v.user.Registered, parent.Len())
+		rnge, err := charts.ParseRange(split[1], registered, parent.Len())
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid range")
+			return nil, nil, errors.Wrap(err, "invalid range")
 		} else {
-			return charts.Interval(parent, rnge), nil
+			return charts.Interval(parent, rnge), nil, nil
 		}
 
 	case "periods":
-		rnge, err := charts.ParseRanges(split[1], v.user.Registered, parent.Len())
+		rnge, err := charts.ParseRanges(split[1], registered, parent.Len())
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid range")
+			return nil, nil, errors.Wrap(err, "invalid range")
 		} else {
-			return charts.Intervals(parent, rnge, charts.Sum), nil
+			return charts.Intervals(parent, rnge, charts.Sum), nil, nil
 		}
 
 	case "step":
-		rnge, err := charts.ParseRanges(split[1], v.user.Registered, parent.Len())
+		rnge, err := charts.ParseRanges(split[1], registered, parent.Len())
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid range")
+			return nil, nil, errors.Wrap(err, "invalid range")
 		} else {
-			return charts.Intervals(parent, rnge, charts.Id), nil
+			return charts.Intervals(parent, rnge, charts.Id), nil, nil
 		}
 
 	case "interval":
 		rnge, err := charts.CroppedRange(
 			rsrc.ParseDay(split[1]),
 			rsrc.ParseDay(split[2]),
-			v.user.Registered, parent.Len())
+			registered, parent.Len())
 		if err != nil {
-			return nil, errors.Wrap(err, "invalid range")
+			return nil, nil, errors.Wrap(err, "invalid range")
 		} else {
-			return charts.Interval(parent, rnge), nil
+			return charts.Interval(parent, rnge), rnge.Begin, nil
 		}
 
 	case "top":
 		n, _ := strconv.Atoi(split[1])
 		titles, _ := charts.Top(parent, n)
-		return charts.Only(parent, titles), nil
+		return charts.Only(parent, titles), nil, nil
 
 	case "column":
 		i, _ := strconv.Atoi(split[1])
-		return charts.Column(parent, i), nil
+		return charts.Column(parent, i), nil, nil
 	default:
-		return nil, errors.New("step does not exist")
+		return nil, nil, errors.New("step does not exist")
 	}
 }
 

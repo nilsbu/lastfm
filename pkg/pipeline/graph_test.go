@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
 
 func TestCache(t *testing.T) {
@@ -15,9 +16,10 @@ func TestCache(t *testing.T) {
 	}
 
 	type setget struct {
-		method string
-		steps  []string
-		charts charts.Charts
+		method     string
+		steps      []string
+		charts     charts.Charts
+		registered rsrc.Day
 	}
 
 	for _, c := range []struct {
@@ -37,6 +39,7 @@ func TestCache(t *testing.T) {
 				"get",
 				[]string{"sum"},
 				nil,
+				nil,
 			}},
 		},
 		{
@@ -46,6 +49,7 @@ func TestCache(t *testing.T) {
 				"set",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}},
 		},
 		{
@@ -55,10 +59,12 @@ func TestCache(t *testing.T) {
 				"set",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}},
 		},
 		{
@@ -68,14 +74,17 @@ func TestCache(t *testing.T) {
 				"set",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"sum", "id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum", "id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}},
 		},
 		{
@@ -85,18 +94,22 @@ func TestCache(t *testing.T) {
 				"set",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}},
 		},
 		{
@@ -106,29 +119,36 @@ func TestCache(t *testing.T) {
 				"set",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id", "cache"},
 				cs[2],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"id", "cache"},
 				cs[2],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
+				nil,
 				nil,
 			}},
 		},
@@ -139,30 +159,37 @@ func TestCache(t *testing.T) {
 				"set",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"id"},
 				cs[1],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
 				cs[0],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id", "cache"},
 				cs[2],
+				rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"id", "cache"},
 				cs[2],
+				rsrc.ParseDay("2000-01-01"),
 			}},
 		},
 		{
@@ -171,27 +198,27 @@ func TestCache(t *testing.T) {
 			[]setget{{
 				"set",
 				[]string{"sum"},
-				cs[0],
+				cs[0], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"sum", "cache"},
-				cs[3],
+				cs[3], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id"},
-				cs[1],
+				cs[1], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id", "cache"},
-				cs[2],
+				cs[2], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
-				cs[0],
+				cs[0], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum", "cache"},
-				nil,
+				nil, nil,
 			}},
 		},
 		{
@@ -200,15 +227,15 @@ func TestCache(t *testing.T) {
 			[]setget{{
 				"set",
 				[]string{"sum"},
-				cs[0],
+				cs[0], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"sum"},
-				cs[1],
+				cs[1], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum"},
-				cs[1],
+				cs[1], rsrc.ParseDay("2000-01-01"),
 			}},
 		},
 		{
@@ -217,27 +244,44 @@ func TestCache(t *testing.T) {
 			[]setget{{
 				"set",
 				[]string{"sum"},
-				cs[0],
+				cs[0], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"sum", "cache"},
-				cs[3],
+				cs[3], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"sum"},
-				cs[0],
+				cs[0], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id"},
-				cs[1],
+				cs[1], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"set",
 				[]string{"id", "cache"},
-				cs[2],
+				cs[2], rsrc.ParseDay("2000-01-01"),
 			}, {
 				"get",
 				[]string{"sum", "cache"},
-				nil,
+				nil, nil,
+			}},
+		},
+		{
+			"registered changes",
+			3,
+			[]setget{{
+				"set",
+				[]string{"sum"},
+				cs[0], rsrc.ParseDay("2000-01-01"),
+			}, {
+				"set",
+				[]string{"sum", "sum"},
+				cs[1], rsrc.ParseDay("2001-01-01"),
+			}, {
+				"get",
+				[]string{"sum", "sum"},
+				cs[1], rsrc.ParseDay("2001-01-01"),
 			}},
 		},
 	} {
@@ -246,12 +290,13 @@ func TestCache(t *testing.T) {
 
 			for i, cmd := range c.cmds {
 				var result charts.Charts
+				registered := cmd.registered
 				switch cmd.method {
 				case "get":
-					result = cache.get(cmd.steps)
+					result, registered = cache.get(cmd.steps)
 
 				case "set":
-					result = cache.set(cmd.steps, cmd.charts)
+					result = cache.set(cmd.steps, cmd.charts, cmd.registered)
 
 				default:
 					t.Fatalf("method '%v' not supported", cmd.method)
@@ -268,6 +313,13 @@ func TestCache(t *testing.T) {
 						t.Fatalf("result of step %v (%v %v) is wrong but not nil",
 							i, cmd.method, cmd.steps)
 					}
+				}
+				if cmd.registered != nil && registered == nil {
+					t.Fatal("registered must not be nil")
+				} else if cmd.registered == nil && registered != nil {
+					t.Fatal("registered must be nil but is", registered)
+				} else if cmd.registered != nil && rsrc.Between(cmd.registered, registered).Days() != 0 {
+					t.Fatalf("expected registered %v but was %v", cmd.registered, registered)
 				}
 			}
 		})
