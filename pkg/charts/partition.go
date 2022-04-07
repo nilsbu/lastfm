@@ -3,6 +3,7 @@ package charts
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/nilsbu/async"
@@ -217,4 +218,44 @@ func getYearIdxs(registered rsrc.Day, len int) (idxs []int) {
 	}
 	idxs = append(idxs, len-1)
 	return
+}
+
+// TageWeightPartition partitions artists by a select number of tags. Tags must have a certain reach and must not be blacklisted.
+func TagWeightPartition(artists []Title, tags [][]info.Tag, blacklist map[string]interface{}) Partition {
+	partitionsMap := make(map[string]interface{})
+	partitionTitles := make(map[string][]Title)
+	for i, artist := range artists {
+		var partition string
+		if tag, ok := getTagWeightPartition(artist, tags[i], blacklist); ok {
+			partition = strings.ToLower(tag.Name)
+		} else {
+			partition = "-"
+		}
+
+		partitionTitles[partition] = append(partitionTitles[partition], artist)
+		partitionsMap[partition] = nil
+	}
+
+	partitions := make([]Title, len(partitionsMap))
+	i := 0
+	for partition := range partitionsMap {
+		partitions[i] = KeyTitle(partition)
+		i++
+	}
+
+	return biMapPartition{
+		partitionTitles: partitionTitles,
+		partitions:      partitions,
+		key:             func(title Title) string { return title.Key() },
+	}
+}
+
+func getTagWeightPartition(artist Title, tags []info.Tag, blacklist map[string]interface{}) (info.Tag, bool) {
+	for _, tag := range tags {
+		_, blacklisted := blacklist[tag.Name]
+		if !blacklisted && tag.Reach >= 25000 {
+			return tag, true
+		}
+	}
+	return info.Tag{}, false
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/info"
 	"github.com/nilsbu/lastfm/pkg/io"
+	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/pkg/errors"
@@ -328,6 +329,20 @@ func (w *pipeline) getPartition(
 	case "country":
 		corrections, _ := unpack.LoadCountryCorrections(w.session.User, w.store)
 		return charts.TagPartition(parent, config.Countries, corrections, w.store), nil
+	case "tags":
+		titles := parent.Titles()
+		artists := make([]string, len(titles))
+		for i := range titles {
+			artists[i] = titles[i].Artist()
+		}
+
+		at, _ := organize.LoadArtistTags(artists, w.store)
+		tags := make([][]info.Tag, len(titles))
+		for i, title := range titles {
+			tags[i] = at[title.String()]
+		}
+
+		return charts.TagWeightPartition(titles, tags, config.Blacklist()), nil
 	default:
 		return nil, fmt.Errorf("chart type '%v' not supported", step)
 	}

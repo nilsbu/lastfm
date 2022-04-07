@@ -15,9 +15,8 @@ type partitionTitles struct {
 
 func TestPartiton(t *testing.T) {
 	for _, c := range []struct {
-		name      string
-		partition charts.Partition
-		// titlePartitions []titlePartition
+		name            string
+		partition       charts.Partition
 		partitionTitles []partitionTitles
 		partitions      []charts.Title
 	}{
@@ -150,6 +149,29 @@ func TestPartiton(t *testing.T) {
 				{charts.KeyTitle("2020"), []charts.Title{charts.KeyTitle("last"), charts.KeyTitle("last2")}},
 			},
 			[]charts.Title{charts.KeyTitle("2019"), charts.KeyTitle("2020")},
+		},
+		{
+			"tag weight partition",
+			charts.TagWeightPartition(
+				[]charts.Title{
+					charts.ArtistTitle("first"),
+					charts.ArtistTitle("second"),
+					charts.ArtistTitle("firstAgain"),
+					charts.ArtistTitle("none"),
+				},
+				[][]info.Tag{
+					{info.Tag{Name: "1st", Reach: 100000}, info.Tag{Name: "2nd", Reach: 100000}},
+					{info.Tag{Name: "1stnope", Reach: 100}, info.Tag{Name: "2nd", Reach: 100000}},
+					{info.Tag{Name: "1stnope", Reach: 100}, info.Tag{Name: "1st", Reach: 100000}, info.Tag{Name: "2nd", Reach: 100000}},
+					{info.Tag{Name: "1stnope", Reach: 100}, info.Tag{Name: "blacklisted", Reach: 100000}},
+				},
+				map[string]interface{}{"blacklisted": nil}),
+			[]partitionTitles{
+				{charts.KeyTitle("1st"), []charts.Title{charts.ArtistTitle("first"), charts.ArtistTitle("firstAgain")}},
+				{charts.KeyTitle("2nd"), []charts.Title{charts.ArtistTitle("second")}},
+				{charts.KeyTitle("-"), []charts.Title{charts.ArtistTitle("none")}},
+			},
+			[]charts.Title{charts.KeyTitle("1st"), charts.KeyTitle("2nd"), charts.KeyTitle("-")},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
