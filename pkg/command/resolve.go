@@ -298,6 +298,8 @@ var exePrintPeriods = &cmd{
 			entry:      opts["entry"].(float64),
 		},
 			period: params[0].(string),
+			begin:  opts["begin"].(time.Time),
+			end:    opts["end"].(time.Time),
 		}
 	},
 	params: params{&param{
@@ -313,6 +315,8 @@ var exePrintPeriods = &cmd{
 		"normalized": optChartsNormalized,
 		"duration":   optChartsDuration,
 		"entry":      optChartsEntry,
+		"begin":      optDate,
+		"end":        optDate,
 	},
 	session: true,
 }
@@ -331,6 +335,8 @@ var exePrintFades = &cmd{
 		},
 			hl:     params[0].(float64),
 			period: params[1].(string),
+			begin:  opts["begin"].(time.Time),
+			end:    opts["end"].(time.Time),
 		}
 	},
 	params: params{parHL, &param{
@@ -346,6 +352,8 @@ var exePrintFades = &cmd{
 		"normalized": optChartsNormalized,
 		"duration":   optChartsDuration,
 		"entry":      optChartsEntry,
+		"begin":      optDate,
+		"end":        optDate,
 	},
 	session: true,
 }
