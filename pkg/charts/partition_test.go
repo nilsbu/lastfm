@@ -173,6 +173,30 @@ func TestPartiton(t *testing.T) {
 			},
 			[]charts.Title{charts.KeyTitle("1st"), charts.KeyTitle("2nd"), charts.KeyTitle("-")},
 		},
+		{
+			"partial replacement",
+			charts.PartialReplacements(
+				[]charts.Title{
+					charts.ArtistTitle("keep"),
+					charts.ArtistTitle("keep2"),
+					charts.ArtistTitle("replace"),
+					charts.ArtistTitle("replace2"),
+					charts.ArtistTitle("replace3"),
+				},
+				map[string]string{
+					"replace":  "group1",
+					"replace2": "group2",
+					"replace3": "group1",
+				},
+			),
+			[]partitionTitles{
+				{charts.KeyTitle("keep"), []charts.Title{charts.ArtistTitle("keep")}},
+				{charts.KeyTitle("keep2"), []charts.Title{charts.ArtistTitle("keep2")}},
+				{charts.KeyTitle("group1"), []charts.Title{charts.ArtistTitle("replace"), charts.ArtistTitle("replace3")}},
+				{charts.KeyTitle("group2"), []charts.Title{charts.ArtistTitle("replace2")}},
+			},
+			[]charts.Title{charts.KeyTitle("keep"), charts.KeyTitle("keep2"), charts.KeyTitle("group1"), charts.KeyTitle("group2")},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			for _, pt := range c.partitionTitles {

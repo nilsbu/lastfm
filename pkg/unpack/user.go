@@ -186,10 +186,17 @@ func LoadSupertagCorrections(user string, r rsrc.Reader,
 }
 
 // LoadCountryCorrections loads corrections for artist's country. The result
-// is a map with the artist names as keys and intended supertags as values.
+// is a map with the artist names as keys and intended countries as values.
 func LoadCountryCorrections(user string, r rsrc.Reader,
 ) (map[string]string, error) {
 	return loadTagCorrections(user, r, rsrc.CountryCorrections)
+}
+
+// LoadGroups loads artist groupings. The result
+// is a map with the artist names as keys and groups as values.
+func LoadGroups(user string, r rsrc.Reader,
+) (map[string]string, error) {
+	return loadTagCorrections(user, r, rsrc.Groups)
 }
 
 func loadTagCorrections(

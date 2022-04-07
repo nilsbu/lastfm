@@ -259,3 +259,32 @@ func getTagWeightPartition(artist Title, tags []info.Tag, blacklist map[string]i
 	}
 	return info.Tag{}, false
 }
+
+func PartialReplacements(artists []Title, replace map[string]string) Partition {
+	partitionsMap := make(map[string]interface{})
+	partitionTitles := make(map[string][]Title)
+	for _, artist := range artists {
+		var partition Title
+		if group, ok := replace[artist.Artist()]; ok {
+			partition = KeyTitle(group)
+		} else {
+			partition = artist
+		}
+
+		partitionTitles[partition.Key()] = append(partitionTitles[partition.Key()], artist)
+		partitionsMap[partition.Key()] = nil
+	}
+
+	partitions := make([]Title, len(partitionsMap))
+	i := 0
+	for partition := range partitionsMap {
+		partitions[i] = KeyTitle(partition)
+		i++
+	}
+
+	return biMapPartition{
+		partitionTitles: partitionTitles,
+		partitions:      partitions,
+		key:             func(title Title) string { return title.Key() },
+	}
+}

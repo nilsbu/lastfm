@@ -255,9 +255,16 @@ func SupertagCorrections(user string) Locator {
 	}
 }
 
-func CountryCorrections(user string) Locator {
+func CountryCorrections(user string) Locator { // TODO shouldn't be user dependent
 	return &userData{
 		method: "countrycorrections",
+		name:   user,
+	}
+}
+
+func Groups(user string) Locator {
+	return &userData{
+		method: "groups",
 		name:   user,
 	}
 }

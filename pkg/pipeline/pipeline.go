@@ -343,6 +343,13 @@ func (w *pipeline) getPartition(
 		}
 
 		return charts.TagWeightPartition(titles, tags, config.Blacklist()), nil
+	case "groups":
+		replacements, err := unpack.LoadGroups(w.session.User, w.store)
+		if err != nil {
+			return nil, err
+		}
+
+		return charts.PartialReplacements(parent.Titles(), replacements), nil
 	default:
 		return nil, fmt.Errorf("chart type '%v' not supported", step)
 	}
