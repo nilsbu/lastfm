@@ -115,7 +115,7 @@ var exeHelp = &cmd{
 }
 
 var exePrintFade = &cmd{
-	descr: "prints a user's top artists in fading charts", // TODO
+	descr: "prints a user's top artists in fading charts",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printFade{printCharts: printCharts{
 			keys:       opts["keys"].(string),
@@ -147,7 +147,7 @@ var exePrintFade = &cmd{
 }
 
 var exePrintPeriod = &cmd{
-	descr: "", // TODO
+	descr: "prints charts in a certain period, that can be something like '2009' for a year, '2013-02' for a month or '2022-04-08' for a day",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printPeriod{printCharts: printCharts{
 			keys:       opts["keys"].(string),
@@ -164,7 +164,7 @@ var exePrintPeriod = &cmd{
 	},
 	params: params{&param{
 		"period",
-		"", // TODO
+		"identidies the period, something like '2009' for a year, '2013-02' for a month or '2022-04-08' for a day",
 		"string",
 	}},
 	options: options{
@@ -181,7 +181,7 @@ var exePrintPeriod = &cmd{
 }
 
 var exePrintInterval = &cmd{
-	descr: "", // TODO
+	descr: "prints charts in an interval identified by beginning and end date",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printInterval{printCharts: printCharts{
 			keys:       opts["keys"].(string),
@@ -193,19 +193,11 @@ var exePrintInterval = &cmd{
 			duration:   opts["duration"].(bool),
 			entry:      opts["entry"].(float64),
 		},
-			begin:  getDay(params[0]),
-			before: getDay(params[1]),
+			begin: getDay(params[0]),
+			end:   getDay(params[1]),
 		}
 	},
-	params: params{&param{
-		"begin",
-		"", // TODO
-		"time",
-	}, &param{
-		"before",
-		"", // TODO
-		"time",
-	}},
+	params: params{parBegin, parEnd},
 	options: options{
 		"keys":       optChartsKeys,
 		"by":         optChartType,
@@ -560,6 +552,18 @@ var parHL = &param{
 	"float",
 }
 
+var parBegin = &param{
+	"begin",
+	"first date of an interval (inclusive) in the format YYYY-MM-DD",
+	"time",
+}
+
+var parEnd = &param{
+	"end",
+	"first date of an interval (inclusive) in the format YYYY-MM-DD",
+	"time",
+}
+
 // TODO name any key (see above) of option are duplicate
 var optChartType = &option{
 	param{"by",
@@ -625,16 +629,12 @@ var optDate = &option{
 }
 
 var optBegin = &option{
-	param{"date",
-		"a date in the format YYYY-MM-DD",
-		"time"},
+	*parBegin,
 	"0001-01-01",
 }
 
 var optEnd = &option{
-	param{"date",
-		"a date in the format YYYY-MM-DD",
-		"time"},
+	*parEnd,
 	"9999-12-31",
 }
 

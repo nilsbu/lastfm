@@ -180,8 +180,8 @@ func (cmd printPeriod) Execute(
 
 type printInterval struct {
 	printCharts
-	begin  rsrc.Day
-	before rsrc.Day
+	begin rsrc.Day
+	end   rsrc.Day
 }
 
 func (cmd printInterval) Execute(
@@ -191,7 +191,7 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("interval,%v,%v", cmd.begin, cmd.before), "sum", "cache")
+	steps = setStep(steps, fmt.Sprintf("interval,%v,%v", cmd.begin, cmd.end), "sum", "cache")
 	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)

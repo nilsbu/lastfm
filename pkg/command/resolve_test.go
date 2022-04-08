@@ -252,7 +252,7 @@ func TestResolve(t *testing.T) {
 			printInterval{
 				printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, normalized: false},
 				begin:       rsrc.ParseDay("2007-01-01"),
-				before:      rsrc.ParseDay("2018-12-24")}, true,
+				end:         rsrc.ParseDay("2018-12-24")}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fademax", "66"},
