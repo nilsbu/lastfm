@@ -212,7 +212,7 @@ var exePrintInterval = &cmd{
 }
 
 var exePrintFadeMax = &cmd{
-	descr: "", // TODO
+	descr: "prints the maximum that the 'fade' charts reach for a given artist",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printFadeMax{printCharts: printCharts{
 			keys:       opts["keys"].(string),
@@ -574,7 +574,7 @@ var optChartType = &option{
 
 var optGenericName = &option{
 	param{"name",
-		"some name", // TODO be more specific
+		"some name that identifies a partition",
 		"string"},
 	"",
 }
