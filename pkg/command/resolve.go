@@ -405,6 +405,7 @@ var exeTableFade = &cmd{
 	descr: "tables a user's top artists in fading charts",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return tableFade{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -419,6 +420,7 @@ var exeTableFade = &cmd{
 	},
 	params: params{parHL},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -435,6 +437,7 @@ var exeTablePeriods = &cmd{
 	descr: "tables a user's top artists by total number of plays in the specified periods",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return tablePeriods{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -452,6 +455,7 @@ var exeTablePeriods = &cmd{
 		"string",
 	}},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -467,6 +471,7 @@ var exeTableTotal = &cmd{
 	descr: "tables a user's top artists by total number of plays",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return tableTotal{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -479,6 +484,7 @@ var exeTableTotal = &cmd{
 		}
 	},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -594,7 +600,7 @@ var optChartsKeys = &option{
 	param{"keys",
 		"keys of the charts ('artist' or 'song')",
 		"string"},
-	"",
+	"artist",
 }
 
 var optChartsNormalized = &option{

@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -113,17 +114,17 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-n=25"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "all", name: "", n: 25}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 25}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-%=TRUE"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "all", name: "", n: 10, percentage: true}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, percentage: true}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-n=k25"},
@@ -140,27 +141,27 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total", "-by=super", "-n=25"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "super", name: "", n: 25}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "super", name: "", n: 25}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-by=super", "-normalized", "-date=2018-02-01"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "super", name: "", normalized: true, n: 10}, date: time.Date(2018, time.February, 1, 0, 0, 0, 0, time.UTC)}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "super", name: "", normalized: true, n: 10}, date: time.Date(2018, time.February, 1, 0, 0, 0, 0, time.UTC)}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-by=year"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "year", name: "", n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "year", name: "", n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-by=year", "-name=2018"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "year", name: "2018", n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "year", name: "2018", n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-by=year", "-entry=60"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "year", entry: 60, n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "year", entry: 60, n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-by=year", "-entry=60", "-keys=song"},
@@ -170,17 +171,17 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total", "-by=country"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "country", n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "country", n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-by=total"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "total", name: "", n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "total", name: "", n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-duration"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "all", duration: true, n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "all", duration: true, n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "print", "asdf"},
@@ -193,12 +194,12 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "fade", "30.25"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 30.25}, true,
+			printFade{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, hl: 30.25}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade", "30.25", "-name=DYD"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{printCharts: printCharts{by: "all", name: "DYD", n: 10}, hl: 30.25}, true,
+			printFade{printCharts: printCharts{keys: "artist", by: "all", name: "DYD", n: 10}, hl: 30.25}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade", "30.25", "-name"},
@@ -207,12 +208,12 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "fade", "10", "-%"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{printCharts: printCharts{by: "all", n: 10, percentage: true}, hl: 10}, true,
+			printFade{printCharts: printCharts{keys: "artist", by: "all", n: 10, percentage: true}, hl: 10}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade", "10", "-normalized=True", "-date=2000-01-01"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{printCharts: printCharts{by: "all", n: 10, normalized: true}, hl: 10, date: time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)}, true,
+			printFade{printCharts: printCharts{keys: "artist", by: "all", n: 10, normalized: true}, hl: 10, date: time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade"},
@@ -233,30 +234,30 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "period", "2015"},
 			&unpack.SessionInfo{User: "user"},
-			printPeriod{printCharts: printCharts{by: "all", name: "", n: 10}, period: "2015"}, true,
+			printPeriod{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, period: "2015"}, true,
 		},
 		{
 			[]string{"lastfm", "print", "period", "2015", "-%=1"},
 			&unpack.SessionInfo{User: "user"},
-			printPeriod{printCharts: printCharts{by: "all", name: "", n: 10, percentage: true}, period: "2015"}, true,
+			printPeriod{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, percentage: true}, period: "2015"}, true,
 		},
 		{
 			[]string{"lastfm", "print", "period", "2015", "-normalized=t"},
 			&unpack.SessionInfo{User: "user"},
-			printPeriod{printCharts: printCharts{by: "all", name: "", n: 10, normalized: true}, period: "2015"}, true,
+			printPeriod{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, normalized: true}, period: "2015"}, true,
 		},
 		{
 			[]string{"lastfm", "print", "interval", "2007-01-01", "2018-12-24"},
 			&unpack.SessionInfo{User: "user"},
 			printInterval{
-				printCharts: printCharts{by: "all", name: "", n: 10, normalized: false},
+				printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, normalized: false},
 				begin:       time.Date(2007, time.January, 1, 0, 0, 0, 0, time.UTC),
 				before:      time.Date(2018, time.December, 24, 0, 0, 0, 0, time.UTC)}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fademax", "66"},
 			&unpack.SessionInfo{User: "user"},
-			printFadeMax{printCharts: printCharts{by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
+			printFadeMax{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
 		},
 		{
 			[]string{"lastfm", "print", "tags", "Add"},
@@ -269,22 +270,22 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm-csv", "print", "total"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}}, true,
 		},
 		{
 			[]string{"lastfm", "table", "total"},
 			&unpack.SessionInfo{User: "user"},
-			tableTotal{printCharts: printCharts{by: "all", name: "", n: 10}, step: 1}, true,
+			tableTotal{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, step: 1}, true,
 		},
 		{
 			[]string{"lastfm", "table", "total", "-step=200"},
 			&unpack.SessionInfo{User: "user"},
-			tableTotal{printCharts: printCharts{by: "all", name: "", n: 10}, step: 200}, true,
+			tableTotal{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, step: 200}, true,
 		},
 		{
 			[]string{"lastfm", "table", "period", "1y"},
 			&unpack.SessionInfo{User: "user"},
-			tablePeriods{printCharts: printCharts{by: "all", name: "", n: 10}, period: "1y"}, true,
+			tablePeriods{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, period: "1y"}, true,
 		},
 		// {
 		// 	[]string{"lastfm", "timeline", "-before=2008-01-23", "-from=2000-11-03"},
@@ -297,30 +298,30 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm-csv", "table", "fade", "10"},
 			&unpack.SessionInfo{User: "user"},
-			tableFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 10, step: 1}, true,
+			tableFade{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, hl: 10, step: 1}, true,
 		},
 		{
 			// relevant option stored
 			[]string{"lastfm-csv", "table", "fade", "10"},
 			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
-			tableFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 10, step: 30}, true,
+			tableFade{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, hl: 10, step: 30}, true,
 		},
 		{
 			// irrelevant option stored
 			[]string{"lastfm", "print", "total"},
 			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
-			printTotal{printCharts: printCharts{by: "all", name: "", n: 10}}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}}, true,
 		},
 		{
 			// explicit parameter overrides stored parameter
 			[]string{"lastfm-csv", "table", "fade", "10", "-step=25"},
 			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
-			tableFade{printCharts: printCharts{by: "all", name: "", n: 10}, hl: 10, step: 25}, true,
+			tableFade{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, hl: 10, step: 25}, true,
 		},
 	}
 
-	for _, c := range cases {
-		str := strings.Join(c.args, " ")
+	for i, c := range cases {
+		str := fmt.Sprintf("%v - %v", i, strings.Join(c.args, " "))
 		if c.session != nil {
 			str += " (" + string(c.session.User) + ")"
 		}

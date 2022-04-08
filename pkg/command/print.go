@@ -14,7 +14,7 @@ import (
 )
 
 type printCharts struct {
-	keys       string // defaults to "artist"
+	keys       string
 	by         string
 	name       string
 	percentage bool
@@ -25,10 +25,6 @@ type printCharts struct {
 }
 
 func (cmd printCharts) getSteps() ([]string, error) {
-	if cmd.keys == "" {
-		cmd.keys = "artist"
-	}
-
 	steps := []string{cmd.keys + "s"}
 	if cmd.duration {
 		steps[0] += "duration"
