@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/format"
@@ -15,11 +14,6 @@ import (
 	"github.com/nilsbu/lastfm/pkg/unpack"
 	"github.com/nilsbu/lastfm/test/mock"
 )
-
-func date(str string) time.Time {
-	date, _ := time.Parse("2006-01-02", str)
-	return date
-}
 
 func iotaF(base float64, n int) []float64 {
 	nums := make([]float64, n)
@@ -103,7 +97,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			nil,
 			false,
@@ -124,7 +118,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			nil,
 			false,
@@ -141,7 +135,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			nil,
 			false,
@@ -162,7 +156,6 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: time.Time{},
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
@@ -190,7 +183,6 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: time.Time{},
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
@@ -216,7 +208,7 @@ func TestPrint(t *testing.T) {
 					by: "all",
 					n:  10,
 				},
-				date: rsrc.ParseDay("2018-01-02").Time(),
+				date: rsrc.ParseDay("2018-01-02"),
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
@@ -245,7 +237,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
@@ -273,7 +265,6 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: time.Time{},
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.InOrder([]charts.Pair{
@@ -458,7 +449,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
@@ -486,7 +477,7 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
@@ -544,7 +535,7 @@ func TestPrint(t *testing.T) {
 					n:          10,
 				},
 				hl:   1,
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			nil,
 			false,
@@ -566,7 +557,7 @@ func TestPrint(t *testing.T) {
 					n:          10,
 				},
 				hl:   1,
-				date: date("2018-01-01"),
+				date: rsrc.ParseDay("2018-01-01"),
 			},
 			nil,
 			false,
@@ -686,8 +677,8 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				begin:  date("2018-01-01"),
-				before: date("2018-01-03"),
+				begin:  rsrc.ParseDay("2018-01-01"),
+				before: rsrc.ParseDay("2018-01-03"),
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{
@@ -716,8 +707,8 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				begin:  date("2018-01-01"),
-				before: date("2018-01-03"),
+				begin:  rsrc.ParseDay("2018-01-01"),
+				before: rsrc.ParseDay("2018-01-03"),
 			},
 			nil, false,
 		},
@@ -738,8 +729,8 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				begin:  date("2018-01-01"),
-				before: date("2018-01-03"),
+				begin:  rsrc.ParseDay("2018-01-01"),
+				before: rsrc.ParseDay("2018-01-03"),
 			},
 			nil, false,
 		},
@@ -760,8 +751,8 @@ func TestPrint(t *testing.T) {
 					normalized: false,
 					n:          10,
 				},
-				begin:  date("2018-01-01"),
-				before: date("2018-01-03"),
+				begin:  rsrc.ParseDay("2018-01-01"),
+				before: rsrc.ParseDay("2018-01-03"),
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.FromMap(map[string][]float64{

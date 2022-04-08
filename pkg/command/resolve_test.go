@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -146,7 +146,7 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "total", "-by=super", "-normalized", "-date=2018-02-01"},
 			&unpack.SessionInfo{User: "user"},
-			printTotal{printCharts: printCharts{keys: "artist", by: "super", name: "", normalized: true, n: 10}, date: time.Date(2018, time.February, 1, 0, 0, 0, 0, time.UTC)}, true,
+			printTotal{printCharts: printCharts{keys: "artist", by: "super", name: "", normalized: true, n: 10}, date: rsrc.ParseDay("2018-02-01")}, true,
 		},
 		{
 			[]string{"lastfm", "print", "total", "-by=year"},
@@ -213,7 +213,7 @@ func TestResolve(t *testing.T) {
 		{
 			[]string{"lastfm", "print", "fade", "10", "-normalized=True", "-date=2000-01-01"},
 			&unpack.SessionInfo{User: "user"},
-			printFade{printCharts: printCharts{keys: "artist", by: "all", n: 10, normalized: true}, hl: 10, date: time.Date(2000, time.January, 1, 0, 0, 0, 0, time.UTC)}, true,
+			printFade{printCharts: printCharts{keys: "artist", by: "all", n: 10, normalized: true}, hl: 10, date: rsrc.ParseDay("2000-01-01")}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fade"},
@@ -251,8 +251,8 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user"},
 			printInterval{
 				printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, normalized: false},
-				begin:       time.Date(2007, time.January, 1, 0, 0, 0, 0, time.UTC),
-				before:      time.Date(2018, time.December, 24, 0, 0, 0, 0, time.UTC)}, true,
+				begin:       rsrc.ParseDay("2007-01-01"),
+				before:      rsrc.ParseDay("2018-12-24")}, true,
 		},
 		{
 			[]string{"lastfm", "print", "fademax", "66"},

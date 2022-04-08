@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
@@ -128,7 +128,7 @@ var exePrintFade = &cmd{
 			entry:      opts["entry"].(float64),
 		},
 			hl:   params[0].(float64),
-			date: opts["date"].(time.Time),
+			date: getDay(opts["date"]),
 		}
 	},
 	params: params{parHL},
@@ -193,8 +193,8 @@ var exePrintInterval = &cmd{
 			duration:   opts["duration"].(bool),
 			entry:      opts["entry"].(float64),
 		},
-			begin:  params[0].(time.Time),
-			before: params[1].(time.Time),
+			begin:  getDay(params[0]),
+			before: getDay(params[1]),
 		}
 	},
 	params: params{&param{
@@ -269,7 +269,7 @@ var exePrintTotal = &cmd{
 			duration:   opts["duration"].(bool),
 			entry:      opts["entry"].(float64),
 		},
-			date: opts["date"].(time.Time),
+			date: getDay(opts["date"]),
 		}
 	},
 	options: options{
@@ -330,8 +330,8 @@ var exePrintPeriods = &cmd{
 			entry:      opts["entry"].(float64),
 		},
 			period: params[0].(string),
-			begin:  opts["begin"].(time.Time),
-			end:    opts["end"].(time.Time),
+			begin:  getDay(opts["begin"]),
+			end:    getDay(opts["end"]),
 		}
 	},
 	params: params{&param{
@@ -367,8 +367,8 @@ var exePrintFades = &cmd{
 		},
 			hl:     params[0].(float64),
 			period: params[1].(string),
-			begin:  opts["begin"].(time.Time),
-			end:    opts["end"].(time.Time),
+			begin:  getDay(opts["begin"]),
+			end:    getDay(opts["end"]),
 		}
 	},
 	params: params{parHL, &param{
@@ -781,13 +781,21 @@ func parseArgument(arg, kind string) (value interface{}, err error) {
 		value, err = strconv.ParseBool(arg)
 	case "time":
 		if arg == "" {
-			value = time.Time{}
+			value = nil
 		} else {
-			value, err = time.Parse("2006-01-02", arg)
+			value = rsrc.ParseDay(arg)
 		}
 	default:
 		// Cannot be reached
 	}
 
 	return value, err
+}
+
+func getDay(arg interface{}) rsrc.Day {
+	if day, ok := arg.(rsrc.Day); ok {
+		return day
+	} else {
+		return nil
+	}
 }

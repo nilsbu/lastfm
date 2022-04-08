@@ -2,7 +2,6 @@ package command
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/display"
@@ -71,7 +70,7 @@ func setStep(steps []string, sub ...string) []string {
 
 type printTotal struct {
 	printCharts
-	date time.Time
+	date rsrc.Day
 }
 
 func (cmd printTotal) Execute(
@@ -84,9 +83,8 @@ func (cmd printTotal) Execute(
 
 	steps = setStep(steps, "sum", "cache")
 
-	null := time.Time{}
-	if cmd.date != null {
-		steps = append(steps, fmt.Sprintf("day,%v", rsrc.DayFromTime(cmd.date)))
+	if cmd.date != nil {
+		steps = append(steps, fmt.Sprintf("day,%v", cmd.date))
 	}
 	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
@@ -112,7 +110,7 @@ func (cmd printTotal) Execute(
 type printFade struct {
 	printCharts
 	hl   float64
-	date time.Time
+	date rsrc.Day
 }
 
 func (cmd printFade) Execute(
@@ -124,9 +122,8 @@ func (cmd printFade) Execute(
 
 	steps = setStep(steps, fmt.Sprintf("fade,%v", cmd.hl), "cache")
 
-	null := time.Time{}
-	if cmd.date != null {
-		steps = append(steps, fmt.Sprintf("day,%v", rsrc.DayFromTime(cmd.date)))
+	if cmd.date != nil {
+		steps = append(steps, fmt.Sprintf("day,%v", cmd.date))
 	}
 	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
@@ -183,8 +180,8 @@ func (cmd printPeriod) Execute(
 
 type printInterval struct {
 	printCharts
-	begin  time.Time
-	before time.Time
+	begin  rsrc.Day
+	before rsrc.Day
 }
 
 func (cmd printInterval) Execute(
@@ -194,7 +191,7 @@ func (cmd printInterval) Execute(
 		return err
 	}
 
-	steps = setStep(steps, fmt.Sprintf("interval,%v,%v", rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.before)), "sum", "cache")
+	steps = setStep(steps, fmt.Sprintf("interval,%v,%v", cmd.begin, cmd.before), "sum", "cache")
 	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
@@ -314,7 +311,7 @@ func (cmd printTags) Execute(
 type printPeriods struct {
 	printCharts
 	period     string
-	begin, end time.Time
+	begin, end rsrc.Day
 }
 
 func (cmd printPeriods) Execute(
@@ -331,14 +328,13 @@ func (cmd printPeriods) Execute(
 	}
 	ll := cha.Len()
 
-	b, e := rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.end)
-	interval, err := charts.CroppedRange(b, e, pl.Registered(), ll)
+	interval, err := charts.CroppedRange(cmd.begin, cmd.end, pl.Registered(), ll)
 	if err != nil {
 		return err
 	}
-	steps = append(steps, fmt.Sprintf("interval,%v,%v", b, e))
+	steps = append(steps, fmt.Sprintf("interval,%v,%v", cmd.begin, cmd.end))
 
-	ranges, _ := charts.ParseRanges(cmd.period, interval.Begin, rsrc.Between(b, e).Days())
+	ranges, _ := charts.ParseRanges(cmd.period, interval.Begin, rsrc.Between(cmd.begin, cmd.end).Days())
 
 	steps = append(steps, fmt.Sprintf("periods,%v", cmd.period), "cache")
 
@@ -378,7 +374,7 @@ type printFades struct {
 	printCharts
 	hl         float64
 	period     string
-	begin, end time.Time
+	begin, end rsrc.Day
 }
 
 func (cmd printFades) Execute(
@@ -396,14 +392,14 @@ func (cmd printFades) Execute(
 	if err != nil {
 		return err
 	}
-	b, e := rsrc.DayFromTime(cmd.begin), rsrc.DayFromTime(cmd.end)
-	interval, err := charts.CroppedRange(b, e, pl.Registered(), cha.Len())
+
+	interval, err := charts.CroppedRange(cmd.begin, cmd.end, pl.Registered(), cha.Len())
 	if err != nil {
 		return err
 	}
-	steps = append(steps, fmt.Sprintf("interval,%v,%v", b, e))
+	steps = append(steps, fmt.Sprintf("interval,%v,%v", cmd.begin, cmd.end))
 
-	ranges, _ := charts.ParseRanges(cmd.period, interval.Begin, rsrc.Between(b, e).Days())
+	ranges, _ := charts.ParseRanges(cmd.period, interval.Begin, rsrc.Between(cmd.begin, cmd.end).Days())
 	steps = append(steps, fmt.Sprintf("step,%v", cmd.period))
 	cha, err = pl.Execute(steps)
 	if err != nil {
