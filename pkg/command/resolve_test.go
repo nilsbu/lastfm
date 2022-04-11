@@ -333,6 +333,12 @@ func TestResolve(t *testing.T) {
 			&unpack.SessionInfo{User: "user", Options: map[string]string{"step": "30"}},
 			tableFade{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10}, hl: 10, step: 25}, true,
 		},
+		{
+			// raw steps
+			[]string{"lastfm", "print", "raw", "artistsduration", "sum", "top,69"},
+			&unpack.SessionInfo{User: "user"},
+			printRaw{precision: 2, steps: []string{"artistsduration", "sum", "top,69"}}, true,
+		},
 	}
 
 	for i, c := range cases {

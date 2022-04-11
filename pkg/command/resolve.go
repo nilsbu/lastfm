@@ -75,7 +75,7 @@ var cmdPrint = node{
 		"after":    node{cmd: exePrintAfter},
 		"periods":  node{cmd: exePrintPeriods},
 		"fades":    node{cmd: exePrintFades},
-		// TODO Add command for raw execution
+		"raw":      node{cmd: exePrintRaw},
 	},
 }
 
@@ -386,6 +386,25 @@ var exePrintFades = &cmd{
 	session: true,
 }
 
+var exePrintRaw = &cmd{
+	descr: "TODO",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return printRaw{
+			precision: opts["precision"].(int),
+			steps:     asStringSlice(params),
+		}
+	},
+	params: params{&param{
+		"steps",
+		"a sequence of step descriptors",
+		"string...",
+	}},
+	options: options{
+		"precision": optPrecision,
+	},
+	session: true,
+}
+
 var exeTimeline = &cmd{
 	descr: "timeline of events",
 	get: func(params []interface{}, opts map[string]interface{}) command {
@@ -642,6 +661,13 @@ var optEnd = &option{
 	"9999-12-31",
 }
 
+var optPrecision = &option{
+	param{"precision",
+		"number of decimals",
+		"int"},
+	"2",
+}
+
 var optStep = &option{
 	param{"step",
 		"date step", // TODO
@@ -707,23 +733,43 @@ func parseArguments(args []string, cmd *cmd, sessionOptions map[string]string,
 		return nil, nil, errors.New("too few params")
 	}
 
-	params = make([]interface{}, len(cmd.params))
+	params = []interface{}{}
+	keepKind := ""
 
-	for i := 0; i < len(cmd.params); i++ {
-		value, err := parseArgument(args[i], cmd.params[i].kind)
+	for i := 0; ; i++ {
+		if i >= len(args) || args[i][0] == '-' {
+			break
+		}
+		kind := ""
+		if keepKind == "" {
+			if i >= len(cmd.params) {
+				break
+			} else {
+				if strings.HasSuffix(cmd.params[i].kind, "...") {
+					keepKind = cmd.params[i].kind[:len(cmd.params[i].kind)-3]
+					kind = keepKind
+				} else {
+					kind = cmd.params[i].kind
+				}
+			}
+		} else {
+			kind = keepKind
+		}
+
+		value, err := parseArgument(args[i], kind)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		params[i] = value
+		params = append(params, value)
 	}
 
 	rawOpts := make(map[string]string)
 	opts = make(map[string]interface{})
 
-	for i := len(cmd.params); i < len(args); i++ {
+	for i := len(params); i < len(args); i++ {
 		if args[i][0] != '-' {
-			return nil, nil, fmt.Errorf("parameter '%v' is unexpected", args[i])
+			return nil, nil, fmt.Errorf("option '%v' is unexpected", args[i])
 		}
 
 		idx := strings.Index(args[i], "=")
@@ -802,4 +848,12 @@ func getDay(arg interface{}) rsrc.Day {
 	} else {
 		return nil
 	}
+}
+
+func asStringSlice(params []interface{}) []string {
+	ps := make([]string, len(params))
+	for i, param := range params {
+		ps[i] = param.(string)
+	}
+	return ps
 }

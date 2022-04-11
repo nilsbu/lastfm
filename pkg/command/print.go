@@ -432,3 +432,25 @@ func (cmd printFades) Execute(
 
 	return d.Display(f)
 }
+
+type printRaw struct {
+	precision int
+	steps     []string
+}
+
+func (cmd printRaw) Execute(
+	session *unpack.SessionInfo, s io.Store, pl pipeline.Pipeline, d display.Display) error {
+	cha, err := pl.Execute(cmd.steps)
+	if err != nil {
+		return err
+	}
+
+	f := &format.Charts{
+		Charts:     []charts.Charts{cha},
+		Numbered:   true,
+		Precision:  cmd.precision,
+		Percentage: false,
+	}
+
+	return d.Display(f)
+}
