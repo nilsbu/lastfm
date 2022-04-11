@@ -260,6 +260,21 @@ func TestResolve(t *testing.T) {
 			printFadeMax{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, percentage: false}, hl: 66}, true,
 		},
 		{
+			[]string{"lastfm", "print", "periods", "3y"},
+			&unpack.SessionInfo{User: "user"},
+			printPeriods{printCharts: printCharts{keys: "artist", by: "all", name: "", n: 10, percentage: false}, period: "3y", begin: rsrc.ParseDay("0001-01-01"), end: rsrc.ParseDay("9999-12-31")}, true,
+		},
+		{
+			[]string{"lastfm", "print", "periods", "3y", "-keys=song", "-end=2022-01-01"},
+			&unpack.SessionInfo{User: "user"},
+			printPeriods{printCharts: printCharts{keys: "song", by: "all", name: "", n: 10, percentage: false}, period: "3y", begin: rsrc.ParseDay("0001-01-01"), end: rsrc.ParseDay("2022-01-01")}, true,
+		},
+		{
+			[]string{"lastfm", "print", "fades", "333", "3y", "-keys=song", "-end=2022-01-01"},
+			&unpack.SessionInfo{User: "user"},
+			printFades{printCharts: printCharts{keys: "song", by: "all", name: "", n: 10, percentage: false}, hl: 333, period: "3y", begin: rsrc.ParseDay("0001-01-01"), end: rsrc.ParseDay("2022-01-01")}, true,
+		},
+		{
 			[]string{"lastfm", "print", "tags", "Add"},
 			&unpack.SessionInfo{User: "user"}, printTags{"Add"}, true,
 		},

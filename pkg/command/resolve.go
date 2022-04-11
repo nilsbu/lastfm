@@ -313,6 +313,7 @@ var exePrintPeriods = &cmd{
 	descr: "prints a user's top artists by total number of plays in the specified periods",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printPeriods{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -332,6 +333,7 @@ var exePrintPeriods = &cmd{
 		"string",
 	}},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
@@ -349,6 +351,7 @@ var exePrintFades = &cmd{
 	descr: "prints a user's top artists by total number of plays in the specified periods",
 	get: func(params []interface{}, opts map[string]interface{}) command {
 		return printFades{printCharts: printCharts{
+			keys:       opts["keys"].(string),
 			by:         opts["by"].(string),
 			name:       opts["name"].(string),
 			n:          opts["n"].(int),
@@ -369,6 +372,7 @@ var exePrintFades = &cmd{
 		"string",
 	}},
 	options: options{
+		"keys":       optChartsKeys,
 		"by":         optChartType,
 		"name":       optGenericName,
 		"n":          optArtistCount,
