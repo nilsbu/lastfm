@@ -89,7 +89,3 @@ func (f *Table) formatBody(
 
 	return nil
 }
-
-func (f *Table) JSON(w io.Writer) error {
-	return nil // TODO fix this
-}
