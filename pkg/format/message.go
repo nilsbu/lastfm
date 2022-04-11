@@ -48,3 +48,12 @@ func (f *Message) HTML(w io.Writer) error {
 	_, err = fmt.Fprintf(w, "<br/>")
 	return err
 }
+
+func (f *Message) JSON(w io.Writer) error {
+	if f.Msg == "" {
+		return nil
+	}
+
+	_, err := fmt.Fprintf(w, `{"msg": "%v}`, f.Msg)
+	return err
+}

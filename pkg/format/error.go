@@ -33,3 +33,8 @@ func (f *Error) Plain(w io.Writer) error {
 func (f *Error) HTML(w io.Writer) error {
 	return f.Plain(w)
 }
+
+func (f *Error) JSON(w io.Writer) error {
+	_, err := fmt.Fprintf(w, `{"error": "%v"`, f.Err.Error())
+	return err
+}
