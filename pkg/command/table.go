@@ -33,6 +33,13 @@ func (cmd tableTotal) Execute(
 
 	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), pl.Registered(), cha.Len())
 
+	steps = append(steps, fmt.Sprintf("step,%vd", cmd.step))
+
+	cha, err = pl.Execute(steps)
+	if err != nil {
+		return err
+	}
+
 	f := &format.Table{
 		Charts: cha,
 		Ranges: ranges,
@@ -60,17 +67,22 @@ func (cmd tableFade) Execute(
 		return err
 	}
 
-	steps = setStep(steps,
-		fmt.Sprintf("fade,%v", cmd.hl),
-		"cache",
-		fmt.Sprintf("top,%v", cmd.n),
-		fmt.Sprintf("step,%vd", cmd.step))
+	steps = setStep(steps, fmt.Sprintf("fade,%v", cmd.hl))
+
+	steps = append(steps, fmt.Sprintf("top,%v", cmd.n))
 
 	cha, err := pl.Execute(steps)
 	if err != nil {
 		return err
 	}
 	ranges, _ := charts.ParseRanges(fmt.Sprintf("%vd", cmd.step), pl.Registered(), cha.Len())
+
+	steps = append(steps, fmt.Sprintf("step,%vd", cmd.step))
+
+	cha, err = pl.Execute(steps)
+	if err != nil {
+		return err
+	}
 
 	f := &format.Table{
 		Charts: cha,

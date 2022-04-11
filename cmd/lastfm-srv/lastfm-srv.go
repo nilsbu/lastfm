@@ -76,7 +76,7 @@ func handleRequest(
 		args = append(args, fmt.Sprintf("-%v=%v", k, vs[0]))
 	}
 
-	err := command.Execute(args, session, s, pl, display.NewWeb(w))
+	err := command.Execute(args, session, s, pl, display.NewJSON(w))
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -100,7 +100,9 @@ func main() {
 
 	pl := pipeline.New(session, s)
 
-	// TODO Reuse early stages of the charts
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/charts/", http.StripPrefix("/charts/", fs))
+
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		handleRequest(session, s, pl, rw, r)
 	})

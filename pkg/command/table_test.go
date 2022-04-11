@@ -98,6 +98,7 @@ func TestTable(t *testing.T) {
 			[][]info.Song{
 				{{Artist: "X"}},
 				{{Artist: "X"}},
+				{},
 			}, true,
 			tableTotal{
 				printCharts: printCharts{by: "all", n: 3},
