@@ -222,9 +222,10 @@ func initPlainWriter(d *data, c *Charts, w io.Writer) chartsWriter {
 	header := len(c.Ranges.Delims) >= len(c.Charts)
 
 	var numPattern string
-	if c.Numbered && len(d.titles) > 0 {
-		numPattern = "%" + strconv.Itoa(int(math.Log10(float64(len(d.titles[0]))))+1) + "d: "
+	if c.Numbered {
+		numPattern = "%" + strconv.Itoa(int(math.Log10(float64(d.lines)))+1) + "d: "
 	}
+	fmt.Println(numPattern)
 
 	titleLens := make([]int, len(d.titles))
 	for i, titles := range d.titles {
