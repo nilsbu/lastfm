@@ -21,7 +21,12 @@
                             url += '&' + word.substring(1);
                         }
                     } else {
-                        url += '/' + word
+                        if (inOptions) {
+                            url += '+' + word
+                        } else {
+                            url += '/' + word
+                        }
+                        
                     }
                 });
 
