@@ -84,26 +84,3 @@ func (t songTitle) Artist() string {
 func (t songTitle) Key() string {
 	return fmt.Sprintf("%v\n%v", t.artist, t.title)
 }
-
-type stringTitle string
-
-// StringTitle is a Title which is non-empty only for String().
-// TODO remove StringTitle
-func StringTitle(s string) Title {
-	return stringTitle(s)
-}
-
-// String returns the the string.
-func (k stringTitle) String() string {
-	return string(k)
-}
-
-// Artist returns ""
-func (k stringTitle) Artist() string {
-	return ""
-}
-
-// Key returns ""
-func (k stringTitle) Key() string {
-	return string(k)
-}

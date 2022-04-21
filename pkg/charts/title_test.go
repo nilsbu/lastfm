@@ -28,11 +28,6 @@ func TestTitles(t *testing.T) {
 			charts.SongTitle(info.Song{Artist: "x", Title: "y"}),
 			"x - y", "x\ny", "x", "y",
 		},
-		{
-			"string title",
-			charts.StringTitle("a"),
-			"a", "a", "", "",
-		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			if c.string != c.title.String() {

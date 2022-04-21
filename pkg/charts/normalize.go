@@ -37,7 +37,7 @@ func newNormalizer(parent Charts, totals Charts) *normalizer {
 	for i := 0; i < workers; i++ {
 		go func() {
 			// TODO is there a way to not query the entire length of the totals?
-			totals, err := n.totals.Data([]Title{StringTitle("total")}, 0, parent.Len())
+			totals, err := n.totals.Data([]Title{KeyTitle("total")}, 0, parent.Len())
 			for job := range n.lineChan {
 				if err == nil {
 					f(job.in, job.out, totals[0], job.begin, job.end)

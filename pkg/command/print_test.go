@@ -268,8 +268,8 @@ func TestPrint(t *testing.T) {
 			},
 			&format.Charts{
 				Charts: []charts.Charts{charts.InOrder([]charts.Pair{
-					{Title: charts.StringTitle("France"), Values: []float64{1, 1, 2}},
-					{Title: charts.StringTitle("-"), Values: []float64{0, 1, 1}},
+					{Title: charts.KeyTitle("France"), Values: []float64{1, 1, 2}},
+					{Title: charts.KeyTitle("-"), Values: []float64{0, 1, 1}},
 				})},
 				Numbered:   true,
 				Precision:  0,

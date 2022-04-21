@@ -48,10 +48,10 @@ func TestPartiton(t *testing.T) {
 			"totalPartition",
 			charts.TotalPartition([]charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}),
 			[]partitionTitles{
-				{charts.StringTitle("total"), []charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}},
+				{charts.KeyTitle("total"), []charts.Title{charts.KeyTitle("a"), charts.KeyTitle("b")}},
 				{charts.KeyTitle("n"), []charts.Title{}},
 			},
-			[]charts.Title{charts.StringTitle("total")},
+			[]charts.Title{charts.KeyTitle("total")},
 		},
 		{
 			"empty first key partition",

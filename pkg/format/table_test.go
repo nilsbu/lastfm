@@ -24,8 +24,8 @@ func TestTableCSV(t *testing.T) {
 		},
 		{
 			charts.InOrder([]charts.Pair{
-				{Title: charts.StringTitle("X"), Values: []float64{2, 3}},
-				{Title: charts.StringTitle("ABC"), Values: []float64{1.25, 2}},
+				{Title: charts.KeyTitle("X"), Values: []float64{2, 3}},
+				{Title: charts.KeyTitle("ABC"), Values: []float64{1.25, 2}},
 			}),
 			charts.ParseRangesTrusted("1d", rsrc.ParseDay("2012-01-01"), 1),
 			",", true,
