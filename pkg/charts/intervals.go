@@ -246,15 +246,13 @@ func (c intervals) Len() int {
 }
 
 func (c intervals) Data(titles []Title, begin, end int) ([][]float64, error) {
-	// TODO speedup
-	// data := c.parent.Data(titles, c.delims[begin], c.delims[end])
-
 	lines := make([][]float64, len(titles))
 	for j := range titles {
 		lines[j] = make([]float64, end-begin)
 	}
 
-	// cha := make([]LazyCharts, end-begin)
+	// I tried to run this in parallel and it turns out that it's slower that way.
+	// This may have to do with the fact that following calls are less "related", causing more cache misses.
 	for i := begin; i < end; i++ {
 		cha := c.f(Crop(c.parent, c.delims[i], c.delims[i+1]))
 		cdata, err := cha.Data(titles, cha.Len()-1, cha.Len())
