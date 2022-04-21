@@ -10,7 +10,7 @@
                 const cmd = document.getElementById('command').value;
                 const words = cmd.split(' ');
 
-                var url = document.URL.substring(0, document.URL.indexOf("/static"));
+                var url = document.URL.substring(0, document.URL.indexOf("/static")) + "/json";
                 var inOptions = false;
                 words.forEach(word => {
                     if (word[0] == '-') {

@@ -69,14 +69,23 @@ func handleRequest(
 		return
 	}
 
+	a := strings.Split(r.URL.Path, "/")[1:]
+	var d display.Display
+	if a[0] == "json" {
+		d = display.NewJSON(w)
+		a = a[1:]
+	} else {
+		d = display.NewWeb(w)
+	}
+
 	args := []string{"lastfm-srv"}
-	args = append(args, strings.Split(r.URL.Path, "/")[1:]...)
+	args = append(args, a...)
 
 	for k, vs := range r.URL.Query() {
 		args = append(args, fmt.Sprintf("-%v=%v", k, vs[0]))
 	}
 
-	err := command.Execute(args, session, s, pl, display.NewJSON(w))
+	err := command.Execute(args, session, s, pl, d)
 	if err != nil {
 		fmt.Println(err)
 	}
