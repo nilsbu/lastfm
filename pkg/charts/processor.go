@@ -119,9 +119,12 @@ func Cache(parent Charts) Charts {
 
 		go func(title Title, row *cacheRow, parent Charts) {
 			for request := range row.channel {
-
 				if row.begin > -1 {
 					if row.begin <= request.begin && row.begin+len(row.data) >= request.end {
+						request.back <- cacheRowAnswer{
+							data: row.data[request.begin-row.begin : request.end-row.begin],
+							err:  nil,
+						}
 					} else {
 						var res [][]float64
 						var err error
@@ -148,16 +151,16 @@ func Cache(parent Charts) Charts {
 						}
 						continue
 					}
-				}
-
-				data, err := parent.Data([]Title{title}, request.begin, request.end)
-				if err == nil {
-					row.data = data[0]
-					row.begin = request.begin
-				}
-				request.back <- cacheRowAnswer{
-					data: data[0],
-					err:  err,
+				} else {
+					data, err := parent.Data([]Title{title}, request.begin, request.end)
+					if err == nil {
+						row.data = data[0]
+						row.begin = request.begin
+					}
+					request.back <- cacheRowAnswer{
+						data: data[0],
+						err:  err,
+					}
 				}
 			}
 		}(k, row, parent)
