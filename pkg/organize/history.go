@@ -21,12 +21,10 @@ func UpdateHistory(
 		return nil, fmt.Errorf("user '%v' has no valid registration date",
 			user.Name)
 	}
-	endCached := user.Registered
-
 	cache := unpack.NewCached(s)
 
-	bookmark, err := unpack.LoadBookmark(user.Name, s)
-	if err == nil {
+	endCached := user.Registered
+	if bookmark, err := unpack.LoadBookmark(user.Name, s); err == nil {
 		endCached = bookmark
 	}
 
@@ -52,6 +50,9 @@ func UpdateHistory(
 	newPlays, err := LoadHistory(
 		unpack.User{Name: user.Name, Registered: endCached},
 		until, f, cache) // TODO make fresh optional
+	if err != nil {
+		return nil, err
+	}
 
 	for _, plays := range newPlays {
 		err = attachDuration(plays, cache)
@@ -85,37 +86,30 @@ func LoadHistory(
 	until rsrc.Day,
 	io rsrc.IO,
 	l unpack.Loader) ([][]info.Song, error) {
-
 	if until == nil {
 		return nil, errors.New("parameter 'until' is no valid Day")
 	} else if user.Registered == nil {
 		return nil, errors.New("user has no valid registration date")
+	} else {
+		return loadHistory(user.Name, user.Registered, until, io, l)
 	}
+}
 
-	days := rsrc.Between(user.Registered, until).Days()
+func loadHistory(
+	user string,
+	begin, until rsrc.Day,
+	io rsrc.IO,
+	l unpack.Loader) ([][]info.Song, error) {
+
+	days := rsrc.Between(begin, until).Days()
 	result := make([][]info.Song, days+1)
-	feedback := make(chan error)
-	for i := range result {
-		go func(i int) {
-			date := user.Registered.AddDate(0, 0, i)
-			dp, err := loadDayPlays(user.Name, date, io, l)
-			if err == nil {
-				result[i] = dp
-			}
-			feedback <- err
-		}(i)
-	}
-	fail := []error{}
-	for i := 0; i <= days; i++ {
-		err := <-feedback
-		if err != nil {
-			fail = append(fail, err)
-		}
-	}
-	if len(fail) > 0 {
-		return nil, fail[0] // TODO return all errors
-	}
-	return result, nil
+	errs := async.Pie(len(result), func(i int) error {
+		date := begin.AddDate(0, 0, i)
+		dp, err := loadDayPlays(user, date, io, l)
+		result[i] = dp
+		return err
+	})
+	return result, errs
 }
 
 // loadDayPlaysResult is the result of loadDayPlays.
