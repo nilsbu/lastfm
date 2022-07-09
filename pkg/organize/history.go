@@ -14,7 +14,7 @@ import (
 // reads the remaining days from raw data. The last saved day gets reloaded.
 func UpdateHistory(
 	user *unpack.User,
-	until rsrc.Day, // TODO change to end/before
+	end rsrc.Day,
 	s, f rsrc.IO,
 ) (plays [][]info.Song, err error) {
 	if user.Registered == nil {
@@ -38,18 +38,18 @@ func UpdateHistory(
 		oldPlays = oldPlays[:days]
 	}
 
-	if until == nil {
-		return nil, errors.New("'until' is not a valid day")
+	if end == nil {
+		return nil, errors.New("'end' is not a valid day")
 	}
 
-	if rsrc.Between(until.AddDate(0, 0, 1), endCached).Days() > 0 {
+	if rsrc.Between(end, endCached).Days() > 0 {
 		days := rsrc.Between(user.Registered, endCached).Days() - 1
 		return oldPlays[:days], nil
 	}
 
 	newPlays, err := LoadHistory(
 		unpack.User{Name: user.Name, Registered: endCached},
-		until, f, cache) // TODO make fresh optional
+		end, f, cache) // TODO make fresh optional
 	if err != nil {
 		return nil, err
 	}
@@ -83,26 +83,26 @@ func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]info.Song, e
 // LoadHistory load plays from all days since the registration of the user.
 func LoadHistory(
 	user unpack.User,
-	until rsrc.Day,
+	end rsrc.Day,
 	io rsrc.IO,
 	l unpack.Loader) ([][]info.Song, error) {
-	if until == nil {
-		return nil, errors.New("parameter 'until' is no valid Day")
+	if end == nil {
+		return nil, errors.New("parameter 'end' is no valid Day")
 	} else if user.Registered == nil {
 		return nil, errors.New("user has no valid registration date")
 	} else {
-		return loadHistory(user.Name, user.Registered, until, io, l)
+		return loadHistory(user.Name, user.Registered, end, io, l)
 	}
 }
 
 func loadHistory(
 	user string,
-	begin, until rsrc.Day,
+	begin, end rsrc.Day,
 	io rsrc.IO,
 	l unpack.Loader) ([][]info.Song, error) {
 
-	days := rsrc.Between(begin, until).Days()
-	result := make([][]info.Song, days+1)
+	days := rsrc.Between(begin, end).Days()
+	result := make([][]info.Song, days)
 	errs := async.Pie(len(result), func(i int) error {
 		date := begin.AddDate(0, 0, i)
 		dp, err := loadDayPlays(user, date, io, l)
