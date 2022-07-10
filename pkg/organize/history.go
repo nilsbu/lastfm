@@ -6,6 +6,7 @@ import (
 
 	async "github.com/nilsbu/async"
 	"github.com/nilsbu/lastfm/pkg/info"
+	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -191,7 +192,7 @@ func attachDuration(songs []info.Song, cache unpack.Loader) error {
 
 // BackupUpdateHistory overwrites the prepared history by re-fetching the data.
 // A number of days before the current bookmark, specified by delta, won't be re-fetched.
-func BackupUpdateHistory(userName string, delta int, s rsrc.IO) error {
+func BackupUpdateHistory(userName string, delta int, s io.Store) error {
 	var bookmark, backup rsrc.Day
 	if user, err := unpack.LoadUserInfo(userName, unpack.NewCacheless(s)); err != nil {
 		return err
@@ -202,8 +203,7 @@ func BackupUpdateHistory(userName string, delta int, s rsrc.IO) error {
 	}
 	end := bookmark.AddDate(0, 0, -delta)
 	cache := unpack.NewCached(s)
-	fmt.Println(backup, end)
-	if _, err := loadHistory(userName, backup, end, s, cache); err != nil {
+	if _, err := loadHistory(userName, backup, end, io.FreshStore(s), cache); err != nil {
 		return err
 	} else if err := unpack.WriteBackupBookmark(end.AddDate(0, 0, 1), userName, s); err != nil {
 		return err
