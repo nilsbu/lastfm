@@ -28,7 +28,7 @@ func UpdateHistory(
 		endCached = bookmark
 	}
 
-	oldPlays, err := loadDays(user.Name, user.Registered, endCached, s)
+	oldPlays, err := LoadPreparedHistory(user.Name, user.Registered, endCached, s)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func UpdateHistory(
 	return append(oldPlays, newPlays...), err
 }
 
-func loadDays(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]info.Song, error) {
+func LoadPreparedHistory(user string, begin, end rsrc.Day, r rsrc.Reader) ([][]info.Song, error) {
 	days := rsrc.Between(begin, end).Days()
 	plays := make([][]info.Song, days)
 
@@ -101,15 +101,18 @@ func loadHistory(
 	io rsrc.IO,
 	l unpack.Loader) ([][]info.Song, error) {
 
-	days := rsrc.Between(begin, end).Days()
-	result := make([][]info.Song, days)
-	errs := async.Pie(len(result), func(i int) error {
-		date := begin.AddDate(0, 0, i)
-		dp, err := loadDayPlays(user, date, io, l)
-		result[i] = dp
-		return err
-	})
-	return result, errs
+	if days := rsrc.Between(begin, end).Days(); days <= 0 {
+		return nil, nil
+	} else {
+		result := make([][]info.Song, days)
+		errs := async.Pie(len(result), func(i int) error {
+			date := begin.AddDate(0, 0, i)
+			dp, err := loadDayPlays(user, date, io, l)
+			result[i] = dp
+			return err
+		})
+		return result, errs
+	}
 }
 
 // loadDayPlaysResult is the result of loadDayPlays.
@@ -184,4 +187,27 @@ func attachDuration(songs []info.Song, cache unpack.Loader) error {
 
 	// not all tracks are found, ignore this
 	return nil
+}
+
+// BackupUpdateHistory overwrites the prepared history by re-fetching the data.
+// A number of days before the current bookmark, specified by delta, won't be re-fetched.
+func BackupUpdateHistory(userName string, delta int, s rsrc.IO) error {
+	var bookmark, backup rsrc.Day
+	if user, err := unpack.LoadUserInfo(userName, unpack.NewCacheless(s)); err != nil {
+		return err
+	} else if bookmark, err = unpack.LoadBookmark(userName, s); err != nil {
+		return err
+	} else if backup, err = unpack.LoadBackupBookmark(userName, s); err != nil {
+		backup = user.Registered
+	}
+	end := bookmark.AddDate(0, 0, -delta)
+	cache := unpack.NewCached(s)
+	fmt.Println(backup, end)
+	if _, err := loadHistory(userName, backup, end, s, cache); err != nil {
+		return err
+	} else if err := unpack.WriteBackupBookmark(end.AddDate(0, 0, 1), userName, s); err != nil {
+		return err
+	} else {
+		return nil
+	}
 }

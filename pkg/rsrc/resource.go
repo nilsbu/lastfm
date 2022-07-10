@@ -219,6 +219,13 @@ func Bookmark(user string) Locator {
 	}
 }
 
+func BackupBookmark(user string) Locator {
+	return &userData{
+		method: "bookmark2",
+		name:   user,
+	}
+}
+
 func AllDayPlays(user string) Locator {
 	return &userData{
 		method: "alldayplays",
