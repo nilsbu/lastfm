@@ -4,13 +4,24 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/organize"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
 
-func createStore() (io.Store, error) {
+func dumpChan() chan<- format.Formatter {
+	obChan := make(chan format.Formatter)
+	go func() {
+		for range obChan {
+		}
+	}()
+
+	return obChan
+}
+
+func createStore(observer chan format.Formatter) (io.Store, error) {
 	key, err := unpack.LoadAPIKey(io.FileIO{})
 	if err != nil {
 		return nil, err
@@ -26,8 +37,9 @@ func createStore() (io.Store, error) {
 		fileIOs = append(fileIOs, io.FileIO{})
 	}
 
-	st, err := io.NewStore(
+	st, err := io.NewObservedStore(
 		[][]rsrc.IO{webIOs, fileIOs},
+		[]chan<- format.Formatter{observer, dumpChan()},
 	)
 	if err != nil {
 		return nil, err
@@ -37,7 +49,10 @@ func createStore() (io.Store, error) {
 }
 
 func main() {
-	s, err := createStore()
+	webObserver := make(chan format.Formatter)
+	// d := display.NewTimedTerminal(webObserver, 1*time.Second)
+
+	s, err := createStore(webObserver)
 	if err != nil {
 		fmt.Println(err)
 		return

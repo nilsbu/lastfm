@@ -203,6 +203,7 @@ func BackupUpdateHistory(userName string, delta int, s io.Store) error {
 	}
 	end := bookmark.AddDate(0, 0, -delta)
 	cache := unpack.NewCached(s)
+	fmt.Println(backup, end)
 	if _, err := loadHistory(userName, backup, end, io.FreshStore(s), cache); err != nil {
 		return err
 	} else if err := unpack.WriteBackupBookmark(end.AddDate(0, 0, 1), userName, s); err != nil {
