@@ -65,7 +65,10 @@ func main() {
 	}
 
 	for {
-		organize.BackupUpdateHistory(session.User, 30, s)
+		if err := organize.BackupUpdateHistory(session.User, 30, s); err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		time.Sleep(60 * 60 * time.Second)
 	}
