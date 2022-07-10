@@ -163,8 +163,8 @@ func (w *pipeline) load() (*vars, error) {
 	}
 
 	days := rsrc.Between(v.user.Registered, v.bookmark).Days()
-	v.plays = make([][]info.Song, days+1)
-	err = async.Pie(days+1, func(i int) error {
+	v.plays = make([][]info.Song, days)
+	err = async.Pie(days, func(i int) error {
 		day := v.user.Registered.AddDate(0, 0, i)
 		if songs, err := unpack.LoadDayHistory(v.user.Name, day, w.store); err == nil {
 			for j, song := range songs {

@@ -200,7 +200,7 @@ func TestTable(t *testing.T) {
 			d := mock.NewDisplay()
 
 			if c.hasCharts && c.user != nil {
-				unpack.WriteBookmark(c.user.Registered.AddDate(0, 0, len(c.history)-1), user, s)
+				unpack.WriteBookmark(c.user.Registered.AddDate(0, 0, len(c.history)), user, s)
 
 				for i, day := range c.history {
 					err := unpack.WriteDayHistory(day, user, c.user.Registered.AddDate(0, 0, i), s)
