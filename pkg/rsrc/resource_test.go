@@ -198,6 +198,7 @@ func TestUserDataPath(t *testing.T) {
 		// path is always ok, since input is considered valid
 	}{
 		{Bookmark("user1"), ".lastfm/user/user1/bookmark.json"},
+		{BackupBookmark("user1"), ".lastfm/user/user1/bookmark2.json"},
 		{AllDayPlays("user1"), ".lastfm/user/user1/alldayplays.json"},
 		{SongHistory("user1"), ".lastfm/user/user1/history.json"},
 		{DayHistory("user1", ParseDay("2019-12-31")), ".lastfm/user/user1/history/2019-12-31.json"},

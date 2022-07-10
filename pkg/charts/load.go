@@ -80,8 +80,8 @@ func (w *load) load() error {
 	}
 
 	days := rsrc.Between(user.Registered, bookmark).Days()
-	w.plays = make([][]info.Song, days+1)
-	err = async.Pie(days+1, func(i int) error {
+	w.plays = make([][]info.Song, days)
+	err = async.Pie(days, func(i int) error {
 		day := user.Registered.AddDate(0, 0, i)
 		if songs, err := unpack.LoadDayHistory(w.user, day, w.r); err == nil {
 			for j, song := range songs {
@@ -149,10 +149,6 @@ func (p *tagPartition) Titles(partition Title) ([]Title, error) {
 			return nil
 		}
 	})
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return nil, err
-	// }
 
 	titles := make([]Title, len(parentTitles))
 	j := 0

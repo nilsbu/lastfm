@@ -58,6 +58,54 @@ func TestBookmarks(t *testing.T) {
 	}
 }
 
+func TestBackupBookmarks(t *testing.T) {
+	cases := []struct {
+		bookmark rsrc.Day
+		write    bool
+		readOK   bool
+	}{
+		{
+			rsrc.ParseDay("2019-02-01"),
+			false, false,
+		},
+		{
+			rsrc.ParseDay("2019-02-01"),
+			true, true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run("", func(t *testing.T) {
+			io, err := mock.IO(
+				map[rsrc.Locator][]byte{rsrc.BackupBookmark("user"): nil}, mock.Path)
+			if err != nil {
+				t.Fatal("setup error")
+			}
+
+			if c.write {
+				err = unpack.WriteBackupBookmark(c.bookmark, "user", io)
+				if err != nil {
+					t.Error("unexpected error during write:", err)
+				}
+			}
+
+			bookmark, err := unpack.LoadBackupBookmark("user", io)
+			if err != nil && c.readOK {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !c.readOK {
+				t.Error("expected error but none occurred")
+			}
+
+			if err == nil {
+				if c.bookmark.Midnight() != bookmark.Midnight() {
+					t.Errorf("wrong data\nwant: '%v'\nhas:  '%v'",
+						c.bookmark, bookmark)
+				}
+			}
+		})
+	}
+}
+
 func TestAllDayPlays(t *testing.T) {
 	cases := []struct {
 		plays  []map[string]float64

@@ -48,6 +48,46 @@ func (o obBookmark) raw(obj interface{}) interface{} {
 	return js
 }
 
+type obBackupBookmark struct {
+	user string
+}
+
+// WriteBackupBookmark writes a backup bookmark.
+func WriteBackupBookmark(bookmark rsrc.Day, user string, w rsrc.Writer) error {
+	return deposit(bookmark, obBackupBookmark{user}, w)
+}
+
+// LoadBackupBookmark loads a backup bookmark.
+func LoadBackupBookmark(user string, r rsrc.Reader) (rsrc.Day, error) {
+	data, err := obtain(&obBackupBookmark{user}, r)
+	if err != nil {
+		return nil, err
+	}
+	return data.(rsrc.Day), nil
+}
+
+func (o obBackupBookmark) locator() rsrc.Locator {
+	return rsrc.BackupBookmark(o.user)
+}
+
+func (o obBackupBookmark) deserializer() interface{} {
+	return &jsonBookmark{}
+}
+
+func (o obBackupBookmark) interpret(raw interface{}) (interface{}, error) {
+	bookmark := raw.(*jsonBookmark)
+	return rsrc.ParseDay(bookmark.NextDay), nil
+}
+
+func (o obBackupBookmark) raw(obj interface{}) interface{} {
+	t := obj.(rsrc.Day).Time()
+
+	js := jsonBookmark{
+		NextDay: fmt.Sprintf("%04d-%02d-%02d", t.Year(), t.Month(), t.Day()),
+	}
+	return js
+}
+
 type obAllDayPlays struct {
 	user string
 }

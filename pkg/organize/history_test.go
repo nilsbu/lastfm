@@ -28,14 +28,14 @@ func TestLoadHistory(t *testing.T) {
 
 	testCases := []struct {
 		user  unpack.User
-		until rsrc.Day
+		end   rsrc.Day
 		files map[rsrc.Locator][]byte
 		dps   [][]info.Song
 		ok    bool
 	}{
 		{
 			unpack.User{Name: "", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-11"),
+			rsrc.ParseDay("2018-01-12"),
 			map[rsrc.Locator][]byte{
 				p01: nil,
 				p11: nil,
@@ -54,7 +54,7 @@ func TestLoadHistory(t *testing.T) {
 		},
 		{
 			unpack.User{Name: "", Registered: nil},
-			rsrc.ParseDay("2018-01-11"),
+			rsrc.ParseDay("2018-01-12"),
 			map[rsrc.Locator][]byte{
 				p01: nil,
 			},
@@ -63,7 +63,7 @@ func TestLoadHistory(t *testing.T) {
 		},
 		{
 			unpack.User{Name: "ASDF", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-11"),
+			rsrc.ParseDay("2018-01-12"),
 			map[rsrc.Locator][]byte{
 				p01:   []byte(`{"recenttracks":{"track":[{"artist":{"#text":"ASDF"}}], "@attr":{"totalPages":"1"}}}`),
 				p11:   []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XXX"}}], "@attr":{"totalPages":"1"}}}`),
@@ -78,7 +78,7 @@ func TestLoadHistory(t *testing.T) {
 		},
 		{
 			unpack.User{Name: "ASDF", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-10"),
+			rsrc.ParseDay("2018-01-11"),
 			map[rsrc.Locator][]byte{
 				p01: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"X"}}], "@attr":{"page":"1","totalPages":"3"}}}`),
 				p02: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"Y"}}], "@attr":{"page":"2","totalPages":"3"}}}`),
@@ -94,7 +94,7 @@ func TestLoadHistory(t *testing.T) {
 		},
 		{
 			unpack.User{Name: "ASDF", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-10"),
+			rsrc.ParseDay("2018-01-11"),
 			map[rsrc.Locator][]byte{
 				p01: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"X"}}], "@attr":{"page":"1","totalPages":"3"}}}`),
 				p02: []byte(""),
@@ -110,7 +110,7 @@ func TestLoadHistory(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			io, _ := mock.IO(tc.files, mock.Path)
 
-			dps, err := organize.LoadHistory(tc.user, tc.until, io, unpack.NewCached(io))
+			dps, err := organize.LoadHistory(tc.user, tc.end, io, unpack.NewCached(io))
 			if err != nil && tc.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !tc.ok {
@@ -147,7 +147,7 @@ func TestUpdateHistory(t *testing.T) {
 	testCases := []struct {
 		name           string
 		user           unpack.User
-		until          rsrc.Day
+		end            rsrc.Day
 		bookmark       rsrc.Day
 		saved          [][]info.Song
 		tracksFile     map[rsrc.Locator][]byte
@@ -158,7 +158,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"no data",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-10"),
+			rsrc.ParseDay("2018-01-11"),
 			nil,
 			nil,
 			map[rsrc.Locator][]byte{},
@@ -169,7 +169,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"registration day invalid",
 			unpack.User{Name: "AA", Registered: nil},
-			rsrc.ParseDay("2018-01-10"),
+			rsrc.ParseDay("2018-01-11"),
 			nil,
 			nil,
 			map[rsrc.Locator][]byte{},
@@ -191,7 +191,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"download one day",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-10"),
+			rsrc.ParseDay("2018-01-11"),
 			rsrc.ParseDay("2018-01-10"),
 			[][]info.Song{},
 			map[rsrc.Locator][]byte{h0: nil, bm: nil},
@@ -207,7 +207,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"download some, have some",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-11")},
-			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-14"),
 			rsrc.ParseDay("2018-01-12"),
 			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
@@ -239,7 +239,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"don't reload what you don't need",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-12"),
+			rsrc.ParseDay("2018-01-13"),
 			rsrc.ParseDay("2018-01-12"),
 			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
@@ -270,7 +270,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"have more than want",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-11"),
+			rsrc.ParseDay("2018-01-12"),
 			rsrc.ParseDay("2018-01-13"),
 			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
@@ -297,7 +297,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"saved days ahead of bookmark",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-14"),
 			rsrc.ParseDay("2018-01-12"),
 			[][]info.Song{
 				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
@@ -331,7 +331,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"saved days but no bookmark",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-14"),
 			nil,
 			[][]info.Song{
 				{{Artist: "XX"}, {Artist: "XX"}},
@@ -365,7 +365,7 @@ func TestUpdateHistory(t *testing.T) {
 		{
 			"download error",
 			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
-			rsrc.ParseDay("2018-01-10"),
+			rsrc.ParseDay("2018-01-11"),
 			rsrc.ParseDay("2018-01-10"),
 			[][]info.Song{},
 			map[rsrc.Locator][]byte{bm: nil},
@@ -379,36 +379,11 @@ func TestUpdateHistory(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.tracksFile[rsrc.SongHistory(tc.user.Name)] = nil
 			io1, _ := mock.IO(tc.tracksFile, mock.Path)
-			if tc.saved != nil {
-				for i, songs := range tc.saved {
-					if err := unpack.WriteDayHistory(songs, tc.user.Name, tc.user.Registered.AddDate(0, 0, i), io1); err != nil {
-						t.Fatal("unexpected error during write of all day plays:", err)
-					}
-				}
-				// if err := unpack.WriteSongHistory(tc.saved, tc.user.Name, io1); err != nil {
-				// 	t.Fatal("unexpected error during write of all day plays:", err)
-				// }
-			}
-
-			if tc.bookmark != nil {
-				dt := rsrc.Between(tc.user.Registered, tc.bookmark).Days()
-				sd := len(tc.saved)
-				if dt > sd {
-					t.Fatalf("bookmark is %vd after registered but must not be more "+
-						"than number of days saved (%v)",
-						dt, sd)
-				}
-
-				if err := unpack.WriteBookmark(tc.bookmark, tc.user.Name, io1); err != nil {
-					t.Fatal("unexpected error during write of bookmark:", err)
-				}
-			}
+			prepareFiles(t, &tc.user, tc.saved, nil, tc.bookmark, io1)
 
 			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
-
 			store, _ := io.NewStore([][]rsrc.IO{{io0}, {io1}})
-
-			plays, err := organize.UpdateHistory(&tc.user, tc.until, store, io.FreshStore(store))
+			plays, err := organize.UpdateHistory(&tc.user, tc.end, store, io.FreshStore(store))
 			if err != nil && tc.ok {
 				t.Error("unexpected error:", err)
 			} else if err == nil && !tc.ok {
@@ -421,6 +396,203 @@ func TestUpdateHistory(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestBackupUpdateHistory(t *testing.T) {
+	h0 := rsrc.History("AA", 1, rsrc.ParseDay("2018-01-10"))
+	h1 := rsrc.History("AA", 1, rsrc.ParseDay("2018-01-11"))
+	// h2 := rsrc.History("AA", 1, rsrc.ParseDay("2018-01-12"))
+	// h3 := rsrc.History("AA", 1, rsrc.ParseDay("2018-01-13"))
+
+	b0 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-10"))
+	b1 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-11"))
+	b2 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-12"))
+	b3 := rsrc.DayHistory("AA", rsrc.ParseDay("2018-01-13"))
+
+	bm := rsrc.Bookmark("AA")
+	bu := rsrc.BackupBookmark("AA")
+	ui := rsrc.UserInfo("AA")
+
+	// tASDF := rsrc.TrackInfo("ASDF", "")
+	tXX := rsrc.TrackInfo("XX", "")
+	tA := rsrc.TrackInfo("A", "")
+	// thui := rsrc.TrackInfo("hui", "")
+	// tB := rsrc.TrackInfo("B", "")
+
+	testCases := []struct {
+		name             string
+		user             unpack.User
+		end              rsrc.Day
+		backup, bookmark rsrc.Day
+		delta            int
+		saved            [][]info.Song
+		tracksFile       map[rsrc.Locator][]byte
+		tracksDownload   map[rsrc.Locator][]byte
+		plays            [][]info.Song
+		writtenBackup    rsrc.Day
+		ok               bool
+	}{
+		{
+			"have never backuped",
+			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
+			rsrc.ParseDay("2018-01-13"),
+			nil,
+			rsrc.ParseDay("2018-01-13"),
+			1,
+			[][]info.Song{
+				{},                            // two songs missing
+				{{Artist: "A", Duration: 2}},  // wrong duration
+				{{Artist: "XX", Duration: 1}}, // won't be checked
+			},
+			map[rsrc.Locator][]byte{
+				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
+				bm: nil, bu: nil,
+				b0: nil, b1: nil, b2: nil, b3: nil,
+				ui:  nil,
+				tXX: []byte(`{"track":{"duration":"60000"}}`),
+				tA:  []byte(`{"track":{"duration":"240000"}}`),
+			},
+			map[rsrc.Locator][]byte{},
+			[][]info.Song{
+				{{Artist: "XX", Duration: 1}, {Artist: "XX", Duration: 1}},
+				{{Artist: "A", Duration: 4}},
+				{{Artist: "XX", Duration: 1}},
+			},
+			rsrc.ParseDay("2018-01-13"),
+			true,
+		},
+		{
+			"don't fix before backup point",
+			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
+			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-11"),
+			rsrc.ParseDay("2018-01-13"),
+			1,
+			[][]info.Song{
+				{},                            // two songs missing, won't be corrected
+				{{Artist: "A", Duration: 2}},  // wrong duration
+				{{Artist: "XX", Duration: 1}}, // won't be checked
+			},
+			map[rsrc.Locator][]byte{
+				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
+				bm: nil, bu: nil,
+				b0: nil, b1: nil, b2: nil, b3: nil,
+				ui:  nil,
+				tXX: []byte(`{"track":{"duration":"60000"}}`),
+				tA:  []byte(`{"track":{"duration":"240000"}}`),
+			},
+			map[rsrc.Locator][]byte{},
+			[][]info.Song{
+				{},
+				{{Artist: "A", Duration: 4}},
+				{{Artist: "XX", Duration: 1}},
+			},
+			rsrc.ParseDay("2018-01-13"),
+			true,
+		},
+		{
+			"nothing to do when backup is at the end",
+			unpack.User{Name: "AA", Registered: rsrc.ParseDay("2018-01-10")},
+			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-13"),
+			1,
+			[][]info.Song{
+				{},                            // two songs missing, won't be corrected
+				{{Artist: "A", Duration: 2}},  // wrong duration
+				{{Artist: "XX", Duration: 1}}, // won't be checked
+			},
+			map[rsrc.Locator][]byte{
+				h0: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"XX"}},{"artist":{"#text":"XX"}}], "@attr":{"totalPages":"1"}}}`),
+				h1: []byte(`{"recenttracks":{"track":[{"artist":{"#text":"A"}}], "@attr":{"totalPages":"1"}}}`),
+				bm: nil, bu: nil,
+				b0: nil, b1: nil, b2: nil, b3: nil,
+				ui:  nil,
+				tXX: []byte(`{"track":{"duration":"60000"}}`),
+				tA:  []byte(`{"track":{"duration":"240000"}}`),
+			},
+			map[rsrc.Locator][]byte{},
+			[][]info.Song{
+				{},
+				{{Artist: "A", Duration: 2}},
+				{{Artist: "XX", Duration: 1}},
+			},
+			rsrc.ParseDay("2018-01-13"),
+			true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.tracksFile[rsrc.SongHistory(tc.user.Name)] = nil
+			io1, _ := mock.IO(tc.tracksFile, mock.Path)
+			prepareFiles(t, &tc.user, tc.saved, tc.backup, tc.bookmark, io1)
+
+			if err := unpack.WriteUserInfo(&tc.user, io1); err != nil {
+				t.Fatal("cannot write user info:", err)
+			}
+
+			io0, _ := mock.IO(tc.tracksDownload, mock.URL)
+			store, _ := io.NewStore([][]rsrc.IO{{io0}, {io1}})
+			err := organize.BackupUpdateHistory(tc.user.Name, tc.delta, store)
+			if err != nil && tc.ok {
+				t.Error("unexpected error:", err)
+			} else if err == nil && !tc.ok {
+				t.Error("expected error but none occurred")
+			}
+			if err == nil {
+				// only io1 is given, since downloads shouldn't happen here
+				if plays, err := organize.LoadPreparedHistory(tc.user.Name, tc.user.Registered, tc.end, io1); err != nil {
+					t.Fatal(err)
+				} else if !reflect.DeepEqual(plays, tc.plays) {
+					t.Errorf("updated plays faulty:\nhas:      %v\nexpected: %v",
+						printSongs(plays), printSongs(tc.plays))
+				} else if backup, err := unpack.LoadBackupBookmark(tc.user.Name, io1); err != nil {
+					t.Errorf("backup bookmark doesn't exist")
+				} else if backup != tc.writtenBackup {
+					t.Errorf("backup wasn't written properly: expect: %v, actual: %v", tc.writtenBackup, backup)
+				}
+			}
+		})
+	}
+}
+
+func prepareFiles(t *testing.T, user *unpack.User, songss [][]info.Song, backup, bookmark rsrc.Day, w rsrc.Writer) {
+	for i, songs := range songss {
+		if err := unpack.WriteDayHistory(songs, user.Name, user.Registered.AddDate(0, 0, i), w); err != nil {
+			t.Fatal("unexpected error during write of all day plays:", err)
+		}
+	}
+
+	if backup != nil {
+		dt := rsrc.Between(user.Registered, backup).Days()
+		sd := len(songss)
+		if dt > sd {
+			t.Fatalf("backup is %vd after registered but must not be more "+
+				"than number of days saved (%v)",
+				dt, sd)
+		}
+
+		if err := unpack.WriteBackupBookmark(backup, user.Name, w); err != nil {
+			t.Fatal("unexpected error during write of backup:", err)
+		}
+	}
+
+	if bookmark != nil {
+		dt := rsrc.Between(user.Registered, bookmark).Days()
+		sd := len(songss)
+		if dt > sd {
+			t.Fatalf("bookmark is %vd after registered but must not be more "+
+				"than number of days saved (%v)",
+				dt, sd)
+		}
+
+		if err := unpack.WriteBookmark(bookmark, user.Name, w); err != nil {
+			t.Fatal("unexpected error during write of bookmark:", err)
+		}
 	}
 }
 
