@@ -106,7 +106,7 @@ func loadHistory(
 		return nil, nil
 	} else {
 		result := make([][]info.Song, days)
-		errs := async.Pie(len(result), func(i int) error {
+		errs := async.Pie(days, func(i int) error {
 			date := begin.AddDate(0, 0, i)
 			dp, err := loadDayPlays(user, date, io, l)
 			result[i] = dp
@@ -203,9 +203,10 @@ func BackupUpdateHistory(userName string, delta int, s io.Store) error {
 	}
 	end := bookmark.AddDate(0, 0, -delta)
 	cache := unpack.NewCached(s)
-	fmt.Println(backup, end)
-	if _, err := loadHistory(userName, backup, end, io.FreshStore(s), cache); err != nil {
+	if songs, err := loadHistory(userName, backup, end, io.FreshStore(s), cache); err != nil {
 		return err
+	} else if len(songs) == 0 {
+		return nil
 	} else if err := unpack.WriteBackupBookmark(end.AddDate(0, 0, 1), userName, s); err != nil {
 		return err
 	} else {

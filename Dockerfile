@@ -13,4 +13,5 @@ COPY cmd ./cmd
 
 RUN go build -o /lastfm-wrkr ./cmd/lastfm-wrkr
 
-CMD /lastfm-wrkr /data
+WORKDIR /
+CMD /lastfm-wrkr
