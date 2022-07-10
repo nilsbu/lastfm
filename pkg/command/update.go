@@ -22,8 +22,8 @@ func (cmd updateHistory) Execute(
 		return errors.Wrap(err, "failed to load user info")
 	}
 
-	today := rsrc.DayFromTime(time.Now()).AddDate(0, 0, 1)
-	_, err = organize.UpdateHistory(user, today, s, io.FreshStore(s))
+	today := rsrc.DayFromTime(time.Now())
+	_, err = organize.UpdateHistory(user, today.AddDate(0, 0, 1), s, io.FreshStore(s))
 	if err != nil {
 		return errors.Wrap(err, "failed to update user history")
 	}
