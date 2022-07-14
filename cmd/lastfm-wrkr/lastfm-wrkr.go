@@ -49,22 +49,21 @@ func createStore(observer chan format.Formatter) (io.Store, error) {
 }
 
 func main() {
-	webObserver := make(chan format.Formatter)
-	// d := display.NewTimedTerminal(webObserver, 1*time.Second)
-
-	s, err := createStore(webObserver)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	session, err := unpack.LoadSessionInfo(s)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	for {
+		webObserver := make(chan format.Formatter)
+
+		s, err := createStore(webObserver)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		session, err := unpack.LoadSessionInfo(s)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		if err := organize.BackupUpdateHistory(session.User, 30, s); err != nil {
 			fmt.Println(err)
 			return
