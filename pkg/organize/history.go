@@ -116,13 +116,6 @@ func loadHistory(
 	}
 }
 
-// loadDayPlaysResult is the result of loadDayPlays.
-type loadDayPlaysResult struct {
-	DayPlays []info.Song
-	Page     int
-	Err      error
-}
-
 func loadDayPlays(
 	user string,
 	time rsrc.Day,
@@ -145,28 +138,19 @@ func loadDayPlays(
 	pages := make([][]info.Song, firstPage.Pages)
 	pages[0] = firstPage.Plays
 
-	back := make(chan loadDayPlaysResult)
-	for page := 2; page <= len(pages); page++ {
-		go func(page int) {
-			histPage, tmpErr := unpack.LoadHistoryDayPage(user, page, time, unpack.NewCacheless(io))
-			if tmpErr != nil {
-				back <- loadDayPlaysResult{nil, page, tmpErr}
-			} else {
-				err := attachDuration(histPage.Plays, cache)
-				back <- loadDayPlaysResult{histPage.Plays, page, err}
-			}
-		}(page)
-	}
-
-	for p := 1; p < len(pages); p++ {
-		dpr := <-back
-		if dpr.Err != nil {
-			return nil, dpr.Err
+	errs := async.Pie(len(pages)-1, func(i int) error {
+		page := i + 2
+		if histPage, err := unpack.LoadHistoryDayPage(user, page, time, unpack.NewCacheless(io)); err != nil {
+			return err
+		} else {
+			err := attachDuration(histPage.Plays, cache)
+			pages[page-1] = histPage.Plays
+			return err
 		}
-
-		pages[dpr.Page-1] = dpr.DayPlays
+	})
+	if errs != nil {
+		return nil, errs
 	}
-	close(back)
 
 	plays := []info.Song{}
 	for _, page := range pages {
