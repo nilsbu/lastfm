@@ -21,7 +21,7 @@ func dumpChan() chan<- format.Formatter {
 	return obChan
 }
 
-func createStore(observer chan format.Formatter) (io.Store, error) {
+func createStore() (io.Store, error) {
 	key, err := unpack.LoadAPIKey(io.FileIO{})
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func createStore(observer chan format.Formatter) (io.Store, error) {
 
 	st, err := io.NewObservedStore(
 		[][]rsrc.IO{webIOs, fileIOs},
-		[]chan<- format.Formatter{observer, dumpChan()},
+		[]chan<- format.Formatter{dumpChan(), dumpChan()},
 	)
 	if err != nil {
 		return nil, err
@@ -50,9 +50,7 @@ func createStore(observer chan format.Formatter) (io.Store, error) {
 
 func main() {
 	for {
-		webObserver := make(chan format.Formatter)
-
-		s, err := createStore(webObserver)
+		s, err := createStore()
 		if err != nil {
 			fmt.Println(err)
 			return
