@@ -191,7 +191,7 @@ func BackupUpdateHistory(userName string, delta int, s io.Store) error {
 		return err
 	} else if len(songs) == 0 {
 		return nil
-	} else if err := unpack.WriteBackupBookmark(end.AddDate(0, 0, 1), userName, s); err != nil {
+	} else if err := unpack.WriteBackupBookmark(end, userName, s); err != nil {
 		return err
 	} else {
 		return nil

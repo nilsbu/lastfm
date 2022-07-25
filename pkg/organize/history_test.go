@@ -414,11 +414,8 @@ func TestBackupUpdateHistory(t *testing.T) {
 	bu := rsrc.BackupBookmark("AA")
 	ui := rsrc.UserInfo("AA")
 
-	// tASDF := rsrc.TrackInfo("ASDF", "")
 	tXX := rsrc.TrackInfo("XX", "")
 	tA := rsrc.TrackInfo("A", "")
-	// thui := rsrc.TrackInfo("hui", "")
-	// tB := rsrc.TrackInfo("B", "")
 
 	testCases := []struct {
 		name             string
@@ -460,7 +457,7 @@ func TestBackupUpdateHistory(t *testing.T) {
 				{{Artist: "A", Duration: 4}},
 				{{Artist: "XX", Duration: 1}},
 			},
-			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-12"),
 			true,
 		},
 		{
@@ -490,7 +487,7 @@ func TestBackupUpdateHistory(t *testing.T) {
 				{{Artist: "A", Duration: 4}},
 				{{Artist: "XX", Duration: 1}},
 			},
-			rsrc.ParseDay("2018-01-13"),
+			rsrc.ParseDay("2018-01-12"),
 			true,
 		},
 		{
