@@ -6,11 +6,10 @@ const CMD = {
 
 function Dashboard(props) {
     return (
-        
         <div className="container"><div className="row">
-            <div className="col"><Charts name="year"/></div>
-            <div className="col"><Charts name="f365"/></div>
-            <div className="col"><Charts name="f3653"/></div>
+            <div className="col table-responsive" style={{height: '100%'}}><Charts name="year"/></div>
+            <div className="col table-responsive" style={{height: '100%'}}><Charts name="f365"/></div>
+            <div className="col table-responsive" style={{height: '100%'}}><Charts name="f3653"/></div>
         </div></div>
     )
 }
@@ -59,8 +58,8 @@ class Charts extends React.Component {
         }
         return (
             <div className="charts-table">
-                <table><tbody>
-                    {this.state.data.elems.map((elem) => <Line key={elem.name} elem={elem}/>)}
+                <table className="table table-striped bg-dark text-white"><tbody>
+                    {this.state.data.elems.map((elem, i) => <Line key={elem.name} idx={i} elem={elem}/>)}
                 </tbody></table>
             </div>
         );
@@ -70,7 +69,8 @@ class Charts extends React.Component {
 function Line(props) {
     return (
         <tr>
-            <th>{props.elem.name}</th>
+            <td>{props.idx+1}</td>
+            <td>{props.elem.name}</td>
             <td>{props.elem.value.toFixed(2)}</td>
         </tr>
     );
