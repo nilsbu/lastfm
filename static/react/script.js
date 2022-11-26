@@ -1,6 +1,20 @@
-function Dashboard(props) {
-    return <Charts name="year"/>
+const CMD = {
+    "year": `/json/print/period/${new Date().getFullYear()}`,
+    "f365": "/json/print/fade/365",
+    "f3653": "/json/print/fade/3653",
 }
+
+function Dashboard(props) {
+    return (
+        
+        <div className="container"><div className="row">
+            <div className="col"><Charts name="year"/></div>
+            <div className="col"><Charts name="f365"/></div>
+            <div className="col"><Charts name="f3653"/></div>
+        </div></div>
+    )
+}
+
 class Charts extends React.Component {
     constructor(props) {
         super(props);
@@ -12,7 +26,7 @@ class Charts extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/json/print/period/2022")
+        fetch(CMD[this.props.name])
             .then(res => res.json())
             .then(
                 (result) => {
