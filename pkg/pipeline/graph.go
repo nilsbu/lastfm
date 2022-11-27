@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"sync"
+
 	"github.com/nilsbu/lastfm/pkg/charts"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 )
@@ -13,7 +15,7 @@ type graph struct {
 }
 
 type node struct {
-	children   map[string]*node
+	children   sync.Map
 	charts     charts.Charts
 	registered rsrc.Day
 	lastAccess int
@@ -21,7 +23,7 @@ type node struct {
 
 func newGraph(limit int) *graph {
 	return &graph{
-		root:   &node{children: map[string]*node{}},
+		root:   &node{children: sync.Map{}},
 		caches: [][]string{},
 		limit:  limit,
 	}
@@ -50,12 +52,14 @@ func (c *graph) set(steps []string, charts charts.Charts, registered rsrc.Day) c
 				i++
 			}
 		}
-		n.children[steps[len(steps)-1]] = &node{
-			map[string]*node{},
-			charts,
-			registered,
-			0,
-		}
+		n.children.Store(
+			steps[len(steps)-1],
+			&node{
+				sync.Map{},
+				charts,
+				registered,
+				0,
+			})
 
 		if len(steps) == 1 || steps[len(steps)-1] == "cache" {
 			c.caches = append(c.caches, steps)
@@ -73,8 +77,8 @@ func (c *graph) find(steps []string, counter int) *node {
 		n.lastAccess = counter
 	}
 	for _, step := range steps {
-		if next, ok := n.children[step]; ok {
-			n = next
+		if next, ok := n.children.Load(step); ok {
+			n = next.(*node)
 			if counter > 0 {
 				n.lastAccess = counter
 			}
@@ -111,7 +115,7 @@ func (c *graph) removeCache(cacheId int) {
 	// remove from nodes (includes children)
 	steps := c.caches[cacheId]
 	parent := c.find(steps[:len(steps)-1], -1)
-	delete(parent.children, steps[len(steps)-1])
+	parent.children.Delete(steps[len(steps)-1])
 
 	// remove from caches list
 	newList := make([][]string, 0)
