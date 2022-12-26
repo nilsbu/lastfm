@@ -8,18 +8,22 @@ const PERIODS = [
 ];
 
 const CMD = {
-    "year":        (v) => `/json/print/period/${v}`,
-    "fade":        (v) => `/json/print/fade/${v}`,
-    "fromYear":    (v) => `/json/print/total?by=year&name=${v}`,
-    "period":      (v) => `/json/print/interval/${PERIODS[v][0]}/${PERIODS[v][1]}`,
+    "year":     (v) => `/json/print/period/${v}`,
+    "fromYear": (v) => `/json/print/total?by=year&name=${v}`,
+    "fade":     (v) => `/json/print/fade/${v}`,
+    "super":    (v) => `/json/print/total?by=super&name=${v}`,
+    "period":   (v) => `/json/print/interval/${PERIODS[v][0]}/${PERIODS[v][1]}`,
 };
 
 const YEARS = Array.from({length: YEAR - 2007 + 1}, (x, i) => i + 2007); // TODO fix init
+
+const SUPERS = ["rock", "metal", "pop", "electronic", "hip-hop", "folk", "reggae", "classical", "jazz"];
 
 const OPTS = {
     "main": [],
     "fromYear": YEARS,
     "year": YEARS,
+    "super": SUPERS,
     "fade": [30, 365, 1000, 3653],
     "period": [0, 1, 2, 3],
 };
