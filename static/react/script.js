@@ -1,21 +1,34 @@
 const YEAR = new Date().getFullYear();
 
+const PERIODS = [
+    ["2007-05-05", "2012-02-17"],
+    ["2012-02-17", "2017-02-11"],
+    ["2017-02-11", "2022-06-20"],
+    ["2022-06-20", "2099-12-31"],
+];
+
 const CMD = {
     "year":        (v) => `/json/print/period/${v}`,
     "fade":        (v) => `/json/print/fade/${v}`,
     "fromYear":    (v) => `/json/print/total?by=year&name=${v}`,
+    "period":      (v) => `/json/print/interval/${PERIODS[v][0]}/${PERIODS[v][1]}`,
 };
 
+const YEARS = Array.from({length: YEAR - 2007 + 1}, (x, i) => i + 2007); // TODO fix init
+
 const OPTS = {
-    "pages": ["main", "years"],
-    "years": Array.from({length: YEAR - 2007 + 1}, (x, i) => i + 2007), // TODO fix init
+    "main": [],
+    "fromYear": YEARS,
+    "year": YEARS,
+    "fade": [30, 365, 1000, 3653],
+    "period": [0, 1, 2, 3],
 };
 
 class Dashboard extends React.Component {
     constructor(props) {
         super(props);
         this.state = { 
-            page: OPTS.pages[0],
+            page: Object.keys(OPTS)[0],
         };
     }
 
@@ -29,7 +42,7 @@ class Dashboard extends React.Component {
         return (
             <div className="container">
                 <div className="row" style={{height: '10%'}}>
-                    <Choices onSubmit={this.choose} type={OPTS.pages} page={this.state.page}/>
+                    <Choices onSubmit={this.choose} type={Object.keys(OPTS)} page={this.state.page}/>
                 </div>
                 <Content page={this.state.page}/>
             </div>
@@ -47,10 +60,10 @@ function Content(props) {
                 <div className="col-sm table-responsive" style={{height: '100%'}}><Charts name="fade" param="3653"/></div>
             </div>
         );
-    case "years":
+    default:
         return (
             <div className="row table-responsive" style={{height: '90%'}}>
-                <ChosenCharts options={OPTS.years} func={"fromYear"} /> 
+                <ChosenCharts options={OPTS[props.page]} func={props.page} key={props.page} /> 
             </div>
         );
     }
