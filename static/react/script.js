@@ -1,17 +1,84 @@
+const YEAR = new Date().getFullYear();
+
 const CMD = {
-    "year": `/json/print/period/${new Date().getFullYear()}`,
-    "f365": "/json/print/fade/365",
-    "f3653": "/json/print/fade/3653",
+    "year":        (v) => `/json/print/period/${v}`,
+    "fade":        (v) => `/json/print/fade/${v}`,
+    "fromYear":    (v) => `/json/print/total?by=year&name=${v}`,
+};
+
+const OPTS = {
+    "pages": ["main", "years"],
+    "years": Array.from({length: YEAR - 2007 + 1}, (x, i) => i + 2007), // TODO fix init
+};
+
+class Dashboard extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { 
+            page: OPTS.pages[0],
+        };
+    }
+
+    choose = (page) => {
+        this.setState(Object.assign({}, this.state, {
+            page: page,
+        }));
+    }
+
+    render() {
+        return (
+            <div className="container">
+                <div className="row" style={{height: '10%'}}>
+                    <Choices onSubmit={this.choose} type={OPTS.pages} page={this.state.page}/>
+                </div>
+                <Content page={this.state.page}/>
+            </div>
+        )
+    }
 }
 
-function Dashboard(props) {
-    return (
-        <div className="container"><div className="row">
-            <div className="col table-responsive" style={{height: '100%'}}><Charts name="year"/></div>
-            <div className="col table-responsive" style={{height: '100%'}}><Charts name="f365"/></div>
-            <div className="col table-responsive" style={{height: '100%'}}><Charts name="f3653"/></div>
-        </div></div>
-    )
+function Content(props) {
+    switch (props.page) {
+    case "main":
+        return (
+            <div className="row" style={{height: '90%'}}>
+                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts name="year" param={YEAR}/></div>
+                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts name="fade" param="365"/></div>
+                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts name="fade" param="3653"/></div>
+            </div>
+        );
+    case "years":
+        return (
+            <div className="row table-responsive" style={{height: '90%'}}>
+                <ChosenCharts options={OPTS.years} func={"fromYear"} /> 
+            </div>
+        );
+    }
+}
+
+class ChosenCharts extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            current: props.options[0],
+        };
+
+        this.choose = (page) => this.setState(Object.assign({}, this.state, {
+            current: page,
+        }));
+    }
+
+    render() {
+        return (
+            <div>
+                <div className="row" style={{height: '10%'}}>
+                    <Choices onSubmit={this.choose} type={this.props.options} page={this.state.current}/>
+                </div>
+                <div className="col-sm table-responsive" style={{height: '100%'}} key={this.props.func+this.state.current}>
+                    <Charts name={this.props.func} param={this.state.current}/>
+                </div>
+            </div>
+    )}
 }
 
 class Charts extends React.Component {
@@ -21,11 +88,10 @@ class Charts extends React.Component {
             data: null,
             isLoaded: false,
         };
-
     }
 
     componentDidMount() {
-        fetch(CMD[this.props.name])
+        fetch(CMD[this.props.name](this.props.param))
             .then(res => res.json())
             .then(
                 (result) => {
@@ -64,6 +130,33 @@ class Charts extends React.Component {
             </div>
         );
   }
+}
+
+class Choices extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { 
+            options: props.type,
+            page: props.page,
+            onSubmit: props.onSubmit,
+        };
+    }
+
+    render() {
+        return (
+            <nav aria-label="...">
+                <ul className="pagination bg-dark">
+                    {
+                        this.state.options.map((opt) => (
+                            <li className="page-item bg-dark" key={opt}>
+                                <div className="page-link bg-dark" onClick={() => this.state.onSubmit(opt)}>{opt}</div>
+                            </li>
+                        ))
+                    }
+                </ul>
+            </nav>
+        );
+    }
 }
 
 function Line(props) {
