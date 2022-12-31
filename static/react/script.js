@@ -45,8 +45,8 @@ class Dashboard extends React.Component {
 
     render() {
         return (
-            <div className="container">
-                <div className="row" style={{height: '10%'}}>
+            <div className="container main">
+                <div className="row row-cols-2" >
                     <Choices onSubmit={this.choose} type={Object.keys(OPTS)} page={this.state.page}/>
                 </div>
                 <Content page={this.state.page}/>
@@ -59,23 +59,23 @@ function Content(props) {
     switch (props.page) {
     case "main":
         return (
-            <div className="row" style={{height: '90%'}}>
-                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts func={CMD["year"]} param={YEAR}/></div>
-                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts func={CMD["fade"]} param="365"/></div>
-                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts func={CMD["fade"]} param="3653"/></div>
+            <div className="row row-body" style={{display: "block"}}>
+                <Charts func={CMD["year"]} param={YEAR}/>
+                <Charts func={CMD["fade"]} param="365"/>
+                <Charts func={CMD["fade"]} param="3653"/>
             </div>
         );
     case "buffet":
         return (
-            <div className="row" style={{height: '90%'}}>
+            <div className="row row-body" style={{display: "block"}}>
                 <Buffet />
             </div>
         );
     default:
         return (
-            <div className="row table-responsive" style={{height: '90%'}}>
+            // <div className="row row-body table-responsive">
                 <ChosenCharts options={OPTS[props.page]} func={CMD[props.page]} key={props.page} /> 
-            </div>
+            // </div>
         );
     }
 }
@@ -134,14 +134,12 @@ class Buffet extends React.Component {
 
     render() {
         return (
-            <div>
-                <div className="row" style={{height: '10%'}}>
+            <div key={`buffet-${this.getFunc()()}`}>
+                <div className="row">
                     <Choices onSubmit={this.chooseBase} type={["total", "fade", "period", "interval"]} page={this.state.base}/>
                 </div>
                 <Params base={this.state.base} cb={this.setParams} />
-                <div className="col-sm table-responsive" style={{height: '100%'}} key={this.getFunc()("")} >
-                    <Charts func={this.getFunc()} param="" />
-                </div>
+                <Charts func={this.getFunc()} param="" />
             </div>
         );
     }
@@ -194,14 +192,14 @@ class Params extends React.Component {
             return (<div/>);
         } else {
             return (
-                <div className="input-group mb-3" >
+                <div className="input-group bg-dark">
                     {
                         titles.map((opt, i) => [
                             (<span className="input-group-text bg-dark" key={"p-span-" + opt} >{opt}</span>), 
                             (<input type="text" key={"p-input-" + opt} className="form-control bg-dark" placeholder="" aria-label={opt} aria-describedby="basic-addon1" onChange={(v) => this.set(`p${i}`, v.target.value)} />)]
                         )
                     }
-                    <button type="button" className="btn btn-primary mb-3" onClick={() => this.props.cb(this.state.params)} >Confirm</button>
+                    <button type="button" className="btn btn-outline-secondary bg-dark" onClick={() => this.props.cb(this.state.params)} >Confirm</button>
                 </div>
             );
         }
@@ -222,13 +220,9 @@ class ChosenCharts extends React.Component {
 
     render() {
         return (
-            <div>
-                <div className="row" style={{height: '10%'}}>
-                    <Choices onSubmit={this.choose} type={this.props.options} page={this.state.current}/>
-                </div>
-                <div className="col-sm table-responsive" style={{height: '100%'}} key={this.props.func+this.state.current}>
-                    <Charts func={this.props.func} param={this.state.current}/>
-                </div>
+            <div className="row-body row container" style={{display: "block"}} key={`cc-${this.props.options}-${this.state.current}`}>
+                <Choices onSubmit={this.choose} type={this.props.options} page={this.state.current}/>
+                <Charts func={this.props.func} param={this.state.current}/>
             </div>
         );
     }
@@ -276,7 +270,7 @@ class Charts extends React.Component {
             return <div className="charts-table"/>
         }
         return (
-            <div className="charts-table">
+            <div className="col-sm table-responsive charts-table row">
                 <table className="table table-striped bg-dark text-white"><tbody>
                     {this.state.data.elems.map((elem, i) => <Line key={elem.name} idx={i} elem={elem}/>)}
                 </tbody></table>
@@ -297,7 +291,7 @@ class Choices extends React.Component {
 
     render() {
         return (
-            <nav aria-label="...">
+            <nav aria-label="..." className="row">
                 <ul className="pagination bg-dark">
                     {
                         this.state.options.map((opt) => (
