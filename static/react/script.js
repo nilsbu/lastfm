@@ -21,6 +21,7 @@ const SUPERS = ["rock", "metal", "pop", "electronic", "hip-hop", "folk", "reggae
 
 const OPTS = {
     "main": [],
+    "buffet": [],
     "fromYear": YEARS,
     "year": YEARS,
     "super": SUPERS,
@@ -50,7 +51,7 @@ class Dashboard extends React.Component {
                 </div>
                 <Content page={this.state.page}/>
             </div>
-        )
+        );
     }
 }
 
@@ -59,17 +60,151 @@ function Content(props) {
     case "main":
         return (
             <div className="row" style={{height: '90%'}}>
-                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts name="year" param={YEAR}/></div>
-                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts name="fade" param="365"/></div>
-                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts name="fade" param="3653"/></div>
+                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts func={CMD["year"]} param={YEAR}/></div>
+                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts func={CMD["fade"]} param="365"/></div>
+                <div className="col-sm table-responsive" style={{height: '100%'}}><Charts func={CMD["fade"]} param="3653"/></div>
+            </div>
+        );
+    case "buffet":
+        return (
+            <div className="row" style={{height: '90%'}}>
+                <Buffet />
             </div>
         );
     default:
         return (
             <div className="row table-responsive" style={{height: '90%'}}>
-                <ChosenCharts options={OPTS[props.page]} func={props.page} key={props.page} /> 
+                <ChosenCharts options={OPTS[props.page]} func={CMD[props.page]} key={props.page} /> 
             </div>
         );
+    }
+}
+
+class Buffet extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            base: "total",
+            params: {},
+            jsxParams: null,
+        };
+
+        this.chooseBase = (page) => {
+            this.setState(Object.assign({}, this.state, {
+                base: page,
+                params: {},
+            }));
+        };
+
+        this.setParams = (params) => this.setState(Object.assign({}, this.state, {
+            params: params,
+        })); 
+    }
+
+    getFunc() {
+        // TODO: is the closure here needed?
+        var str = "/json/print/" + this.state.base;
+        var params = {...this.state.params};
+
+        switch (this.state.base) {
+        case "fade":
+        case "period":
+            str += `/${params.p0}`;
+            break;
+        case "interval":
+            str += `/${params.p0}/${params.p1}`;
+            break;
+        }
+        delete params.p0;
+        delete params.p1;
+        
+        var first = true;
+        for (const [key, value] of Object.entries(params)) {
+            if (first) {
+                str += "?";
+                first = false;
+            } else {
+                str += "&";
+            }
+            str += `${key}=${value}`;
+        }
+
+        return function (param) {return str;}
+    }
+
+    render() {
+        return (
+            <div>
+                <div className="row" style={{height: '10%'}}>
+                    <Choices onSubmit={this.chooseBase} type={["total", "fade", "period", "interval"]} page={this.state.base}/>
+                </div>
+                <Params base={this.state.base} cb={this.setParams} />
+                <div className="col-sm table-responsive" style={{height: '100%'}} key={this.getFunc()("")} >
+                    <Charts func={this.getFunc()} param="" />
+                </div>
+            </div>
+        );
+    }
+}
+
+class Params extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            params: {},
+            lastBase: props.base,
+        };
+
+        this.set = (name, value) => {
+            this.setState(Object.assign({}, this.state, {
+                params: Object.assign({}, this.state.params, {
+                    [name]: value,
+                }),
+            }));
+        }; 
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.base !== this.props.base) {
+            this.setState(Object.assign({}, this.state, {
+                params: {},
+            }));
+            this.props.cb(this.state.params);
+        }
+    }
+
+    render() {
+        var titles = [];
+
+        switch (this.props.base) {
+        case "total":
+            break;
+        case "fade":
+            titles = ["half-life"];
+            break;
+        case "period":
+            titles = ["period"];
+            break;
+        case "interval":
+            titles = ["begin", "end"];
+            break;
+        }
+
+        if (titles.length == 0) {
+            return (<div/>);
+        } else {
+            return (
+                <div className="input-group mb-3" >
+                    {
+                        titles.map((opt, i) => [
+                            (<span className="input-group-text bg-dark" key={"p-span-" + opt} >{opt}</span>), 
+                            (<input type="text" key={"p-input-" + opt} className="form-control bg-dark" placeholder="" aria-label={opt} aria-describedby="basic-addon1" onChange={(v) => this.set(`p${i}`, v.target.value)} />)]
+                        )
+                    }
+                    <button type="button" className="btn btn-primary mb-3" onClick={() => this.props.cb(this.state.params)} >Confirm</button>
+                </div>
+            );
+        }
     }
 }
 
@@ -92,10 +227,11 @@ class ChosenCharts extends React.Component {
                     <Choices onSubmit={this.choose} type={this.props.options} page={this.state.current}/>
                 </div>
                 <div className="col-sm table-responsive" style={{height: '100%'}} key={this.props.func+this.state.current}>
-                    <Charts name={this.props.func} param={this.state.current}/>
+                    <Charts func={this.props.func} param={this.state.current}/>
                 </div>
             </div>
-    )}
+        );
+    }
 }
 
 class Charts extends React.Component {
@@ -108,7 +244,7 @@ class Charts extends React.Component {
     }
 
     componentDidMount() {
-        fetch(CMD[this.props.name](this.props.param))
+        fetch(this.props.func(this.props.param))
             .then(res => res.json())
             .then(
                 (result) => {
@@ -123,7 +259,7 @@ class Charts extends React.Component {
                     error
                     });
                 }
-            )
+            );
     }
 
     reshapeData(raw) {
@@ -146,7 +282,7 @@ class Charts extends React.Component {
                 </tbody></table>
             </div>
         );
-  }
+    }
 }
 
 class Choices extends React.Component {
