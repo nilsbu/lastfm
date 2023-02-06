@@ -20,13 +20,21 @@ const YEARS = Array.from({length: YEAR - 2007 + 1}, (x, i) => i + 2007); // TODO
 const SUPERS = ["rock", "metal", "pop", "electronic", "hip-hop", "folk", "reggae", "classical", "jazz"];
 
 const OPTS = {
-    "main": [],
+    "year": YEARS,
     "buffet": [],
     "fromYear": YEARS,
-    "year": YEARS,
     "super": SUPERS,
     "fade": [30, 365, 1000, 3653],
     "period": [0, 1, 2, 3],
+};
+
+const INITIAL_IDX = {
+    "year": -1,
+    "buffet": 0,
+    "fromYear": -1,
+    "super": 0,
+    "fade": 1,
+    "period": -1,
 };
 
 class Dashboard extends React.Component {
@@ -74,7 +82,7 @@ function Content(props) {
     default:
         return (
             // <div className="row row-body table-responsive">
-                <ChosenCharts options={OPTS[props.page]} func={CMD[props.page]} key={props.page} /> 
+                <ChosenCharts options={OPTS[props.page]} func={CMD[props.page]} key={props.page} init={INITIAL_IDX[props.page]} /> 
             // </div>
         );
     }
@@ -209,8 +217,11 @@ class Params extends React.Component {
 class ChosenCharts extends React.Component {
     constructor(props) {
         super(props);
+
+        let idx = props.init >= 0 ? props.init : props.options.length + props.init;
+
         this.state = {
-            current: props.options[0],
+            current: props.options[idx],
         };
 
         this.choose = (page) => this.setState(Object.assign({}, this.state, {
