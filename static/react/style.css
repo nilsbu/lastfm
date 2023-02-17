@@ -1,5 +1,4 @@
 .charts-table {
-    flex-grow: 1;
     overflow-y: scroll;
     height: 100%;
 }
@@ -7,6 +6,12 @@
 .row-body {
     overflow-y: hidden;
     flex-direction: column;
+}
+
+.row {
+    margin: 0;
+    /* display: block; */
+    flex-wrap: nowrap;
 }
 
 .main {

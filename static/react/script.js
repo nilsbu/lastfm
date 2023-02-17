@@ -94,6 +94,7 @@ class Buffet extends React.Component {
         this.state = {
             base: "total",
             params: {},
+            filters: "all",
             jsxParams: null,
         };
 
@@ -104,9 +105,17 @@ class Buffet extends React.Component {
             }));
         };
 
-        this.setParams = (params) => this.setState(Object.assign({}, this.state, {
-            params: params,
+        this.setParams = (params) => {
+            this.setState(Object.assign({}, this.state, {
+                params: params,
+            })); 
+        }
+
+        this.setFilters = (filters) => {
+            this.setState(Object.assign({}, this.state, {
+            filters: filters,
         })); 
+    }
     }
 
     getFunc() {
@@ -125,6 +134,10 @@ class Buffet extends React.Component {
         }
         delete params.p0;
         delete params.p1;
+
+        if (this.state.filters != null) {
+            params.by = this.state.filters;
+        }
         
         var first = true;
         for (const [key, value] of Object.entries(params)) {
@@ -137,17 +150,23 @@ class Buffet extends React.Component {
             str += `${key}=${value}`;
         }
 
-        return function (param) {return str;}
+        return function () {return str;}
     }
 
     render() {
+        var func = this.getFunc();
         return (
-            <div key={`buffet-${this.getFunc()()}`}>
+            <div key={`buffet-${func()}`}>
                 <div className="row">
                     <Choices onSubmit={this.chooseBase} type={["total", "fade", "period", "interval"]} page={this.state.base}/>
                 </div>
                 <Params base={this.state.base} cb={this.setParams} />
-                <Charts func={this.getFunc()} param="" />
+                <Filter name="all" cb={this.setFilters} />
+                <Filter name="super" cb={this.setFilters} />
+                <Filter name="country" cb={this.setFilters} />
+                <Filter name="year" cb={this.setFilters} />
+                <Filter name="groups" cb={this.setFilters} />
+                <Charts func={func} param="" />
             </div>
         );
     }
@@ -214,6 +233,33 @@ class Params extends React.Component {
     }
 }
 
+class Filter extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            value: "",
+        };
+
+        this.set = () => {
+            this.props.cb(this.props.name);
+        };
+    }
+
+    render() {
+        return (
+            <div className="form-check form-check-inline" key={"filter-" + this.props.name}>
+                <input className="form-check-input" type="radio"
+                    id={this.props.name}
+                    name="filter-radio"
+                    value={this.props.name}
+                    onClick={this.set}
+                    />
+                <label className="form-check-label text-white" htmlFor={this.props.name}>{this.props.name}</label>
+            </div>
+        );
+    }
+}
+
 class ChosenCharts extends React.Component {
     constructor(props) {
         super(props);
@@ -231,7 +277,7 @@ class ChosenCharts extends React.Component {
 
     render() {
         return (
-            <div className="row-body row container" style={{display: "block"}} key={`cc-${this.props.options}-${this.state.current}`}>
+            <div className="row-body row container" key={`cc-${this.props.options}-${this.state.current}`}>
                 <Choices onSubmit={this.choose} type={this.props.options} page={this.state.current}/>
                 <Charts func={this.props.func} param={this.state.current}/>
             </div>
@@ -281,7 +327,7 @@ class Charts extends React.Component {
             return <div className="charts-table"/>
         }
         return (
-            <div className="col-sm table-responsive charts-table row">
+            <div className="table-responsive charts-table row">
                 <table className="table table-striped bg-dark text-white"><tbody>
                     {this.state.data.elems.map((elem, i) => <Line key={elem.name} idx={i} elem={elem}/>)}
                 </tbody></table>
