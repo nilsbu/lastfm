@@ -95,6 +95,7 @@ class Buffet extends React.Component {
             base: "total",
             params: {},
             filters: "all",
+            nameFilter: "",
             jsxParams: null,
         };
 
@@ -113,9 +114,21 @@ class Buffet extends React.Component {
 
         this.setFilters = (filters) => {
             this.setState(Object.assign({}, this.state, {
-            filters: filters,
-        })); 
-    }
+                filters: filters,
+            }));
+        }
+
+        this.setNameFilter = (nameFilter) => {
+            this.setState(Object.assign({}, this.state, {
+                nameFilter: nameFilter,
+            }));
+        }
+
+        this.setCharts = (charts) => {
+            this.setState(Object.assign({}, this.state, {
+                jsxParams: charts,
+            }));
+        }
     }
 
     getFunc() {
@@ -137,6 +150,10 @@ class Buffet extends React.Component {
 
         if (this.state.filters != null) {
             params.by = this.state.filters;
+
+            if (this.state.nameFilter != null) {
+                params.name = this.state.nameFilter;
+            }
         }
         
         var first = true;
@@ -166,7 +183,8 @@ class Buffet extends React.Component {
                 <Filter name="country" cb={this.setFilters} />
                 <Filter name="year" cb={this.setFilters} />
                 <Filter name="groups" cb={this.setFilters} />
-                <Charts func={func} param="" />
+                <NameFilter enabled={this.state.filters != "all"} opts={this.state.jsxParams} cb={this.setNameFilter} />
+                <Charts func={func} param="" cb={this.setCharts} />
             </div>
         );
     }
@@ -260,6 +278,34 @@ class Filter extends React.Component {
     }
 }
 
+
+class NameFilter extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            count: 0,
+        };
+    }
+
+    render() {
+        if (!this.props.enabled || this.props.opts == null) {
+            (<div key="no-name-filter"/>)
+        }
+        else {
+            console.log(this.props.opts);
+            console.log("rerendering name filter");
+            this.state.count++;
+            return (
+                <Choices key={`name-filter-${this.state.count}`}
+                    onSubmit={this.props.cb}
+                    type={this.props.opts.data.labels}
+                    page={this.props.opts.data.labels[0]}
+                />
+            );
+        }
+    }
+}
+
 class ChosenCharts extends React.Component {
     constructor(props) {
         super(props);
@@ -299,10 +345,14 @@ class Charts extends React.Component {
             .then(res => res.json())
             .then(
                 (result) => {
+                    console.log("Received data");
+
                     this.setState(Object.assign({}, this.state, {
                         isLoaded: true,
                         data: this.reshapeData(result),
                     }));
+
+                    if (this.props.cb) { this.props.cb(result); }
                 },
                 (error) => {
                     this.setState({
