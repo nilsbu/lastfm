@@ -113,6 +113,10 @@ class Buffet extends React.Component {
         }
 
         this.setFilters = (filters) => {
+            if (this.state.filters != filters) {
+                this.setCharts(null);
+            }
+
             this.setState(Object.assign({}, this.state, {
                 filters: filters,
             }));
@@ -183,7 +187,7 @@ class Buffet extends React.Component {
                 <Filter name="country" cb={this.setFilters} />
                 <Filter name="year" cb={this.setFilters} />
                 <Filter name="groups" cb={this.setFilters} />
-                <NameFilter enabled={this.state.filters != "all"} opts={this.state.jsxParams} cb={this.setNameFilter} />
+                <NameFilter enabled={this.state.filters != "all" && this.state.nameFilter == null} opts={this.state.jsxParams} cb={this.setNameFilter} />
                 <Charts func={func} param="" cb={this.setCharts} />
             </div>
         );
