@@ -114,14 +114,19 @@ func main() {
 	http.Handle("/charts/", http.StripPrefix("/charts/", fs))
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		handleRequest(session, s, pl, rw, r)
+		if r.TLS == nil {
+			http.Redirect(rw, r, "https://"+r.Host+r.URL.Path, http.StatusMovedPermanently)
+			return
+		} else {
+			handleRequest(session, s, pl, rw, r)
+		}
 	})
 
 	tlsCertPath := os.Getenv("TLS_CERT_PATH")
 	certPath := tlsCertPath + "/cert.pem"
 	keyPath := tlsCertPath + "/privkey.pem"
 
-	if err := http.ListenAndServeTLS(":3000", certPath, keyPath, nil); err != nil {
+	if err := http.ListenAndServeTLS(":443", certPath, keyPath, nil); err != nil {
 		log.Fatal(err)
 	}
 }
