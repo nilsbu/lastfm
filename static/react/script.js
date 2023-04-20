@@ -97,6 +97,7 @@ class Buffet extends React.Component {
             filters: "all",
             nameFilter: "",
             jsxParams: null,
+	    waiting: false,
         };
 
         this.chooseBase = (page) => {
@@ -114,15 +115,19 @@ class Buffet extends React.Component {
 
         this.setFilters = (filters) => {
             if (this.state.filters != filters) {
-                this.setCharts(null);
-            }
+	        console.log(`reset filters from '${this.state.filters}' to '${filters}'`);
 
-            this.setState(Object.assign({}, this.state, {
-                filters: filters,
-            }));
+                this.setState(Object.assign({}, this.state, {
+                    filters: filters,
+		    nameFilter: "",
+		    jsxParams: null,
+		    waiting: true,
+                }));
+            }
         }
 
         this.setNameFilter = (nameFilter) => {
+	    if (this.state.waiting) {return;}
             this.setState(Object.assign({}, this.state, {
                 nameFilter: nameFilter,
             }));
@@ -131,6 +136,7 @@ class Buffet extends React.Component {
         this.setCharts = (charts) => {
             this.setState(Object.assign({}, this.state, {
                 jsxParams: charts,
+		    waiting: false,
             }));
         }
     }
@@ -187,7 +193,7 @@ class Buffet extends React.Component {
                 <Filter name="country" cb={this.setFilters} />
                 <Filter name="year" cb={this.setFilters} />
                 <Filter name="groups" cb={this.setFilters} />
-                <NameFilter enabled={this.state.filters != "all" && this.state.nameFilter == null} opts={this.state.jsxParams} cb={this.setNameFilter} />
+                <NameFilter enabled={this.state.filters != "all" && this.state.nameFilter == ""} opts={this.state.jsxParams} cb={this.setNameFilter} />
                 <Charts func={func} param="" cb={this.setCharts} />
             </div>
         );
