@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/nilsbu/lastfm/pkg/command"
@@ -122,11 +121,7 @@ func main() {
 		handleRequest(session, s, pl, rw, r)
 	})
 
-	tlsCertPath := os.Getenv("TLS_CERT_PATH")
-	certPath := tlsCertPath + "/cert.pem"
-	keyPath := tlsCertPath + "/privkey.pem"
-
-	if err := http.ListenAndServeTLS(":3000", certPath, keyPath, nil); err != nil {
+	if err := http.ListenAndServe(":3000", nil); err != nil {
 		log.Fatal(err)
 	}
 }
