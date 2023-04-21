@@ -8,7 +8,7 @@ TLS_CERT_REL=... # path to the TLS certificate relative to TLS_CERT_BASE, e.g. l
 DATA_PATH=... # path to the directory containing the data, e.g. ~/.lastfm
 ```
 
-The split between TLS_CERT_BASE and TLS_CERT_REL is necessary because the TLS certificates are mounted into the container as a volume. This can be problematic if the actual directory contains symbolic links. Ensure that the links are relative and that TLS_CERT_BASE is the directory containing both the link and actual certificate.
+The split between `TLS_CERT_BASE` and `TLS_CERT_REL` is necessary because the TLS certificates are mounted into the container as a volume. This can be problematic if the actual directory contains symbolic links. Ensure that the links are relative and that `TLS_CERT_BASE` is the directory containing both the link and actual certificate.
 
 Build with docker using the following command:
 
