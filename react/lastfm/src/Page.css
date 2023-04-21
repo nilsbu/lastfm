@@ -1,0 +1,15 @@
+.row {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  
+  .col {
+    overflow-x: auto;
+  }
+  
+.table-container {
+    overflow: auto;
+    height: calc(100vh - 150px); /* adjust the height as needed */
+}
+  
