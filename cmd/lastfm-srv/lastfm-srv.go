@@ -59,8 +59,7 @@ func handleRequest(
 	w http.ResponseWriter,
 	r *http.Request) {
 
-	// fmt.Println(r.URL.Path)
-	fmt.Fprintln(os.Stderr, r.URL.Path)
+	fmt.Println("Request:", r.URL.Path)
 
 	if r.Method != "GET" {
 		http.Error(w, "Method is not supported.", http.StatusNotFound)
