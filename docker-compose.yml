@@ -1,0 +1,31 @@
+version: '3'
+services:
+  lastfm-base:
+    build:
+      context: .
+      dockerfile: base.dockerfile
+    image: lastfm/base
+    container_name: lastfm-base
+  lastfm-srv:
+    build:
+      context: .
+      dockerfile: srv.dockerfile
+      args:
+        tls_cert_rel: ${TLS_CERT_REL}
+    image: lastfm/srv
+    container_name: lastfm-srv
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${DATA_PATH}:/.lastfm:rw
+      - ${TLS_CERT_BASE}:/cert:ro
+  lastfm-wrkr:
+    build:
+      context: .
+      dockerfile: wrkr.dockerfile
+    image: lastfm/wrkr
+    container_name: lastfm-wrkr
+    volumes:
+      - ${DATA_PATH}:/.lastfm:rw
+   

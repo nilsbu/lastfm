@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1
 
+# This is the base image for the different services
+
 FROM golang:1.16-alpine
 
 WORKDIR /app
@@ -10,8 +12,4 @@ RUN go mod download
 
 COPY pkg ./pkg
 COPY cmd ./cmd
-
-RUN go build -o /lastfm-wrkr ./cmd/lastfm-wrkr
-
-WORKDIR /
-CMD /lastfm-wrkr
+COPY config ./config

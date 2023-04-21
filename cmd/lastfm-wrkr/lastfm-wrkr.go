@@ -67,6 +67,8 @@ func main() {
 			return
 		}
 
+		fmt.Println("done for now, sleeping for 1 hour...")
+
 		time.Sleep(60 * 60 * time.Second)
 	}
 }
