@@ -10,17 +10,12 @@ function Table(props : { data: TableData }) {
 
   return (
     <BootstrapTable striped bordered hover>
-      <thead>
-        <tr>
-          <th>Label</th>
-          <th>Value</th>
-        </tr>
-      </thead>
       <tbody>
-        {data.map(item => (
+        {data.map((item, index) => (
           <tr key={item.label}>
+            <td>{index + 1}</td>
             <td>{item.label}</td>
-            <td>{item.value}</td>
+            <td>{item.value.toFixed(2)}</td>
           </tr>
         ))}
       </tbody>
