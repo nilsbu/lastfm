@@ -1,4 +1,4 @@
-type Button = { function: string; name: string };
+export type Button = { function: string; name: string };
 
 type ButtonGroup = {
   [key: string]: Button[];

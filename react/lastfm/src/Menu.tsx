@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import type { Button } from './menus';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface MenuProps {
   onMethodChange: (newMethod: string) => void;
-  buttons: { function: string; name: string }[];
+  buttons: Button[];
 }
 
 function Menu(props: MenuProps) {
