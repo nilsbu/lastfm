@@ -16,7 +16,7 @@ interface JSONData {
 }
 
 function Page() {
-  const [method, setMethod] = useState([buttons['topLevel'][0].function]);
+  const [method, setMethod] = useState([buttons['topLevel'].buttons[0].function]);
 
   const getMethod = (methodArray : string[]) => {
     return methodArray.join('/');
@@ -28,7 +28,7 @@ function Page() {
       var newMethodArray = [...method]; // create a copy of the method array
       if (index === 0) {
         // if the top level method has changed, reset the rest of the method array
-        newMethodArray = getMenus(newMethod).map(menu => buttons[menu][0].function);
+        newMethodArray = getMenus(newMethod).map(menu => buttons[menu].default);
       }
       newMethodArray[index] = newMethod;
       console.log(`New method array: ${newMethodArray}`);
