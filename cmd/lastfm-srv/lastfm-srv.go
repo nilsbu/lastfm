@@ -59,6 +59,9 @@ func handleRequest(
 	w http.ResponseWriter,
 	r *http.Request) {
 
+	// Added this to allow CORS for development purposes
+	w.Header().Set("Access-Control-Allow-Origin", "http://nboon.de:3000")
+
 	fmt.Println("Request:", r.URL.Path)
 
 	if r.Method != "GET" {
