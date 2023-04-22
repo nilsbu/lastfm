@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function Menu(props) {
+interface MenuProps {
+  onMethodChange: (newMethod: string) => void;
+  buttons: { function: string; name: string }[];
+}
+
+function Menu(props: MenuProps) {
   const [active, setActive] = useState('total');
 
-  const handleClick = (name) => {
+  const handleClick = (name : string) => {
     setActive(name);
     props.onMethodChange(name);
   };

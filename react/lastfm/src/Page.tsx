@@ -5,14 +5,24 @@ import Menu from './Menu';
 import './Page.css';
 import { buttons, getMenus } from './menus';
 
+interface JSONData {
+  data: {
+    labels: string[],
+    datasets: {
+      data: number[]
+    }[]
+  }
+}
+
+
 function Page() {
   const [method, setMethod] = useState([buttons['topLevel'][0].function]);
 
-  const getMethod = (methodArray) => {
+  const getMethod = (methodArray : string[]) => {
     return methodArray.join('/');
   };
 
-  const handleMethodChange = (newMethod, index) => {
+  const handleMethodChange = (newMethod : string, index : number) => {
     console.log(`Changing method to ${newMethod} at index ${index}`);
     if (newMethod !== method[index]) {
       var newMethodArray = [...method]; // create a copy of the method array
@@ -27,7 +37,7 @@ function Page() {
     }
   };
 
-  const transformData = (data) => {
+  const transformData = (data : JSONData) => {
     return data.data.labels.map((label, index) => {
       const value = data.data.datasets[0].data[index];
       return { label, value };
@@ -38,9 +48,9 @@ function Page() {
     fetchData(method); // Fetch data once at initialization
   }, []); // empty array as second argument to ensure that useEffect only runs once
 
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<{ label: string; value: number }[]>([]);
 
-  const fetchData = (method) => {
+  const fetchData = (method : string[]) => {
     const name = getMethod(method);
     console.log(`Fetching data from http://${window.location.hostname}:3001/json/print/${name}`);
     fetch(`http://${window.location.hostname}:3001/json/print/${name}`)

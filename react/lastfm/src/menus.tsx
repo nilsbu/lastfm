@@ -1,4 +1,10 @@
-export const buttons = {
+type Button = { function: string; name: string };
+
+type ButtonGroup = {
+  [key: string]: Button[];
+};
+
+export const buttons: ButtonGroup = {
     'topLevel': [
       { function: 'total', name: 'Total' },
       { function: 'fade', name: 'Fade' },
@@ -9,7 +15,7 @@ export const buttons = {
     ]
   };
   
-  export const getMenus = (topLevelFunction) => {
+  export const getMenus = (topLevelFunction : string) => {
     switch (topLevelFunction) {
       case 'total':
         return ['topLevel'];

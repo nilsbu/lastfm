@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table as BootstrapTable } from 'react-bootstrap';
 
-function Table(props) {
+function Table(props : { data: { label: string, value: number }[] }) {
   const { data } = props;
 
   if (!data) {
