@@ -8,6 +8,8 @@ function Table(props) {
     return null;
   }
 
+  console.log(data);
+
   return (
     <BootstrapTable striped bordered hover>
       <thead>
