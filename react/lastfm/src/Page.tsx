@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import Table from './Table';
 import Menu from './Menu';
@@ -44,9 +44,15 @@ function Page() {
     });
   };
 
+  const isFirstRender = useRef(true); // add a ref to keep track of initial render
+
   useEffect(() => {
-    fetchData(method); // Fetch data once at initialization
-  }, []); // empty array as second argument to ensure that useEffect only runs once
+    if (isFirstRender.current) { // check if it's the first render
+      isFirstRender.current = false;
+    } else {
+      fetchData(method);
+    }
+  }, []); // no dependencies, so it only runs once
 
   const [data, setData] = useState<TableData>([]);
 
