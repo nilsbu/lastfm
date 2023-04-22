@@ -5,6 +5,7 @@ import Menu from './Menu';
 import './Page.css';
 import { buttons, getMenus } from './menus';
 
+// type that we get as JSON. There is more because it's also used for the chart.
 interface JSONData {
   data: {
     labels: string[],
@@ -13,7 +14,6 @@ interface JSONData {
     }[]
   }
 }
-
 
 function Page() {
   const [method, setMethod] = useState([buttons['topLevel'][0].function]);
@@ -48,7 +48,7 @@ function Page() {
     fetchData(method); // Fetch data once at initialization
   }, []); // empty array as second argument to ensure that useEffect only runs once
 
-  const [data, setData] = useState<{ label: string; value: number }[]>([]);
+  const [data, setData] = useState<TableData>([]);
 
   const fetchData = (method : string[]) => {
     const name = getMethod(method);
