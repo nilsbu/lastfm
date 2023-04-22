@@ -11,12 +11,13 @@ type MenuDefinition = {
 
 const currentYear = new Date().getFullYear();
 
-export const buttons: MenuDefinition = {
+export const menuDefinition: MenuDefinition = {
   'topLevel': {
     buttons: [
       { function: 'total', name: 'Total' },
       { function: 'fade', name: 'Fade' },
       { function: 'period', name: 'Period' },
+      { function: 'super', name: 'Super'},
     ],
     default: 'total'
   },
@@ -35,19 +36,61 @@ export const buttons: MenuDefinition = {
       return { function: year.toString(), name: year.toString() };
     }),
     default: currentYear.toString()
+  },
+  'super': {
+    buttons: [
+      { function: 'all', name: 'All' },
+      // Will be filled in by the server
+    ],
+    default: 'all'
   }
 };
   
-  export const getMenus = (topLevelFunction : string) => {
-    switch (topLevelFunction) {
-      case 'total':
-        return ['topLevel'];
-      case 'fade':
-        return ['topLevel', 'fade'];
-      case 'period':
-        return ['topLevel', 'period'];
-      default:
-        return ['topLevel'];
+export const getMenus = (topLevelFunction : string) => {
+  switch (topLevelFunction) {
+    case 'total':
+      return ['topLevel'];
+    case 'fade':
+      return ['topLevel', 'fade'];
+    case 'period':
+      return ['topLevel', 'period'];
+    case 'super':
+      return ['topLevel', 'super'];
+    default:
+      return ['topLevel'];
+  }
+};
+
+export const getQuery = (methodArray: string[]) => {
+  let queryStringStarted = false;
+  let result = '';
+  for (let i = 0; i < methodArray.length; i++) {
+    const element = methodArray[i];
+    if (queryStringStarted || element.includes('=')) {
+      if (!queryStringStarted) {
+        result += '?';
+        queryStringStarted = true;
+      } else {
+        result += '&';
+      }
+    } else if (i !== 0) {
+      result += '/';
     }
-  };
-  
+    result += element;
+  }
+  return result;
+};
+
+export const transformMethod = (methodArray: string[]) => {
+  if (methodArray[0] === 'super') {
+    const [by, name, ...rest] = methodArray;
+    return [
+      'total',
+      `by=${by}`,
+      name !== 'all' ? `name=${name}` : '',
+      ...rest,
+    ].filter(Boolean);
+  } else {
+    return methodArray;
+  }
+};

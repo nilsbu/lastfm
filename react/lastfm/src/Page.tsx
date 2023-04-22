@@ -3,7 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import Table from './Table';
 import Menu from './Menu';
 import './Page.css';
-import { buttons, getMenus } from './menus';
+import { menuDefinition, getMenus, getQuery, transformMethod } from './menus';
 
 // type that we get as JSON. There is more because it's also used for the chart.
 interface JSONData {
@@ -16,11 +16,7 @@ interface JSONData {
 }
 
 function Page() {
-  const [method, setMethod] = useState([buttons['topLevel'].buttons[0].function]);
-
-  const getMethod = (methodArray : string[]) => {
-    return methodArray.join('/');
-  };
+  const [method, setMethod] = useState([menuDefinition['topLevel'].buttons[0].function]);
 
   const handleMethodChange = (newMethod : string, index : number) => {
     console.log(`Changing method to ${newMethod} at index ${index}`);
@@ -28,7 +24,7 @@ function Page() {
       var newMethodArray = [...method]; // create a copy of the method array
       if (index === 0) {
         // if the top level method has changed, reset the rest of the method array
-        newMethodArray = getMenus(newMethod).map(menu => buttons[menu].default);
+        newMethodArray = getMenus(newMethod).map(menu => menuDefinition[menu].default);
       }
       newMethodArray[index] = newMethod;
       console.log(`New method array: ${newMethodArray}`);
@@ -57,14 +53,18 @@ function Page() {
   const [data, setData] = useState<TableData>([]);
 
   const fetchData = (method : string[]) => {
-    const name = getMethod(method);
+    const name = getQuery(transformMethod(method));
     console.log(`Fetching data from http://${window.location.hostname}:3001/json/print/${name}`);
     fetch(`http://${window.location.hostname}:3001/json/print/${name}`)
       .then(response => response.json())
       .then(data => transformData(data))
-      .then(data => setData(data))
+      .then(data => {
+        setData(data);
+      })
       .catch(error => console.error(error));
   };
+
+  const [menu, setMenu] = useState(menuDefinition);
 
   return (
     <Container fluid>
@@ -74,7 +74,7 @@ function Page() {
             <Menu
               key={menu}
               onMethodChange={newMethod => handleMethodChange(newMethod, index)}
-              buttons={buttons[menu]}
+              buttons={menuDefinition[menu]}
             />
           ))}
         </Col>
