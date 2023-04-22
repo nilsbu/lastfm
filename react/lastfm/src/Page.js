@@ -6,19 +6,47 @@ import './Page.css';
 
 function Page() {
   // button functionality
-  const buttons = [
-    { function: 'total', name: 'Total' },
-    { function: 'fade/365', name: 'Fade 1y' },
-    { function: 'fade/3653', name: 'Fade 10y' },
-  ];
+  const buttons = {
+    'topLevel': [
+      { function: 'total', name: 'Total' },
+      { function: 'fade', name: 'Fade' },
+    ],
+    'fade': [
+      { function: '365', name: '365' },
+      { function: '3653', name: '3653' },
+    ]
+  };
 
-  const [method, setMethod] = useState('');
-
-  const handleMethodChange = (newMethod) => {
-    if (newMethod !== method) {
-      fetchData(newMethod);
+  const getMenus = (topLevelFunction) => {
+    switch (topLevelFunction) {
+      case 'total':
+        return ['topLevel'];
+      case 'fade':
+        return ['topLevel', 'fade'];
+      default:
+        return ['topLevel'];
     }
-    setMethod(newMethod);
+  };
+
+  const [method, setMethod] = useState([buttons['topLevel'][0].function]);
+
+  const getMethod = (methodArray) => {
+    return methodArray.join('/');
+  };
+
+  const handleMethodChange = (newMethod, index) => {
+    console.log(`Changing method to ${newMethod} at index ${index}`);
+    if (newMethod !== method[index]) {
+      var newMethodArray = [...method]; // create a copy of the method array
+      if (index === 0) {
+        // if the top level method has changed, reset the rest of the method array
+        newMethodArray = getMenus(newMethod).map(menu => buttons[menu][0].function);
+      }
+      newMethodArray[index] = newMethod;
+      console.log(`New method array: ${newMethodArray}`);
+      setMethod(newMethodArray); // update the method state with the new array
+      fetchData(newMethodArray); // fetch new data
+    }
   };
 
   const transformData = (data) => {
@@ -29,12 +57,14 @@ function Page() {
   };
 
   useEffect(() => {
-    fetchData(buttons[0].function); // Fetch data once at initialization
+    fetchData(method); // Fetch data once at initialization
   }, []); // empty array as second argument to ensure that useEffect only runs once
 
   const [data, setData] = useState([]);
 
-  const fetchData = (name) => {
+  const fetchData = (method) => {
+    const name = getMethod(method);
+    console.log(`Fetching data from http://${window.location.hostname}:3001/json/print/${name}`);
     fetch(`http://${window.location.hostname}:3001/json/print/${name}`)
       .then(response => response.json())
       .then(data => transformData(data))
@@ -46,7 +76,13 @@ function Page() {
     <Container fluid>
       <Row>
         <Col>
-          <Menu onMethodChange={handleMethodChange} buttons={buttons} />
+          {getMenus(method[0]).map((menu, index) => (
+            <Menu
+              key={menu}
+              onMethodChange={newMethod => handleMethodChange(newMethod, index)}
+              buttons={buttons[menu]}
+            />
+          ))}
         </Col>
       </Row>
       <Row>
