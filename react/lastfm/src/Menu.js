@@ -9,10 +9,26 @@ function Menu(props) {
     props.onMethodChange(name);
   };
 
+  // button functionality
+  const buttons = [
+    { function: 'total', name: 'Total' },
+    { function: 'fade/365', name: 'Fade 1y' },
+    { function: 'fade/3653', name: 'Fade 10y' },
+  ];
+
   return (
-    <div className="bg-secondary p-3 d-flex justify-content-between">
-      <button onClick={() => handleClick('total')} className={active === 'total' ? 'active' : ''}>Total</button>
-      <button onClick={() => handleClick('fade')} className={`btn btn-light ${active === 'fade' ? 'active' : ''}`}>Fade</button>
+    <div className="bg-secondary p-3">
+      <div className="row">
+        <div className="col-auto">
+          {buttons.map(button => (
+            <button
+              key={button.function}
+              onClick={() => handleClick(button.function)}
+              className={`btn btn-light mx-1 ${active === button.function ? 'active' : ''}`}
+            >{button.name}</button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
