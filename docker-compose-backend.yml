@@ -19,6 +19,8 @@ services:
     volumes:
       - ${DATA_PATH}:/.lastfm:rw
       - ${TLS_CERT_BASE}:/cert:ro
+    networks:
+      - lastfm-net
   lastfm-wrkr:
     build:
       context: .
@@ -28,3 +30,5 @@ services:
     volumes:
       - ${DATA_PATH}:/.lastfm:rw
    
+networks:
+  lastfm-net:

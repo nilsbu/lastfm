@@ -21,18 +21,20 @@ const apiProxy = httpProxy.createProxyServer();
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Forward requests starting with /json/ to port 3001
+// Forward requests starting with /json/ to the lastfm-srv service
+const target = process.env.BACKEND || 'localhost:3001';
 app.use('/json', (req, res) => {
-    logger.info(`Forwarding request to http://localhost:3001/json${req.url}`);
-    apiProxy.web(req, res, { target: 'http://localhost:3001/json' });
+    logger.info(`Forwarding request to http://${target}/json${req.url}`);
+    apiProxy.web(req, res, { target: `http://${target}/json` });
 });
 
+
 // Serve the static files from the React app
-app.use(express.static(path.join(__dirname, 'client/build')));
+app.use(express.static(path.join(__dirname, '../build')));
 
 // Handle requests that fall through to index.html
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
 });
 
 // Start the server

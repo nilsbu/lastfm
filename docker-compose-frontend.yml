@@ -1,0 +1,11 @@
+version: '3'
+services:
+  lastfm-web:
+    build:
+      context: react/lastfm
+    image: lastfm/web
+    container_name: lastfm-web
+    ports:
+      - "80:3000"
+    networks:
+      - lastfm-net   

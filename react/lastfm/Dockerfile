@@ -1,6 +1,8 @@
 # Set the base image to Node.js 18 (alpine)
 FROM node:18-alpine
 
+ENV BACKEND=lastfm-srv:3000
+
 # Set the working directory to /app
 WORKDIR /app
 
