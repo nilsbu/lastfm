@@ -24,7 +24,7 @@ function Page() {
       var newMethodArray = [...method]; // create a copy of the method array
       if (index === 0) {
         // if the top level method has changed, reset the rest of the method array
-        newMethodArray = getMenus(newMethod).map(menu => menuDefinition[menu].default);
+        newMethodArray = getMenus([newMethod]).map(menu => menuDefinition[menu].default);
       }
       newMethodArray[index] = newMethod;
       console.log(`New method array: ${newMethodArray}`);
@@ -70,7 +70,7 @@ function Page() {
     <Container fluid>
       <Row>
         <Col>
-          {getMenus(method[0]).map((menu, index) => (
+          {getMenus(method).map((menu, index) => (
             <Menu
               key={menu}
               onMethodChange={newMethod => handleMethodChange(newMethod, index)}

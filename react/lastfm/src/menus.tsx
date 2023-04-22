@@ -37,28 +37,61 @@ export const menuDefinition: MenuDefinition = {
     }),
     default: currentYear.toString()
   },
+  'filter': {
+    buttons: [
+      { function: 'all', name: 'All' },
+      { function: 'super', name: 'Super' },
+      // { function: 'year', name: 'Year' },
+    ],
+    default: 'all',
+  },
   'super': {
     buttons: [
       { function: 'all', name: 'All' },
-      // Will be filled in by the server
+      // will be filled in dynamically
     ],
-    default: 'all'
-  }
+    default: 'all',
+  },
 };
-  
-export const getMenus = (topLevelFunction : string) => {
-  switch (topLevelFunction) {
-    case 'total':
-      return ['topLevel'];
-    case 'fade':
-      return ['topLevel', 'fade'];
-    case 'period':
-      return ['topLevel', 'period'];
-    case 'super':
-      return ['topLevel', 'super'];
-    default:
-      return ['topLevel'];
+
+const normalizeMethod = (method: string[]): string[] => {
+  // TODO: instead of this, the methods should be set correctly in the first place
+  const result: string[] = method;
+  if (method.length === 1) {
+    // when only the top level is specified, add no filter
+    result.push('all');
   }
+  if (method.length === 3 && method[2] !== 'all') {
+    // when only the top level and filter are specified, add no name
+    result.push('all');
+  }
+
+  return result;
+}
+
+export const getMenus = (method: string[]): string[] => {
+  method = normalizeMethod(method);
+  const result: string[] = ['topLevel'];
+
+  var i = 0;
+
+  if (method.length > 0) {
+    if (method[i] !== 'total') {
+      result.push(method[i]);
+      i++;
+    }
+    i++;
+
+    result.push('filter');
+
+    if (method.length > i && method[i] !== 'all') {
+      result.push(method[i]);
+      i++;
+    }
+    i++;
+  }
+
+  return result;
 };
 
 export const getQuery = (methodArray: string[]) => {
@@ -82,15 +115,17 @@ export const getQuery = (methodArray: string[]) => {
 };
 
 export const transformMethod = (methodArray: string[]) => {
-  if (methodArray[0] === 'super') {
-    const [by, name, ...rest] = methodArray;
+  const index = methodArray.indexOf('super');
+  if (index !== -1) {
+    const [by, name, ...rest] = methodArray.slice(index);
+    const preSuper = methodArray.slice(0, index);
     return [
-      'total',
+      ...preSuper,
       `by=${by}`,
-      name !== 'all' ? `name=${name}` : '',
+      name !== 'all' && name != null ? `name=${name}` : '',
       ...rest,
-    ].filter(Boolean);
+    ];
   } else {
-    return methodArray;
+    return methodArray.filter((element) => element !== 'all');
   }
 };
