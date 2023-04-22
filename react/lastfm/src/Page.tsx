@@ -3,7 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import Table from './Table';
 import Menu from './Menu';
 import './Page.css';
-import { buttons, getMenus } from './menu';
+import { buttons, getMenus } from './menus';
 
 function Page() {
   const [method, setMethod] = useState([buttons['topLevel'][0].function]);
