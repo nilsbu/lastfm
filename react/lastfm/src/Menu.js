@@ -9,18 +9,11 @@ function Menu(props) {
     props.onMethodChange(name);
   };
 
-  // button functionality
-  const buttons = [
-    { function: 'total', name: 'Total' },
-    { function: 'fade/365', name: 'Fade 1y' },
-    { function: 'fade/3653', name: 'Fade 10y' },
-  ];
-
   return (
     <div className="bg-secondary p-3">
       <div className="row">
         <div className="col-auto">
-          {buttons.map(button => (
+          {props.buttons.map(button => (
             <button
               key={button.function}
               onClick={() => handleClick(button.function)}

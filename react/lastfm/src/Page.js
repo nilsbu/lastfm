@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import Table from './Table';
 import Menu from './Menu';
 import './Page.css';
 
 function Page() {
+  // button functionality
+  const buttons = [
+    { function: 'total', name: 'Total' },
+    { function: 'fade/365', name: 'Fade 1y' },
+    { function: 'fade/3653', name: 'Fade 10y' },
+  ];
+
   const [method, setMethod] = useState('');
 
   const handleMethodChange = (newMethod) => {
@@ -21,6 +28,10 @@ function Page() {
     });
   };
 
+  useEffect(() => {
+    fetchData(buttons[0].function); // Fetch data once at initialization
+  }, []); // empty array as second argument to ensure that useEffect only runs once
+
   const [data, setData] = useState([]);
 
   const fetchData = (name) => {
@@ -35,7 +46,7 @@ function Page() {
     <Container fluid>
       <Row>
         <Col>
-          <Menu onMethodChange={handleMethodChange} />
+          <Menu onMethodChange={handleMethodChange} buttons={buttons} />
         </Col>
       </Row>
       <Row>
