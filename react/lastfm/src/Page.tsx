@@ -3,31 +3,9 @@ import { Container, Row, Col } from 'react-bootstrap';
 import Table from './Table';
 import Menu from './Menu';
 import './Page.css';
+import { buttons, getMenus } from './menu';
 
 function Page() {
-  // button functionality
-  const buttons = {
-    'topLevel': [
-      { function: 'total', name: 'Total' },
-      { function: 'fade', name: 'Fade' },
-    ],
-    'fade': [
-      { function: '365', name: '365' },
-      { function: '3653', name: '3653' },
-    ]
-  };
-
-  const getMenus = (topLevelFunction) => {
-    switch (topLevelFunction) {
-      case 'total':
-        return ['topLevel'];
-      case 'fade':
-        return ['topLevel', 'fade'];
-      default:
-        return ['topLevel'];
-    }
-  };
-
   const [method, setMethod] = useState([buttons['topLevel'][0].function]);
 
   const getMethod = (methodArray) => {
