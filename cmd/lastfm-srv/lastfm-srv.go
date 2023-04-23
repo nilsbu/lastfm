@@ -12,6 +12,7 @@ import (
 	"github.com/nilsbu/lastfm/pkg/format"
 	"github.com/nilsbu/lastfm/pkg/io"
 	"github.com/nilsbu/lastfm/pkg/pipeline"
+	"github.com/nilsbu/lastfm/pkg/refresh"
 	"github.com/nilsbu/lastfm/pkg/rsrc"
 	"github.com/nilsbu/lastfm/pkg/unpack"
 )
@@ -121,7 +122,8 @@ func main() {
 		return
 	}
 
-	pl := pipeline.New(session, s)
+	pl, trigger := refresh.WrapRefresh(s, pipeline.New(session, s), session)
+	go refresh.PeriodicRefresh(trigger, 0, 1, 0) // Every night at 01:00 (UTC)
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		handleRequest(session, s, pl, rw, r)
