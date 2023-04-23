@@ -10,12 +10,12 @@ services:
     build:
       context: .
       dockerfile: srv.dockerfile
-      args:
-        tls_cert_rel: ${TLS_CERT_REL}
     image: lastfm/srv
     container_name: lastfm-srv
     ports:
-      - "3001:3000"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    environment:
+      - BACKEND_PORT=${BACKEND_PORT}
     volumes:
       - ${DATA_PATH}:/.lastfm:rw
       - ${TLS_CERT_BASE}:/cert:ro

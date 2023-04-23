@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/nilsbu/lastfm/pkg/command"
@@ -100,6 +101,12 @@ func handleRequest(
 func main() {
 	fmt.Println("Starting server...")
 
+	port := os.Getenv("BACKEND_PORT")
+	if port == "" {
+		port = "3000"
+	}
+	fmt.Println("Listening on port", port)
+
 	s, err := createStore(dumpChan())
 
 	if err != nil {
@@ -123,7 +130,7 @@ func main() {
 		handleRequest(session, s, pl, rw, r)
 	})
 
-	if err := http.ListenAndServe(":3000", nil); err != nil {
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
 	}
 }

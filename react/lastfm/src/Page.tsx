@@ -57,8 +57,13 @@ function Page() {
 
   const fetchData = (method : MenuChoice) => {
     const name = getQuery(transformMethod(method));
-    console.log(`Fetching data from http://${window.location.hostname}:3001/json/print/${name}`);
-    fetch(`http://${window.location.hostname}:3001/json/print/${name}`)
+
+    console.log(`Fetching data from ${name}`);
+    const hostName = process.env.NODE_ENV === 'production' ? '' : `http://${window.location.hostname}:3001`;
+    console.log(`Fetching data from ${hostName}`);
+
+    console.log(`Fetching data from ${hostName}/json/print/${name}`);
+    fetch(`${hostName}/json/print/${name}`)
       .then(response => response.json())
       .then(data => transformData(data))
       .then(data => {

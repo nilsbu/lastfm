@@ -22,7 +22,7 @@ const apiProxy = httpProxy.createProxyServer();
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Forward requests starting with /json/ to the lastfm-srv service
-const target = process.env.BACKEND || 'localhost:3001';
+const target = process.env.BACKEND_HOST || 'localhost:3001';
 app.use('/json', (req, res) => {
     logger.info(`Forwarding request to http://${target}/json${req.url}`);
     apiProxy.web(req, res, { target: `http://${target}/json` });
