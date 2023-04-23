@@ -3,7 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import Table from './Table';
 import Menu from './Menu';
 import './Page.css';
-import { menuDefinition, getMenus, getQuery, transformMethod } from './menus';
+import { MenuChoice, menuDefinition, getMenus, getQuery, transformMethod } from './menus';
 
 // type that we get as JSON. There is more because it's also used for the chart.
 interface JSONData {
@@ -16,21 +16,24 @@ interface JSONData {
 }
 
 function Page() {
-  const [method, setMethod] = useState([menuDefinition['topLevel'].buttons[0].function]);
+  const [method, setMethod] = useState<MenuChoice>({topLevel: 'total', functionParam: '', filter: 'all', filterParam: ''});
 
-  const handleMethodChange = (newMethod : string, index : number) => {
-    console.log(`Changing method to ${newMethod} at index ${index}`);
-    if (newMethod !== method[index]) {
-      var newMethodArray = [...method]; // create a copy of the method array
-      if (index === 0) {
-        // if the top level method has changed, reset the rest of the method array
-        newMethodArray = getMenus([newMethod]).map(menu => menuDefinition[menu].default);
-      }
-      newMethodArray[index] = newMethod;
-      console.log(`New method array: ${newMethodArray}`);
-      setMethod(newMethodArray); // update the method state with the new array
-      fetchData(newMethodArray); // fetch new data
+  const handleMethodChange = (newMethod : string, index : string) => {
+    var newChoice : MenuChoice;
+    if (index === 'topLevel') {
+      var param = newMethod === 'total' ? '' : menu[newMethod].default;
+      newChoice = {topLevel: newMethod, functionParam: param, filter: method.filter, filterParam: method.filterParam};
+    } else if (index === 'fade' || index === 'period') {
+      newChoice = {topLevel: method.topLevel, functionParam: newMethod, filter: method.filter, filterParam: method.filterParam};
+    } else if (index === 'filter') {
+      var param = newMethod === 'all' ? '' : menu['filter'].default;
+      newChoice = {topLevel: method.topLevel, functionParam: method.functionParam, filter: newMethod, filterParam: param};
+    } else { // must be filterParam
+      newChoice = {topLevel: method.topLevel, functionParam: method.functionParam, filter: method.filter, filterParam: newMethod};
     }
+
+    setMethod(newChoice);
+    fetchData(newChoice); // fetch new data
   };
 
   const transformData = (data : JSONData) => {
@@ -52,7 +55,7 @@ function Page() {
 
   const [data, setData] = useState<TableData>([]);
 
-  const fetchData = (method : string[]) => {
+  const fetchData = (method : MenuChoice) => {
     const name = getQuery(transformMethod(method));
     console.log(`Fetching data from http://${window.location.hostname}:3001/json/print/${name}`);
     fetch(`http://${window.location.hostname}:3001/json/print/${name}`)
@@ -70,10 +73,10 @@ function Page() {
     <Container fluid>
       <Row>
         <Col>
-          {getMenus(method).map((menu, index) => (
+          {getMenus(method).map(menu => (
             <Menu
               key={menu}
-              onMethodChange={newMethod => handleMethodChange(newMethod, index)}
+              onMethodChange={newMethod => handleMethodChange(newMethod, menu)}
               buttons={menuDefinition[menu]}
             />
           ))}

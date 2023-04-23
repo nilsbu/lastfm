@@ -17,7 +17,6 @@ export const menuDefinition: MenuDefinition = {
       { function: 'total', name: 'Total' },
       { function: 'fade', name: 'Fade' },
       { function: 'period', name: 'Period' },
-      { function: 'super', name: 'Super'},
     ],
     default: 'total'
   },
@@ -54,41 +53,24 @@ export const menuDefinition: MenuDefinition = {
   },
 };
 
-const normalizeMethod = (method: string[]): string[] => {
-  // TODO: instead of this, the methods should be set correctly in the first place
-  const result: string[] = method;
-  if (method.length === 1) {
-    // when only the top level is specified, add no filter
-    result.push('all');
-  }
-  if (method.length === 3 && method[2] !== 'all') {
-    // when only the top level and filter are specified, add no name
-    result.push('all');
-  }
+export type MenuChoice = {
+  topLevel: string;
+  functionParam: string; // there might be others in the future when we add intervals
+  filter: string;
+  filterParam: string;
+};
 
-  return result;
-}
-
-export const getMenus = (method: string[]): string[] => {
-  method = normalizeMethod(method);
+export const getMenus = (method: MenuChoice): string[] => {
   const result: string[] = ['topLevel'];
 
-  var i = 0;
+  if (method.topLevel !== 'total') {
+    result.push(method.topLevel);
+  }
+  
+  result.push('filter');
 
-  if (method.length > 0) {
-    if (method[i] !== 'total') {
-      result.push(method[i]);
-      i++;
-    }
-    i++;
-
-    result.push('filter');
-
-    if (method.length > i && method[i] !== 'all') {
-      result.push(method[i]);
-      i++;
-    }
-    i++;
+  if (method.filter !== 'all') {
+    result.push(method.filter);
   }
 
   return result;
@@ -114,18 +96,19 @@ export const getQuery = (methodArray: string[]) => {
   return result;
 };
 
-export const transformMethod = (methodArray: string[]) => {
-  const index = methodArray.indexOf('super');
-  if (index !== -1) {
-    const [by, name, ...rest] = methodArray.slice(index);
-    const preSuper = methodArray.slice(0, index);
-    return [
-      ...preSuper,
-      `by=${by}`,
-      name !== 'all' && name != null ? `name=${name}` : '',
-      ...rest,
-    ];
-  } else {
-    return methodArray.filter((element) => element !== 'all');
+export const transformMethod = (methodArray: MenuChoice): string[] => {
+  var result: string[] = [methodArray.topLevel];
+
+  if (methodArray.functionParam !== '') {
+    result.push(methodArray.functionParam);
   }
+
+  if (methodArray.filter !== 'all') {
+    result.push(`by=${methodArray.filter}`);
+    if (methodArray.filterParam !== 'all') {
+      result.push(`name=${methodArray.filterParam}`);
+    }
+  }
+
+  return result;
 };
