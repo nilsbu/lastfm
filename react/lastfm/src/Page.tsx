@@ -63,6 +63,17 @@ function Page() {
       .then(data => transformData(data))
       .then(data => {
         setData(data);
+        // Receive parameters for filter
+        if (method.filter === 'super' && method.filterParam === 'all') {
+          var newMenu = {...menu};
+          newMenu['super'] = {
+            buttons: ['all', ...data.map(item => item.label)].map(label => {return {function: label, name: label}}),
+            default: 'all',
+          };
+
+          console.log(newMenu['super']);
+          setMenu(newMenu);
+        }
       })
       .catch(error => console.error(error));
   };
@@ -73,11 +84,11 @@ function Page() {
     <Container fluid>
       <Row>
         <Col>
-          {getMenus(method).map(menu => (
+          {getMenus(method).map(_menu => (
             <Menu
-              key={menu}
-              onMethodChange={newMethod => handleMethodChange(newMethod, menu)}
-              buttons={menuDefinition[menu]}
+              key={_menu}
+              onMethodChange={newMethod => handleMethodChange(newMethod, _menu)}
+              buttons={menu[_menu]}
             />
           ))}
         </Col>
