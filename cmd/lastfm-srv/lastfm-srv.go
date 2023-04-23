@@ -123,9 +123,6 @@ func main() {
 
 	pl := pipeline.New(session, s)
 
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/charts/", http.StripPrefix("/charts/", fs))
-
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		handleRequest(session, s, pl, rw, r)
 	})
