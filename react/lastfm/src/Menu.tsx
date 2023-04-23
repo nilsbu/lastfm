@@ -47,13 +47,13 @@ function Menu(props: MenuProps) {
           )}
           {visibleButtons.map((button) => (
             <button
-              key={button.function}
-              onClick={() => handleButtonClick(button.function)}
+              key={button}
+              onClick={() => handleButtonClick(button)}
               className={`btn btn-light mx-1 ${
-                active === button.function ? 'active' : ''
+                active === button ? 'active' : ''
               }`}
             >
-              {button.name}
+              {button.charAt(0).toUpperCase() + button.slice(1)}
             </button>
           ))}
           {startIndex + BUTTONS_PER_PAGE < props.buttons.buttons.length && (

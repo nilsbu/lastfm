@@ -1,7 +1,5 @@
-type Button = { function: string; name: string };
-
 export type ButtonGroup = {
-  buttons: Button[];
+  buttons: string[];
   default: string;
 }
 
@@ -14,39 +12,62 @@ const currentYear = new Date().getFullYear();
 export const menuDefinition: MenuDefinition = {
   'topLevel': {
     buttons: [
-      { function: 'total', name: 'Total' },
-      { function: 'fade', name: 'Fade' },
-      { function: 'period', name: 'Period' },
+      'total',
+      'fade',
+      'period',
     ],
     default: 'total'
   },
   'fade': {
     buttons:[
-      { function: '30', name: '30' },
-      { function: '365', name: '365' },
-      { function: '1000', name: '1000' },
-      { function: '3653', name: '3653' },
+      '30',
+      '365',
+      '1000',
+      '3653',
     ],
     default: '365'
   },
   'period': {
     buttons: Array.from({length: currentYear - 2006}, (_, i) => {
       const year = 2007 + i;
-      return { function: year.toString(), name: year.toString() };
+      return year.toString();
     }),
     default: currentYear.toString()
   },
   'filter': {
     buttons: [
-      { function: 'all', name: 'All' },
-      { function: 'super', name: 'Super' },
-      // { function: 'year', name: 'Year' },
+      'all',
+      'super',
+      'year',
+      'country',
+      'groups',
     ],
     default: 'all',
   },
   'super': {
     buttons: [
-      { function: 'all', name: 'All' },
+      'all',
+      // will be filled in dynamically
+    ],
+    default: 'all',
+  },
+  'year': {
+    buttons: [
+      'all',
+      // will be filled in dynamically
+    ],
+    default: 'all',
+  },
+  'country': {
+    buttons: [
+      'all',
+      // will be filled in dynamically
+    ],
+    default: 'all',
+  },
+  'groups': {
+    buttons: [
+      'all',
       // will be filled in dynamically
     ],
     default: 'all',

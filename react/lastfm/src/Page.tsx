@@ -64,14 +64,12 @@ function Page() {
       .then(data => {
         setData(data);
         // Receive parameters for filter
-        if (method.filter === 'super' && method.filterParam === 'all') {
+        if (menu['filter'].buttons.includes(method.filter) && method.filter !== 'all' && method.filterParam === 'all') {
           var newMenu = {...menu};
-          newMenu['super'] = {
-            buttons: ['all', ...data.map(item => item.label)].map(label => {return {function: label, name: label}}),
+          newMenu[method.filter] = {
+            buttons: ['all', ...data.map(item => item.label)],
             default: 'all',
           };
-
-          console.log(newMenu['super']);
           setMenu(newMenu);
         }
       })
