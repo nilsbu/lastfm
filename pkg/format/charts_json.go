@@ -2,8 +2,41 @@ package format
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 )
+
+type chartData struct {
+	Title string  `json:"title"`
+	Value float64 `json:"value"`
+}
+
+type chart struct {
+	Data []chartData `json:"data"`
+}
+
+type chartJSON struct {
+	Chart chart `json:"chart"`
+}
+
+func convertDataToJSON(d *data) ([]byte, error) {
+	var jsonData chartJSON
+	for i, title := range d.titles[0] {
+		value := d.values[0][i][0]
+		chartData := chartData{
+			Title: title.String(),
+			Value: value,
+		}
+		jsonData.Chart.Data = append(jsonData.Chart.Data, chartData)
+	}
+
+	jsonBytes, err := json.Marshal(jsonData)
+	if err != nil {
+		return jsonBytes, fmt.Errorf("failed to marshal JSON data: %v", err)
+	}
+
+	return jsonBytes, nil
+}
 
 type js map[string]interface{}
 
@@ -13,22 +46,7 @@ func (f *Charts) JSON(w io.Writer) error {
 		return err
 	}
 
-	obj := make(js)
-	obj["type"] = "bar"
-	data := []float64{}
-	labels := []string{}
-
-	titles := d.titles[0]
-	values := d.values[0]
-	for i := range titles {
-		labels = append(labels, titles[i].String())
-		data = append(data, values[i][0])
-	}
-
-	obj["data"] = js{"labels": labels, "datasets": []js{{"data": data}}}
-	obj["options"] = js{"indexAxis": "y"}
-
-	bytes, err := json.Marshal(obj)
+	bytes, err := convertDataToJSON(d)
 	if err != nil {
 		return err
 	}

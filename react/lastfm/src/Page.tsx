@@ -7,13 +7,13 @@ import { MenuChoice, menuDefinition, getMenus, getQuery, transformMethod } from 
 
 // type that we get as JSON. There is more because it's also used for the chart.
 interface JSONData {
-  data: {
-    labels: string[],
-    datasets: {
-      data: number[]
-    }[]
-  }
-}
+  chart: {
+    data: {
+      title: string;
+      value: number;
+    }[];
+  };
+};
 
 function Page() {
   const [method, setMethod] = useState<MenuChoice>({topLevel: 'total', functionParam: '', filter: 'all', filterParam: ''});
@@ -38,9 +38,8 @@ function Page() {
   };
 
   const transformData = (data : JSONData) => {
-    return data.data.labels.map((label, index) => {
-      const value = data.data.datasets[0].data[index];
-      return { label, value };
+    return data.chart.data.map((line) => {
+      return { label: line.title, value: line.value };
     });
   };
 
@@ -59,10 +58,7 @@ function Page() {
   const fetchData = (method : MenuChoice) => {
     const name = getQuery(transformMethod(method));
 
-    console.log(`Fetching data from ${name}`);
     const hostName = process.env.NODE_ENV === 'production' ? '' : `http://${window.location.hostname}:3001`;
-    console.log(`Fetching data from ${hostName}`);
-
     console.log(`Fetching data from ${hostName}/json/print/${name}`);
     fetch(`${hostName}/json/print/${name}`)
       .then(response => response.json())
