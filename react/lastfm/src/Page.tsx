@@ -20,13 +20,14 @@ function Page() {
 
   const handleMethodChange = (newMethod : string, index : string) => {
     var newChoice : MenuChoice;
+    var param : string;
     if (index === 'topLevel') {
-      var param = newMethod === 'total' ? '' : menu[newMethod].default;
+      param = newMethod === 'total' ? '' : menu[newMethod].default;
       newChoice = {topLevel: newMethod, functionParam: param, filter: method.filter, filterParam: method.filterParam};
     } else if (index === 'fade' || index === 'period') {
       newChoice = {topLevel: method.topLevel, functionParam: newMethod, filter: method.filter, filterParam: method.filterParam};
     } else if (index === 'filter') {
-      var param = newMethod === 'all' ? '' : menu['filter'].default;
+      param = newMethod === 'all' ? '' : menu['filter'].default;
       newChoice = {topLevel: method.topLevel, functionParam: method.functionParam, filter: newMethod, filterParam: param};
     } else { // must be filterParam
       newChoice = {topLevel: method.topLevel, functionParam: method.functionParam, filter: method.filter, filterParam: newMethod};
