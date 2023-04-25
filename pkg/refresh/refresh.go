@@ -59,7 +59,7 @@ func WrapRefresh(s io.Store, pl pipeline.Pipeline, session *unpack.SessionInfo) 
 	return rpl, &refreshTrigger{pipeline: rpl}
 }
 
-func PeriodicRefresh(trigger Trigger, h, m, s int) {
+func PeriodicRefresh(trigger Trigger, h, m, s int, pre, post func()) {
 	for {
 		// Get the current time
 		now := time.Now()

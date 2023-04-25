@@ -123,7 +123,13 @@ func main() {
 	}
 
 	pl, trigger := refresh.WrapRefresh(s, pipeline.New(session, s), session)
-	go refresh.PeriodicRefresh(trigger, 0, 1, 0) // Every night at 01:00 (UTC)
+	go refresh.PeriodicRefresh(trigger, 0, 1, 0, // Every night at 01:00 (UTC)
+		func() {
+			command.Execute([]string{"lastfm-srv", "update"}, session, s, pl, display.NewNull())
+		}, func() {
+			args := []string{"lastfm-srv", "print", "fade", "365", "-by=super"}
+			command.Execute(args, session, s, pl, display.NewNull())
+		})
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		handleRequest(session, s, pl, rw, r)
