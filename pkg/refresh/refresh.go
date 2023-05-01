@@ -76,7 +76,13 @@ func PeriodicRefresh(trigger Trigger, h, m, s int, pre, post func()) {
 		// Sleep until the specified time
 		time.Sleep(duration)
 
+		// Call the pre function
+		pre()
+
 		// Call the Refresh method on the provided Trigger object
 		trigger.Refresh()
+
+		// Call the post function
+		post()
 	}
 }
