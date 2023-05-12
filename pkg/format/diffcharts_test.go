@@ -29,7 +29,7 @@ func TestDiffCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n",
 			"",
 			"<table></table>",
-			"{\"chart\":{\"data\":null}}",
+			"{\"chart\":{\"data\":null},\"precision\":0}",
 		},
 		{
 			"1",
@@ -46,7 +46,7 @@ func TestDiffCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";1,24\n",
 			"ABC - 123.40\nX   -   1.24\n",
 			"<table><tr><td>ABC</td><td>123.40</td></tr><tr><td>X</td><td>1.24</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"ABC\",\"value\":123.4,\"prevPos\":0,\"prevValue\":123.4},{\"title\":\"X\",\"value\":1.238,\"prevPos\":1,\"prevValue\":1.238}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"ABC\",\"value\":123.4,\"prevPos\":0,\"prevValue\":123.4},{\"title\":\"X\",\"value\":1.238,\"prevPos\":1,\"prevValue\":1.238}]},\"precision\":2}",
 		},
 		{
 			"percentage",
@@ -63,7 +63,7 @@ func TestDiffCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
 			"a - 75%\nb - 25%\n",
 			"<table><tr><td>a</td><td>75%</td></tr><tr><td>b</td><td>25%</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":0.75,\"prevPos\":0,\"prevValue\":0.75},{\"title\":\"b\",\"value\":0.25,\"prevPos\":1,\"prevValue\":0.25}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":0.75,\"prevPos\":0,\"prevValue\":0.75},{\"title\":\"b\",\"value\":0.25,\"prevPos\":1,\"prevValue\":0.25}]},\"precision\":0}",
 		},
 		{
 			"comma for decimals",
@@ -80,7 +80,7 @@ func TestDiffCharts(t *testing.T) {
 			"\"#\";\"Name\";\"Value\"\n1;\"a\";6,0\n2;\"b\";5,0\n",
 			"1: a - 6.0\n2: b - 5.0\n",
 			"<table><tr><td>1</td><td>a</td><td>6.0</td></tr><tr><td>2</td><td>b</td><td>5.0</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":6,\"prevPos\":1,\"prevValue\":2},{\"title\":\"b\",\"value\":5,\"prevPos\":0,\"prevValue\":4}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":6,\"prevPos\":1,\"prevValue\":2},{\"title\":\"b\",\"value\":5,\"prevPos\":0,\"prevValue\":4}]},\"precision\":1}",
 		},
 	}
 

@@ -53,11 +53,13 @@ type diffChart struct {
 }
 
 type diffChartJSON struct {
-	Chart diffChart `json:"chart"`
+	Chart     diffChart `json:"chart"`
+	Precision int       `json:"precision"`
 }
 
-func convertDiffDataToJSON(c charts.DiffCharts, d *data) ([]byte, error) {
+func convertDiffDataToJSON(c charts.DiffCharts, precision int, d *data) ([]byte, error) {
 	var jsonData diffChartJSON
+	jsonData.Precision = precision
 	for i, title := range d.titles[0] {
 		value := d.values[0][i][0]
 		place, prevValue, _ := c.Previous(title)
@@ -85,7 +87,7 @@ func (c *DiffCharts) JSON(w io.Writer) error {
 		return err
 	}
 
-	bytes, err := convertDiffDataToJSON(c.Charts[0], d)
+	bytes, err := convertDiffDataToJSON(c.Charts[0], c.Precision, d)
 	if err != nil {
 		return err
 	}
