@@ -134,8 +134,10 @@ func (cmd printFade) Execute(
 
 	prec := 2
 
-	f := &format.Charts{
-		Charts:     []charts.Charts{cha},
+	dc := charts.NewDiffCharts(cha, cha.Len()-7)
+
+	f := &format.DiffCharts{
+		Charts:     []charts.DiffCharts{dc},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
