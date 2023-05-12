@@ -4,18 +4,7 @@ import Table from './Table';
 import Menu from './Menu';
 import './Page.css';
 import { MenuChoice, menuDefinition, getMenus, getQuery, transformMethod } from './menus';
-
-// type that we get as JSON. There is more because it's also used for the chart.
-interface JSONData {
-  chart: {
-    data: {
-      title: string;
-      value: number;
-      prevPos?: number;
-      prevValue?: number;
-    }[];
-  };
-};
+// import { JSONData } from './types';
 
 function Page() {
   const [method, setMethod] = useState<MenuChoice>({topLevel: 'total', functionParam: '', filter: 'all', filterParam: ''});
@@ -39,17 +28,6 @@ function Page() {
     fetchData(newChoice); // fetch new data
   };
 
-  const transformData = (data : JSONData) => {
-    return data.chart.data.map((line) => {
-      return { 
-        label: line.title,
-        value: line.value,
-        prevPos: line.prevPos !== undefined ? line.prevPos + 1 : undefined,
-        prevValue: line.prevValue !== undefined ? line.prevValue : undefined,
-      };
-    });
-  };
-
   const isFirstRender = useRef(true); // add a ref to keep track of initial render
 
   useEffect(() => {
@@ -60,7 +38,7 @@ function Page() {
     }
   }, []); // no dependencies, so it only runs once
 
-  const [data, setData] = useState<TableData>([]);
+  const [data, setData] = useState<JSONData>({chart: {data: []}, precision: 0});
 
   const fetchData = (method : MenuChoice) => {
     const name = getQuery(transformMethod(method));
@@ -69,14 +47,13 @@ function Page() {
     console.log(`Fetching data from ${hostName}/json/print/${name}`);
     fetch(`${hostName}/json/print/${name}`)
       .then(response => response.json())
-      .then(data => transformData(data))
       .then(data => {
         setData(data);
         // Receive parameters for filter
         if (menu['filter'].buttons.includes(method.filter) && method.filter !== 'all' && method.filterParam === 'all') {
           var newMenu = {...menu};
           newMenu[method.filter] = {
-            buttons: ['all', ...data.map(item => item.label)],
+            buttons: ['all', ...data.chart.data.map((item: JSONElement) => item.title)],
             default: 'all',
           };
           setMenu(newMenu);
