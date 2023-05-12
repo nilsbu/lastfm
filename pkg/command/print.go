@@ -97,8 +97,8 @@ func (cmd printTotal) Execute(
 	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
-	f := &format.Charts{
-		Charts:     []charts.Charts{cha},
+	f := &format.DiffCharts{
+		Charts:     []charts.DiffCharts{charts.NewDiffCharts(cha, cha.Len()-7)},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -134,10 +134,8 @@ func (cmd printFade) Execute(
 
 	prec := 2
 
-	dc := charts.NewDiffCharts(cha, cha.Len()-7)
-
 	f := &format.DiffCharts{
-		Charts:     []charts.DiffCharts{dc},
+		Charts:     []charts.DiffCharts{charts.NewDiffCharts(cha, cha.Len()-7)},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -170,8 +168,8 @@ func (cmd printPeriod) Execute(
 	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
-	f := &format.Charts{
-		Charts:     []charts.Charts{cha},
+	f := &format.DiffCharts{
+		Charts:     []charts.DiffCharts{charts.NewDiffCharts(cha, cha.Len()-7)},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -205,8 +203,8 @@ func (cmd printInterval) Execute(
 	if cmd.percentage || cmd.normalized {
 		prec = 2
 	}
-	f := &format.Charts{
-		Charts:     []charts.Charts{cha},
+	f := &format.DiffCharts{
+		Charts:     []charts.DiffCharts{charts.NewDiffCharts(cha, cha.Len()-7)},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
@@ -273,8 +271,8 @@ func (cmd printAfter) Execute(
 
 	prec := 2
 
-	f := &format.Charts{
-		Charts:     []charts.Charts{cha},
+	f := &format.DiffCharts{
+		Charts:     []charts.DiffCharts{charts.NewDiffCharts(cha, cha.Len()-7)},
 		Numbered:   true,
 		Precision:  prec,
 		Percentage: cmd.percentage,
