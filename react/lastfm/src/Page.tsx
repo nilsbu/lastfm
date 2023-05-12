@@ -11,6 +11,8 @@ interface JSONData {
     data: {
       title: string;
       value: number;
+      prevPos?: number;
+      prevValue?: number;
     }[];
   };
 };
@@ -39,7 +41,12 @@ function Page() {
 
   const transformData = (data : JSONData) => {
     return data.chart.data.map((line) => {
-      return { label: line.title, value: line.value };
+      return { 
+        label: line.title,
+        value: line.value,
+        prevPos: line.prevPos !== undefined ? line.prevPos + 1 : undefined,
+        prevValue: line.prevValue !== undefined ? line.prevValue : undefined,
+      };
     });
   };
 
