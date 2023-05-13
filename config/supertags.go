@@ -50,6 +50,7 @@ var Supertags = map[string]string{
 	"dancehall": "reggae",
 	"reggae":    "reggae",
 	"reggaeton": "reggae",
+	"Reggaeton": "reggae",
 	"ska":       "reggae",
 
 	"alternative":      "rock",
