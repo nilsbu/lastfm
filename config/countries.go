@@ -87,6 +87,7 @@ var Countries = map[string]string{
 	"philippine":    "Philippines",
 	"polish":        "Poland",
 	"portuguese":    "Portugal",
+	"puerto rican":  "Puerto Rico",
 	"romanian":      "Romania",
 	"russian":       "Russia",
 	"saudi":         "Saudi Arabia",
