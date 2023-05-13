@@ -9,12 +9,23 @@ type MenuDefinition = {
 
 const currentYear = new Date().getFullYear();
 
+const eraDelimiters: string[] = [
+  '2007-05-05', // signed up to Last.fm
+  '2012-02-17', // signed up to Simfy
+  '2017-02-11', // started listening to Lady Gaga
+  '2022-06-20', // moved to Spain
+  '2030-12-31', 
+];
+
 export const menuDefinition: MenuDefinition = {
   'topLevel': {
     buttons: [
       'total',
       'fade',
       'period',
+      'decades',
+      'eras',
+      'fademax',
     ],
     default: 'total'
   },
@@ -33,6 +44,32 @@ export const menuDefinition: MenuDefinition = {
       return year.toString();
     }),
     default: currentYear.toString()
+  },
+  'decades': {
+    buttons: [
+      '2000s',
+      '2010s',
+      '2020s',
+    ],
+    default: '2020s'
+  },
+  'eras': {
+    buttons: [
+      'pre-streaming',
+      'exploration',
+      'pop',
+      'international',
+    ],
+    default: 'international'
+  },
+  'fademax': {
+    buttons:[
+      '30',
+      '365',
+      '1000',
+      '3653',
+    ],
+    default: '365'
   },
   'filter': {
     buttons: [
@@ -120,7 +157,21 @@ export const getQuery = (methodArray: string[]) => {
 export const transformMethod = (methodArray: MenuChoice): string[] => {
   var result: string[] = [methodArray.topLevel];
 
-  if (methodArray.functionParam !== '') {
+  if (methodArray.topLevel === 'decades') {
+    let decadeStart = methodArray.functionParam;
+    let decadeEnd = (parseInt(decadeStart) + 10).toString() + 's';
+  
+    result = ['interval', `${decadeStart.slice(0, -1)}-01-01`, `${decadeEnd.slice(0, -1)}-01-01`];
+  }
+  else if (methodArray.topLevel === 'eras') {
+    const eraIndex = menuDefinition.eras.buttons.indexOf(methodArray.functionParam);
+    const eraStart = eraDelimiters[eraIndex];
+    const eraEnd = eraDelimiters[eraIndex + 1];
+
+    result = ['interval', eraStart, eraEnd];
+    console.log(result);
+  }
+  else if (methodArray.functionParam !== '') {
     result.push(methodArray.functionParam);
   }
 

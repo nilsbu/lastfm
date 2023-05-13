@@ -4,7 +4,6 @@ import Table from './Table';
 import Menu from './Menu';
 import './Page.css';
 import { MenuChoice, menuDefinition, getMenus, getQuery, transformMethod } from './menus';
-// import { JSONData } from './types';
 
 function Page() {
   const [method, setMethod] = useState<MenuChoice>({topLevel: 'total', functionParam: '', filter: 'all', filterParam: ''});
@@ -15,7 +14,7 @@ function Page() {
     if (index === 'topLevel') {
       param = newMethod === 'total' ? '' : menu[newMethod].default;
       newChoice = {topLevel: newMethod, functionParam: param, filter: method.filter, filterParam: method.filterParam};
-    } else if (index === 'fade' || index === 'period') {
+    } else if (menuDefinition.topLevel.buttons.includes(index)) {
       newChoice = {topLevel: method.topLevel, functionParam: newMethod, filter: method.filter, filterParam: method.filterParam};
     } else if (index === 'filter') {
       param = newMethod === 'all' ? '' : menu['filter'].default;
