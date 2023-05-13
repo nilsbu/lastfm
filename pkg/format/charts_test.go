@@ -30,7 +30,7 @@ func TestCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n",
 			"",
 			"<table></table>",
-			"{\"chart\":{\"data\":null}}",
+			"{\"chart\":{\"data\":null},\"precision\":0}",
 		},
 		{
 			"1",
@@ -47,7 +47,7 @@ func TestCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n\"ABC\";123,40\n\"X\";1,24\n",
 			"ABC - 123.40\nX   -   1.24\n",
 			"<table><tr><td>ABC</td><td>123.40</td></tr><tr><td>X</td><td>1.24</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"ABC\",\"value\":123.4},{\"title\":\"X\",\"value\":1.238}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"ABC\",\"value\":123.4},{\"title\":\"X\",\"value\":1.238}]},\"precision\":2}",
 		},
 		{
 			"percentage",
@@ -64,7 +64,7 @@ func TestCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n\"a\";75%\n\"b\";25%\n",
 			"a - 75%\nb - 25%\n",
 			"<table><tr><td>a</td><td>75%</td></tr><tr><td>b</td><td>25%</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":0.75},{\"title\":\"b\",\"value\":0.25}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":0.75},{\"title\":\"b\",\"value\":0.25}]},\"precision\":0}",
 		},
 		{
 			"comma for decimals",
@@ -81,7 +81,7 @@ func TestCharts(t *testing.T) {
 			"\"#\";\"Name\";\"Value\"\n1;\"a\";12,1\n2;\"b\";4,0\n",
 			"1: a - 12.1\n2: b -  4.0\n",
 			"<table><tr><td>1</td><td>a</td><td>12.1</td></tr><tr><td>2</td><td>b</td><td>4.0</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1},{\"title\":\"b\",\"value\":4}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1},{\"title\":\"b\",\"value\":4}]},\"precision\":1}",
 		},
 		{
 			"numbered",
@@ -100,7 +100,7 @@ func TestCharts(t *testing.T) {
 			"\"#\";\"Name\";\"Value\"\n1;\"A\";10\n2;\"B\";9\n3;\"C\";8\n4;\"D\";7\n5;\"E\";6\n6;\"F\";5\n7;\"G\";4\n8;\"H\";3\n9;\"I\";2\n10;\"J\";1\n",
 			" 1: A - 10\n 2: B -  9\n 3: C -  8\n 4: D -  7\n 5: E -  6\n 6: F -  5\n 7: G -  4\n 8: H -  3\n 9: I -  2\n10: J -  1\n",
 			"<table><tr><td>1</td><td>A</td><td>10</td></tr><tr><td>2</td><td>B</td><td>9</td></tr><tr><td>3</td><td>C</td><td>8</td></tr><tr><td>4</td><td>D</td><td>7</td></tr><tr><td>5</td><td>E</td><td>6</td></tr><tr><td>6</td><td>F</td><td>5</td></tr><tr><td>7</td><td>G</td><td>4</td></tr><tr><td>8</td><td>H</td><td>3</td></tr><tr><td>9</td><td>I</td><td>2</td></tr><tr><td>10</td><td>J</td><td>1</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"A\",\"value\":10},{\"title\":\"B\",\"value\":9},{\"title\":\"C\",\"value\":8},{\"title\":\"D\",\"value\":7},{\"title\":\"E\",\"value\":6},{\"title\":\"F\",\"value\":5},{\"title\":\"G\",\"value\":4},{\"title\":\"H\",\"value\":3},{\"title\":\"I\",\"value\":2},{\"title\":\"J\",\"value\":1}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"A\",\"value\":10},{\"title\":\"B\",\"value\":9},{\"title\":\"C\",\"value\":8},{\"title\":\"D\",\"value\":7},{\"title\":\"E\",\"value\":6},{\"title\":\"F\",\"value\":5},{\"title\":\"G\",\"value\":4},{\"title\":\"H\",\"value\":3},{\"title\":\"I\",\"value\":2},{\"title\":\"J\",\"value\":1}]},\"precision\":0}",
 		},
 		{
 			"multiple charts",
@@ -124,7 +124,7 @@ func TestCharts(t *testing.T) {
 			"\"#\";\"Name\";\"Value\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;\"b\";4.0;\"b\";4.0\n",
 			"1: a - 12.1\tX - 5.0\n2: b -  4.0\tb - 4.0\n",
 			"<table><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td>b</td><td>4.0</td><td>b</td><td>4.0</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1},{\"title\":\"b\",\"value\":4}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1},{\"title\":\"b\",\"value\":4}]},\"precision\":1}",
 		},
 		{
 			"multiple charts with range",
@@ -149,7 +149,7 @@ func TestCharts(t *testing.T) {
 			"\"#\";\"Name\";\"Value\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;\"b\";4.0;\"b\";4.0\n",
 			"#  2012-01-01       \t2013-01-01      \n1: a          - 12.1\tX          - 5.0\n2: b          -  4.0\tb          - 4.0\n",
 			"<table><tr><td>#</td><td>2012-01-01</td><td></td><td>2013-01-01</td><td></td></tr><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td>b</td><td>4.0</td><td>b</td><td>4.0</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1},{\"title\":\"b\",\"value\":4}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1},{\"title\":\"b\",\"value\":4}]},\"precision\":1}",
 		},
 		{
 			"multiple charts with different number of lines",
@@ -172,7 +172,7 @@ func TestCharts(t *testing.T) {
 			"\"#\";\"Name\";\"Value\";\"Name\";\"Value\"\n1;\"a\";12.1;\"X\";5.0\n2;;;\"b\";4.0\n",
 			"1: a - 12.1\tX - 5.0\n2:         \tb - 4.0\n",
 			"<table><tr><td>1</td><td>a</td><td>12.1</td><td>X</td><td>5.0</td></tr><tr><td>2</td><td></td><td></td><td>b</td><td>4.0</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"a\",\"value\":12.1}]},\"precision\":1}",
 		},
 		{
 			"multiple charts with different number of lines",
@@ -193,7 +193,7 @@ func TestCharts(t *testing.T) {
 			"\"#\";\"Name\";\"Value\";\"Name\";\"Value\"\n1;;;\"X\";5.0\n2;;;\"b\";4.0\n",
 			"1:       \tX - 5.0\n2:       \tb - 4.0\n",
 			"<table><tr><td>1</td><td></td><td></td><td>X</td><td>5.0</td></tr><tr><td>2</td><td></td><td></td><td>b</td><td>4.0</td></tr></table>",
-			"{\"chart\":{\"data\":null}}", // empty because first chart is empty
+			"{\"chart\":{\"data\":null},\"precision\":1}", // empty because first chart is empty
 		},
 		{
 			"percentage with sum total",
@@ -208,7 +208,7 @@ func TestCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n\"Týrs\";60,0%\n\"AB\";40,0%\n",
 			"Týrs - 60.0%\nAB   - 40.0%\n",
 			"<table><tr><td>Týrs</td><td>60.0%</td></tr><tr><td>AB</td><td>40.0%</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"Týrs\",\"value\":0.6},{\"title\":\"AB\",\"value\":0.4}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"Týrs\",\"value\":0.6},{\"title\":\"AB\",\"value\":0.4}]},\"precision\":1}",
 		},
 		{
 			"zero percentage",
@@ -224,7 +224,7 @@ func TestCharts(t *testing.T) {
 			"\"Name\";\"Value\"\n\"AB\";0%\n",
 			"AB - 0%\n",
 			"<table><tr><td>AB</td><td>0%</td></tr></table>",
-			"{\"chart\":{\"data\":[{\"title\":\"AB\",\"value\":0}]}}",
+			"{\"chart\":{\"data\":[{\"title\":\"AB\",\"value\":0}]},\"precision\":0}",
 		},
 	}
 

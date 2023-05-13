@@ -16,11 +16,13 @@ type chart struct {
 }
 
 type chartJSON struct {
-	Chart chart `json:"chart"`
+	Chart     chart `json:"chart"`
+	Precision int   `json:"precision"`
 }
 
-func convertDataToJSON(d *data) ([]byte, error) {
+func convertDataToJSON(d *data, precision int) ([]byte, error) {
 	var jsonData chartJSON
+	jsonData.Precision = precision
 	for i, title := range d.titles[0] {
 		value := d.values[0][i][0]
 		chartData := chartData{
@@ -46,7 +48,7 @@ func (f *Charts) JSON(w io.Writer) error {
 		return err
 	}
 
-	bytes, err := convertDataToJSON(d)
+	bytes, err := convertDataToJSON(d, f.Precision)
 	if err != nil {
 		return err
 	}
