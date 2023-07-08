@@ -21,6 +21,7 @@ services:
       - ${TLS_CERT_BASE}:/cert:ro
     networks:
       - lastfm-net
+    restart: always
   lastfm-wrkr:
     build:
       context: .
@@ -29,6 +30,7 @@ services:
     container_name: lastfm-wrkr
     volumes:
       - ${DATA_PATH}:/.lastfm:rw
-   
+    restart: always
+
 networks:
   lastfm-net:

@@ -15,6 +15,7 @@ services:
       - TLS_CERT_REL=${TLS_CERT_REL}
     volumes:
       - "${TLS_CERT_BASE}:/cert"
+    restart: always
 
 networks:
   lastfm-net:
