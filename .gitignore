@@ -20,3 +20,6 @@ debug
 
 # directory for temporary test files
 test/files/*
+
+# some files that I don't know what they are
+._*
