@@ -57,6 +57,7 @@ var cmdLastfm = node{
 		"table":    cmdTable,
 		"timeline": {cmd: exeTimeline},
 		"update":   cmdUpdate,
+		"info":     {cmd: exeInfo},
 	},
 }
 
@@ -105,6 +106,15 @@ var cmdUpdate = node{
 		},
 		session: true,
 	},
+}
+
+var exeInfo = &cmd{
+	descr: "gives information a locator",
+	get: func(params []interface{}, opts map[string]interface{}) command {
+		return infoT{rsrc: params[0].(string), param: params[1].(string)}
+	},
+	params:  params{parLoc, parStr1},
+	session: false,
 }
 
 var exeHelp = &cmd{
@@ -585,6 +595,17 @@ var parEnd = &param{
 	"end",
 	"first date of an interval (inclusive) in the format YYYY-MM-DD",
 	"time",
+}
+
+var parLoc = &param{
+	"locator",
+	"name of a locator",
+	"string",
+}
+var parStr1 = &param{
+	"string",
+	"some string paramter",
+	"string",
 }
 
 // TODO name any key (see above) of option are duplicate
