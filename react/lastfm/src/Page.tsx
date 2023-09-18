@@ -6,21 +6,21 @@ import './Page.css';
 import { MenuChoice, menuDefinition, getMenus, getQuery, transformMethod } from './menus';
 
 function Page() {
-  const [method, setMethod] = useState<MenuChoice>({topLevel: 'total', functionParam: '', filter: 'all', filterParam: ''});
+  const [method, setMethod] = useState<MenuChoice>({ topLevel: 'total', functionParam: '', filter: 'all', filterParam: '' });
 
-  const handleMethodChange = (newMethod : string, index : string) => {
-    var newChoice : MenuChoice;
-    var param : string;
+  const handleMethodChange = (newMethod: string, index: string) => {
+    var newChoice: MenuChoice;
+    var param: string;
     if (index === 'topLevel') {
       param = newMethod === 'total' ? '' : menu[newMethod].default;
-      newChoice = {topLevel: newMethod, functionParam: param, filter: method.filter, filterParam: method.filterParam};
+      newChoice = { topLevel: newMethod, functionParam: param, filter: method.filter, filterParam: method.filterParam };
     } else if (menuDefinition.topLevel.buttons.includes(index)) {
-      newChoice = {topLevel: method.topLevel, functionParam: newMethod, filter: method.filter, filterParam: method.filterParam};
+      newChoice = { topLevel: method.topLevel, functionParam: newMethod, filter: method.filter, filterParam: method.filterParam };
     } else if (index === 'filter') {
       param = newMethod === 'all' ? '' : menu['filter'].default;
-      newChoice = {topLevel: method.topLevel, functionParam: method.functionParam, filter: newMethod, filterParam: param};
+      newChoice = { topLevel: method.topLevel, functionParam: method.functionParam, filter: newMethod, filterParam: param };
     } else { // must be filterParam
-      newChoice = {topLevel: method.topLevel, functionParam: method.functionParam, filter: method.filter, filterParam: newMethod};
+      newChoice = { topLevel: method.topLevel, functionParam: method.functionParam, filter: method.filter, filterParam: newMethod };
     }
 
     setMethod(newChoice);
@@ -37,20 +37,20 @@ function Page() {
     }
   }, []); // no dependencies, so it only runs once
 
-  const [data, setData] = useState<JSONData>({chart: {data: []}, precision: 0});
+  const [data, setData] = useState<JSONData>({ chart: { data: [] }, precision: 0 });
 
-  const fetchData = (method : MenuChoice) => {
+  const fetchData = (method: MenuChoice) => {
     const name = getQuery(transformMethod(method));
 
     const hostName = process.env.NODE_ENV === 'production' ? '' : `http://${window.location.hostname}:3001`;
-    console.log(`Fetching data from ${hostName}/json/print/${name}`);
-    fetch(`${hostName}/json/print/${name}`)
+    console.log(`Fetching data from json/print/${name}`);
+    fetch(`json/print/${name}`)
       .then(response => response.json())
       .then(data => {
         setData(data);
         // Receive parameters for filter
         if (menu['filter'].buttons.includes(method.filter) && method.filter !== 'all' && method.filterParam === 'all') {
-          var newMenu = {...menu};
+          var newMenu = { ...menu };
           newMenu[method.filter] = {
             buttons: ['all', ...data.chart.data.map((item: JSONElement) => item.title)],
             default: 'all',

@@ -36,16 +36,16 @@ app.use('/json', (req, res) => {
   apiProxy.web(req, res, { target: `http://${target}/json` });
 });
 
-// Redirect HTTP traffic to HTTPS
-app.use((req, res, next) => {
-  if (req.secure) {
-    // Request is already secure
-    next();
-  } else {
-    // Redirect to HTTPS
-    res.redirect(`https://${req.hostname}${req.url}`);
-  }
-});
+// // Redirect HTTP traffic to HTTPS
+// app.use((req, res, next) => {
+//   if (req.secure) {
+//     // Request is already secure
+//     next();
+//   } else {
+//     // Redirect to HTTPS
+//     res.redirect(`https://${req.hostname}${req.url}`);
+//   }
+// });
 
 // Serve the static files from the React app over HTTPS
 app.use(express.static(path.join(__dirname, '../build')));

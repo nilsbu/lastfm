@@ -6,8 +6,8 @@ services:
     image: lastfm/web
     container_name: lastfm-web
     ports:
-      - "80:3000"
-      - "443:4000"
+      - "4001:3000" # TCP
+      - "4002:4000" # TLS
     networks:
       - lastfm-net
     environment:
